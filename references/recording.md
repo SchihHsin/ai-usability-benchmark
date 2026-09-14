@@ -109,7 +109,7 @@ M7显式自评可用`report --run-dir runs/run-001 --event-id m7 --kind self_rep
 
 ## evaluation.json
 
-新运行使用`v2-partial-2026-09-14`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
+新运行使用`v2-five-band-2026-09-14`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
 
 文件顶层为`schema_version`、`run_id`、`revisions`。每次evaluate在同一个文件内增加修订，绑定完整process的SHA-256，保留旧判定。每个修订包含`evaluation`：
 
