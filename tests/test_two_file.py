@@ -102,6 +102,19 @@ class TwoFileTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             score_template.score_records([record], (2026,9))
 
+    def test_confirmed_version_uses_same_two_file_validation(self):
+        self.run=self.root/'confirmed'
+        self.metadata.update(rubric_version=log.partial_metrics.VERSION, protocol={'requirements':[{'id':'R1','importance':'core','description':'任务要求'}]})
+        log.init_run(self.run,self.metadata,self.body)
+        base=self.complete()
+        value=log.partial_metrics.template(log.events(self.run))
+        value.update(assessor={'id':'test'},evidence=base['evidence'])
+        value['requirements'][0].update(status='reviewed',reason='原文支撑',evidence_refs=['e1'])
+        value['metrics'][2].update(score=3,status='scored',official_body_observed=True,reason='关键支撑仍缺',requirement_refs=['R1'],evidence_refs=['e1'])
+        log.save_evaluation(self.run,value)
+        self.assertEqual(log.check(self.run)['issues'],[])
+        self.assertEqual(len(list(self.run.iterdir())),2)
+
     def test_binary_roundtrip_and_credentials(self):
         body=b'\xff\x00\r\n'
         self.assertEqual(log.unpack(log.pack(body)),body)

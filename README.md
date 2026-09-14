@@ -22,7 +22,9 @@ python3 scripts/run_log.py check --run-dir runs/example
 
 ## 评分版本
 
-新实验默认`v2-draft`，按[评价规则](references/evaluation.md)保存观测；分档未定稿，分值保持null。任务配对和规则未确定时不称正式评分实验。
+新实验默认`v2-partial-2026-09-14`：M2记录实际获取状态；M8报告S/F/R/U成本；M3与M10采用已确认五档。完整定义及输入见[已确认规则](references/confirmed-metrics.md)。其余指标与M11暂不输出数值；既有v2-draft保留原样。
+
+`python3 scripts/run_log.py template --run-dir runs/example`可输出当前运行的评价模板。脚本校验引用和字段，内容分档由评价者依据原文判断。
 
 `score_template.py`及[rubric](references/rubric.md)保留旧版`2026-09-14`。仅显式选择此版本的输入可计算；旧实验不自动改分，不能把新定义套进旧公式。既有多文件运行使用`scripts/legacy_run_log.py`检查，见[旧版说明](references/legacy-recording.md)。
 

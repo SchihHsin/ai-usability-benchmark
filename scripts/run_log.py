@@ -8,8 +8,10 @@ import os
 from pathlib import Path
 try:
     from .legacy_run_log import now, read_json, safe_id, reject_credentials
+    from . import partial_metrics
 except ImportError:
     from legacy_run_log import now, read_json, safe_id, reject_credentials
+    import partial_metrics
 
 SCHEMA = "two-file-1"
 DRAFT = "v2-draft"
@@ -178,6 +180,8 @@ def validate_evaluation(rows, value):
             for item in node:
                 walk(item)
     walk(value)
+    if version == partial_metrics.VERSION:
+        partial_metrics.validate(rows, value)
     if version == DRAFT:
         if value.get("overall") is not None or any(m.get("score") is not None for m in value["metrics"]):
             raise ValueError("v2-draft尚未定稿，禁止输出正式分值或套用旧综合公式")
@@ -244,7 +248,7 @@ def check(directory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     subs = parser.add_subparsers(dest="command", required=True)
-    for command in ("init", "begin", "dispatch", "finish", "end", "report", "evaluate", "check"):
+    for command in ("init", "begin", "dispatch", "finish", "end", "report", "evaluate", "template", "check"):
         p = subs.add_parser(command)
         p.add_argument("--run-dir", type=Path, required=True)
         if command == "init":
@@ -278,6 +282,7 @@ def main():
         elif a.command == "finish": finish(a.run_dir, a.event_id, a.response, a.status, read_json(a.observation) if a.observation else {})
         elif a.command == "report": report(a.run_dir, a.event_id, a.content, a.kind)
         elif a.command == "end": end_run(a.run_dir, a.answer, a.reason)
+        elif a.command == "template": print(json.dumps(partial_metrics.template(events(a.run_dir)), ensure_ascii=False, indent=2))
         elif a.command == "evaluate": save_evaluation(a.run_dir, read_json(a.input))
         else:
             result = check(a.run_dir)
