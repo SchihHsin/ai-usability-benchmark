@@ -27,8 +27,11 @@ score_template.py — 「AI 可用性」11 项指标的量化打分管线（可�
 4. 受阻（官方页 SPA 抓不到正文）记 BLOCKED，归一时按 0，且**不等于给③打1分**。
 """
 
-import sys, json
+import sys, json, argparse, re, hashlib
+from pathlib import Path
 
+RUBRIC_VERSION = "2026-09-14"
+NO_SOURCES = "无来源"
 BLK = "受阻"   # 受阻态（③ 在官方 SPA 抓不到正文时）
 
 # ============================================================
@@ -49,11 +52,16 @@ SOURCE_CRED = {
 CONSIST = {"high": +1.0, "mid": 0.0, "low": -1.0}
 
 # 时效性（recency）—— ⑥ 的「只罚不奖」修正项（够新是基线、过时才扣）。
-# today 固定为某个参照月，便于复算；各源真实发表日期由 web_search 实测，None=未拿到。
+# 旧API/演示保留默认月；正式--input必须--as-of，显式传参给M6。日期None=未取得。
 TODAY = (2026, 6)
 
+def parse_month(ym):
+    if not isinstance(ym, str) or not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2])", ym):
+        raise ValueError("日期必须为 YYYY-MM")
+    return int(ym[:4]), int(ym[5:7])
+
 def _age_months(ym, today=TODAY):
-    y, m = int(ym[:4]), int(ym[5:7])
+    y, m = parse_month(ym)
     return (today[0] - y) * 12 + (today[1] - m)
 
 def recency_factor(dates, today=TODAY):
@@ -121,8 +129,8 @@ RAW = {
             rounds=1, rank=1, refine=False, fetch=1, fetch_fail=0,
             core_fetch="static", exec=True, ref_level="exhaustive",
             n_versions=1, ver_matrix=False, ver_irrelev=False, two_axis=False,
-            sources=["official_doc", "tech_blog", "qa_reputation"],
-            platforms=["docs.example.com", "blog.example.net", "qa.example.org"],
+            sources=["tech_blog", "tech_blog", "qa_reputation"],
+            platforms=["tutorial.example.com", "blog.example.net", "qa.example.org"],
             dates=["2025-06", "2024-09", None], consist="high",
             own=4, churn="stable", pin="exact", repro="copyrun",
         ),
@@ -162,7 +170,7 @@ def score1_discover(r):
 
 def score2_fetch(r):
     """② 官方可抓取性 = 核心 how-to 页抓取形态映射。"""
-    return {"static":5, "ssr":4, "partial":4, "spa":2, "robots":1}[r["core_fetch"]]
+    return {"static":5, "ssr":4, "partial":3, "spa":2, "robots":1}[r["core_fetch"]]
 
 def score3_detail(r):
     """③ 官方正文详尽度。② 为 SPA/robots（抓不到正文）→ 受阻中性态。"""
@@ -194,12 +202,14 @@ def score5_sec_qty(r):
     if n >= 1: return 2
     return 1
 
-def score6_sec_cred(r):
+def score6_sec_cred(r, today=TODAY):
     """⑥ 二手可信度/一致性 = 来源可信度均分 + 一致性因子 + 时效罚分 + 独立性罚分，clamp 1..5。"""
+    if r["sources"] == []:
+        return NO_SOURCES
     creds = [SOURCE_CRED[s] for s in r["sources"]]
     mean = sum(creds) / len(creds)
     val = (mean + CONSIST[r["consist"]]
-           + recency_factor(r.get("dates", []))
+           + recency_factor(r.get("dates", []), today=today)
            + independence_factor(r.get("platforms", [])))
     return max(1, min(5, round(val)))
 
@@ -230,8 +240,8 @@ def score10_repro(r):
 # 3. ⑪ 综合置信度 = 三源噪声-OR（OFF/SEC/OWN 任一扛住即可答）
 # ============================================================
 def nm(v):
-    """归一：1–5 → 0.2–1.0；受阻 → 0。"""
-    return 0.0 if v == BLK else v / 5.0
+    """归一：1–5 → 0.2–1.0；受阻/已确认无来源 → 0，未知不能归零。"""
+    return 0.0 if v in (BLK, NO_SOURCES) else v / 5.0
 
 def score11_overall(s):
     """s = 已算出的 ①–⑩ 分列表。返回 (综合分, 档位, 中间量)。"""
@@ -239,8 +249,8 @@ def score11_overall(s):
     SEC = nm(s[4]) * nm(s[5])                # 二手：数量×可信
     OWN = nm(s[6])                           # 自带知识
     K = 1 - (1 - OFF) * (1 - SEC) * (1 - OWN)
-    vf = 0.7 + 0.3 * nm(s[3])                # 版本因子（跨渠道 ±30%）
-    cf = 0.9 + 0.1 * nm(s[7])                # 成本因子（±10%）
+    vf = 0.7 + 0.3 * nm(s[3])                # 版本因子（正常输入为0.76–1）
+    cf = 0.9 + 0.1 * nm(s[7])                # 成本因子（正常输入为0.92–1）
     score = K * vf * cf
     band = ("高",5) if score>=0.80 else ("中高",4) if score>=0.63 else \
            ("中",3) if score>=0.45 else ("低",2) if score>=0.24 else ("很低",1)
@@ -258,13 +268,13 @@ LABELS = ["①发现","②抓取","③详尽","④版本清","⑤二手量","⑥
 
 TASKS = list(RAW.keys())
 
-def compute():
+def compute(today=TODAY):
     out = {}
     for t in TASKS:
         out[t] = {}
         for st in STACKS:
             r = RAW[t][st]
-            s = [f(r) for f in METRICS]
+            s = [f(r, today=today) if f is score6_sec_cred else f(r) for f in METRICS]
             score, band, mid = score11_overall(s)
             out[t][st] = dict(scores=s, overall=round(score, 3),
                               band=band[0], mid=mid)
@@ -273,23 +283,177 @@ def compute():
 def fmt(v):
     return str(v).rjust(4)
 
+# JSON observations are separate from this script; each model uses the same code.
+REQUIRED = [
+    ("rounds", "rank", "refine"), ("core_fetch",),
+    ("core_fetch", "exec", "ref_level"),
+    ("n_versions", "ver_matrix", "ver_irrelev", "two_axis"),
+    ("sources",), ("sources", "platforms", "dates", "consist"),
+    ("own", "churn"), ("rounds", "fetch", "fetch_fail"), ("pin",), ("repro",),
+]
+ENUMS = {
+    "core_fetch": {"static", "ssr", "partial", "spa", "robots"},
+    "ref_level": {"exhaustive", "core_only", "overview", "fragment", "none"},
+    "consist": set(CONSIST), "churn": set(CHURN),
+    "pin": {"exact", "mostly", "range", "none"},
+    "repro": {"copyrun", "params", "partial", "skeleton"},
+    "body_status": {"retrieved", "partial", "not_retrieved"},
+}
+BOOLS = {"refine", "exec", "ver_matrix", "ver_irrelev", "two_axis"}
+COUNTS = {"rounds", "rank", "fetch", "fetch_fail", "n_versions", "own"}
+
+
+def validate_raw(raw, today):
+    if not isinstance(raw, dict):
+        raise ValueError("raw必须是对象")
+    for key, value in raw.items():
+        if value is None:
+            continue
+        if key in BOOLS and type(value) is not bool:
+            raise ValueError(f"{key}必须是布尔或null")
+        if key in COUNTS and (type(value) is not int or value < (1 if key in {"rank", "own"} else 0)):
+            raise ValueError(f"{key}必须是合法整数或null")
+        if key == "own" and value > 5:
+            raise ValueError("own必须在1–5之间")
+        if key in ENUMS and value not in ENUMS[key]:
+            raise ValueError(f"{key}的枚举值无效；未知请使用null")
+    if raw.get("fetch") is not None and raw.get("fetch_fail") is not None and raw["fetch_fail"] > raw["fetch"]:
+        raise ValueError("失败获取次数不能超过全部获取次数")
+    if raw.get("n_versions") == 0 and raw.get("ver_irrelev") is not True:
+        raise ValueError("版本敏感任务未确定版本时用null，不能用0获得高分")
+    if raw.get("rank") is not None and raw.get("rounds") == 0:
+        raise ValueError("零次搜索不能声称观察到搜索排名")
+    if raw.get("body_status") in {"retrieved", "partial"} and raw.get("core_fetch") in {"spa", "robots"}:
+        raise ValueError("正文取得状态与core_fetch受阻状态冲突")
+    if raw.get("body_status") == "not_retrieved" and raw.get("core_fetch") in {"static", "ssr", "partial"}:
+        raise ValueError("正文未取得与core_fetch取得状态冲突")
+    for key in ("sources", "platforms", "dates"):
+        if raw.get(key) is not None and not isinstance(raw[key], list):
+            raise ValueError(f"{key}必须是列表或null")
+    sources = raw.get("sources")
+    if sources is not None:
+        for source in sources:
+            if not isinstance(source, str) or source not in SOURCE_CRED:
+                raise ValueError("未知来源类型")
+            if source.startswith("official_"):
+                raise ValueError("官方来源不能计入第三方sources")
+        for key in ("platforms", "dates"):
+            if raw.get(key) is not None and len(raw[key]) != len(sources):
+                raise ValueError(f"{key}必须与sources一一对应")
+    if raw.get("platforms") is not None and any(not isinstance(x, str) or not x.strip() for x in raw["platforms"]):
+        raise ValueError("platforms成员必须是非空域名；未知时整字段用null")
+    for date in raw.get("dates") or []:
+        if date is not None and parse_month(date) > today:
+            raise ValueError("来源日期晚于统一参照月，请核对；不要推算为负月龄")
+
+
+def score_record(raw, today, evidence_refs=None):
+    """Score one run; unknown inputs remain null, not low scores. No network calls."""
+    validate_raw(raw, today)
+    if evidence_refs is not None and not isinstance(evidence_refs, dict):
+        raise ValueError("evidence_refs必须是字段到证据ID列表的映射")
+    values, states, issues = [], [], {}
+    for i, function in enumerate(METRICS):
+        required = REQUIRED[i]
+        blocked = raw.get("core_fetch") in {"spa", "robots"} or raw.get("body_status") == "not_retrieved"
+        if i == 2:
+            if blocked:
+                required = ("core_fetch",) if raw.get("core_fetch") in {"spa", "robots"} else ("body_status",)
+            elif raw.get("body_status") in {"retrieved", "partial"}:
+                required = ("body_status", "exec", "ref_level")
+        if i == 3 and raw.get("ver_irrelev") is True:
+            required = ("ver_irrelev",)
+        if i == 5 and raw.get("sources") == []:
+            required = ("sources",)
+        missing = [key for key in required if raw.get(key) is None]
+        unsupported = [] if evidence_refs is None else [
+            key for key in required if not isinstance(evidence_refs.get(key), list)
+            or not evidence_refs[key] or not all(isinstance(x, str) and x.strip() for x in evidence_refs[key])
+        ]
+        if missing or unsupported:
+            values.append(None)
+            states.append("missing" if missing else "unverified")
+            issues[f"M{i+1}"] = {"missing_fields": missing, "fields_without_evidence": unsupported}
+            continue
+        if i == 2 and blocked:
+            value = BLK
+        elif i == 2 and raw.get("core_fetch") is None:
+            # Retrieved content can be assessed without guessing static vs SSR.
+            value = score3_detail({**raw, "core_fetch": None})
+        elif i == 3 and raw.get("ver_irrelev") is True:
+            value = 5
+        else:
+            value = function(raw, today=today) if i == 5 else function(raw)
+        values.append(value)
+        states.append("blocked" if value == BLK else "no_sources" if value == NO_SOURCES else "scored")
+    overall = band = mid = None
+    if all(value is not None for value in values[:8]):
+        overall, band_pair, mid = score11_overall(values)
+        band = band_pair[0]
+    return dict(scores=values, metric_status=states,
+                overall=None if overall is None else round(overall, 3),
+                overall_exact=overall, band=band, mid=mid, issues=issues,
+                rubric_version=RUBRIC_VERSION,
+                score_script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                reference_month=f"{today[0]:04d}-{today[1]:02d}")
+
+
+def read_records(path):
+    text = path.read_text(encoding="utf-8")
+    records = ([json.loads(line) for line in text.splitlines() if line.strip()]
+               if path.suffix == ".jsonl" else json.loads(text))
+    if not isinstance(records, list) or not records:
+        raise ValueError("输入必须是非空JSON记录列表或JSONL")
+    return records
+
+
+def score_records(records, today):
+    result, seen = [], set()
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("每条运行必须是对象")
+        identity = ("run_id", "task_id", "ecosystem", "model_id", "protocol_version", "rubric_version")
+        if any(not isinstance(record.get(k), str) or not record[k].strip() for k in identity):
+            raise ValueError("每条运行必须包含非空身份字段：" + ", ".join(identity))
+        if record["rubric_version"] != RUBRIC_VERSION:
+            raise ValueError("输入rubric_version与当前脚本不同，禁止静默重算旧规则")
+        if type(record.get("repetition")) is not int or record["repetition"] < 1:
+            raise ValueError("repetition必须是正整数")
+        if record["run_id"] in seen:
+            raise ValueError("重复run_id，不得覆盖或静默去重")
+        seen.add(record["run_id"])
+        if record.get("reference_month") not in (None, f"{today[0]:04d}-{today[1]:02d}"):
+            raise ValueError("输入参照月与命令行不一致")
+        scored = score_record(record.get("raw"), today, record.get("evidence_refs", {}))
+        result.append({**{k: record[k] for k in identity}, "repetition": record["repetition"], **scored})
+    if len({r["protocol_version"] for r in result}) > 1:
+        raise ValueError("同一计分批次不可混用protocol_version")
+    return result
+
+
 def main():
-    data = compute()
-    if "--json" in sys.argv:
-        print(json.dumps(data, ensure_ascii=False, indent=2))
+    parser = argparse.ArgumentParser(description="统一计分；不调用模型、不执行检索")
+    parser.add_argument("--input", type=Path, help="多模型JSON/JSONL观测；无输入仅演示")
+    parser.add_argument("--as-of", help="统一参照月YYYY-MM，真实输入必须显式指定")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    try:
+        if args.input:
+            if not args.as_of:
+                parser.error("真实观测必须指定 --as-of YYYY-MM")
+            data = score_records(read_records(args.input), parse_month(args.as_of))
+        else:
+            data = compute(parse_month(args.as_of) if args.as_of else TODAY)
+    except (ValueError, TypeError, OSError) as error:
+        parser.error(str(error))
+    if args.json or args.input:
+        print(json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False))
         return
-    print("AI 可用性矩阵（① 越大越好；⑧ 反向；⑪=三源噪声-OR 综合）\n")
-    head = "任务".ljust(10) + "生态".ljust(8) + "".join(l.rjust(6) for l in LABELS)
-    print(head)
-    print("-" * len(head))
-    for t in TASKS:
-        for st in STACKS:
-            d = data[t][st]
-            row = (t.ljust(10) + STACK_LABEL.get(st, st).ljust(8)
-                   + "".join(fmt(x) + "  " for x in d["scores"])
-                   + fmt(d["overall"]) + f"  ({d['band']})")
-            print(row)
-        print()
+    print("示例数据（非实测）；M1–M10为1–5，M11为0–1。")
+    for task, sides in data.items():
+        for side, value in sides.items():
+            print(task, STACK_LABEL.get(side, side), value["scores"], value["overall"], value["band"])
+
 
 if __name__ == "__main__":
     main()
