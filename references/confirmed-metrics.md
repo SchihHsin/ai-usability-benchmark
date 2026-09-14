@@ -35,7 +35,9 @@
 
 ## M3：已取得官方内容对任务要求的支撑
 
-执行前冻结需求ID、说明和importance（core=完成任务必需；supplementary=题目要求的辅助说明）。不能在看到结果后增加辅助要求或改变重要程度。
+M3评价已取得官方正文的内容充分性；正文获取状态属于M2，版本选择与组件配套属于M4，不作为M3的评分依据。
+
+执行前冻结任务需求ID、说明和importance（core=完成任务必需；supplementary=题目要求的辅助说明），明确其中属于M3的步骤、解释、参数、实现或诊断内容要求。下表的“核心环节”“辅助说明”“全部要求”均限于上述内容范围。不能在看到结果后增加辅助要求或改变重要程度。
 
 | 分值 | 判定 |
 |---|---|
@@ -43,13 +45,13 @@
 | 2 | 有背景、术语或方向说明，尚不足以完成任何核心环节 |
 | 3 | 能支撑部分核心环节，仍缺影响完成任务的关键内容 |
 | 4 | 所有核心环节有充分支撑，题目要求的部分辅助说明仍缺失 |
-| 5 | 全部预定要求有充分支撑，未发现影响使用的未解决冲突 |
+| 5 | 纳入M3的全部预定内容要求均有充分支撑，未发现这些内容自身存在影响任务使用的未解决矛盾 |
 
-先逐需求保存实际支持及缺口，再给总档。只有背景方向是2；已有具体可用操作/解释、但核心任务仍不完整是3。影响使用的未解决冲突不能宣称相关需求充分支撑。
+先逐需求保存实际支持及缺口，再给总档。只有背景方向是2；已有具体可用操作/解释、但核心任务仍不完整是3。内容自身矛盾指步骤、参数解释或实现说明前后不一致。
 
 相关正文全部未取得时标`not_assessable`，score=null，不给1。混合情况分别说明“正文受阻”与“取得后仍缺信息”；总档仅指实际取得内容的支撑，不是整个官网原文质量。检查范围或核心/辅助划分不足以支持确定档位时保持pending，不猜分。
 
-如果预定要求全部是核心要求，则没有4分所对应的辅助缺口，允许跳过该档；不得为了用满五档临时增加任务要求。
+如果纳入M3的预定内容要求全部是核心要求，则没有4分所对应的辅助缺口，允许跳过该档；不得为了用满五档临时增加任务要求。
 
 ## M8：真实获取成本
 
@@ -71,6 +73,8 @@ C=0不自动给5分，保持待定或不适用。这是每两次调用一档的�
 
 ## M10：最终操作方案的完整性与一致性
 
+M10评价最终回答的操作步骤与代码；来源内容支撑属于M3/M6，最终回答的版本说明属于M9。不能只因版本未交代清楚或来源得分低而降低M10；须指出操作方案本身的具体缺口。
+
 | 分值 | 判定 |
 |---|---|
 | 1 | 没有形成与任务相关的操作方案 |
@@ -89,7 +93,7 @@ C=0不自动给5分，保持待定或不适用。这是每两次调用一档的�
 
 运行metadata选择本版本。需求清单置于`metadata.protocol.requirements`，每项有id、description、importance。用`run_log.py template --run-dir ...`输出评价模板到标准输出；编辑后用evaluate写进原evaluation.json，不增加默认交付文件。
 
-M3/M10的非空score必须为整数1—5，status=scored，并有reason、requirement_refs及可解析的原文evidence_refs。M3还须有official_body_observed=true，冻结需求含core/supplementary分类。逐项requirements判定必须完整并含reason和证据引用。M10须声明scope=main_solution、适用条件和runtime_validation；有额外方案时另列。
+M3/M10的非空score必须为整数1—5，status=scored，并有reason、requirement_refs及可解析的原文evidence_refs。M3还须有official_body_observed=true，冻结需求含core/supplementary分类。逐项requirements判定必须完整并含reason和证据引用；完整整理任务需求不等于把所有需求都用于每个指标评分，M3的requirement_refs及判定理由限于其内容范围。M10须声明scope=main_solution、适用条件和runtime_validation；有额外方案时另列。
 
 M2的预定目标置于`metadata.protocol.acquisition_targets`：每项含id、description、requirement_refs。模板生成对应observation.targets，每项填写score、initial_state、final_official_state、reason、evidence_refs、event_refs；状态代码为not_obtained/partial/obtained/unknown。M2证据须来自event_refs中的实际fetch返回，不能只引用搜索摘要或最终回答；本地未派发事件不算正文获取失败。每个已评分目标另填return_kind与state_basis，分别声明返回类型与证据支持的判定依据。恢复路径可另存recovery_event_refs，并同时列入event_refs；不再用是否恢复区分4/5分。用`scripts.body_state_metrics.aggregate(targets)`计算observation.aggregate，再取band填任务score。
 
