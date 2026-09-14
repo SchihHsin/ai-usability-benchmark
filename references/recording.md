@@ -112,7 +112,7 @@ check分别返回日志完整性issues与协议偏离protocol_deviations，并�
 
 ## evaluation.json
 
-新运行使用`v2-five-band-2026-09-14`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
+新运行使用`v2-body-state-2026-09-14`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
 
 文件顶层为`schema_version`、`run_id`、`revisions`。每次evaluate在同一个文件内增加修订，绑定完整process的SHA-256，保留旧判定。每个修订包含`evaluation`：
 
@@ -141,3 +141,5 @@ check分别返回日志完整性issues与协议偏离protocol_deviations，并�
 空数组不代表没有问题，只表示尚未整理；须在limitations注明。`check`检查字节哈希、未完成请求、结束事件、评价与过程绑定、引文和引用是否可解析。它不判断引用是否足以支撑结论，也不能确认未导出的工具调用是否遗漏。缺少评价时会报告“尚未评价”，不会自动填分。
 
 旧输入及公式仅见[旧版说明](legacy-recording.md)。新草案不能生成旧RAW后冒充新评分。
+
+当前M2每项目标保存return_kind、state_basis与初次/最终状态。1/2对应not_obtained，3/4对应partial，5对应obtained；摘要与截断由return_kind区别。状态变化及其事件仍保留，不能因重试后已补齐而删除早期障碍。

@@ -20,7 +20,7 @@ def targets(rows):
     return declared
 
 
-def aggregate(items):
+def aggregate(items, *, body_state=False):
     scores = [t.get('score') for t in items]
     if any(s is not None and (type(s) is not int or not 1 <= s <= 5) for s in scores):
         raise ValueError('目标分值须为整数1—5或null')
@@ -30,7 +30,7 @@ def aggregate(items):
     n = len(scores)
     return dict(target_count=n, assessed_count=len(known), unknown_count=n-len(known),
                 not_obtained_count=sum(s in (1, 2) for s in known),
-                partial_count=known.count(3), score_sum=total,
+                partial_count=sum(s in (3, 4) for s in known) if body_state else known.count(3), score_sum=total,
                 mean=total/n if complete else None,
                 band=(2*total+n)//(2*n) if complete else None)
 
@@ -55,7 +55,7 @@ def template(rows):
     return value
 
 
-def validate(rows, value):
+def validate(rows, value, *, body_state=False):
     compat = copy.deepcopy(value)
     for m in compat['metrics']:
         if m['id'] in {'M2', 'M8'}:
@@ -72,7 +72,7 @@ def validate(rows, value):
     ids = [t.get('target_id') for t in items]
     if len(ids) != len(set(ids)) or set(ids) != {t['id'] for t in targets(rows)}:
         raise ValueError('M2必须完整对应预定目标，不按URL增删目标')
-    expected = aggregate(items)
+    expected = aggregate(items, body_state=body_state)
     if obs.get('aggregate') != expected:
         raise ValueError('M2均值、分档或缺口计数不符')
     events = {r['id']: r for r in rows}
@@ -83,7 +83,8 @@ def validate(rows, value):
             raise ValueError('目标获取状态无效')
         if s is None:
             continue
-        state = 'not_obtained' if s <= 2 else 'partial' if s == 3 else 'obtained'
+        partial_scores = {3, 4} if body_state else {3}
+        state = 'not_obtained' if s <= 2 else 'partial' if s in partial_scores else 'obtained'
         if t['final_official_state'] != state or not t.get('reason') or not t.get('evidence_refs') or not t.get('event_refs'):
             raise ValueError('目标评分须有一致的最终状态、理由、事件和原文证据')
         fetch_results = {eid for eid in t['event_refs'] if eid in events
@@ -94,14 +95,20 @@ def validate(rows, value):
                                        and evidence.get(eid, {}).get('field') == 'response'
                                        for eid in t['evidence_refs']):
             raise ValueError('M2评分须引用实际fetch返回原文，搜索摘要或最终回答不能替代')
-        if t['initial_state'] == 'unknown':
-            raise ValueError('首次获取未知，不能判定获取路径档位')
-        if s == 4 and (t['initial_state'] == 'obtained' or not t.get('recovery_event_refs')):
-            raise ValueError('四分须保留初次障碍及官方替代路径事件')
-        if s == 4 and not set(t.get('recovery_event_refs', [])) & fetch_results:
-            raise ValueError('M2恢复须关联实际fetch返回事件')
-        if s == 5 and t['initial_state'] != 'obtained':
-            raise ValueError('五分须直接取得正文')
+        if body_state:
+            kinds = {1: 'page_not_obtained', 2: 'frame_only', 3: 'summary_or_preview',
+                     4: 'incomplete_body', 5: 'complete_body'}
+            if t.get('return_kind') != kinds[s] or not str(t.get('state_basis') or '').strip():
+                raise ValueError('M2须有与分档一致的返回类型及可核验的状态依据')
+        else:
+            if t['initial_state'] == 'unknown':
+                raise ValueError('首次获取未知，不能判定获取路径档位')
+            if s == 4 and (t['initial_state'] == 'obtained' or not t.get('recovery_event_refs')):
+                raise ValueError('四分须保留初次障碍及官方替代路径事件')
+            if s == 4 and not set(t.get('recovery_event_refs', [])) & fetch_results:
+                raise ValueError('M2恢复须关联实际fetch返回事件')
+            if s == 5 and t['initial_state'] != 'obtained':
+                raise ValueError('五分须直接取得正文')
         if set(t.get('recovery_event_refs', [])) - set(t['event_refs']):
             raise ValueError('恢复事件须列入可校验的event_refs')
     check_score(m, expected['band'])
