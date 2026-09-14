@@ -10,7 +10,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import score_template as score
-from scripts import run_log
+from scripts import legacy_run_log as run_log
 
 
 def raw():
