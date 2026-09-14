@@ -55,6 +55,7 @@ model_id使用实际配置中的模型标识，不通过模型自我介绍猜测
 
 - 来源用source_id，保留原URL/去重URL及规则、发布者、日期/版本及其出处、是否转载。不同URL不一定独立，同一URL在不同时间也不一定同一内容。
 - 每次读取独立event_id，内嵌返回保留大小/哈希；不因后面成功而删早期失败。
+- 同一返回中，工具明确自称补充/生成的片段标为tool_generated_supplement；提取片段与补充片段分开标注字符区间，来源不明时用unknown。不用工具补充内容冒充原网页正文。
 - evidence_id关联返回事件内的字符区间和必要原文。整理后的“详尽”“有用”等评价不能替代原文。
 - 任务需求逐项关联证据及支撑范围，标明命令、参数、步骤、诊断案例、版本适用关系。未取得支持不等于原网页不存在这些信息。
 - 版本先保存component→version→source→compatibility；不同组件正常配套不直接算冲突。
@@ -104,6 +105,8 @@ python3 scripts/run_log.py check --run-dir runs/run-001
 M7显式自评可用`report --run-dir runs/run-001 --event-id m7 --kind self_report --content self-report.txt`保存；客户端限制说明用`--kind client_note`。两者都在process内，后处理引用content片段。
 
 工具未派发就被本地权限/预算阻止时，不登记dispatch，用`finish --status not_dispatched`保存实际阻止信息。工具已派发后失败使用error。客户端不暴露派发状态时保留请求和日志缺口，不能凭模型总结补派发事件。统计区分requested/dispatched/returned/not_dispatched；工具派发数不等同于网络HTTP请求数或批量query数。
+
+check分别返回日志完整性issues与协议偏离protocol_deviations，并按协议的search_budget/fetch_budget核对实际派发数。日志完整不等于预算合规；超额调用全部保留，并在评价与对照分析中注明。未配置上限时标未知。
 
 记录器不执行搜索、不自动截获任何客户端工具调用、不强制工具预算；这些需要客户端/调度器实际接入。Prompt中的预算只是指令，不能声称硬限制。中断保留已有事件，恢复评价时说明缺口，不补造返回。脚本仅防止常规重复写入并检查哈希，不提供防篡改认证或并发写入保证。
 

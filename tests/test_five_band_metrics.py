@@ -5,10 +5,12 @@ from scripts import five_band_metrics as p
 
 class FiveBandTests(unittest.TestCase):
     def rows(self, n=2):
-        return [dict(type='run_start', metadata=dict(rubric_version=p.VERSION, protocol=dict(
+        return [dict(type='run_start', id='run-start',metadata=dict(rubric_version=p.VERSION, protocol=dict(
             requirements=[dict(id='R', description='操作', importance='core')],
             acquisition_targets=[dict(id=str(i),description='目标'+str(i),requirement_refs=['R']) for i in range(n)]))),
-            dict(type='tool_request',id='s',role='search'),dict(type='tool_dispatch',request_id='s')]
+            dict(type='tool_request',id='s',role='fetch'),dict(type='tool_dispatch',id='dispatch-s',request_id='s'),
+            dict(type='tool_result',id='result-s',request_id='s',tool_status='ok'),
+            dict(type='run_end',id='run-end',stop_reason='task_complete')]
 
     def test_mean_and_gaps(self):
         a=p.aggregate([dict(score=s) for s in [5,5,5,5,1]])
@@ -35,9 +37,10 @@ class FiveBandTests(unittest.TestCase):
 
     def test_scored_targets_and_cost(self):
         rows=self.rows();v=p.template(rows);m=v['metrics'][1]
+        v['evidence']=[dict(id='e',event_id='result-s',field='response')]
         for t,s in zip(m['observation']['targets'],[4,5]):
-            t.update(score=s,initial_state='partial' if s==4 else 'obtained',final_official_state='obtained',reason='原文支持',evidence_refs=['e'],event_refs=['s'])
-            if s==4:t['recovery_event_refs']=['s']
+            t.update(score=s,initial_state='partial' if s==4 else 'obtained',final_official_state='obtained',reason='原文支持',evidence_refs=['e'],event_refs=['result-s'])
+            if s==4:t['recovery_event_refs']=['result-s']
         m['observation']['aggregate']=p.aggregate(m['observation']['targets'])
         m.update(score=5,status='scored',reason='均值4.5')
         v['metrics'][7].update(score=5,status='scored',reason='一次实际调用')
@@ -46,6 +49,24 @@ class FiveBandTests(unittest.TestCase):
         with self.assertRaises(ValueError):p.validate(rows,v)
         v['metrics'][7]['score']=5
         m['observation']['targets'][0]['recovery_event_refs']=[]
+        with self.assertRaises(ValueError):p.validate(rows,v)
+
+    def test_search_cannot_substitute_for_fetch(self):
+        rows=self.rows();rows[1]['role']='search';v=p.template(rows)
+        v['evidence']=[dict(id='e',event_id='result-s',field='response')]
+        m=v['metrics'][1]
+        for t in m['observation']['targets']:
+            t.update(score=5,initial_state='obtained',final_official_state='obtained',reason='搜索摘要',evidence_refs=['e'],event_refs=['result-s'])
+        m['observation']['aggregate']=p.aggregate(m['observation']['targets'])
+        m.update(score=5,status='scored',reason='误判')
+        with self.assertRaises(ValueError):p.validate(rows,v)
+
+    def test_incomplete_cost_does_not_receive_high_score(self):
+        for rows in [self.rows()[:-1],self.rows()[:3]+[self.rows()[-1]]]:
+            v=p.template(rows);v['metrics'][7].update(score=5,status='scored',reason='仅部分调用')
+            with self.assertRaises(ValueError):p.validate(rows,v)
+        rows=self.rows();rows[-1]['stop_reason']='controller_timeout';v=p.template(rows)
+        v['metrics'][7].update(score=5,status='scored',reason='超时')
         with self.assertRaises(ValueError):p.validate(rows,v)
 
     def test_no_dispatch_has_no_cost_score(self):

@@ -75,6 +75,8 @@ def validate(rows, value):
     expected = aggregate(items)
     if obs.get('aggregate') != expected:
         raise ValueError('M2均值、分档或缺口计数不符')
+    events = {r['id']: r for r in rows}
+    evidence = {e['id']: e for e in value['evidence']}
     for t in items:
         s = t.get('score')
         if any(t.get(k) not in old.STATES for k in ('initial_state', 'final_official_state')):
@@ -84,10 +86,20 @@ def validate(rows, value):
         state = 'not_obtained' if s <= 2 else 'partial' if s == 3 else 'obtained'
         if t['final_official_state'] != state or not t.get('reason') or not t.get('evidence_refs') or not t.get('event_refs'):
             raise ValueError('目标评分须有一致的最终状态、理由、事件和原文证据')
+        fetch_results = {eid for eid in t['event_refs'] if eid in events
+                         and events[eid].get('type') == 'tool_result'
+                         and events[eid].get('tool_status') != 'not_dispatched'
+                         and events.get(events[eid].get('request_id'), {}).get('role') == 'fetch'}
+        if not fetch_results or not any(evidence.get(eid, {}).get('event_id') in fetch_results
+                                       and evidence.get(eid, {}).get('field') == 'response'
+                                       for eid in t['evidence_refs']):
+            raise ValueError('M2评分须引用实际fetch返回原文，搜索摘要或最终回答不能替代')
         if t['initial_state'] == 'unknown':
             raise ValueError('首次获取未知，不能判定获取路径档位')
         if s == 4 and (t['initial_state'] == 'obtained' or not t.get('recovery_event_refs')):
             raise ValueError('四分须保留初次障碍及官方替代路径事件')
+        if s == 4 and not set(t.get('recovery_event_refs', [])) & fetch_results:
+            raise ValueError('M2恢复须关联实际fetch返回事件')
         if s == 5 and t['initial_state'] != 'obtained':
             raise ValueError('五分须直接取得正文')
         if set(t.get('recovery_event_refs', [])) - set(t['event_refs']):
@@ -100,6 +112,13 @@ def validate(rows, value):
     c = obs['C']['S'] + obs['C']['F']
     if type(obs.get('total_calls')) is not int or obs['total_calls'] != c:
         raise ValueError('M8总调用数须等于S+F')
+    if m.get('score') is not None:
+        requests = {r['id'] for r in rows if r['type'] == 'tool_request' and r.get('role') in {'search', 'fetch'}}
+        results = {r['request_id'] for r in rows if r['type'] == 'tool_result'}
+        if not rows or rows[-1]['type'] != 'run_end' or requests - results:
+            raise ValueError('M8日志尚未闭合，只报告已观测调用数，不填成本档位')
+        if rows[-1].get('stop_reason') in {'controller_timeout', 'adapter_error', 'client_error'}:
+            raise ValueError('M8执行异常中断，保留原始成本但不当作完成任务的成本档位')
     check_score(m, cost_band(c))
 
 

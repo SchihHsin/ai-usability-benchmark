@@ -84,9 +84,9 @@ C=0不自动给5分，保持待定或不适用。这是每两次调用一档的�
 
 M3/M10的非空score必须为整数1—5，status=scored，并有reason、requirement_refs及可解析的原文evidence_refs。M3还须有official_body_observed=true，冻结需求含core/supplementary分类。逐项requirements判定必须完整并含reason和证据引用。M10须声明scope=main_solution、适用条件和runtime_validation；有额外方案时另列。
 
-M2的预定目标置于`metadata.protocol.acquisition_targets`：每项含id、description、requirement_refs。模板生成对应observation.targets，每项填写score、initial_state、final_official_state、reason、evidence_refs、event_refs；状态代码为not_obtained/partial/obtained/unknown。4分另填recovery_event_refs，且这些事件也列入event_refs。用`scripts.five_band_metrics.aggregate(targets)`计算observation.aggregate，再取band填任务score。
+M2的预定目标置于`metadata.protocol.acquisition_targets`：每项含id、description、requirement_refs。模板生成对应observation.targets，每项填写score、initial_state、final_official_state、reason、evidence_refs、event_refs；状态代码为not_obtained/partial/obtained/unknown。M2证据须来自event_refs中的实际fetch返回，不能只引用搜索摘要或最终回答；本地未派发事件不算正文获取失败。4分另填recovery_event_refs，且这些事件也列入event_refs，其中须包含实际fetch返回。用`scripts.five_band_metrics.aggregate(targets)`计算observation.aggregate，再取band填任务score。
 
-M8 observation保留C对象中的S/F/R/U（兼容原字段名），total_calls存S+F；retry_request_ids/no_body_fetch_request_ids未知时用null。程序核对派发事件、总数与分档；score可待定，正式填分须status=scored和reason。M2/M8也按此状态要求填分。
+M8 observation保留C对象中的S/F/R/U（兼容原字段名），total_calls存S+F；retry_request_ids/no_body_fetch_request_ids未知时用null。程序核对派发事件、总数与分档；运行未结束、存在未返回调用或因超时/客户端错误中断时，只保存已观测成本，score保持null；score可待定，正式填分须status=scored和reason。M2/M8也按此状态要求填分。
 
 其他指标和overall仍为null。M2的恢复路径分档与M8成本有部分重合，后续设计M11时须检查重复赋权。此前v2-partial版的无分值规则见[旧版定义](confirmed-metrics-partial-2026-09-14.md)，校验继续兼容，既有实验不自动重算。
 

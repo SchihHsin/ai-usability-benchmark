@@ -244,7 +244,20 @@ def check(directory):
             validate_evaluation(rows, revision["evaluation"])
         except (ValueError, KeyError) as error:
             issues.append(f"评价: {error}")
-    return {"run_id": rows[0]["metadata"]["run_id"], "issues": issues, "counts": counts}
+    protocol = rows[0]["metadata"].get("protocol", {})
+    budget_checks = {}
+    deviations = []
+    for role in ("search", "fetch"):
+        limit = protocol.get(role + "_budget")
+        observed = counts["dispatched"][role]
+        valid_limit = type(limit) is int and limit >= 0
+        exceeded = observed > limit if valid_limit else None
+        budget_checks[role] = {"limit": limit if valid_limit else None,
+                               "observed_dispatches": observed, "exceeded": exceeded}
+        if exceeded:
+            deviations.append(f"{role}: 实际调用{observed}次，超过协议上限{limit}次")
+    return {"run_id": rows[0]["metadata"]["run_id"], "issues": issues, "counts": counts,
+            "budget_checks": budget_checks, "protocol_deviations": deviations}
 
 
 def main():

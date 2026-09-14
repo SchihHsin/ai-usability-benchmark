@@ -30,6 +30,17 @@ class TwoFileTests(unittest.TestCase):
             requirements=[dict(id='R1', evidence_refs=['e1'])], issues=[],
             metrics=[dict(id='M2', score=None, event_refs=['s1'])], overall=None)
 
+    def test_budget_check_separates_compliance_from_log_integrity(self):
+        rows=log.events(self.run)
+        rows[0]['metadata']['protocol']={'search_budget':0,'fetch_budget':2}
+        (self.run/'process.jsonl').write_text(''.join(json.dumps(r,ensure_ascii=False)+'\n' for r in rows))
+        log.begin(self.run,'budget-search','search','web_search',{'query':'example'})
+        log.dispatch(self.run,'budget-search')
+        report=log.check(self.run)
+        self.assertEqual(report['budget_checks']['search']['exceeded'],True)
+        self.assertEqual(report['budget_checks']['fetch']['exceeded'],False)
+        self.assertEqual(len(report['protocol_deviations']),1)
+
     def test_two_files_exact_bytes_and_revisions(self):
         value = self.complete()
         log.save_evaluation(self.run, value)
