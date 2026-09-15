@@ -8,10 +8,10 @@ import os
 from pathlib import Path
 try:
     from .legacy_run_log import now, read_json, safe_id, reject_credentials
-    from . import partial_metrics, five_band_metrics, body_state_metrics
+    from . import partial_metrics, five_band_metrics, body_state_metrics, document_metrics
 except ImportError:
     from legacy_run_log import now, read_json, safe_id, reject_credentials
-    import partial_metrics, five_band_metrics, body_state_metrics
+    import partial_metrics, five_band_metrics, body_state_metrics, document_metrics
 
 SCHEMA = "two-file-1"
 DRAFT = "v2-draft"
@@ -180,6 +180,8 @@ def validate_evaluation(rows, value):
             for item in node:
                 walk(item)
     walk(value)
+    if version == document_metrics.VERSION:
+        document_metrics.validate(rows, value)
     if version == body_state_metrics.VERSION:
         body_state_metrics.validate(rows, value)
     if version == five_band_metrics.VERSION:
@@ -264,7 +266,8 @@ def check(directory):
 
 def metric_template(rows):
     version = rows[0]['metadata']['rubric_version']
-    module = {body_state_metrics.VERSION: body_state_metrics,
+    module = {document_metrics.VERSION: document_metrics,
+              body_state_metrics.VERSION: body_state_metrics,
               five_band_metrics.VERSION: five_band_metrics}.get(version, partial_metrics)
     return module.template(rows)
 

@@ -108,11 +108,11 @@ M7显式自评可用`report --run-dir runs/run-001 --event-id m7 --kind self_rep
 
 check分别返回日志完整性issues与协议偏离protocol_deviations，并按协议的search_budget/fetch_budget核对实际派发数。日志完整不等于预算合规；超额调用全部保留，并在评价与对照分析中注明。未配置上限时标未知。
 
-记录器不执行搜索、不自动截获任何客户端工具调用、不强制工具预算；这些需要客户端/调度器实际接入。Prompt中的预算只是指令，不能声称硬限制。中断保留已有事件，恢复评价时说明缺口，不补造返回。脚本仅防止常规重复写入并检查哈希，不提供防篡改认证或并发写入保证。
+记录器本身不执行搜索、不截获客户端调用；工具预算使用单独的[执行前拦截器](budget-control.md)，须在实际客户端接入。Prompt中的预算只是指令，不能声称硬限制。中断保留已有事件，恢复评价时说明缺口，不补造返回。脚本仅防止常规重复写入并检查哈希，不提供防篡改认证或并发写入保证。
 
 ## evaluation.json
 
-新运行使用`v2-body-state-2026-09-14`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
+新运行使用`v2-document-2026-09-15`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
 
 文件顶层为`schema_version`、`run_id`、`revisions`。每次evaluate在同一个文件内增加修订，绑定完整process的SHA-256，保留旧判定。每个修订包含`evaluation`：
 
@@ -143,3 +143,5 @@ check分别返回日志完整性issues与协议偏离protocol_deviations，并�
 旧输入及公式仅见[旧版说明](legacy-recording.md)。新草案不能生成旧RAW后冒充新评分。
 
 当前M2每项目标保存return_kind、state_basis与初次/最终状态。1/2对应not_obtained，3/4对应partial，5对应obtained；摘要与截断由return_kind区别。状态变化及其事件仍保留，不能因重试后已补齐而删除早期障碍。
+
+新版本v2-document-2026-09-15按实际独立文档保存M2清单与fetch_inventory，接口见confirmed-metrics.md；同文档多次获取不重复加权，失败项保留。预算hook账本只是准许/拒绝证据，结束前导入process.jsonl的client_note，不把准许次数当实际派发次数。运行仍只交付两个文件。

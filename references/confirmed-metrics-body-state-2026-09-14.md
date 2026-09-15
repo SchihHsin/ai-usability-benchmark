@@ -1,14 +1,10 @@
 # 已确认的M2、M3、M8、M10规则
 
-版本：`v2-document-2026-09-15`。本版确定以下四项；M1/M4/M5/M6/M7/M9继续保存观测，M11暂不计算。不是整套评分体系已经完成验证。旧版`v2-draft`仍保持全部分值为null，不追溯修改既有运行。
+版本：`v2-body-state-2026-09-14`。本版确定以下四项；M1/M4/M5/M6/M7/M9继续保存观测，M11暂不计算。不是整套评分体系已经完成验证。旧版`v2-draft`仍保持全部分值为null，不追溯修改既有运行。
 
 ## M2：官方目标正文获取状态
 
-以实际选择读取的独立官方文档为平均单位，文档各评一次，再等权平均。执行前固定任务需求及文档纳入/去重规则；执行中通过实际请求形成文档清单，不预先把“解释错误”“给出步骤”等信息需求各当一篇文档。所有尝试读取的官方文档均纳入，包括仅框架和失败项，不只挑成功项。
-
-同一篇文档的失败重试、分页、分段读取合并为一个document ID，依据本轮累计取得的正文判断最终状态；已经取得的正文不会因后一次失败而消失。同一文档满足多个任务需求也只计一次，多个requirement_refs不增加权重。官方不同格式且确认为相同正文时合并；不同版本或不同文档不因标题相似自动合并，保存identity_basis和对应URL。第三方镜像在来源与恢复记录中关联原文，不提高官方M2。
-
-例如A读了3次后完整取得，B读了1次仍只有框架：A=5、B=2，均值(5+2)/2=3.5，四舍五入得到4档；分母是2篇文档，不是4次获取。4次调用计入M8；A首次遇阻的证据保留。
+对不同正文目标分别判断实际返回状态。执行前固定目标ID与范围；目标对应要读取的内容，不按URL或调用次数增加。相同正文的分页、分段读取与失败重试合并为一个目标，按最后实际取得的内容判定；不同正文目标各评一次，再等权平均。
 
 | 分值 | 描述 | return_kind | 判定依据 |
 |---|---|---|---|
@@ -35,7 +31,7 @@
 
 例如五个不同目标为2、3、4、5、5，均值3.8，四舍五入为4分。保留原始均值、每项目标分、分数和与目标数；4.5进为5，不使用银行家舍入。任务级4分是平均档位，不表示所有目标均为“不完整正文”。
 
-同时报告未取得正文数（1/2分）、未完整取得数（3/4分）与未知数；保留目标的具体return_kind，以区分摘要和截断。只要纳入文档仍有未知，均值与总档位保持null，不删除未知项后平均。同一目标从摘要/截断进一步补齐为完整正文时，最终记5，原有障碍另存。
+同时报告未取得正文数（1/2分）、未完整取得数（3/4分）与未知数；保留目标的具体return_kind，以区分摘要和截断。只要预定目标仍有未知，均值与总档位保持null，不删除未知项后平均。同一目标从摘要/截断进一步补齐为完整正文时，最终记5，原有障碍另存。
 
 ## M3：已取得官方内容对任务要求的支撑
 
@@ -99,9 +95,7 @@ M10评价最终回答的操作步骤与代码；来源内容支撑属于M3/M6，
 
 M3/M10的非空score必须为整数1—5，status=scored，并有reason、requirement_refs及可解析的原文evidence_refs。M3还须有official_body_observed=true，冻结需求含core/supplementary分类。逐项requirements判定必须完整并含reason和证据引用；完整整理任务需求不等于把所有需求都用于每个指标评分，M3的requirement_refs及判定理由限于其内容范围。M10须声明scope=main_solution、适用条件和runtime_validation；有额外方案时另列。
 
-M2 observation.targets保存去重后的文档清单：target_id作为document ID，另含description、requirement_refs、urls、identity_basis、score、initial_state、final_official_state、reason、evidence_refs、event_refs、return_kind、state_basis。相同文档的全部获取返回都列入event_refs，保留初次障碍；score基于实际官方fetch返回原文。用`scripts.document_metrics.aggregate(targets)`计算aggregate，band填任务score。
-
-observation.fetch_inventory逐个覆盖实际fetch请求：request_id、source_class（official/third_party/unverified/not_dispatched）、document_id、reason、event_refs。official映射到文档ID；其他类别document_id为null。未派发请求不计入官方M2或M8；第三方镜像单列来源与恢复关系。归属未核实或清单不完整时任务M2保持null，不能删除不利项后算平均。程序校验清单覆盖和去重，文档身份仍须有实际依据，不能声称脚本自动证明两页相同。
+M2的预定目标置于`metadata.protocol.acquisition_targets`：每项含id、description、requirement_refs。模板生成对应observation.targets，每项填写score、initial_state、final_official_state、reason、evidence_refs、event_refs；状态代码为not_obtained/partial/obtained/unknown。M2证据须来自event_refs中的实际fetch返回，不能只引用搜索摘要或最终回答；本地未派发事件不算正文获取失败。每个已评分目标另填return_kind与state_basis，分别声明返回类型与证据支持的判定依据。恢复路径可另存recovery_event_refs，并同时列入event_refs；不再用是否恢复区分4/5分。用`scripts.body_state_metrics.aggregate(targets)`计算observation.aggregate，再取band填任务score。
 
 M8 observation保留C对象中的S/F/R/U（兼容原字段名），total_calls存S+F；retry_request_ids/no_body_fetch_request_ids未知时用null。程序核对派发事件、总数与分档；运行未结束、存在未返回调用或因超时/客户端错误中断时，只保存已观测成本，score保持null；score可待定，正式填分须status=scored和reason。M2/M8也按此状态要求填分。
 
@@ -110,5 +104,3 @@ M8 observation保留C对象中的S/F/R/U（兼容原字段名），total_calls�
 脚本验证格式、数值、版本和引用，不会自动读懂网页或证明评价者选择的档位正确。内容判断需按上述边界逐项核验，分歧保留原文与修订理由，不按模型标签调整分数。
 
 此前将4分定义为经替代路径取得的版本保留于[旧版路径分档](confirmed-metrics-path-2026-09-14.md)，版本号为v2-five-band-2026-09-14。旧实验不会自动重算或替换版本，新旧M2不得混算。
-
-上一版固定正文目标的规则见[2026-09-14正文状态版](confirmed-metrics-body-state-2026-09-14.md)，旧数据保留原协议与分值；新版本只改变文档纳入/去重与数据接口，不改变五档、均值公式或指标职责。
