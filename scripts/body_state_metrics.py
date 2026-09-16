@@ -21,5 +21,5 @@ def template(rows):
     return value
 
 
-def validate(rows, value):
-    return previous.validate(rows, value, body_state=True)
+def validate(rows, value, *, coverage=False):
+    return previous.validate(rows, value, body_state=True, coverage=coverage)

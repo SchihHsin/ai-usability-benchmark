@@ -112,7 +112,7 @@ check分别返回日志完整性issues与协议偏离protocol_deviations，并�
 
 ## evaluation.json
 
-新运行使用`v2-document-2026-09-15`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
+新运行使用`v2-coverage-2026-09-15`，字段与边界见[已确认规则](confirmed-metrics.md)。下方v2-draft示例仅保留作旧验证记录兼容；当前模板由`run_log.py template --run-dir ...`输出。
 
 文件顶层为`schema_version`、`run_id`、`revisions`。每次evaluate在同一个文件内增加修订，绑定完整process的SHA-256，保留旧判定。每个修订包含`evaluation`：
 
@@ -144,4 +144,4 @@ check分别返回日志完整性issues与协议偏离protocol_deviations，并�
 
 当前M2每项目标保存return_kind、state_basis与初次/最终状态。1/2对应not_obtained，3/4对应partial，5对应obtained；摘要与截断由return_kind区别。状态变化及其事件仍保留，不能因重试后已补齐而删除早期障碍。
 
-新版本v2-document-2026-09-15按实际独立文档保存M2清单与fetch_inventory，接口见confirmed-metrics.md；同文档多次获取不重复加权，失败项保留。预算hook账本只是准许/拒绝证据，结束前导入process.jsonl的client_note，不把准许次数当实际派发次数。运行仍只交付两个文件。
+新版本v2-coverage-2026-09-15按实际独立文档保存M2清单与fetch_inventory，接口见confirmed-metrics.md；同文档多次获取不重复加权，失败项保留。预算hook账本只是准许/拒绝证据，结束前导入process.jsonl的client_note，不把准许次数当实际派发次数。运行仍只交付两个文件。

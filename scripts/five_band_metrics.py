@@ -55,7 +55,7 @@ def template(rows):
     return value
 
 
-def validate(rows, value, *, body_state=False):
+def validate(rows, value, *, body_state=False, coverage=False):
     compat = copy.deepcopy(value)
     for m in compat['metrics']:
         if m['id'] in {'M2', 'M8'}:
@@ -98,7 +98,7 @@ def validate(rows, value, *, body_state=False):
         if body_state:
             kinds = {1: 'page_not_obtained', 2: 'frame_only', 3: 'summary_or_preview',
                      4: 'incomplete_body', 5: 'complete_body'}
-            if t.get('return_kind') != kinds[s] or not str(t.get('state_basis') or '').strip():
+            if (not coverage and t.get('return_kind') != kinds[s]) or not str(t.get('state_basis') or '').strip():
                 raise ValueError('M2须有与分档一致的返回类型及可核验的状态依据')
         else:
             if t['initial_state'] == 'unknown':

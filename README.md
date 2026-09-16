@@ -22,7 +22,7 @@ python3 scripts/run_log.py check --run-dir runs/example
 
 ## 评分版本
 
-新实验默认`v2-document-2026-09-15`：M2按正文返回状态五档评分、去重后的独立官方文档等权平均，同一正文的重试/分页不重复计分；M8按S+F五档评分并保留S/F/R/U；M3与M10采用已确认五档。完整定义及输入见[已确认规则](references/confirmed-metrics.md)。其余指标与M11暂不输出数值；既有v2-draft保留原样。
+新实验默认`v2-coverage-2026-09-15`：M2按可核对的正文取得程度五档评分、去重后的独立官方文档等权平均，同一正文的重试/分页不重复计分；M8按S+F五档评分并保留S/F/R/U；M3与M10采用已确认五档。完整定义及输入见[已确认规则](references/confirmed-metrics.md)。其余指标与M11暂不输出数值；既有v2-draft保留原样。
 
 `python3 scripts/run_log.py template --run-dir runs/example`可输出当前运行的评价模板。脚本校验引用和字段，内容分档由评价者依据原文判断。
 

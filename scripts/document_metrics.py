@@ -24,7 +24,7 @@ def aggregate(documents):
     if len(ids)!=len(set(ids)): raise ValueError('同一文档不能重复进入M2分母')
     return body.aggregate(documents)
 
-def validate(rows,value):
+def validate(rows,value, *, coverage=False):
     m=value['metrics'][1];obs=m['observation'];docs=obs['targets']
     if obs['aggregate']!=aggregate(docs):raise ValueError('文档均值或去重不符')
     inventory=obs.get('fetch_inventory')
@@ -60,4 +60,4 @@ def validate(rows,value):
     if m.get('score') is not None:
         if set(ids)!=set(requests) or any(x['source_class']=='unverified' for x in inventory):
             raise ValueError('获取清单尚未完整归类，不得发布任务M2均值')
-    body.validate(adapted_rows(rows,docs),value)
+    body.validate(adapted_rows(rows,docs),value, coverage=coverage)
