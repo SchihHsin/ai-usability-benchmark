@@ -119,15 +119,26 @@ def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--data",default=str(ROOT/"reviewed-data.json")); ap.add_argument("--development-data"); ap.add_argument("--heldout-data"); ap.add_argument("--validate",action="store_true"); ap.add_argument("--frozen",default=str(ROOT/"frozen-selection.json")); ap.add_argument("--out",default=None); args=ap.parse_args()
     dev,held,source=split_inputs(args)
     if args.validate:
-        fr=json.loads(Path(args.frozen).read_text()); rows=held or dev
+        fr=json.loads(Path(args.frozen).read_text()); rows=held
         protocol_hash=hashlib.sha256((ROOT/'protocol.json').read_bytes()).hexdigest()
         if fr.get('protocol_sha256') != protocol_hash: raise ValueError('frozen selection protocol hash mismatch')
         canonical=json.dumps(dev,ensure_ascii=False,sort_keys=True,separators=(',',':')); ih=hashlib.sha256(canonical.encode()).hexdigest()
         if fr.get('input_sha256') != ih:
             raise ValueError('frozen selection development input hash mismatch')
-        if held==[] and not args.heldout_data: raise ValueError("--validate requires heldout split/data")
-        fit=fr["fit"]; err=group_mean(rows,row_loss(rows,fit["a"],fit["b"]))
-        res={"mode":"validate","frozen_selection":fr,"n":len(rows),"heldout_group_mse":err,"rows":[r["case"] for r in rows]}
+        if not held: raise ValueError("--validate requires non-empty heldout-data.json")
+        fit=fr["fit"]; rf=ROOT/'fit-results.json'; prior=json.loads(rf.read_text()) if rf.exists() else {}
+        model_fits={k:v for k,v in prior.get('models',{}).items()}; model_fits['original']={'a':.3,'b':.1}
+        if fr.get('selected_family') not in model_fits: model_fits[fr['selected_family']]=fit
+        errors={k:group_mean(rows,row_loss(rows,v['a'],v['b'])) for k,v in model_fits.items()}
+        selected_error=errors[fr['selected_family']]; base_error=errors['original']
+        pair=[{'case':r['case'],'group':r['group'],'selected_minus_original':float(x)} for r,x in zip(rows,row_loss(rows,fit['a'],fit['b'])-row_loss(rows,.3,.1))]
+        budgets={}
+        for bgt in sorted({str(r.get('budget')) for r in rows}):
+            rr=[r for r in rows if str(r.get('budget'))==bgt]; budgets[bgt]={'n':len(rr),'selected_mse':group_mean(rr,row_loss(rr,fit['a'],fit['b'])),'original_mse':group_mean(rr,row_loss(rr,.3,.1))}
+        rng=np.random.default_rng(20260921); gs=sorted({r['group'] for r in rows}); diffs=[]
+        for _ in range(1000):
+            sample=rng.choice(gs,size=len(gs),replace=True); diffs.append(float(np.mean([np.mean([x for x,r in zip(row_loss(rows,fit['a'],fit['b'])-row_loss(rows,.3,.1),rows) if r['group']==g]) for g in sample])))
+        res={"mode":"validate","frozen_selection":fr,"n":len(rows),"heldout_group_mse":selected_error,"baseline_original_group_mse":base_error,"family_group_mse":errors,"pair_loss":pair,"budget_errors":budgets,"bootstrap_selected_minus_original":{"seed":20260921,"n":1000,"mean":float(np.mean(diffs)),"p05":float(np.quantile(diffs,.05)),"p95":float(np.quantile(diffs,.95))},"rows":[r["case"] for r in rows]}
         Path(args.out or ROOT/"validation-results.json").write_text(json.dumps(res,ensure_ascii=False,indent=2)+"\n"); print(json.dumps(res,ensure_ascii=False,indent=2)); return
     selected,fit,models=select_family(dev)
     # Interval-distance sensitivity is descriptive and cannot affect selection.

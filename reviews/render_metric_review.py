@@ -20,6 +20,7 @@ def render(metrics,refs,root,reading_log):
         for r in d['refs']:
             title,url,scope,limit=refs[r]
             parts.append(f'<p><a href="{H(url)}">{H(title)}</a><br>{H(scope)}<br><b>不能据此推断：</b>{H(limit)}</p>')
+        if key=='M11':parts.append((root/'m11-uniform-fit-fragment.html').read_text())
         if key=='M11':parts.append((root/'m11-fitting-fragment.html').read_text())
         if key=='M11':parts.append((root/'m11-coefficients-fragment.html').read_text())
         if key=='M1':parts.append((root/'m1-session-literature.html').read_text()+(root/'m1-replay.html').read_text())
