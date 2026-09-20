@@ -1,0 +1,165 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "├── op_host                   // Host侧实现文件\n│   ├── add_custom.cpp        // [需修改] 算子原型注册、Tiling实现\n│   └── CMakeLists.txt\n└── op_kernel                 // 核函数（Kernel）侧实现文件",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_OOyv8Uxz0VYgd00ABLV36970.result",
+      "evidence_quote": "├── op_host                   // Host侧实现文件\n│   ├── add_custom.cpp        // [需修改] 算子原型注册、Tiling实现\n│   └── CMakeLists.txt\n└── op_kernel                 // 核函数（Kernel）侧实现文件",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出的工程目录树、kernel 侧完整代码（KernelAdd 类、add_custom 核函数）与 host 侧 TilingFunc 实现均与 S4 官方正文逐段一致，S1 亦给出同类目录结构。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "msopgen gen -i add_custom.json -c ai_core-ascendxxyy -lan cpp -out AddCustom",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_OOyv8Uxz0VYgd00ABLV36970.result",
+      "evidence_quote": "msopgen gen -i add_custom.json -c ai_core-ascendxxyy -lan cpp -out AddCustom",
+      "verification": "source",
+      "reason": "命令、各参数含义（-i/-c/-lan/-out）、输入 JSON 原型定义（含 format/type 一一对应说明）与 S4 原文一致；S1 补充 -f tf 变体亦有原文支持。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "REGISTER_TILING_DEFAULT(AddCustomTilingData);  // 注册TilingData结构体类型\n    GET_TILING_DATA(tilingData, tiling);           // 反序列化tiling参数为结构体实例",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_OOyv8Uxz0VYgd00ABLV36970.result",
+      "evidence_quote": "REGISTER_TILING_DEFAULT(AddCustomTilingData);  // 注册TilingData结构体类型\n    GET_TILING_DATA(tilingData, tiling);           // 反序列化tiling参数为结构体实例",
+      "verification": "source",
+      "reason": "Tiling 结构体定义（add_custom_tiling.h）、host 侧 GetTilingData<AddCustomTilingData>() 填充、kernel 侧 GET_TILING_DATA 反序列化的完整传递链均转录自 S4 官方正文；答案如实标注 SetSimdNumBlocks 写法存疑。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "生成物在：\n$ASCEND_OPP_PATH/vendors/<vendor_name>/op_api/include/aclnn_<op>.h 与 .../op_api/lib/libcust_opapi.so（vendor_name 未配置时默认 customize）",
+      "answer_event_id": "final",
+      "evidence_id": "call_01_FsjFOYM8L1uMybBTYcf23080.result",
+      "evidence_quote": "算子编译部署后，会在算子包安装目录下的`op_api`目录生成单算子调用的头文件`aclnn_<op>.h`和动态库`libcust_opapi.so`。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；aclnn 头文件与动态库的生成机制和具体路径（op_api/include、op_api/lib）由 S2/S3 两个官方正文直接支持；两段式接口签名亦有原文。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "### 以下内容来自本轮未能取得正文的官方页标题 + 二手材料 + 我的先验知识，标注为「未取得官方正文佐证」",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_kpBvxdAS3uKgm1rVqqa76441.result",
+      "evidence_quote": "TORCH_LIBRARY_IMPL(npu, PrivateUse1, m) { m.impl(\"{op_name}\", TORCH_FN(run_xxx)); }",
+      "verification": "none",
+      "reason": "答案给出了 TORCH_LIBRARY_FRAGMENT/TORCH_LIBRARY_IMPL 注册代码、torch.ops.load_library、op-plugin 构建命令等文件/函数/命令，内容可与二手 skill 文档（event call_00_kpBvxdAS3uKgm1rVqqa76441）对应，但答案自身明确声明该节为二手来源与先验、官方正文未取得，且注册宏写法与独立 .so 加载方式均未经官方来源核实，故记 unverified。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "cd AddCustom\n./build.sh\n# 产物：build_out/custom_opp_<target_os>_<target_architecture>.run\n\n# 部署到 CANN（S1）\n./build_out/custom_opp_<target_os>_<target_architecture>.run",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_OOyv8Uxz0VYgd00ABLV36970.result",
+      "evidence_quote": "在算子工程根目录下执行编译脚本：\n\ncd AddCustom\n./build.sh",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案按「前置环境 → msopgen 生成 → 修改代码 → ./build.sh 编译 → .run 部署 → 设置 LD_LIBRARY_PATH → aclnn 调用工程编译运行」给出完整先后依赖链，各环节命令均有 S1/S4 官方正文对应；S2/S3 补充 ENABLE_BINARY_PACKAGE 依赖说明。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "工具链版本（CMake≥3.19、GCC≥7.5、Python≥3.9）有 S4 原文依据，soc_version 获取方法明确；但关键配套版本未锁定：CANN 仅并列引用 8.5.0.alpha001 与 8.0.0.alpha003 两个文档版本而未选定，torch_npu/PyTorch/op-plugin 分支号（7.3.0、v2.7.1）为二手数值且答案自认未核对，官方配套支持矩阵未取得，属「部分组件有依据、其余未确定」。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "未取得：CANN × torch_npu × PyTorch × Python × GCC × soc_version 的官方配套支持矩阵。"
+        }
+      ],
+      "raw_status": "partial"
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "msOpGen→编译→部署→aclnn C++ 调用主链路命令、代码、CMakeLists、环境变量完整（仅需替换 soc_version/路径等环境值，接近 4-5 分）；但题目核心的 PyTorch 集成部分只有二手方案骨架：TORCH_LIBRARY 注册代码无完整 setup.py/工程文件，op-plugin 路线命令为二手数值且写法未核实，答案自身列出 4 项未核实缺口并声明所有代码未验证可执行，需补充修正才能完成 PyTorch 侧接入，故整体为 3。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "本轮未执行任何命令、未编译、未在 NPU 上运行；所有代码均为文档原文转录，未验证可执行。"
+        },
+        {
+          "event_id": "final",
+          "quote": "未核实清单（PyTorch 接入）\n1. msOpGen 是否存在 -f pytorch 并在 framework/ 生成 PyTorch 适配插件——未取得官方正文。"
+        }
+      ],
+      "raw_status": "partial"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "├── op_host                   // Host侧实现文件\n│   ├── add_custom.cpp        // [需修改] 算子原型注册、Tiling实现\n│   └── CMakeLists.txt\n└── op_kernel                 // 核函数（Kernel）侧实现文件"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "生成物在：\n$ASCEND_OPP_PATH/vendors/<vendor_name>/op_api/include/aclnn_<op>.h 与 .../op_api/lib/libcust_opapi.so（vendor_name 未配置时默认 customize）"
+        }
+      ]
+    },
+    {
+      "requirement": 6,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_OOyv8Uxz0VYgd00ABLV36970.result",
+          "quote": "在算子工程根目录下执行编译脚本：\n\ncd AddCustom\n./build.sh"
+        }
+      ]
+    },
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "未取得：CANN × torch_npu × PyTorch × Python × GCC × soc_version 的官方配套支持矩阵。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "本轮未执行任何命令、未编译、未在 NPU 上运行；所有代码均为文档原文转录，未验证可执行。"
+        }
+      ]
+    }
+  ],
+  "case": "case-4317367445af",
+  "kind": "outcome",
+  "task_id": "D",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-4317367445af-outcome.json",
+    "sha256": "81d82808f412ab31565d369a199dceb52c67b5a48d23798f6df3385448c07830",
+    "process_sha256": "5cdc273e25f228bc1b59211b177c6d4cb1f5c916bfa4792bd94b45c74fd3e850",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

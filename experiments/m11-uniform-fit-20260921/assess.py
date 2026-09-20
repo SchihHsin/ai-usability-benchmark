@@ -60,7 +60,8 @@ def extract(raw):
     return val,provider,result
 
 def audit(value,item,kind):
-    byid={x['event_id']:x['text'] for x in item['sources']}; byid.update({x['event_id']:x['text'] for x in item['prior']})
+    byid={x['event_id']:x['text'] for x in item['sources']}
+    if kind=='predictors': byid.update({x['event_id']:x['text'] for x in item['prior']})
     if kind=='predictors':
         for x in item['sources']:
             if x.get('request_id'):

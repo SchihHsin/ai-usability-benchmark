@@ -146,6 +146,728 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T18:33:32.883906+00:00",
+      "process_sha256": "e43907b015dcf5de3ba52071b92bb90f1712b4560116295b5415c3c1afa8ff03",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result)",
+            "answer_event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) {",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 .cu 内核与入口函数 at::Tensor mymuladd_cuda(const at::Tensor& a, const at::Tensor& b, double c) 的完整签名，且与官方教程抓取正文逐字一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "2.2 CUDA 版 `setup.py`（**我检索前知识，未经本轮来源核对**）",
+            "answer_event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_quote": "The page uses **`CppExtension`**, not `CUDAExtension`. There is **no full `CUDAExtension`-based setup.py** in the content.",
+            "verification": "none",
+            "reason": "答案确实给出完整 CUDAExtension setup.py（含 sources=[\"extension.cpp\",\"kernel.cu\"]、nvcc extra_compile_args、BuildExtension），但自标为检索前知识未核对；来源页面仅有 CppExtension 版本与一句 CUDAExtension 提及，无法核实该代码正确性。",
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "PyObject* PyInit__C(void)",
+            "answer_event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_quote": "The import from Python will load the .so consisting of this file in this extension, so that the TORCH_LIBRARY static initializers below are run.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案解释了通过空 _C 模块（PyInit__C 或 PYBIND11_MODULE）导入 .so 触发 TORCH_LIBRARY 静态初始化从而绑定 Python，且给出 PYBIND11_MODULE 写法及其稳定 ABI 警告；全部与官方正文一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-20"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}",
+            "answer_event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) {\n  m.impl(\"mymuladd\", &mymuladd_cuda);\n}",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 TORCH_LIBRARY schema 定义、TORCH_LIBRARY_IMPL CPU/CUDA 后端注册及 STABLE_TORCH_LIBRARY/TORCH_BOX 完整注册代码段，与官方抓取正文逐字对应。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "调用：`torch.ops.extension_cpp.mymuladd(a, b, c)`（带重载时 `torch.ops.extension_cpp.mymuladd.default`）。",
+            "answer_event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_quote": "torch.ops.extension_cpp.mymuladd",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案明确给出算子调用名 torch.ops.extension_cpp.mymuladd 及参数 (a, b, c)、.default 重载与 from . import _C 前置加载，均有官方正文支持。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "常见命令（**未核实**）：`pip install -e .` 或 `python setup.py install`。",
+            "answer_event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "evidence_quote": "The tutorial page contains **no** explicit `pip install`, `python setup.py build_ext`, `python setup.py install`, or `torch.utils.cpp_extension.load` / `load_inline` command lines.",
+            "verification": "none",
+            "reason": "导入（from . import _C）与调用（torch.ops.extension_cpp.mymuladd）顺序有官方正文支持，但关键构建命令本身来源缺失且答案自标未核实，整体无法证实。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询即出现相关官方来源，排名第2（docs.pytorch.org 官方教程），按五档为4分。",
+            "evidence": [
+              {
+                "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+                "quote": "## 2. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "唯一独立官方文档（docs.pytorch.org cpp_custom_ops）取得直接正文，含大量逐字代码块与章节结构，抓取结果自称无截断标记；但直接正文的完整起止依据仅有工具自述，无独立核对证据，按规则保留4—5区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "The page appears complete for its own scope — **no visible truncation markers**"
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "❌ MISSING:** No full `CUDAExtension` setup.py with `.cu` file lists or `nvcc` flags is provided in the content."
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "正文含完整 TORCH_LIBRARY/注册代码、CUDA kernel 代码、Python 调用方式与版本前提，但原题明确要求的完整 CUDAExtension setup.py 与具体构建/导入命令缺失（仅有 CppExtension 示例并指向外部仓库），关键步骤缺失为3分。",
+            "evidence": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "If you need to compile CUDA code (for example, `.cu` files), then instead use [torch.utils.cpp_extension.CUDAExtension]"
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "❌ LARGELY MISSING.** The tutorial page contains **no** explicit `pip install`, `python setup.py build_ext`, `python setup.py install`, or `torch.utils.cpp_extension.load` / `load_inline` command lines."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "同一官方页面内以明确条件（PyTorch 2.4+/2.10+、ABI-stable 与否）即可选定适用版本路径，含清晰的版本前提与选择条件说明。",
+            "evidence": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later if using the stable ABI**)"
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "\"If you are using PyTorch 2.10+, we recommend using the ABI-stable API."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 1,
+            "upper": 2,
+            "status": "bounded",
+            "reason": "搜索结果中独立第三方来源仅知乎1条；maskerprc.github.io 与 aidoczh.com 为 PyTorch 官方教程的转载/镜像，同一内容只计一次，故计数区间为1—2条，跨2档下限给2并保留区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+                "quote": "## 4. [CUDA编程学习：自定义Pytorch+cpp/cuda extension - 知乎](https://zhuanlan.zhihu.com/p/671704557)"
+              },
+              {
+                "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+                "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "知乎片段仅提及修改 setup.py 的一般性说法，无会改变操作或结论的实质性关键陈述可供核验；镜像站为官方内容转载不构成独立互证，关键说法缺少可追溯核对依据，保留2—3区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+                "quote": "完成上述编写之后，我们最后就只剩下 setup.py 函数需要修改，其实需要修改的东西非常有限"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前冻结回答已覆盖原题全部六项：文件结构与入口签名、完整 CUDAExtension setup.py、pybind11 绑定、TORCH_LIBRARY/TORCH_LIBRARY_IMPL 注册代码、Python 侧 import 与 torch.ops 调用、构建命令与关键约束；经与官方教程事后核对，TORCH_LIBRARY/TORCH_LIBRARY_IMPL、CUDAExtension+BuildExtension、kernel 结构均正确。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "CUDAExtension(\n            name=\"my_cuda_ext\",\n            sources=[\"extension.cpp\", \"kernel.cu\"],\n            extra_compile_args={\"cxx\": [\"-O3\"], \"nvcc\": [\"-O3\"]},\n        )"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY(myops, m) {\n    m.def(\"add(Tensor a, Tensor b) -> Tensor\");\n}"
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) {\n  m.impl(\"mymuladd\", &mymuladd_cuda);\n}"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=2",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_QueFDbjHIklZzkhvc5re0222.dispatch",
+              "call_00_dqrGSbSPCCPww6H7mWMO1771.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "原题未强制要求具体版本，属弱定版需求。答案给出有依据的适用范围：PyTorch 2.4+（稳定 ABI 2.10+）、TORCH_TARGET_VERSION=0x020a000000000000、Py_LIMITED_API=0x03090000（CPython 3.9），并如实声明 CUDA toolkit/nvcc 版本官方未给出、构建命令未核实。所需组件中 CUDA/nvcc 版本未定到具体版本，符合第4档；未达第5档因 CUDA 侧组件无具体版本。",
+            "evidence": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later if using the stable ABI**)"
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "No explicit CUDA toolkit / nvcc version requirements are stated on the page."
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "有具体操作方案：官方原文的 setup.py、.cu 内核、注册代码、Python 导入/调用代码可直接使用；但关键缺口明确存在——CUDAExtension 版 setup.py 与构建命令（pip install -e . / python setup.py install）为未核实的检索前知识，需用户自行修正/补写才能完整跑通，且答案自身列出这些缺口。按最终答案内容核查判断为第3档；未实际编译运行，不宣称复现。",
+            "evidence": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "Build & run commands (pip install, python setup.py, load) | ❌ Essentially absent"
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "if you need to compile CUDA code (for example, `.cu` files), then instead use [torch.utils.cpp_extension.CUDAExtension](https://pytorch.org/docs/stable/cpp_extension.html#torch.utils.cpp_extension.CUDAExtension)"
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "唯一独立官方文档（docs.pytorch.org cpp_custom_ops）取得直接正文，含大量逐字代码块与章节结构，抓取结果自称无截断标记；但直接正文的完整起止依据仅有工具自述，无独立核对证据，按规则保留4—5区间。"
+              },
+              {
+                "metric": "M5",
+                "status": "bounded",
+                "reason": "搜索结果中独立第三方来源仅知乎1条；maskerprc.github.io 与 aidoczh.com 为 PyTorch 官方教程的转载/镜像，同一内容只计一次，故计数区间为1—2条，跨2档下限给2并保留区间。"
+              },
+              {
+                "metric": "M6",
+                "status": "bounded",
+                "reason": "知乎片段仅提及修改 setup.py 的一般性说法，无会改变操作或结论的实质性关键陈述可供核验；镜像站为官方内容转载不构成独立互证，关键说法缺少可追溯核对依据，保留2—3区间。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "唯一独立官方文档（docs.pytorch.org cpp_custom_ops）取得直接正文，含大量逐字代码块与章节结构，抓取结果自称无截断标记；但直接正文的完整起止依据仅有工具自述，无独立核对证据，按规则保留4—5区间。"
+            },
+            {
+              "metric": "M5",
+              "status": "bounded",
+              "reason": "搜索结果中独立第三方来源仅知乎1条；maskerprc.github.io 与 aidoczh.com 为 PyTorch 官方教程的转载/镜像，同一内容只计一次，故计数区间为1—2条，跨2档下限给2并保留区间。"
+            },
+            {
+              "metric": "M6",
+              "status": "bounded",
+              "reason": "知乎片段仅提及修改 setup.py 的一般性说法，无会改变操作或结论的实质性关键陈述可供核验；镜像站为官方内容转载不构成独立互证，关键说法缺少可追溯核对依据，保留2—3区间。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+            "field": "response",
+            "sha256": "8b41522987b9b1e4cfa8b43e186b56d98b881a8d545a4d602d50cec1f94e6692",
+            "start": 419,
+            "end": 531,
+            "quote": "## 2. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 21192,
+            "end": 21271,
+            "quote": "The page appears complete for its own scope — **no visible truncation markers**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 2968,
+            "end": 3079,
+            "quote": "❌ MISSING:** No full `CUDAExtension` setup.py with `.cu` file lists or `nvcc` flags is provided in the content.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 2641,
+            "end": 2760,
+            "quote": "If you need to compile CUDA code (for example, `.cu` files), then instead use [torch.utils.cpp_extension.CUDAExtension]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 11670,
+            "end": 11871,
+            "quote": "❌ LARGELY MISSING.** The tutorial page contains **no** explicit `pip install`, `python setup.py build_ext`, `python setup.py install`, or `torch.utils.cpp_extension.load` / `load_inline` command lines.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 16986,
+            "end": 17065,
+            "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later if using the stable ABI**)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 17410,
+            "end": 17481,
+            "quote": "\"If you are using PyTorch 2.10+, we recommend using the ABI-stable API.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+            "field": "response",
+            "sha256": "8b41522987b9b1e4cfa8b43e186b56d98b881a8d545a4d602d50cec1f94e6692",
+            "start": 1032,
+            "end": 1123,
+            "quote": "## 4. [CUDA编程学习：自定义Pytorch+cpp/cuda extension - 知乎](https://zhuanlan.zhihu.com/p/671704557)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+            "field": "response",
+            "sha256": "8b41522987b9b1e4cfa8b43e186b56d98b881a8d545a4d602d50cec1f94e6692",
+            "start": 742,
+            "end": 875,
+            "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+            "field": "response",
+            "sha256": "8b41522987b9b1e4cfa8b43e186b56d98b881a8d545a4d602d50cec1f94e6692",
+            "start": 1138,
+            "end": 1185,
+            "quote": "完成上述编写之后，我们最后就只剩下 setup.py 函数需要修改，其实需要修改的东西非常有限",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "b39643af875c023432679a18b5200e675389dc5f69591e1db47604eb8239cf3c",
+            "start": 1034,
+            "end": 1226,
+            "quote": "CUDAExtension(\\n            name=\\\"my_cuda_ext\\\",\\n            sources=[\\\"extension.cpp\\\", \\\"kernel.cu\\\"],\\n            extra_compile_args={\\\"cxx\\\": [\\\"-O3\\\"], \\\"nvcc\\\": [\\\"-O3\\\"]},\\n        )",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-12",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "b39643af875c023432679a18b5200e675389dc5f69591e1db47604eb8239cf3c",
+            "start": 1713,
+            "end": 1792,
+            "quote": "TORCH_LIBRARY(myops, m) {\\n    m.def(\\\"add(Tensor a, Tensor b) -> Tensor\\\");\\n}",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 4609,
+            "end": 4693,
+            "quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) {\n  m.impl(\"mymuladd\", &mymuladd_cuda);\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 16986,
+            "end": 17065,
+            "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later if using the stable ABI**)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 20402,
+            "end": 20482,
+            "quote": "Build & run commands (pip install, python setup.py, load) | ❌ Essentially absent",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "a334982d213089e2c480b695e25e55a536f753b277f62ab6c7a66003a871b9a2",
+            "start": 5556,
+            "end": 5652,
+            "quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 6392,
+            "end": 6490,
+            "quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) {",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "a334982d213089e2c480b695e25e55a536f753b277f62ab6c7a66003a871b9a2",
+            "start": 4534,
+            "end": 4576,
+            "quote": "2.2 CUDA 版 `setup.py`（**我检索前知识，未经本轮来源核对**）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 681,
+            "end": 803,
+            "quote": "The page uses **`CppExtension`**, not `CUDAExtension`. There is **no full `CUDAExtension`-based setup.py** in the content.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "a334982d213089e2c480b695e25e55a536f753b277f62ab6c7a66003a871b9a2",
+            "start": 9708,
+            "end": 9733,
+            "quote": "PyObject* PyInit__C(void)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "a334982d213089e2c480b695e25e55a536f753b277f62ab6c7a66003a871b9a2",
+            "start": 8693,
+            "end": 8788,
+            "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 4609,
+            "end": 4693,
+            "quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) {\n  m.impl(\"mymuladd\", &mymuladd_cuda);\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "a334982d213089e2c480b695e25e55a536f753b277f62ab6c7a66003a871b9a2",
+            "start": 10718,
+            "end": 10814,
+            "quote": "调用：`torch.ops.extension_cpp.mymuladd(a, b, c)`（带重载时 `torch.ops.extension_cpp.mymuladd.default`）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 13434,
+            "end": 13466,
+            "quote": "torch.ops.extension_cpp.mymuladd",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "a334982d213089e2c480b695e25e55a536f753b277f62ab6c7a66003a871b9a2",
+            "start": 2075,
+            "end": 2136,
+            "quote": "常见命令（**未核实**）：`pip install -e .` 或 `python setup.py install`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+            "field": "response",
+            "sha256": "71b1aac5a7d59c50c335e0f7d43de44cb2f7337b67908a22ce03c4e6e4da80bf",
+            "start": 11691,
+            "end": 11871,
+            "quote": "The tutorial page contains **no** explicit `pip install`, `python setup.py build_ext`, `python setup.py install`, or `torch.utils.cpp_extension.load` / `load_inline` command lines.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-7bc2eae074d7-predictors.json": "f911c20450d8e6adf9d363f0618e115524eaefdb764f6b31013cafc85f3d44e9",
+          "reviewed/development/case-7bc2eae074d7-outcome.json": "8517e0625bf3e4fb4cb0062ec0aa91688c26a962b43123c011dae5d5a117b263"
+        },
+        "m2_documents": [
+          {
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "title": "Custom C++ and CUDA Operators — PyTorch Tutorials 2.14.0+cu130",
+            "status": "direct_body",
+            "completeness": "no independent evidence of full-page boundaries; tool self-report of no truncation only",
+            "score_range": [
+              4,
+              5
+            ]
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_QueFDbjHIklZzkhvc5re0222.result",
+                "quote": "query\": \"pytorch custom CUDA kernel C++ extension CUDAExtension setup.py TORCH_LIBRARY tutorial\""
+              },
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "\"url\": \"https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html\""
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result)"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "PyObject* PyInit__C(void)"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "The import from Python will load the .so consisting of this file in this extension, so that the TORCH_LIBRARY static initializers below are run."
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "调用：`torch.ops.extension_cpp.mymuladd(a, b, c)`（带重载时 `torch.ops.extension_cpp.mymuladd.default`）。"
+              }
+            ]
+          },
+          {
+            "metric": "M9",
+            "bad_refs": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later if using the stable ABI**)"
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "call_00_dqrGSbSPCCPww6H7mWMO1771.result",
+                "quote": "Build & run commands (pip install, python setup.py, load) | ❌ Essentially absent"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

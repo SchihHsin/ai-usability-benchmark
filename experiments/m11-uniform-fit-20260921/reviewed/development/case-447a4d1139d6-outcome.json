@@ -1,0 +1,147 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "absent",
+      "answer_quote": "官方 PyTorch 镜像的确切仓库地址/tag：本轮未取得官方正文（AscendHub 页只返回框架），仅确认官方入口存在。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_r1qmt1bfK5mocH32Axtu7598.result",
+      "evidence_quote": "筛选\n\n综合排序\n\n下载量\n\n最新\n\n加载中",
+      "verification": "source",
+      "reason": "答案明确说明未取得官方镜像仓库名称与 tag，AscendHub 页面仅返回导航框架（源事件证实只有\"加载中\"占位）。也未给出宿主机驱动兼容条件（仅泛提\"驱动/固件与 CANN-toolkit 版本匹配\"）。该方面缺失。"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "docker run -it --rm \\\n  --runtime=ascend \\\n  -e ASCEND_VISIBLE_DEVICES=0 \\\n  <ascend-pytorch-image> bash",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_ukbybbegqcwI7dAK1Xt32692.result",
+      "evidence_quote": "1.根据ASCEND_VISIBLE_DEVICES，将对应的NPU设备挂载到容器的namespace。",
+      "verification": "source",
+      "reason": "答案给出了 docker run 核心命令，但自注\"runtime 注册名具体是 ascend（我在先验知识中的记忆）……本轮官方正文中未出现 docker run --runtime=... 的完整示例\"。ASCEND_VISIBLE_DEVICES 机制有官方 README 佐证，但完整命令本身（含 --runtime=ascend）无来源验证，镜像名也为占位符。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "候选节点：/dev/davinci0…/dev/davinciN（每卡）、/dev/davinci_manager（管理设备）、/dev/devmm_svm（虚拟内存管理）、/dev/hisi_hdc（Host-Device 通信）。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_KWNBvqKjL3n0xbjr97bx5532.result",
+      "evidence_quote": "MindCluster Ascend Docker Runtime（容器引擎插件）为训推任务提供容器化支持，自动挂载所需文件和设备依赖。",
+      "verification": "source",
+      "reason": "答案给出候选设备清单及用途，但明确标注\"基于先验知识的候选，本轮未取得官方原文支持\"。官方来源仅证明插件自动挂载设备依赖，未给出具体 /dev 设备清单，故清单本身无来源验证。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "./Ascend-docker-runtime_{version}_linux-{arch}.run --install\n# 或指定路径\n./Ascend-docker-runtime_{version}_linux-{arch}.run --install --install-path=<path>",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_BhhfBvASFM6z77jfAeba8839.result",
+      "evidence_quote": "./Ascend-docker-runtime_{version}_linux-{arch}.run --install",
+      "verification": "source",
+      "reason": "答案给出安装命令（--check、chmod、--install、--install-path、systemctl daemon-reload && systemctl restart docker）、Containerd 配置文件路径与内容、CDI 模式参数，均与官方安装文档事件 call_00_BhhfBvASFM6z77jfAeba8839.result 和 README 事件 call_00_ukbybbegqcwI7dAK1Xt32692.result 的原文一致。"
+    },
+    {
+      "id": 5,
+      "status": "absent",
+      "answer_quote": "将 Host 上的 CANN Runtime Library 挂载到容器的 namespace。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_uYziiy3zACn2z3R3tVei3916.result",
+      "evidence_quote": "需确保安装了对应 CANN-toolkit 版本及相应固件、驱动，并已应用 CANN-toolkit 环境变量。",
+      "verification": "source",
+      "reason": "答案只说明插件自动挂载 CANN Runtime Library，未给出容器内 CANN/torch_npu 的具体路径（如 set_env.sh）或需设置的环境变量（LD_LIBRARY_PATH 等）。来源仅泛提\"已应用 CANN-toolkit 环境变量\"，无具体设置内容。该方面缺失。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "import torch\nimport torch_npu\n\nx = torch.randn(2, 2).npu()\ny = torch.randn(2, 2).npu()\nz = x.mm(y)\n\nprint(z)",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_uYziiy3zACn2z3R3tVei3916.result",
+      "evidence_quote": "x = torch.randn(2, 2).npu()\n4  y = torch.randn(2, 2).npu()\n5  z = x.mm(y)\n6\n7  print(z)",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出的验证代码与官方 ascend.github.io 文档正文完全一致（import torch_npu + Tensor .npu() 矩阵乘法），并引用\"程序能够成功打印矩阵 Z 的值即为安装成功\"，来源事件 call_00_uYziiy3zACn2z3R3tVei3916.result 原文可证。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": 2,
+      "upper": 3,
+      "status": "insufficient_evidence",
+      "reason": "关键组件版本未锁定：官方镜像仓库名与 tag 未取得（占位符 <ascend-pytorch-image>）；torch_npu×CANN 配套矩阵未渲染；docker run 示例版本全为 {version} 占位。仅 MindCluster v7.1.RC1 下载来源与 CANN 文档版本（8.3.RC1.alpha003）有依据，但未形成可执行的具体版本组合，多处关键定版（镜像、配套关系）未确定。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "官方 PyTorch 镜像的确切仓库地址/tag：本轮未取得官方正文（AscendHub 页只返回框架），仅确认官方入口存在。"
+        },
+        {
+          "event_id": "final",
+          "quote": "torch_npu × CANN 配套矩阵\t**未取得**（表格动态未渲染）"
+        }
+      ],
+      "raw_status": "unverified"
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": 3,
+      "upper": 4,
+      "status": "insufficient_evidence",
+      "reason": "安装 Ascend Docker Runtime 部分命令完整可照抄（cd、--check、chmod、--install、systemctl，参数表齐全）；但核心 docker run 命令的镜像名为占位符、runtime 注册名 ascend 答案自认未核实，需补充镜像地址并修正/确认 runtime 名才能实际执行，属\"有具体操作方案但需补充缺失内容\"。验证代码完整可执行。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "⚠️ **未核实**：runtime 注册名具体是 ascend（我在先验知识中的记忆）……**本轮官方正文中未出现 docker run --runtime=... 的完整示例**"
+        },
+        {
+          "event_id": "final",
+          "quote": "systemctl daemon-reload && systemctl restart docker"
+        }
+      ],
+      "raw_status": "unverified"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 6,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_uYziiy3zACn2z3R3tVei3916.result",
+          "quote": "x = torch.randn(2, 2).npu()\n4  y = torch.randn(2, 2).npu()\n5  z = x.mm(y)\n6\n7  print(z)"
+        }
+      ]
+    },
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "官方 PyTorch 镜像的确切仓库地址/tag：本轮未取得官方正文（AscendHub 页只返回框架），仅确认官方入口存在。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "⚠️ **未核实**：runtime 注册名具体是 ascend（我在先验知识中的记忆）……**本轮官方正文中未出现 docker run --runtime=... 的完整示例**"
+        }
+      ]
+    }
+  ],
+  "case": "case-447a4d1139d6",
+  "kind": "outcome",
+  "task_id": "K",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-447a4d1139d6-outcome.json",
+    "sha256": "319589dc402299ec841dd6254757fdab1a8695a42cc9b436d963ad6c7d1870b5",
+    "process_sha256": "e415cc710225001b08b701e11560979b53b420d789394ba4628bd1cdde1a1c7b",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

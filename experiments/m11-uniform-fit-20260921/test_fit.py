@@ -10,8 +10,8 @@ def row(case,group,a,b, y=None, split="development"):
     return {"case":case,"group":group,"split":split,"input_intervals":x,"outcome_interval":[y,y] if y is not None else [0,1]}
 
 def test_synthetic_recovery():
-    # Constant K=0.784, factors identify a=.30,b=.10 through varied M4/M8.
-    true=(.30,.10); rows=[]
+    # Constant K=0.784, factors identify a=.27,b=.14 through varied M4/M8.
+    true=(.27,.14); rows=[]
     for g in "ABCD":
         for i,(m4,m8) in enumerate([(1,1),(2,4),(4,2),(5,5)]):
             x=[[3,3]]*8; x[3]=[m4,m4]; x[7]=[m8,m8]; k=1-(1-.6**3)*(1-.6**2)*(1-.6); y=k*(1-true[0]*(1-m4/5))*(1-true[1]*(1-m8/5)); rows.append({"case":f"{g}{i}","group":g,"input_intervals":x,"outcome_interval":[y,y]})
@@ -34,3 +34,10 @@ def test_input_integrity_and_split_isolation():
         z=row('nan','A',1,1,.2); z['input_intervals'][0]=[float('nan'),1]; f.write(json.dumps([z,],allow_nan=True)); f.flush()
         try: fit.read_rows(f.name); assert False
         except ValueError as e: assert 'non-finite' in str(e)
+
+def test_selection_never_opens_heldout():
+    from types import SimpleNamespace
+    with tempfile.NamedTemporaryFile(mode='w+',suffix='.json') as f:
+        f.write(json.dumps([row('dev','A',2,3,.5)]));f.flush()
+        dev,held,_=fit.split_inputs(SimpleNamespace(development_data=f.name,heldout_data='/nonexistent-heldout-file-must-not-be-read.json',validate=False))
+        assert len(dev)==1 and held==[]

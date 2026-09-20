@@ -146,6 +146,721 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T18:33:32.906479+00:00",
+      "process_sha256": "de91e93c9744985206a25d1f8c1aeec83a838bfb186e348e91776088341411d3",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "torch.distributed.init_process_group(backend=\"hccl\", rank=local_rank)",
+            "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；backend（hccl）与 rank 在代码中明确给出；world_size 虽未出现在主样例的 init 调用中，但答案在两卡改写节明确说明“确保训练脚本中dist.init_process_group()中world_size参数为2”，并在启动约束中要求配置 rank 与 world_size，与官方文档一致，三要素齐备。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-15",
+              "ev-16"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "absent",
+            "answer_quote": "官方 5 种拉起方式的逐字命令在附录页 PT_LMTMOG_0086.html，本轮只允许 1 次 fetch，未抓取该附录页，故 torchrun / torch_npu_run / shell 的具体命令行参数（--nnodes --nproc_per_node --node_rank --master_addr --master_port、torch_npu_run 的 ranktable 参数等）未从官方正文核实。",
+            "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_quote": "在单机和多机场景下，有5种方式可拉起分布式训练：",
+            "verification": "source",
+            "reason": "答案仅枚举 5 种拉起方式名称（shell 脚本、mp.spawn、Python、torchrun、torch_npu_run），未给出任何具体启动命令或 launcher 参数；已抓取的官方页面确实也只列出方式名而无逐字命令，答案如实披露该缺口，未编造。该准则内容缺失。",
+            "evidence_refs": [
+              "ev-17"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "所有脚本统一主节点的 `MASTER_PORT` 和 `MASTER_ADDR`。",
+            "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。配置相应的rank与world_size。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；master 地址与端口通过统一 MASTER_ADDR/MASTER_PORT 说明，另有 HCCL 端口预留 60000-60015 及 HCCL_IF_BASE_PORT；rank/world_size 配置要求亦明确。节点 rank 的 launcher 级参数（--node_rank）被如实列为未核实，但 master 地址、端口与 rank 配置方式本身有官方依据，准则主体满足。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-18"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "若用环境变量 `HCCL_IF_BASE_PORT` 指定网卡起始端口，则预留以该端口起始的 16 个端口。",
+            "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_quote": "若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口，则需要预留以该端口起始的16个端口。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；给出了通信相关环境变量 HCCL_IF_BASE_PORT 及其用法（指定起始端口、预留 16 个端口），与官方来源一致；HCCL_IF_IP、HCCL_SOCKET_IFNAME、RANK_TABLE_FILE 等被诚实标注未核实，未编造。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "device = torch.device('npu', local_rank)",
+            "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_quote": "local_rank = int(os.environ[\"LOCAL_RANK\"])",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；完整给出每进程绑定 NPU 的链路：从 LOCAL_RANK 环境变量取值 → torch.device('npu', local_rank) → DDP 的 device_ids=[local_rank], output_device=local_rank，均与官方文档逐字一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)",
+            "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "evidence_quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；给出了与多卡一致性直接相关的 sampler 设置：DistributedSampler(train_data) 并在 DataLoader 中通过 sampler=train_sampler 结合，另有 set_epoch 等同步点虽未提及，但准则只要求一项设置，已满足且与官方来源一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为昇腾官方文档（hiascend.com 的 TorchNPU6.0.RC1 多卡分布式训练页）。",
+            "evidence": [
+              {
+                "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+                "quote": "## 1. [多卡分布式训练-TorchNPU6.0.RC1-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0024.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "唯一官方文档取得直接正文（含代码块与分节内容），但正文完整性缺少可核对的起止依据：拉起方式仅列出5种名称，具体命令指向未抓取的附录页，无法确认无缺页或截断，按规则保留4—5区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "在单机和多机场景下，有5种方式可拉起分布式训练："
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "附录[拉起多卡训练脚本示例]...中，以一个简单模型脚本为样例，展示了每种拉起方式脚本代码的修改方法以及各种拉起方式的适配方法，用户可以参考学习。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "正文含初始化代码（backend=hccl、local_rank、DistributedSampler、DDP 包裹）、设备绑定与环境准备（hccn_tool、端口预留、MASTER_ADDR/PORT 提示），但原题明确需要的 HCCL 多机启动命令正文缺失（仅列方式名称，命令在附录页）、MASTER_ADDR/端口/rank 的具体配置方式仅一句带过、可见设备环境变量未给出。",
+            "evidence": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口，则需要预留以该端口起始的16个端口。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方页面标题即锁定 TorchNPU6.0.RC1 版本，单一版本说明清楚；页内并给出 torchrun/torch_npu_run 的 PyTorch 版本适用条件，无需跨页对照即可选定。",
+            "evidence": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "模型训练适配-迁移适配-PyTorch 训练模型迁移调优指南-TorchNPU6.0.RC1开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "torchrun方式：仅在PyTorch 1.11.0及以上版本支持使用。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一搜索预算内相关独立第三方来源去重后为3条：gitcode 博客、CSDN verse_armour、cnblogs；devpress 为 CSDN 同文镜像只计一次。",
+            "evidence": [
+              {
+                "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+                "quote": "## 2. [HCCL 接入 PyTorch 分布式训练：torch.distributed 使用 ...]"
+              },
+              {
+                "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+                "quote": "## 3. [【昇腾】多卡分布式训练-官方例程_warnings.warn"
+              },
+              {
+                "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+                "quote": "## 4. [【训练技巧】PyTorch多卡训练模型DistributedDataParallel ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；存在第三方材料且 CSDN 文章的关键说法（多卡训练分类与配置流程）与官方文档一致，构成可追溯依据；但仅有搜索摘要，其余关键说法（启动命令、环境变量细节）未获独立全文核验或交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+                "quote": "多卡训练分为 单机多卡 训练与 多机多卡 训练，二者均需要将 单机训练脚本 修改为 多卡训练脚本"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "多卡训练分为单机多卡训练与多机多卡训练，二者均需要将单卡训练脚本修改为多卡训练脚本，配置流程如下。"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：backend='hccl'、init_process_group、DDP 包裹、torchrun 启动、MASTER_ADDR/PORT 及可见设备环境变量，且与官方正文核对一致（backend=hclc 写法、DistributedSampler、MASTER_ADDR/PORT）；但部分具体参数与约束（HCCL_IF_IP 等变量准确名称、官方推荐的 shell 脚本与 torch_npu_run 方式、60000-60015 端口预留）仍需外部资料补充，故不给5分。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "dist.init_process_group(backend=\"hccl\", init_method=\"env://\")"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "HCCL建议使用60000-60015端口，若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=2",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_t5KNQHD5x7C7P5Y8VTBn5643.dispatch",
+              "call_00_NoJSAjpKlmM4k6UIQ6KY2352.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "na",
+            "reason": "原题为操作型 how-to（初始化与启动方式），未要求锁定库版本/工具链版本/soc_version 等组件，按规则记 N/A。答案附带给出了文档版本（TorchNPU 6.0.RC1）与 launcher 的 PyTorch 版本约束（torchrun 需 1.11.0+，torch_npu_run 仅 1.11.0），soc_version/CANN 配套被如实标注未核实，但均非本题定版需求。",
+            "evidence": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "torchrun 方式：仅 PyTorch 1.11.0 及以上版本支持"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "soc_version（如 Ascend910B 等）与 CANN 版本配套：本页未给出，未核实；只知道文档版本为 TorchNPU 6.0.RC1"
+              }
+            ],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "初始化代码（LOCAL_RANK→device→init_process_group→DDP→DataLoader）与环境准备命令（sysctl 端口预留、hccn_tool 配 IP/连通性校验、关防火墙、lldp 检查、somaxconn 调整）完整可照抄；但多机启动这一关键步骤的逐字命令缺失（附录页未抓取），需补充 torchrun/torch_npu_run/shell 的具体命令行才能端到端执行。答案自身明确指出该缺口，符合 3 分档（有具体方案但需补充缺失内容）。仅内容核查，未实际运行。",
+            "evidence": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "完整启动命令行未取得正文：官方 5 种拉起方式的逐字命令在附录页 PT_LMTMOG_0086.html，本轮只允许 1 次 fetch，未抓取该附录页"
+              }
+            ],
+            "raw_status": "partial",
+            "evidence_refs": [
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "唯一官方文档取得直接正文（含代码块与分节内容），但正文完整性缺少可核对的起止依据：拉起方式仅列出5种名称，具体命令指向未抓取的附录页，无法确认无缺页或截断，按规则保留4—5区间。"
+              },
+              {
+                "metric": "M6",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；存在第三方材料且 CSDN 文章的关键说法（多卡训练分类与配置流程）与官方文档一致，构成可追溯依据；但仅有搜索摘要，其余关键说法（启动命令、环境变量细节）未获独立全文核验或交叉印证。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "唯一官方文档取得直接正文（含代码块与分节内容），但正文完整性缺少可核对的起止依据：拉起方式仅列出5种名称，具体命令指向未抓取的附录页，无法确认无缺页或截断，按规则保留4—5区间。"
+            },
+            {
+              "metric": "M6",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；存在第三方材料且 CSDN 文章的关键说法（多卡训练分类与配置流程）与官方文档一致，构成可追溯依据；但仅有搜索摘要，其余关键说法（启动命令、环境变量细节）未获独立全文核验或交叉印证。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+            "field": "response",
+            "sha256": "669b0e7910a6f3562be4f23079ab804b43a0e1f3d8a4bba9eed39e6b76fb2a8d",
+            "start": 82,
+            "end": 225,
+            "quote": "## 1. [多卡分布式训练-TorchNPU6.0.RC1-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0024.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 7753,
+            "end": 7777,
+            "quote": "在单机和多机场景下，有5种方式可拉起分布式训练：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2052,
+            "end": 2120,
+            "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 6848,
+            "end": 6883,
+            "quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2978,
+            "end": 3034,
+            "quote": "若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口，则需要预留以该端口起始的16个端口。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 23,
+            "end": 78,
+            "quote": "模型训练适配-迁移适配-PyTorch 训练模型迁移调优指南-TorchNPU6.0.RC1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 7821,
+            "end": 7858,
+            "quote": "torchrun方式：仅在PyTorch 1.11.0及以上版本支持使用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+            "field": "response",
+            "sha256": "669b0e7910a6f3562be4f23079ab804b43a0e1f3d8a4bba9eed39e6b76fb2a8d",
+            "start": 414,
+            "end": 468,
+            "quote": "## 2. [HCCL 接入 PyTorch 分布式训练：torch.distributed 使用 ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+            "field": "response",
+            "sha256": "669b0e7910a6f3562be4f23079ab804b43a0e1f3d8a4bba9eed39e6b76fb2a8d",
+            "start": 705,
+            "end": 742,
+            "quote": "## 3. [【昇腾】多卡分布式训练-官方例程_warnings.warn",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+            "field": "response",
+            "sha256": "669b0e7910a6f3562be4f23079ab804b43a0e1f3d8a4bba9eed39e6b76fb2a8d",
+            "start": 970,
+            "end": 1023,
+            "quote": "## 4. [【训练技巧】PyTorch多卡训练模型DistributedDataParallel ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "db4e10cf3c99928b30c4fe0f9c8be13861af51f15e57e8b8fa1603a1f2960777",
+            "start": 764,
+            "end": 829,
+            "quote": "dist.init_process_group(backend=\\\"hccl\\\", init_method=\\\"env://\\\")",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2052,
+            "end": 2120,
+            "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2956,
+            "end": 3015,
+            "quote": "HCCL建议使用60000-60015端口，若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 3099,
+            "end": 3153,
+            "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ea37fce3263c9903ac7a3480dcc2fa034181b86a182f98e83ff776c16d2faf0e",
+            "start": 456,
+            "end": 525,
+            "quote": "torch.distributed.init_process_group(backend=\"hccl\", rank=local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2052,
+            "end": 2120,
+            "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 7753,
+            "end": 7777,
+            "quote": "在单机和多机场景下，有5种方式可拉起分布式训练：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ea37fce3263c9903ac7a3480dcc2fa034181b86a182f98e83ff776c16d2faf0e",
+            "start": 2366,
+            "end": 2407,
+            "quote": "所有脚本统一主节点的 `MASTER_PORT` 和 `MASTER_ADDR`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ea37fce3263c9903ac7a3480dcc2fa034181b86a182f98e83ff776c16d2faf0e",
+            "start": 1299,
+            "end": 1353,
+            "quote": "若用环境变量 `HCCL_IF_BASE_PORT` 指定网卡起始端口，则预留以该端口起始的 16 个端口。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2978,
+            "end": 3034,
+            "quote": "若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口，则需要预留以该端口起始的16个端口。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ea37fce3263c9903ac7a3480dcc2fa034181b86a182f98e83ff776c16d2faf0e",
+            "start": 391,
+            "end": 431,
+            "quote": "device = torch.device('npu', local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 1848,
+            "end": 1890,
+            "quote": "local_rank = int(os.environ[\"LOCAL_RANK\"])",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ea37fce3263c9903ac7a3480dcc2fa034181b86a182f98e83ff776c16d2faf0e",
+            "start": 549,
+            "end": 624,
+            "quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+            "field": "response",
+            "sha256": "d0ae351799299f106498339f220d49a7654e4c2cc68722ac89628f0a6a1ca4e7",
+            "start": 2175,
+            "end": 2250,
+            "quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-3e89964f75db-predictors.json": "7726741d27f77ce1ad4840c8a8d65c66cda0ed074efd73e2ce2cce20f93f63db",
+          "reviewed/development/case-3e89964f75db-outcome.json": "116cdcb580fac4bb1a7e7f39865885835ae43a2426327988033d396da17c32d0"
+        },
+        "m2_documents": [
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0024.html",
+            "title": "多卡分布式训练-TorchNPU6.0.RC1-昇腾社区",
+            "representation": "direct_body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M6",
+            "bad_refs": [
+              {
+                "event_id": "call_00_t5KNQHD5x7C7P5Y8VTBn5643.result",
+                "quote": "多卡训练分为 单机多卡 训练与 多机多卡 训练，二者均需要将 单机训练脚本 修改为 多卡训练脚本"
+              },
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "多卡训练分为单机多卡训练与多机多卡训练，二者均需要将单卡训练脚本修改为多卡训练脚本，配置流程如下。"
+              }
+            ]
+          },
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "\"tool\": \"WebFetch\""
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "torch.distributed.init_process_group(backend=\"hccl\", rank=local_rank)"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "所有脚本统一主节点的 `MASTER_PORT` 和 `MASTER_ADDR`。"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。配置相应的rank与world_size。"
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "若用环境变量 `HCCL_IF_BASE_PORT` 指定网卡起始端口，则预留以该端口起始的 16 个端口。"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "device = torch.device('npu', local_rank)"
+              }
+            ]
+          },
+          {
+            "requirement": 6,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)"
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+                "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

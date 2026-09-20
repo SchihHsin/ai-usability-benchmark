@@ -1,0 +1,192 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "with torch.autocast(device_type=device, dtype=torch.float16, enabled=use_amp):\n            output = net(input)\n            loss = loss_fn(output, target)",
+      "answer_event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_quote": "with torch.autocast(device_type=device, dtype=torch.float16, enabled=use_amp):\n            output = net(input)\n            loss = loss_fn(output, target)",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案给出 autocast 上下文包围前向与 loss 计算的完整代码，与官方教程原文一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "scaler = torch.amp.GradScaler(\"cuda\", enabled=use_amp)",
+      "answer_event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_quote": "scaler = torch.amp.GradScaler(\"cuda\" ,enabled=use_amp)",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；给出 GradScaler 创建代码及构造时机说明（收敛运行开始时构造一次、同一实例贯穿全程），与官方页面一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "scaler.scale(loss).backward()",
+      "answer_event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_quote": "scaler.scale(loss).backward()",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案多次出现该调用并附官方注释说明其作用（对 scaled loss 调用 backward），与来源一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "scaler.step(opt)",
+      "answer_event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_quote": "scaler.step(opt)",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 scaler.step(opt) 调用（opt 为优化器变量），并说明其先 unscale、无 inf/NaN 才执行 optimizer.step()，与来源一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "scaler.step(opt)\n        scaler.update()",
+      "answer_event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_quote": "# Updates the scale for next iteration.\n        scaler.update()",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案在多个代码块中按 scale→step→update 顺序给出 scaler.update()，并注明其更新下一次迭代的 scale，顺序与官方示例一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "分别用 `enabled=False` 关闭 autocast 或 GradScaler，看 inf/NaN 是否仍在。",
+      "answer_event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+      "evidence_quote": "Disable `autocast` or `GradScaler` individually (by passing `enabled=False` to their constructor) and see if `infs`/`NaNs` persist.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案第7节说明溢出排查（梯度含 inf/NaN 时 scaler.step 跳过、用 enabled=False 分别关闭 autocast/GradScaler 验证、可疑区段强制 float32），覆盖溢出检查与 AMP 是否生效的验证方法，与来源 Troubleshooting 一节对应。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为用法问题，无需锁定具体库/工具链版本，记 N/A。答案仍给出有依据的版本前提（PyTorch 1.6+）及页面版本（2.14.0+cu130 教程），但题目不要求定版组件。",
+      "evidence": [
+        {
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "需要 PyTorch 1.6+（该教程原文：“The only requirements are PyTorch 1.6 or later and a CUDA-capable GPU”）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": 4,
+      "upper": 4,
+      "status": "insufficient_evidence",
+      "reason": "答案给出完整可照抄的 AMP 训练循环（GradScaler 创建、autocast 包前向、scale/step/update/zero_grad），代码为官方文档原文，前置条件（PyTorch 1.6+、CUDA GPU、Tensor Core 架构受益说明）明确；仅需用户替换自己的模型、数据、loss_fn 等环境内容即可运行，未发现需修正的错误。不足：最小示例中的 make_model/data 生成代码未包含在最终答案中，需用户以自身训练代码替换，故评 4 而非 5。答案亦声明未实际运行验证。",
+      "evidence": [
+        {
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler = torch.amp.GradScaler(\"cuda\", enabled=use_amp)"
+        },
+        {
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler.scale(loss).backward()\n        scaler.step(opt)\n        scaler.update()\n        opt.zero_grad()"
+        },
+        {
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "未执行任何代码；本次未运行 GPU 或训练脚本，无法报告实测加速比或收敛结果。"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "with torch.autocast(device_type=device, dtype=torch.float16, enabled=use_amp):\n            output = net(input)\n            loss = loss_fn(output, target)"
+        }
+      ]
+    },
+    {
+      "requirement": 2,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler = torch.amp.GradScaler(\"cuda\", enabled=use_amp)"
+        }
+      ]
+    },
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler.scale(loss).backward()"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler.step(opt)"
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler.step(opt)\n        scaler.update()"
+        }
+      ]
+    },
+    {
+      "requirement": 6,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "分别用 `enabled=False` 关闭 autocast 或 GradScaler，看 inf/NaN 是否仍在。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "call_00_e4wHNeUuJOACOdM4Bv5e2338.result",
+          "quote": "scaler = torch.amp.GradScaler(\"cuda\", enabled=use_amp)"
+        }
+      ]
+    }
+  ],
+  "case": "case-9ee139c52911",
+  "kind": "outcome",
+  "task_id": "P",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "restricted",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-9ee139c52911-outcome.json",
+    "sha256": "a2615fb3001ac1a01cb09a6fa90b3d5843de1de15f1459fa62c9abe2c1050ff1",
+    "process_sha256": "7f0693fef2dd78e1907c5c813032f57930d46ca3f1e661f7fbe0e8d09a375ab1",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

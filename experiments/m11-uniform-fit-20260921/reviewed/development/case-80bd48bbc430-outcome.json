@@ -1,0 +1,134 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "最新容器 tag：**26.08-py3**（NGC 页面 \"Latest\" 标记）；同页可见 26.07/26.06 等）\n- 26.08 基于：**Ubuntu 24.04、CUDA 13.4.1、PyTorch 2.14.0a0+4fdf77b940、TensorRT 11.2.1.2**\n- 驱动要求：官方指向 CUDA Compatibility Guide / CUDA Toolkit Release Notes 的驱动兼容矩阵（页面未直接给出单一驱动号）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_kqaZDY0muOrsOvF7o4Ca8937.result",
+      "evidence_quote": "Release 26.08 is based on CUDA 13.4.1. For comprehensive and up-to-date driver compatibility information, please refer to the following documentation:",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出镜像名 nvcr.io/nvidia/pytorch:26.08-py3 及宿主机前置（驱动+toolkit，无需宿主 CUDA Toolkit），并说明驱动兼容依据 CUDA 13.4.1 兼容矩阵；来源证实 26.08 基于 CUDA 13.4.1 且驱动要求外链兼容文档。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_Spf1mJzZAXdtfGX7lmFw9033.result",
+      "evidence_quote": "If you have Docker 19.03 or later, a typical command to launch the container is:\n\n```\ndocker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3\n```",
+      "verification": "source",
+      "reason": "答案给出带 --gpus all 的 docker run 核心命令，与 NGC 官方页面原文一致。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "sudo nvidia-ctk runtime configure --runtime=docker\nsudo systemctl restart docker",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_qThoSeHKKWGgmOhPsZC91582.result",
+      "evidence_quote": "Configure the container runtime by using the `nvidia-ctk` command:\n\n   ```\n   $ sudo nvidia-ctk runtime configure --runtime=docker\n   ```",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 apt/dnf 安装 toolkit（固定 1.20.1-1）及 nvidia-ctk runtime configure + 重启 Docker 的配置命令，均与官方 install guide 原文一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "absent",
+      "answer_quote": "2. **要加 `--gpus all`**（Docker 19.03+ 的原生写法），它替代了旧的 `nvidia-docker run` / `--runtime=nvidia` 包装方式。",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案仅使用 --gpus all，未说明 --gpus 的取值选项（如 all、count、device=ID）与容器内 GPU 可见性的对应关系；来源中 running.html 仅提及 NVIDIA_VISIBLE_DEVICES 环境变量，答案也未展开。该方面无内容。"
+    },
+    {
+      "id": 5,
+      "status": "absent",
+      "answer_quote": "验证容器内 GPU 可用：\n```bash\n$ python\n>>> import torch\n>>> print(torch.cuda.is_available())\nTrue\n```",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案版本表中列出 CUDA 13.4.1 与 PyTorch 2.14.0a0，但未给出容器内检查版本的命令（如 torch.__version__、torch.version.cuda、nvcc --version）；torch.cuda.is_available() 只检查可用性而非版本。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "验证容器内 GPU 可用：\n```bash\n$ python\n>>> import torch\n>>> print(torch.cuda.is_available())\nTrue\n```",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_Spf1mJzZAXdtfGX7lmFw9033.result",
+      "evidence_quote": "PyTorch is run by importing it as a Python module:\n\n```\n$ python\n>>> import torch\n>>> print(torch.cuda.is_available())\nTrue\n```",
+      "verification": "source",
+      "reason": "答案给出容器内 import torch 并检查 torch.cuda.is_available() 的命令/代码，另有宿主侧 nvidia-smi 验证命令，满足 GPU 可见性与 PyTorch 设备检查。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "部分定版",
+      "reason": "容器 tag 定到 26.08-py3，容器内 CUDA 13.4.1、PyTorch 2.14.0a0+4fdf77b940 均有官方依据；toolkit 给出官方示例版本 1.20.1-1（非强制）。但 NVIDIA 驱动未定到具体版本（答案自述'未定到具体版本（需查兼容矩阵）'），至少一项组件未锁定具体版本，属第 4 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "| NVIDIA 驱动 | 官方未给单一数字，指向 CUDA 兼容矩阵 | 未定到具体版本（需查兼容矩阵） |"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "操作指导基本完整",
+      "reason": "安装、配置、验证、运行命令均为官方原文完整命令行，含固定版本号与前置条件；tag xx.xx 为明确标识并有说明的用户环境参数（示例 22.01，且答案另给出 26.08-py3 具体可用值）。扣分点：nvcr.io 登录步骤未获官方核实（答案自述），且是否需 --runtime=nvidia 存在未解决的官方写法分歧。综合为 4 档：仅需替换环境参数即可执行，无需修正内容错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "**此登录步骤在本轮检索中未从官方已取得页面确认**：NGC 目录页被工具提取时未返回登录说明"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "最新容器 tag：**26.08-py3**（NGC 页面 \"Latest\" 标记）；同页可见 26.07/26.06 等）\n- 26.08 基于：**Ubuntu 24.04、CUDA 13.4.1、PyTorch 2.14.0a0+4fdf77b940、TensorRT 11.2.1.2**\n- 驱动要求：官方指向 CUDA Compatibility Guide / CUDA Toolkit Release Notes 的驱动兼容矩阵（页面未直接给出单一驱动号）"
+        }
+      ]
+    },
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_qThoSeHKKWGgmOhPsZC91582.result",
+          "quote": "Configure the container runtime by using the `nvidia-ctk` command:\n\n   ```\n   $ sudo nvidia-ctk runtime configure --runtime=docker\n   ```"
+        }
+      ]
+    }
+  ],
+  "case": "case-80bd48bbc430",
+  "kind": "outcome",
+  "task_id": "K",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-80bd48bbc430-outcome.json",
+    "sha256": "dd2e364a2f1d968ac64817ff5bb72e4840b54ad49c5454d99a1a0bbb526291ce",
+    "process_sha256": "bc065442360c5306da21ee628a6858519be2a662e1e20445e2416565f9518c7b",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

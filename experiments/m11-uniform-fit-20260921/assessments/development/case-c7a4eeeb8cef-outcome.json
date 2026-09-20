@@ -1,0 +1,334 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "关键纠正：**cuSPARSE 不属于\"稠密矩阵乘/卷积\"的官方加速库**。cuSPARSE 文档明确其功能是稀疏矩阵与稀疏/稠密向量、矩阵之间的运算（SpMV、SpMM、sparse×sparse 等），目标矩阵稀疏度为 70%–99.9%",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_pTu7Cd2eCGcgqP4GEh9Z6708.result",
+      "evidence_quote": "The string \"GEMM\" **does not appear** anywhere in the provided content. No dense GEMM routine is described.",
+      "verification": "source",
+      "reason": "答案分别说明了三库覆盖范围（cuBLAS/cuBLASLt=稠密 GEMM，cuDNN=卷积，cuSPARSE=稀疏运算）并纠正了前提。cuSPARSE 官方文档抽取证实无 GEMM 能力且目标稀疏度 70%-99.9%；cuBLAS 源（call_00_mujFRidxNu9w8bJwZhGy1520.result）证实 cuBLASLt 专用于 GEMM；cuDNN 概览（call_00_0KYUDEEMKppnqIBXx61A1748.result）证实卷积原语。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "即：**layout/类型/epilogue 需要灵活或需要复用算法选择时用 cuBLASLt；简单 BLAS 调用用 cuBLAS**。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_mujFRidxNu9w8bJwZhGy1520.result",
+      "evidence_quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API. This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.",
+      "verification": "source",
+      "reason": "矩阵乘侧给出 cuBLAS vs cuBLASLt 选择条件（灵活性/算法复用），与 cuBLAS 13.4 Introduction 原文一致；卷积侧给出 frontend graph API vs backend legacy 的选择条件（\"一般情况下用 cuDNN frontend…只有需要旧的非图式固定功能例程或纯 C 接口时才用 backend API\"），与 cuDNN 概览页 \"Use the NVIDIA cuDNN backend API only if you want to use the legacy fixed-function routines…\" 相符。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "稀疏矩阵×稠密矩阵 / 稀疏算子 | **cuSPARSE**（或 cuSPARSELt） | **不是稠密矩阵乘/卷积的加速库**；仅在权重/激活被稀疏化后才有意义",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_pTu7Cd2eCGcgqP4GEh9Z6708.result",
+      "evidence_quote": "Operations between a **sparse matrix** and a **dense matrix**: multiplication, triangular solver, tridiagonal solver, pentadiagonal solver",
+      "verification": "source",
+      "reason": "答案说明 cuSPARSE 适用于稀疏矩阵×稠密矩阵/向量等稀疏场景（SpMV/SpMM），并给出稀疏度目标 70%–99.9%，与 cuSPARSE 13.4 官方文档的功能列表及 \"the library targets matrices with sparsity ratios in the range between 70%-99.9%\" 一致。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "std::shared_ptr<Tensor_attributes> conv_fprop(std::shared_ptr<Tensor_attributes> image, std::shared_ptr<Tensor_attributes> filter, Conv_fprop_attributes);",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_mhOJqVOStQjr4efJCIZc6392.result",
+      "evidence_quote": "std::shared_ptr<Tensor_attributes> conv_fprop(std::shared_ptr<Tensor_attributes> image,                                                  std::shared_ptr<Tensor_attributes> filter,                                                  Conv_fprop_attributes);",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出多个 API 名称与调用片段（cublasSgemm/cublasGemmEx、conv_fprop/dgrad/wgrad、cusparseSpMM 及 setter 列表）。其中 cuDNN frontend conv_fprop 签名与官方 Convolutions 页逐字一致；cublasSgemm/cusparseSpMM 签名答案已如实标注为既有知识未核对，但本条只需至少一个 API 名称/片段，已满足。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "For maximum compatibility with existing Fortran environments, the cuBLAS library uses **column-major storage, and 1-based indexing**.",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_mujFRidxNu9w8bJwZhGy1520.result",
+      "evidence_quote": "For maximum compatibility with existing Fortran environments, the cuBLAS library uses column-major storage, and 1-based indexing.",
+      "verification": "source",
+      "reason": "答案给出 Tensor layout 约束（列主序、1-based 索引、leading dimension 含义、IDX2F/IDX2C 宏），并补充 Tensor Core 16 字节对齐条件与 compute type 选择（如 CUBLAS_COMPUTE_32F_FAST_TF32），均与 cuBLAS 13.4 官方抽取内容一致（对齐条件 \"intptr_t(A) % 16 == 0\" 等亦在源中逐字出现）。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "cuDNN | **9.26.0**（support matrix）；推荐配置为 **cuDNN 9.26.0 + CUDA 13.4**",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_vDRe3mPTWGwo1TwXB4hB9164.result",
+      "evidence_quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4. This is the configuration used for tuning heuristics.",
+      "verification": "source",
+      "reason": "答案给出 CUDA 版本与文档出处：cuBLAS 13.4、cuSPARSE 13.4（官方文档标题，见 call_00_mujFRidxNu9w8bJwZhGy1520.result / call_00_pTu7Cd2eCGcgqP4GEh9Z6708.result）、cuDNN 9.26.0 + CUDA 13.4（官方 support matrix 原文证实），并在 §6 列出全部官方文档 URL。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 5,
+      "status": "supported",
+      "reason": "所需组件均定到具体版本且有官方依据：cuBLAS 13.4、cuSPARSE 13.4（官方文档标题）、cuDNN 9.26.0 并给出推荐配套 CUDA 13.4（官方 support matrix 原文），配套关系无未解决冲突；历史节点（cuBLASLt 自 CUDA 10.1、64 位接口自 cuBLAS 12）亦有官方正文支持。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "cuBLAS | **13.4**（页面标题 \"cuBLAS 13.4 documentation\"）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cuSPARSE | **13.4**（\"cuSPARSE 13.4 documentation\"）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cuDNN | **9.26.0**（support matrix）；推荐配置为 **cuDNN 9.26.0 + CUDA 13.4**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "status": "supported",
+      "reason": "有具体操作方案（函数原型、参数顺序、句柄生命周期、workspace 建议对齐），关键操作可确定，但缺完整可执行程序：无 include/编译链接命令、无完整内存分配与错误检查示例；且 cublasSgemm/cublasGemmEx/cusparseSpMM 签名答案自述来自既有知识、未经官方正文核对，执行前需补写外围代码并核对签名，属第 3 档。答案亦如实声明代码未编译运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "（以下函数原型来自我的既有知识，**本轮未从官方正文取回签名**，官方页仅检索到目录条目 `2.7.1 cublas<t>gemm()`、`2.8.12 cublasGemmEx()`）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "典型流程：`cusparseCreate` → 建 SpMat/DnMat 描述符 → `cusparseSpMM_bufferSize` 取 workspace → 分配 → `cusparseSpMM` → 释放"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "**本回答中的代码/命令均未实际编译或运行**（运行状态：未验证）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "std::shared_ptr<Tensor_attributes> conv_fprop(std::shared_ptr<Tensor_attributes> image, std::shared_ptr<Tensor_attributes> filter, Conv_fprop_attributes);"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_mhOJqVOStQjr4efJCIZc6392.result",
+          "quote": "std::shared_ptr<Tensor_attributes> conv_fprop(std::shared_ptr<Tensor_attributes> image,                                                  std::shared_ptr<Tensor_attributes> filter,                                                  Conv_fprop_attributes);"
+        }
+      ]
+    }
+  ],
+  "case": "case-c7a4eeeb8cef",
+  "task_id": "C",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "关键纠正：**cuSPARSE 不属于\"稠密矩阵乘/卷积\"的官方加速库**。cuSPARSE 文档明确其功能是稀疏矩阵与稀疏/稠密向量、矩阵之间的运算（SpMV、SpMM、sparse×sparse 等），目标矩阵稀疏度为 70%–99.9%",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_pTu7Cd2eCGcgqP4GEh9Z6708.result",
+        "evidence_quote": "The string \"GEMM\" **does not appear** anywhere in the provided content. No dense GEMM routine is described.",
+        "verification": "source",
+        "reason": "答案分别说明了三库覆盖范围（cuBLAS/cuBLASLt=稠密 GEMM，cuDNN=卷积，cuSPARSE=稀疏运算）并纠正了前提。cuSPARSE 官方文档抽取证实无 GEMM 能力且目标稀疏度 70%-99.9%；cuBLAS 源（call_00_mujFRidxNu9w8bJwZhGy1520.result）证实 cuBLASLt 专用于 GEMM；cuDNN 概览（call_00_0KYUDEEMKppnqIBXx61A1748.result）证实卷积原语。"
+      },
+      {
+        "id": 2,
+        "status": "supported",
+        "answer_quote": "即：**layout/类型/epilogue 需要灵活或需要复用算法选择时用 cuBLASLt；简单 BLAS 调用用 cuBLAS**。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_mujFRidxNu9w8bJwZhGy1520.result",
+        "evidence_quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API. This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.",
+        "verification": "source",
+        "reason": "矩阵乘侧给出 cuBLAS vs cuBLASLt 选择条件（灵活性/算法复用），与 cuBLAS 13.4 Introduction 原文一致；卷积侧给出 frontend graph API vs backend legacy 的选择条件（\"一般情况下用 cuDNN frontend…只有需要旧的非图式固定功能例程或纯 C 接口时才用 backend API\"），与 cuDNN 概览页 \"Use the NVIDIA cuDNN backend API only if you want to use the legacy fixed-function routines…\" 相符。"
+      },
+      {
+        "id": 3,
+        "status": "supported",
+        "answer_quote": "稀疏矩阵×稠密矩阵 / 稀疏算子 | **cuSPARSE**（或 cuSPARSELt） | **不是稠密矩阵乘/卷积的加速库**；仅在权重/激活被稀疏化后才有意义",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_pTu7Cd2eCGcgqP4GEh9Z6708.result",
+        "evidence_quote": "Operations between a **sparse matrix** and a **dense matrix**: multiplication, triangular solver, tridiagonal solver, pentadiagonal solver",
+        "verification": "source",
+        "reason": "答案说明 cuSPARSE 适用于稀疏矩阵×稠密矩阵/向量等稀疏场景（SpMV/SpMM），并给出稀疏度目标 70%–99.9%，与 cuSPARSE 13.4 官方文档的功能列表及 \"the library targets matrices with sparsity ratios in the range between 70%-99.9%\" 一致。"
+      },
+      {
+        "id": 4,
+        "status": "supported",
+        "answer_quote": "std::shared_ptr<Tensor_attributes> conv_fprop(std::shared_ptr<Tensor_attributes> image, std::shared_ptr<Tensor_attributes> filter, Conv_fprop_attributes);",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_mhOJqVOStQjr4efJCIZc6392.result",
+        "evidence_quote": "std::shared_ptr<Tensor_attributes> conv_fprop(std::shared_ptr<Tensor_attributes> image,                                                  std::shared_ptr<Tensor_attributes> filter,                                                  Conv_fprop_attributes);",
+        "verification": "source",
+        "reason": "答案给出多个 API 名称与调用片段（cublasSgemm/cublasGemmEx、conv_fprop/dgrad/wgrad、cusparseSpMM 及 setter 列表）。其中 cuDNN frontend conv_fprop 签名与官方 Convolutions 页逐字一致；cublasSgemm/cusparseSpMM 签名答案已如实标注为既有知识未核对，但本条只需至少一个 API 名称/片段，已满足。"
+      },
+      {
+        "id": 5,
+        "status": "supported",
+        "answer_quote": "For maximum compatibility with existing Fortran environments, the cuBLAS library uses **column-major storage, and 1-based indexing**.",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_mujFRidxNu9w8bJwZhGy1520.result",
+        "evidence_quote": "For maximum compatibility with existing Fortran environments, the cuBLAS library uses column-major storage, and 1-based indexing.",
+        "verification": "source",
+        "reason": "答案给出 Tensor layout 约束（列主序、1-based 索引、leading dimension 含义、IDX2F/IDX2C 宏），并补充 Tensor Core 16 字节对齐条件与 compute type 选择（如 CUBLAS_COMPUTE_32F_FAST_TF32），均与 cuBLAS 13.4 官方抽取内容一致（对齐条件 \"intptr_t(A) % 16 == 0\" 等亦在源中逐字出现）。"
+      },
+      {
+        "id": 6,
+        "status": "supported",
+        "answer_quote": "cuDNN | **9.26.0**（support matrix）；推荐配置为 **cuDNN 9.26.0 + CUDA 13.4**",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_vDRe3mPTWGwo1TwXB4hB9164.result",
+        "evidence_quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4. This is the configuration used for tuning heuristics.",
+        "verification": "source",
+        "reason": "答案给出 CUDA 版本与文档出处：cuBLAS 13.4、cuSPARSE 13.4（官方文档标题，见 call_00_mujFRidxNu9w8bJwZhGy1520.result / call_00_pTu7Cd2eCGcgqP4GEh9Z6708.result）、cuDNN 9.26.0 + CUDA 13.4（官方 support matrix 原文证实），并在 §6 列出全部官方文档 URL。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 5,
+        "status": "supported",
+        "reason": "所需组件均定到具体版本且有官方依据：cuBLAS 13.4、cuSPARSE 13.4（官方文档标题）、cuDNN 9.26.0 并给出推荐配套 CUDA 13.4（官方 support matrix 原文），配套关系无未解决冲突；历史节点（cuBLASLt 自 CUDA 10.1、64 位接口自 cuBLAS 12）亦有官方正文支持。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "cuBLAS | **13.4**（页面标题 \"cuBLAS 13.4 documentation\"）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "cuSPARSE | **13.4**（\"cuSPARSE 13.4 documentation\"）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "cuDNN | **9.26.0**（support matrix）；推荐配置为 **cuDNN 9.26.0 + CUDA 13.4**"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 3,
+        "status": "supported",
+        "reason": "有具体操作方案（函数原型、参数顺序、句柄生命周期、workspace 建议对齐），关键操作可确定，但缺完整可执行程序：无 include/编译链接命令、无完整内存分配与错误检查示例；且 cublasSgemm/cublasGemmEx/cusparseSpMM 签名答案自述来自既有知识、未经官方正文核对，执行前需补写外围代码并核对签名，属第 3 档。答案亦如实声明代码未编译运行。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "（以下函数原型来自我的既有知识，**本轮未从官方正文取回签名**，官方页仅检索到目录条目 `2.7.1 cublas<t>gemm()`、`2.8.12 cublasGemmEx()`）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "典型流程：`cusparseCreate` → 建 SpMat/DnMat 描述符 → `cusparseSpMM_bufferSize` 取 workspace → 分配 → `cusparseSpMM` → 释放"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "**本回答中的代码/命令均未实际编译或运行**（运行状态：未验证）"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "32bed25c1dad431680de323207db5476",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7a2d546f641995bfda922d89a1217e3f",
+        "conversationRequestId": "7a2d546f641995bfda922d89a1217e3f",
+        "agent": "cli"
+      },
+      {
+        "messageId": "32bed25c1dad431680de323207db5476",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7a2d546f641995bfda922d89a1217e3f",
+        "conversationRequestId": "7a2d546f641995bfda922d89a1217e3f",
+        "rawUsage": {
+          "prompt_tokens": 23519,
+          "completion_tokens": 11890,
+          "total_tokens": 35409,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 9906,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 22343
+          },
+          "prompt_cache_hit_tokens": 22343,
+          "prompt_cache_miss_tokens": 1176,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 9906,
+          "credit": 7.74,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 23519,
+          "outputTokens": 11890,
+          "totalTokens": 35409,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 22343
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 9906
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "a241a985dc7faa6140fb8ef0d7cc80306032437afba426f68a227ca4bba1f690",
+    "process_sha256": "3ee3e80a275df6cb2aaff0121a2326ad9548107690e3b32165c400a36fc79b8b",
+    "elapsed_seconds": 159.52,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-d63ec0ef388b4181b81a388146ccee99",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

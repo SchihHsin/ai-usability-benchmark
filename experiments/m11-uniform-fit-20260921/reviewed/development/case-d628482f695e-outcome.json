@@ -1,0 +1,126 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "dist.init_process_group(backend=\"nccl\")          # 环境变量已由 torchrun 提供",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_V6vklhgcISZaoBFfIyiY6789.result",
+      "evidence_quote": "Specify `init_method` (a URL string) which indicates where/how to discover peers. Optionally specify `rank` and `world_size`",
+      "verification": "source",
+      "reason": "答案给出 backend=\"nccl\" 并说明 rank/world_size 由 torchrun 环境变量（env://）提供，与官方 init_process_group 文档一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "torchrun --nnodes=2 --nproc_per_node=8 \\\n  --rdzv_id=100 --rdzv_backend=c10d \\\n  --rdzv_endpoint=$MASTER_ADDR:29400 elastic_ddp.py",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_3JV4Vq0twOtidnVR3Rbb3345.result",
+      "evidence_quote": "torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 elastic_ddp.py",
+      "verification": "source",
+      "reason": "答案的多机启动命令逐字引自官方 DDP 教程。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "MASTER_ADDR | rank 0 所在主机 FQDN，用于初始化后端\nMASTER_PORT | MASTER_ADDR 上承载 C10d TCP store 的端口",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_PpD8nFjxxoc4TiB7x15G1239.result",
+      "evidence_quote": "`MASTER_ADDR` - The FQDN of the host that is running worker with rank 0; used to initialize the Torch Distributed backend.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 MASTER_ADDR/MASTER_PORT/GROUP_RANK（节点 rank）的配置方式，与 torchrun 官方文档一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "NCCL_DEBUG：`VERSION` / `WARN` / `INFO` / `TRACE`（排障常用 `DEBUG=INFO`）",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_Ga60ueR8bqWawnYvodgq1337.result",
+      "evidence_quote": "The `NCCL_DEBUG` variable controls the debug information that is displayed from NCCL.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案列出 NCCL_DEBUG、NCCL_SOCKET_IFNAME、NCCL_IB_HCA 等通信相关环境变量，与 NVIDIA NCCL 官方 env 页一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "local_rank = int(os.environ[\"LOCAL_RANK\"])\n    torch.cuda.set_device(local_rank)",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_PpD8nFjxxoc4TiB7x15G1239.result",
+      "evidence_quote": "local_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = torch.nn.parallel.DistributedDataParallel(\n    model, device_ids=[local_rank], output_device=local_rank\n)",
+      "verification": "source",
+      "reason": "答案说明每进程通过 LOCAL_RANK + set_device + device_ids 绑定对应 GPU，与 torchrun 官方 Important Notices 一致。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "sampler.set_epoch(epoch)          # 必须，保证跨 epoch 打乱",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_dg6tTuW4OpzHUad0rR760303.result",
+      "evidence_quote": "In distributed mode, calling the `set_epoch()` method at the beginning of each epoch **before** creating the `DataLoader` iterator is necessary to make shuffling work properly across multiple epochs.",
+      "verification": "source",
+      "reason": "答案给出 DistributedSampler 及 set_epoch 同步设置，与官方文档逐字一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题仅要求初始化、启动命令和环境变量，未要求锁定具体库/工具链版本；答案仍附带 PyTorch 2.14、NCCL 2.31.2 等文档版本信息，且明确声明未指定精确版本矩阵。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "我未指定具体 CUDA/cuDNN/NCCL/torch 组合的精确版本矩阵；若需定版请以各官方支持矩阵为准。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "supported",
+      "reason": "启动命令（torchrun 完整参数）、Python 训练脚本、环境变量导出及前置条件（所有节点相同参数、套 SLURM）均完整；仅需替换 $MASTER_ADDR、节点名、MyModel/MyDataset 等明确标识的用户环境/自定义组件即可执行。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "torchrun --nnodes=2 --nproc-per-node=8 \\\n  --rdzv-id=job1 --rdzv-backend=c10d \\\n  --rdzv-endpoint=$MASTER_ADDR:29400 train_ddp.py"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "MASTER_ADDR | rank 0 所在主机 FQDN，用于初始化后端\nMASTER_PORT | MASTER_ADDR 上承载 C10d TCP store 的端口"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "NCCL_DEBUG：`VERSION` / `WARN` / `INFO` / `TRACE`（排障常用 `DEBUG=INFO`）"
+        }
+      ]
+    }
+  ],
+  "case": "case-d628482f695e",
+  "kind": "outcome",
+  "task_id": "F",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-d628482f695e-outcome.json",
+    "sha256": "53bfc47035080a90533648374a7535b53eaf801170791636f8ba24ac59c3b963",
+    "process_sha256": "fe04cead878b3bb4dc7e77ea2269764df01cdbf84bf5265d4ccdac8fce75c5f3",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

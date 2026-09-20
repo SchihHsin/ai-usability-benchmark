@@ -146,6 +146,830 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T18:33:32.896579+00:00",
+      "process_sha256": "8dda25193a59a8e5abf9c0cab7f75fab27c2ef06ac2f71a41bd9ff4d9b340ad9",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b,\n                              float c, float* result)",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "evidence_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) {",
+            "verification": "source",
+            "reason": "最终答案给出了 .cu 文件的完整 kernel 入口签名（muladd_kernel 与 add_kernel）及 C++ 宿主包装函数 mymuladd_cuda 的签名，与官方教程来源正文一致。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "ext_modules=[\n        CUDAExtension('lltm_cuda', [\n            'lltm_cuda.cpp',\n            'lltm_cuda_kernel.cu',\n        ])\n    ],",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+            "evidence_quote": ">>> CUDAExtension(\n...                 name='cuda_extension',\n...                 sources=['extension.cpp', 'extension_kernel.cu'],\n...                 extra_compile_args={'cxx': ['-g'],\n...                                     'nvcc': ['-O2']},",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案给出完整 setup.py（路线 A 的 CUDAExtension 原文、路线 B 的 CppExtension 原文），并明确 CUDAExtension、源文件与 extra_compile_args/dlink 等编译参数，均可在官方来源中核实。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-26"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "supported",
+            "answer_quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {\n  m.def(\"forward\", &lltm_forward, \"LLTM forward (CUDA)\");",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+            "evidence_quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {\n  m.def(\"forward\", &lltm_forward, \"LLTM forward (CUDA)\");\n  m.def(\"backward\", &lltm_backward, \"LLTM backward (CUDA)\");\n}",
+            "verification": "source",
+            "reason": "最终答案给出 PYBIND11_MODULE 绑定代码（TORCH_EXTENSION_NAME、m.def）并解释了其由构建系统展开的机制，与官方经典教程来源一致。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "supported",
+            "answer_quote": "TORCH_LIBRARY(extension_cpp, m) {\n  // schema 里的 \"float\" 对应 C++ double / Python float\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "evidence_quote": "TORCH_LIBRARY(extension_cpp, m) {\n  // Note that \"float\" in the schema corresponds to the C++ double type\n  // and the Python float type.\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}",
+            "verification": "source",
+            "reason": "最终答案给出 TORCH_LIBRARY schema 定义与 TORCH_LIBRARY_IMPL 后端注册完整代码段，并注明两步注册机制，与官方教程来源正文逐字对应。",
+            "evidence_refs": [
+              "ev-29",
+              "ev-30"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "注册后 Python 侧通过 `torch.ops.extension_cpp.mymuladd` 调用。",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "evidence_quote": "This makes the operator available from Python via torch.ops.extension_cpp.mymuladd.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案明确说明 Python 侧以 torch.ops.extension_cpp.mymuladd 调用注册算子（含参数 a、b、c），并给出 torch.library.opcheck 的调用示例，与官方来源一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-31"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "supported",
+            "answer_quote": "python setup.py install\npip install -e .",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+            "evidence_quote": "python setup.py install",
+            "verification": "source",
+            "reason": "最终答案给出构建（python setup.py install / pip install -e . / build_ext --inplace、JIT load）→ 导入（先 import torch 再 import 扩展）→ 调用算子的具体顺序与命令，均可在来源中核实。",
+            "evidence_refs": [
+              "ev-32",
+              "ev-33"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（PyTorch tutorials 官方预览站），第2条为官方 GitHub 仓库。",
+            "evidence": [
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "## 1. [Custom C and CUDA Extensions](https://master--pytorch-tutorials-preview.netlify.app/advanced/cpp_extension)"
+              },
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "## 2. [tutorials/advanced_source/cpp_custom_ops.rst at 265c75a690ced7994dd91677b28d0a1418772799 · pytorch/tutorials]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 3.8,
+            "lower": 3.8,
+            "upper": 3.8,
+            "status": "scored",
+            "reason": "5个独立官方文档：cpp_custom_ops 教程、cpp_extension API 文档、netlify cpp_extension 教程均取得完整直接正文（5）；docs.pytorch.org/tutorials/advanced/cpp_extension.html 与 docs/main/notes/custom_operators.html 两个 URL 均只返回 custom_ops_landing_page 着陆页正文，未取得目标教程内容（2）。均值 (5+5+5+2+2)/5=3.8。",
+            "evidence": [
+              {
+                "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+                "quote": "## 8. Conclusion\n\nThe tutorial covered the recommended approach to integrating Custom C++ and CUDA operators with PyTorch."
+              },
+              {
+                "event_id": "call_00_gt3Ip88kGSXX9dJBwJyZ5731.result",
+                "quote": "**标题**: PyTorch Custom Operators — PyTorch Tutorials 2.14.0+cu130 documentation"
+              },
+              {
+                "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+                "quote": "## 9. Environment Variables Referenced"
+              },
+              {
+                "event_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+                "quote": "## 10. Performance Comparison Numbers (from the tutorial)"
+              },
+              {
+                "event_id": "call_00_hF9jTVV3doUM30cJ4Qz58074.result",
+                "quote": "**标题**: PyTorch Custom Operators — PyTorch Tutorials 2.14.0+cu130 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；取回的官方正文覆盖原题全部所需：文件结构与入口签名、setup.py（CUDAExtension/CppExtension 及编译参数）、pybind 绑定与 TORCH_LIBRARY/TORCH_LIBRARY_IMPL 注册、register_autograd、register_fake、Python 侧 torch.ops 调用、构建与导入顺序、版本前提，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+                "quote": "This makes the operator available from Python via `torch.ops.extension_cpp.mymuladd`."
+              },
+              {
+                "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+                "quote": ">>> CUDAExtension(\n...        name='cuda_extension',\n...        sources=['extension.cpp', 'extension_kernel.cu'],\n...        extra_compile_args={'cxx': ['-g'],\n...                            'nvcc': ['-O2']})"
+              },
+              {
+                "event_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+                "quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {\n  m.def(\"forward\", &lltm_forward, \"LLTM forward\");\n  m.def(\"backward\", &lltm_backward, \"LLTM backward\");\n}"
+              },
+              {
+                "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+                "quote": "torch.library.register_autograd(\n    \"extension_cpp::mymuladd\", _backward, setup_context=_setup_context)"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "同一官方页面内即可依据明确条件选定版本：教程明确 PyTorch 2.4 或 later（stable ABI 需 2.10+），API 文档标注 v2.14 stable，版本条件清晰无冲突。",
+            "evidence": [
+              {
+                "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+                "quote": "**Required PyTorch version:** PyTorch **2.4 or later** (or PyTorch **2.10 or later** if using the stable ABI)."
+              },
+              {
+                "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+                "quote": "# torch.utils.cpp_extension — PyTorch 2.14 API Documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "去重后相关独立第三方来源 ≥6 条：mljourney、codegenes、lhongpei 博客、runebook.dev、apxml、CSDN、知乎（pytorch.ac.cn 为官方镜像、netlify/github 为官方，均排除）。",
+            "evidence": [
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "## 3. [How to Write a Custom CUDA Kernel for PyTorch](https://mljourney.com/?p=4725/)"
+              },
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "## 5. [Use Customized CUDA kernel in your PyTorch Code](https://lhongpei.github.io/post/guide_pytorch_custom_cuda_kernel)"
+              },
+              {
+                "event_id": "call_00_ilCM7i3RqNe4sGRb4Dhs3200.result",
+                "quote": "## 2. [深入理解torch.library.register_autograd ()：PyTorch新一代 ...]"
+              },
+              {
+                "event_id": "call_00_l2rRf80r2uT8IRtCuG330262.result",
+                "quote": "## 5. [pytorch调用自己写kernel算子 - 知乎](https://zhuanlan.zhihu.com/p/1924588216666821322)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；关键说法（CUDAExtension+BuildExtension 的 setup.py 模式、PYBIND11_MODULE/TORCH_EXTENSION_NAME 绑定、CUDA kernel 启动模式）由多个独立第三方来源（mljourney、lhongpei、codegenes、CSDN、知乎）与官方文档交叉印证，未见未解决的矛盾。",
+            "evidence": [
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "from setuptools import setup\nfrom torch.utils.cpp_extension import BuildExtension, CUDAExtension\nsetup( name='my_cuda_op', ext_modules=[ CUDAExtension( name='my_cuda_op', sources=['my_op_kernel.cu'], ) ]"
+              },
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) { m.def(\"fused_muladd\", &fused_muladd_cuda, \"Fused multiply-add (CUDA)\"); }"
+              },
+              {
+                "event_id": "call_00_l2rRf80r2uT8IRtCuG330262.result",
+                "quote": "## 4. [保姆级教程：手把手教你用PyTorch C++ Extension编译第 ...](https://blog.csdn.net/weixin_42571738/article/details/161184679)"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：目录结构、含 CUDAExtension 与 extra_compile_args dict 的 setup.py、编译命令、kernel 签名与启动、pybind/TORCH_CHECK/流处理、autograd 两条路线，且关键主张（extra_compile_args 分组 dict、register_autograd、PyTorch 约2.4+）均被后续官方来源证实；但 TORCH_LIBRARY 注册代码、Python 侧调用名称等具体参数未给出，本人亦声明不确定，需外部补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "新方式 `torch.library.custom_op` + `register_fake`（meta 实现）+ `torch.library.register_autograd`，或 `TORCH_LIBRARY` 注册算子。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "extra_compile_args={\"cxx\": [\"-O3\"], \"nvcc\": [\"-O3\", \"--use_fast_math\"]}"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "`torch.library.custom_op`/`register_autograd` 的确切 API 签名、最低 PyTorch 版本（大致 2.4+）我不确定。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_o2mSloET1ViKT6Hwt6df4775.dispatch",
+              "call_00_N8lPIafx5lr8uwmv428H8072.dispatch",
+              "call_00_6usuJFXuSDJk86efrQPE7165.dispatch",
+              "call_00_8vvrA93EbWEbQrfmqQtH0247.dispatch",
+              "call_00_gt3Ip88kGSXX9dJBwJyZ5731.dispatch",
+              "call_00_pC1VJ0VC7cLEnUJhGy9F6638.dispatch",
+              "call_00_ilCM7i3RqNe4sGRb4Dhs3200.dispatch",
+              "call_00_l2rRf80r2uT8IRtCuG330262.dispatch",
+              "call_00_hF9jTVV3doUM30cJ4Qz58074.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "原题为流程类问题，未强制要求锁定单一版本；最终答案给出了所有相关组件的有依据适用范围：register_autograd 路线需 PyTorch 2.4+（官方 Prerequisites），stable ABI 路线需 PyTorch 2.10+，并附官方文档版本 2.14.0+cu130。均为范围（'or later'）而非定到具体单一版本，CUDA Toolkit / nvcc 未定具体版本（仅要求与 PyTorch 匹配），故按五档记 4 分。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "PyTorch 2.4 或更高才能使用 torch.library.register_autograd + FakeTensor 的完整路线（官方教程 Prerequisites 原文：\"PyTorch 2.4 or later\"）；若使用 LibTorch Stable ABI 则需 PyTorch 2.10 或更高（\"PyTorch 2.10 or later if using the stable ABI\"）。"
+              }
+            ],
+            "raw_status": "partial",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "操作指导完整且前提明确：完整 setup.py（两种路线）、构建命令（python setup.py install / pip install -e . / build_ext --inplace）、JIT load 代码、导入顺序（先 import torch 再 import 扩展）、环境变量与编译器 ABI 前提均给出，且为官方文档原文摘录；仅需用户替换自己的源文件名/架构等环境值即可直接执行，无需修正错误。答案明确声明未在本机编译运行，按规则不影响档位判定。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "python setup.py install\npip install -e .\n\n# 就地构建\npython setup.py build_ext --inplace"
+              },
+              {
+                "event_id": "final",
+                "quote": "导入时先 `import torch` 再 `import <ext>`（否则动态链接符号解析失败）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；取回的官方正文覆盖原题全部所需：文件结构与入口签名、setup.py（CUDAExtension/CppExtension 及编译参数）、pybind 绑定与 TORCH_LIBRARY/TORCH_LIBRARY_IMPL 注册、register_autograd、register_fake、Python 侧 torch.ops 调用、构建与导入顺序、版本前提，无需另查。"
+              },
+              {
+                "metric": "M6",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；关键说法（CUDAExtension+BuildExtension 的 setup.py 模式、PYBIND11_MODULE/TORCH_EXTENSION_NAME 绑定、CUDA kernel 启动模式）由多个独立第三方来源（mljourney、lhongpei、codegenes、CSDN、知乎）与官方文档交叉印证，未见未解决的矛盾。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；取回的官方正文覆盖原题全部所需：文件结构与入口签名、setup.py（CUDAExtension/CppExtension 及编译参数）、pybind 绑定与 TORCH_LIBRARY/TORCH_LIBRARY_IMPL 注册、register_autograd、register_fake、Python 侧 torch.ops 调用、构建与导入顺序、版本前提，无需另查。"
+            },
+            {
+              "metric": "M6",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；关键说法（CUDAExtension+BuildExtension 的 setup.py 模式、PYBIND11_MODULE/TORCH_EXTENSION_NAME 绑定、CUDA kernel 启动模式）由多个独立第三方来源（mljourney、lhongpei、codegenes、CSDN、知乎）与官方文档交叉印证，未见未解决的矛盾。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+            "field": "response",
+            "sha256": "4a6b5c2b7304799bdd5d7f262adf48d0eae9d8075ddd5d7cd9642edd841a2fea",
+            "start": 97,
+            "end": 211,
+            "quote": "## 1. [Custom C and CUDA Extensions](https://master--pytorch-tutorials-preview.netlify.app/advanced/cpp_extension)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+            "field": "response",
+            "sha256": "4a6b5c2b7304799bdd5d7f262adf48d0eae9d8075ddd5d7cd9642edd841a2fea",
+            "start": 2277,
+            "end": 2393,
+            "quote": "## 2. [tutorials/advanced_source/cpp_custom_ops.rst at 265c75a690ced7994dd91677b28d0a1418772799 · pytorch/tutorials]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "field": "response",
+            "sha256": "70a884906843aea6eb302eadc692b45fadc83057541ee6b0eb581d08eb01969b",
+            "start": 27273,
+            "end": 27395,
+            "quote": "## 8. Conclusion\n\nThe tutorial covered the recommended approach to integrating Custom C++ and CUDA operators with PyTorch.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_gt3Ip88kGSXX9dJBwJyZ5731.result",
+            "field": "response",
+            "sha256": "69a9e5d5f3c116eb623885ee220e283186f02bc2e8efd5706670f1911bd6a644",
+            "start": 0,
+            "end": 79,
+            "quote": "**标题**: PyTorch Custom Operators — PyTorch Tutorials 2.14.0+cu130 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+            "field": "response",
+            "sha256": "47c26b9f2ac45b393d2fd85564cc178e33a8400e7389702d157d16bdf5b29df9",
+            "start": 16972,
+            "end": 17010,
+            "quote": "## 9. Environment Variables Referenced",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+            "field": "response",
+            "sha256": "c462008cfe15f462611e5fbd94687b322e82ea01f6057087c22ca55642d65d81",
+            "start": 24312,
+            "end": 24369,
+            "quote": "## 10. Performance Comparison Numbers (from the tutorial)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_hF9jTVV3doUM30cJ4Qz58074.result",
+            "field": "response",
+            "sha256": "69a9e5d5f3c116eb623885ee220e283186f02bc2e8efd5706670f1911bd6a644",
+            "start": 0,
+            "end": 79,
+            "quote": "**标题**: PyTorch Custom Operators — PyTorch Tutorials 2.14.0+cu130 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "field": "response",
+            "sha256": "70a884906843aea6eb302eadc692b45fadc83057541ee6b0eb581d08eb01969b",
+            "start": 10356,
+            "end": 10441,
+            "quote": "This makes the operator available from Python via `torch.ops.extension_cpp.mymuladd`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+            "field": "response",
+            "sha256": "c462008cfe15f462611e5fbd94687b322e82ea01f6057087c22ca55642d65d81",
+            "start": 8291,
+            "end": 8440,
+            "quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {\n  m.def(\"forward\", &lltm_forward, \"LLTM forward\");\n  m.def(\"backward\", &lltm_backward, \"LLTM backward\");\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "field": "response",
+            "sha256": "70a884906843aea6eb302eadc692b45fadc83057541ee6b0eb581d08eb01969b",
+            "start": 19032,
+            "end": 19136,
+            "quote": "torch.library.register_autograd(\n    \"extension_cpp::mymuladd\", _backward, setup_context=_setup_context)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "field": "response",
+            "sha256": "70a884906843aea6eb302eadc692b45fadc83057541ee6b0eb581d08eb01969b",
+            "start": 29481,
+            "end": 29591,
+            "quote": "**Required PyTorch version:** PyTorch **2.4 or later** (or PyTorch **2.10 or later** if using the stable ABI).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+            "field": "response",
+            "sha256": "47c26b9f2ac45b393d2fd85564cc178e33a8400e7389702d157d16bdf5b29df9",
+            "start": 0,
+            "end": 60,
+            "quote": "# torch.utils.cpp_extension — PyTorch 2.14 API Documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+            "field": "response",
+            "sha256": "4a6b5c2b7304799bdd5d7f262adf48d0eae9d8075ddd5d7cd9642edd841a2fea",
+            "start": 6192,
+            "end": 6277,
+            "quote": "## 3. [How to Write a Custom CUDA Kernel for PyTorch](https://mljourney.com/?p=4725/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+            "field": "response",
+            "sha256": "4a6b5c2b7304799bdd5d7f262adf48d0eae9d8075ddd5d7cd9642edd841a2fea",
+            "start": 14905,
+            "end": 15026,
+            "quote": "## 5. [Use Customized CUDA kernel in your PyTorch Code](https://lhongpei.github.io/post/guide_pytorch_custom_cuda_kernel)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_ilCM7i3RqNe4sGRb4Dhs3200.result",
+            "field": "response",
+            "sha256": "25a6f17b387fa81e700964d50fa71ba74a9a6de5961f319ea51caa91913ab6e2",
+            "start": 418,
+            "end": 479,
+            "quote": "## 2. [深入理解torch.library.register_autograd ()：PyTorch新一代 ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_l2rRf80r2uT8IRtCuG330262.result",
+            "field": "response",
+            "sha256": "21fe438e8be9a22871c98f10a9cddd5a8209583301df2a33105ca216f59bc08c",
+            "start": 6399,
+            "end": 6482,
+            "quote": "## 5. [pytorch调用自己写kernel算子 - 知乎](https://zhuanlan.zhihu.com/p/1924588216666821322)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+            "field": "response",
+            "sha256": "4a6b5c2b7304799bdd5d7f262adf48d0eae9d8075ddd5d7cd9642edd841a2fea",
+            "start": 10141,
+            "end": 10257,
+            "quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) { m.def(\"fused_muladd\", &fused_muladd_cuda, \"Fused multiply-add (CUDA)\"); }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_l2rRf80r2uT8IRtCuG330262.result",
+            "field": "response",
+            "sha256": "21fe438e8be9a22871c98f10a9cddd5a8209583301df2a33105ca216f59bc08c",
+            "start": 6131,
+            "end": 6244,
+            "quote": "## 4. [保姆级教程：手把手教你用PyTorch C++ Extension编译第 ...](https://blog.csdn.net/weixin_42571738/article/details/161184679)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "3c35c7b1e0d93e1fae771c93dbb0b77fa4deebbf3e90792ae38438e85c83eb20",
+            "start": 1662,
+            "end": 1777,
+            "quote": "新方式 `torch.library.custom_op` + `register_fake`（meta 实现）+ `torch.library.register_autograd`，或 `TORCH_LIBRARY` 注册算子。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "3c35c7b1e0d93e1fae771c93dbb0b77fa4deebbf3e90792ae38438e85c83eb20",
+            "start": 968,
+            "end": 1049,
+            "quote": "extra_compile_args={\\\"cxx\\\": [\\\"-O3\\\"], \\\"nvcc\\\": [\\\"-O3\\\", \\\"--use_fast_math\\\"]}",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "3c35c7b1e0d93e1fae771c93dbb0b77fa4deebbf3e90792ae38438e85c83eb20",
+            "start": 1905,
+            "end": 1989,
+            "quote": "`torch.library.custom_op`/`register_autograd` 的确切 API 签名、最低 PyTorch 版本（大致 2.4+）我不确定。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 11865,
+            "end": 11949,
+            "quote": "python setup.py install\npip install -e .\n\n# 就地构建\npython setup.py build_ext --inplace",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 12555,
+            "end": 12606,
+            "quote": "导入时先 `import torch` 再 `import <ext>`（否则动态链接符号解析失败）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 4874,
+            "end": 5000,
+            "quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b,\n                              float c, float* result)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "field": "response",
+            "sha256": "70a884906843aea6eb302eadc692b45fadc83057541ee6b0eb581d08eb01969b",
+            "start": 11250,
+            "end": 11348,
+            "quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) {",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 2141,
+            "end": 2273,
+            "quote": "ext_modules=[\n        CUDAExtension('lltm_cuda', [\n            'lltm_cuda.cpp',\n            'lltm_cuda_kernel.cu',\n        ])\n    ],",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 8022,
+            "end": 8122,
+            "quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {\n  m.def(\"forward\", &lltm_forward, \"LLTM forward (CUDA)\");",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+            "field": "response",
+            "sha256": "c462008cfe15f462611e5fbd94687b322e82ea01f6057087c22ca55642d65d81",
+            "start": 11089,
+            "end": 11252,
+            "quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {\n  m.def(\"forward\", &lltm_forward, \"LLTM forward (CUDA)\");\n  m.def(\"backward\", &lltm_backward, \"LLTM backward (CUDA)\");\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 8339,
+            "end": 8486,
+            "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  // schema 里的 \"float\" 对应 C++ double / Python float\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+            "field": "response",
+            "sha256": "70a884906843aea6eb302eadc692b45fadc83057541ee6b0eb581d08eb01969b",
+            "start": 9906,
+            "end": 10105,
+            "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  // Note that \"float\" in the schema corresponds to the C++ double type\n  // and the Python float type.\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 8656,
+            "end": 8709,
+            "quote": "注册后 Python 侧通过 `torch.ops.extension_cpp.mymuladd` 调用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "0ab1b7ff324b1362bfa6989da9a846ddddf5e185ddc01b0b8d5f92864d3a9f90",
+            "start": 11865,
+            "end": 11905,
+            "quote": "python setup.py install\npip install -e .",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "call_00_pC1VJ0VC7cLEnUJhGy9F6638.result",
+            "field": "response",
+            "sha256": "c462008cfe15f462611e5fbd94687b322e82ea01f6057087c22ca55642d65d81",
+            "start": 23413,
+            "end": 23436,
+            "quote": "python setup.py install",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-f9a13529118e-predictors.json": "eb63800191cff91e8745d08675c492e2d7b556fa7085c55594d75d02fd3cdc2a",
+          "reviewed/development/case-f9a13529118e-outcome.json": "1a1ed2c1dd900345161ef28d06e6df4fb219da965c1c53ae67a1584ad7a87c50"
+        },
+        "m2_documents": [
+          {
+            "url": "https://pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "status": "scored",
+            "score": 5,
+            "note": "取得直接正文，Overview 至 Conclusion 全章节及 Quick Reference，无截断或缺页证据"
+          },
+          {
+            "url": "https://docs.pytorch.org/docs/stable/cpp_extension.html",
+            "status": "scored",
+            "score": 5,
+            "note": "取得完整 API 文档正文，含全部函数签名、示例与环境变量表"
+          },
+          {
+            "url": "https://master--pytorch-tutorials-preview.netlify.app/advanced/cpp_extension",
+            "status": "scored",
+            "score": 5,
+            "note": "取得教程直接正文，setup.py 至性能对比及构建命令完整，并明示未包含项"
+          },
+          {
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_extension.html",
+            "status": "scored",
+            "score": 2,
+            "note": "URL 现指向 custom_ops_landing_page，仅取得着陆页正文，未取得目标教程内容"
+          },
+          {
+            "url": "https://docs.pytorch.org/docs/main/notes/custom_operators.html",
+            "status": "scored",
+            "score": 2,
+            "note": "同样仅返回 custom_ops_landing_page 内容，未取得 Custom Operators Manual 正文"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+                "quote": ">>> CUDAExtension(\n...        name='cuda_extension',\n...        sources=['extension.cpp', 'extension_kernel.cu'],\n...        extra_compile_args={'cxx': ['-g'],\n...                            'nvcc': ['-O2']})"
+              }
+            ]
+          },
+          {
+            "metric": "M6",
+            "bad_refs": [
+              {
+                "event_id": "call_00_o2mSloET1ViKT6Hwt6df4775.result",
+                "quote": "from setuptools import setup\nfrom torch.utils.cpp_extension import BuildExtension, CUDAExtension\nsetup( name='my_cuda_op', ext_modules=[ CUDAExtension( name='my_cuda_op', sources=['my_op_kernel.cu'], ) ]"
+              }
+            ]
+          },
+          {
+            "requirement": 2,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_8vvrA93EbWEbQrfmqQtH0247.result",
+                "quote": ">>> CUDAExtension(\n...                 name='cuda_extension',\n...                 sources=['extension.cpp', 'extension_kernel.cu'],\n...                 extra_compile_args={'cxx': ['-g'],\n...                                     'nvcc': ['-O2']},"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_N8lPIafx5lr8uwmv428H8072.result",
+                "quote": "This makes the operator available from Python via torch.ops.extension_cpp.mymuladd."
+              }
+            ]
+          },
+          {
+            "metric": "M9",
+            "bad_refs": [
+              {
+                "event_id": "final",
+                "quote": "PyTorch 2.4 或更高才能使用 torch.library.register_autograd + FakeTensor 的完整路线（官方教程 Prerequisites 原文：\"PyTorch 2.4 or later\"）；若使用 LibTorch Stable ABI 则需 PyTorch 2.10 或更高（\"PyTorch 2.10 or later if using the stable ABI\"）。"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

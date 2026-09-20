@@ -146,6 +146,919 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T18:33:32.916161+00:00",
+      "process_sha256": "2f47eb04d4416b6b1bdb66e2806c8af3e613a351c8431d7e631785f379d1ac66",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "dist.init_process_group(\n    \"hccl\",\n    rank=(args.node_rank)*(args.nproc_per_node) + local_rank,\n    world_size=world_size,\n)",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "evidence_quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=(args.node_rank)*(args.nproc_per_node) + local_rank)",
+            "verification": "source",
+            "reason": "最终答案给出 backend=\"hccl\"、rank 计算式和 world_size 的 init_process_group 设置，与官方 TorchNPU 6.0.0 正文一致。",
+            "evidence_refs": [
+              "ev-30",
+              "ev-31"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "supported",
+            "answer_quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR \\\n  --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+            "evidence_quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+            "verification": "source",
+            "reason": "答案给出 torchrun 与 torch_npu_run 两种多机启动命令及完整 launcher 参数，与 TorchNPU 7.0.0 官方双机16卡示例原文一致。",
+            "evidence_refs": [
+              "ev-32",
+              "ev-33"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "supported",
+            "answer_quote": "MASTER_ADDR=xxxx              # 主节点IP\nMASTER_PORT=6004              # 未占用端口\nNODE_RANK=0                   # 主节点为0，其他节点按序",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "evidence_quote": "MASTER_ADDR=xxxx                               # 主节点IP地址\n   MASTER_PORT=6004                               # 端口号选一个未被占用的端口即可\n   NODE_RANK=0                                    # 本机序号，主节点为0",
+            "verification": "source",
+            "reason": "答案说明各节点统一 MASTER_ADDR/MASTER_PORT 并按序配置 NODE_RANK，另引 6.0.RC1 '只支持 env://' 的说明，均有官方正文支撑。",
+            "evidence_refs": [
+              "ev-34",
+              "ev-35"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "supported",
+            "answer_quote": "export HCCL_WHITELIST_DISABLE=1",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+            "evidence_quote": "export HCCL_WHITELIST_DISABLE=1",
+            "verification": "source",
+            "reason": "答案给出 HCCL_WHITELIST_DISABLE、HCCL_IF_BASE_PORT、NPU_ASD_ENABLE、ASCEND_RT_VISIBLE_DEVICES 等环境变量；HCCL_WHITELIST_DISABLE 与 HCCL_IF_BASE_PORT 均见于官方正文，ASCEND_RT_VISIBLE_DEVICES 见第三方来源。",
+            "evidence_refs": [
+              "ev-36",
+              "ev-37"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "torch_npu.npu.set_device(local_rank)          # 用 local_rank 自动获取 device 号\ndevice = torch.device(f'npu:{local_rank}')",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "evidence_quote": "torch_npu.npu.set_device(local_rank)\n      #获取device号\n      device = torch.device(f'npu:{local_rank}')",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明用 LOCAL_RANK 通过 set_device 与 torch.device('npu:{local_rank}') 绑定进程与 NPU，与官方示例代码一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-38"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "supported",
+            "answer_quote": "train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank)\ntrain_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "evidence_quote": "train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank)\n       train_loader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler)",
+            "verification": "source",
+            "reason": "答案给出 DistributedSampler(num_replicas=world_size, rank=local_rank) 保障多卡数据一致性，与官方多机多卡示例一致。",
+            "evidence_refs": [
+              "ev-39",
+              "ev-40"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为昇腾官方文档（hiascend.com 多机多卡场景页）。",
+            "evidence": [
+              {
+                "event_id": "call_00_ViTjF0Kyvj5weDomlutr8606.result",
+                "quote": "## 1. [多卡分布式训练-TorchNPU6.0.RC1-昇腾社区 - hiascend.com]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.33,
+            "upper": 4.0,
+            "status": "bounded",
+            "reason": "6个独立官方文档：4个取得直接正文但完整性无独立起止证据（各记4-5候选），2个仅返回标题/评分框架无正文（记2）。等权均值区间[3.33,4.0]。",
+            "evidence": [
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "# 多机多卡场景"
+              },
+              {
+                "event_id": "call_00_N2MilrvgKNQ0od214VCy1160.result",
+                "quote": "**标题**: 拉起多卡训练脚本示例-附录-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              },
+              {
+                "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+                "quote": "# torch_npu_run\n\n#### 简介"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "已取得正文覆盖全部六项criteria：init_process_group(backend/rank/world_size)、torchrun与torch_npu_run启动命令、MASTER_ADDR/MASTER_PORT/node_rank、HCCL环境变量、设备绑定、DistributedSampler。",
+            "evidence": [
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=(args.node_rank)*(args.nproc_per_node) + local_rank)"
+              },
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "MASTER_ADDR=xxxx                               # 主节点IP地址"
+              },
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "也可以通过环境变量HCCL_IF_BASE_PORT指定Host网卡起始端口"
+              },
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "torch_npu.npu.set_device(local_rank)"
+              },
+              {
+                "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+                "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py"
+              },
+              {
+                "event_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+                "quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(training_data)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "各官方页面标题明确标注版本（6.0.0/6.0.RC1/7.0.0/26.0.0），可依据用户环境版本选定适用文档，但需在多版本文档树/多页间对照确定，单页内不提供版本选择条件。",
+            "evidence": [
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+                "quote": "torch_npu_run-通信性能优化-PyTorch框架特性指南-模型开发-TorchNPU7.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_00_teuXejZMLrWXF0um7del5896.result",
+                "quote": "torch_npu_run-通信性能优化-PyTorch框架特性指南-模型开发-TorchNPU26.0.0开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "预算内相关独立第三方来源≥6条：CSDN踩坑文、cnblogs HCCL解析、forceinjection博客、CSDN HCCL架构剖析、CSDN MindSpore分布式、gitcode DeepSeek部署文；devpress为CSDN转载只计一次。",
+            "evidence": [
+              {
+                "event_id": "call_00_ViTjF0Kyvj5weDomlutr8606.result",
+                "quote": "hccl 分布式训练踩坑：从单机到多机的那些事 - CSDN博客"
+              },
+              {
+                "event_id": "call_00_ViTjF0Kyvj5weDomlutr8606.result",
+                "quote": "完整教程：昇腾CANN HCCL深度解析：构建分布式AI训练的高速通信"
+              },
+              {
+                "event_id": "call_00_nV1549zf00poZBfmfkwU1228.result",
+                "quote": "多卡分布式训练 (DDP + HCCL) on Ascend NPU | AI ..."
+              },
+              {
+                "event_id": "call_00_nV1549zf00poZBfmfkwU1228.result",
+                "quote": "HCCL 集合通信库架构剖析——昇腾 NPU 多机多卡训练的"
+              },
+              {
+                "event_id": "call_00_nV1549zf00poZBfmfkwU1228.result",
+                "quote": "昇腾NPU上MindSpore分布式训练实战：环境配置、并行策略"
+              },
+              {
+                "event_id": "call_00_jl1Y7mEJpuBEb4tLEgjJ7283.result",
+                "quote": "DeepSeek-V4 昇腾训练部署全指南：基于 TorchTitan-NPU 的"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "CSDN踩坑文的关键操作性说法（HCCL必须手动配置rank file、init_method用tcp://）与已取得官方文档（env://初始化、torchrun/torch_npu_run无需rank file）直接矛盾且未解决；其hccl.set_option Python API亦无可追溯官方依据。",
+            "evidence": [
+              {
+                "event_id": "call_00_hCI5LWZGKxfGute2akkT8364.result",
+                "quote": "hccl需要你手动写一个`rank file`（类似MPI的hostfile），告诉它哪个NPU连哪个NPU"
+              },
+              {
+                "event_id": "call_00_hCI5LWZGKxfGute2akkT8364.result",
+                "quote": "init_method='tcp://192.168.1.101:23456',  # rank 0的IP:port"
+              },
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。"
+              },
+              {
+                "event_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+                "quote": "由于昇腾AI处理器初始化进程组时initmethod只支持env://"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21",
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程（backend=\"hccl\"、init_process_group、MASTER_ADDR/PORT/RANK/WORLD_SIZE、torchrun多机参数、set_device、DistributedSampler骨架），经官方文档事后核对核心均正确；但集群推荐torch_npu_run、HCCL_IF_BASE_PORT/HCCL_WHITELIST_DISABLE、端口预留与hccn_tool组网等具体参数和约束需补充，rank table问题自认不确定。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.distributed.init_process_group(backend=\"hccl\", init_method=\"env://\", world_size=..., rank=...)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "torchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 --master_addr=<ip> --master_port=29500 train.py"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "多机 HCCL 的 rank table 要求、网卡环境变量、版本配套这些关键操作性细节必须检索官方 CANN/昇腾文档核实"
+              },
+              {
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "torch_npu_run方式**（集群场景推荐）**"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_ViTjF0Kyvj5weDomlutr8606.dispatch",
+              "call_00_kZnu01NwgTIZVqZBDY0L9568.dispatch",
+              "call_00_N2MilrvgKNQ0od214VCy1160.dispatch",
+              "call_00_jl1Y7mEJpuBEb4tLEgjJ7283.dispatch",
+              "call_00_teuXejZMLrWXF0um7del5896.dispatch",
+              "call_00_3l3VLrFtF38WCVdXwnPp0179.dispatch",
+              "call_00_vdVPp8ckN4UQA9aq5xdO3231.dispatch",
+              "call_00_9CCDbIyof0xLyUf2a30x2526.dispatch",
+              "call_00_hCI5LWZGKxfGute2akkT8364.dispatch",
+              "call_00_nV1549zf00poZBfmfkwU1228.dispatch",
+              "call_00_TEgzdPjW5fVcWog4TYMa1327.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "N/A",
+            "reason": "原题为操作方法类问题（DDP+HCCL 初始化与启动方式），不要求锁定库/工具链/soc 具体版本，按规则记 N/A。答案虽标注了文档版本（TorchNPU 6.0.RC1/6.0.0/7.0.0）并提示按本机版本对照文档，但无需据此定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方页面按 TorchNPU 版本分开（URL 段不同）：`60RC1`（6.0.RC1）、`600`（6.0.0）、`700`（7.0.0）、`2600`（26.0.0）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-27"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "答案给出可直接照抄的完整命令（torchrun、torch_npu_run、sysctl 端口预留、hccn_tool 组网检测）及模型脚本代码，仅需替换明确标注的 IP、端口、脚本名等环境值；扣分点：torchrun 路径中 source ./test/env_npu.sh 的内容未提供（答案已自述未取得原文），该文件需用户自行补充。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR \\\n  --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "`source ./test/env_npu.sh` 中 env_npu.sh 的**具体内容**官方页面未展开（多为 ModelZoo 提供，需按所跑模型仓库获取）；本文未能取得其原文。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-28",
+              "ev-29"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "6个独立官方文档：4个取得直接正文但完整性无独立起止证据（各记4-5候选），2个仅返回标题/评分框架无正文（记2）。等权均值区间[3.33,4.0]。"
+              },
+              {
+                "metric": "M7",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程（backend=\"hccl\"、init_process_group、MASTER_ADDR/PORT/RANK/WORLD_SIZE、torchrun多机参数、set_device、DistributedSampler骨架），经官方文档事后核对核心均正确；但集群推荐torch_npu_run、HCCL_IF_BASE_PORT/HCCL_WHITELIST_DISABLE、端口预留与hccn_tool组网等具体参数和约束需补充，rank table问题自认不确定。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "6个独立官方文档：4个取得直接正文但完整性无独立起止证据（各记4-5候选），2个仅返回标题/评分框架无正文（记2）。等权均值区间[3.33,4.0]。"
+            },
+            {
+              "metric": "M7",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程（backend=\"hccl\"、init_process_group、MASTER_ADDR/PORT/RANK/WORLD_SIZE、torchrun多机参数、set_device、DistributedSampler骨架），经官方文档事后核对核心均正确；但集群推荐torch_npu_run、HCCL_IF_BASE_PORT/HCCL_WHITELIST_DISABLE、端口预留与hccn_tool组网等具体参数和约束需补充，rank table问题自认不确定。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_ViTjF0Kyvj5weDomlutr8606.result",
+            "field": "response",
+            "sha256": "8a4eb986f03b8f879d3a943f8c8d2d22e54d09ad8b0bc4cdd2dee31e8c60a9f7",
+            "start": 75,
+            "end": 126,
+            "quote": "## 1. [多卡分布式训练-TorchNPU6.0.RC1-昇腾社区 - hiascend.com]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 301,
+            "end": 309,
+            "quote": "# 多机多卡场景",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_N2MilrvgKNQ0od214VCy1160.result",
+            "field": "response",
+            "sha256": "cb744fe1a0129cc701372b1c901d7964168c66baff3e23e8a48229e26312f94d",
+            "start": 0,
+            "end": 84,
+            "quote": "**标题**: 拉起多卡训练脚本示例-附录-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区\n\n获取效率\n\n正确性\n\n完整性\n\n易理解",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+            "field": "response",
+            "sha256": "40fab8e09b7601404bc2826d3b97875996ecd758184305b3b617b7e3e6c0d8be",
+            "start": 298,
+            "end": 322,
+            "quote": "# torch_npu_run\n\n#### 简介",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 5932,
+            "end": 6041,
+            "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=(args.node_rank)*(args.nproc_per_node) + local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 11793,
+            "end": 11849,
+            "quote": "MASTER_ADDR=xxxx                               # 主节点IP地址",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 617,
+            "end": 655,
+            "quote": "也可以通过环境变量HCCL_IF_BASE_PORT指定Host网卡起始端口",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 10283,
+            "end": 10319,
+            "quote": "torch_npu.npu.set_device(local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+            "field": "response",
+            "sha256": "40fab8e09b7601404bc2826d3b97875996ecd758184305b3b617b7e3e6c0d8be",
+            "start": 3418,
+            "end": 3568,
+            "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+            "field": "response",
+            "sha256": "876e6b19dd2d64b93bbc726f56e58e502914840652512e38ddfd79406e3a40cf",
+            "start": 5050,
+            "end": 5128,
+            "quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(training_data)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 42,
+            "end": 83,
+            "quote": "PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+            "field": "response",
+            "sha256": "40fab8e09b7601404bc2826d3b97875996ecd758184305b3b617b7e3e6c0d8be",
+            "start": 8,
+            "end": 70,
+            "quote": "torch_npu_run-通信性能优化-PyTorch框架特性指南-模型开发-TorchNPU7.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_teuXejZMLrWXF0um7del5896.result",
+            "field": "response",
+            "sha256": "d29805e4c1044ae7b53091c725f3a64a79455d9f203e4ba2ab50bec47cd95498",
+            "start": 8,
+            "end": 71,
+            "quote": "torch_npu_run-通信性能优化-PyTorch框架特性指南-模型开发-TorchNPU26.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_ViTjF0Kyvj5weDomlutr8606.result",
+            "field": "response",
+            "sha256": "8a4eb986f03b8f879d3a943f8c8d2d22e54d09ad8b0bc4cdd2dee31e8c60a9f7",
+            "start": 1010,
+            "end": 1042,
+            "quote": "hccl 分布式训练踩坑：从单机到多机的那些事 - CSDN博客",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_ViTjF0Kyvj5weDomlutr8606.result",
+            "field": "response",
+            "sha256": "8a4eb986f03b8f879d3a943f8c8d2d22e54d09ad8b0bc4cdd2dee31e8c60a9f7",
+            "start": 1276,
+            "end": 1311,
+            "quote": "完整教程：昇腾CANN HCCL深度解析：构建分布式AI训练的高速通信",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_nV1549zf00poZBfmfkwU1228.result",
+            "field": "response",
+            "sha256": "ff5590d41634a6220d6cab296cb0581c70e40e8a5c58657f2cb773a241635a56",
+            "start": 64,
+            "end": 107,
+            "quote": "多卡分布式训练 (DDP + HCCL) on Ascend NPU | AI ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_nV1549zf00poZBfmfkwU1228.result",
+            "field": "response",
+            "sha256": "ff5590d41634a6220d6cab296cb0581c70e40e8a5c58657f2cb773a241635a56",
+            "start": 953,
+            "end": 983,
+            "quote": "HCCL 集合通信库架构剖析——昇腾 NPU 多机多卡训练的",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_nV1549zf00poZBfmfkwU1228.result",
+            "field": "response",
+            "sha256": "ff5590d41634a6220d6cab296cb0581c70e40e8a5c58657f2cb773a241635a56",
+            "start": 1229,
+            "end": 1261,
+            "quote": "昇腾NPU上MindSpore分布式训练实战：环境配置、并行策略",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_jl1Y7mEJpuBEb4tLEgjJ7283.result",
+            "field": "response",
+            "sha256": "e999d18e2deb48256437a5a37ae318f2f6a8bf96265b6f074fe73ce9c8b31624",
+            "start": 1636,
+            "end": 1677,
+            "quote": "DeepSeek-V4 昇腾训练部署全指南：基于 TorchTitan-NPU 的",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_hCI5LWZGKxfGute2akkT8364.result",
+            "field": "response",
+            "sha256": "da51bead019005b3fbfc48a876e15c9cc6bc50f38fdc04f8308d16c5d4c4aa79",
+            "start": 1537,
+            "end": 1591,
+            "quote": "hccl需要你手动写一个`rank file`（类似MPI的hostfile），告诉它哪个NPU连哪个NPU",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_00_hCI5LWZGKxfGute2akkT8364.result",
+            "field": "response",
+            "sha256": "da51bead019005b3fbfc48a876e15c9cc6bc50f38fdc04f8308d16c5d4c4aa79",
+            "start": 3390,
+            "end": 3448,
+            "quote": "init_method='tcp://192.168.1.101:23456',  # rank 0的IP:port",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 5325,
+            "end": 5360,
+            "quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+            "field": "response",
+            "sha256": "876e6b19dd2d64b93bbc726f56e58e502914840652512e38ddfd79406e3a40cf",
+            "start": 2726,
+            "end": 2761,
+            "quote": "由于昇腾AI处理器初始化进程组时initmethod只支持env://",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c489774628219ed39edf9b1c32cec4c0f50812eb8fcc6a77d0ba040220b82700",
+            "start": 708,
+            "end": 812,
+            "quote": "torch.distributed.init_process_group(backend=\\\"hccl\\\", init_method=\\\"env://\\\", world_size=..., rank=...)",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-25",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c489774628219ed39edf9b1c32cec4c0f50812eb8fcc6a77d0ba040220b82700",
+            "start": 1266,
+            "end": 1366,
+            "quote": "torchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 --master_addr=<ip> --master_port=29500 train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 6559,
+            "end": 6586,
+            "quote": "torch_npu_run方式**（集群场景推荐）**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 6351,
+            "end": 6438,
+            "quote": "官方页面按 TorchNPU 版本分开（URL 段不同）：`60RC1`（6.0.RC1）、`600`（6.0.0）、`700`（7.0.0）、`2600`（26.0.0）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 4382,
+            "end": 4536,
+            "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR \\\n  --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 7138,
+            "end": 7232,
+            "quote": "`source ./test/env_npu.sh` 中 env_npu.sh 的**具体内容**官方页面未展开（多为 ModelZoo 提供，需按所跑模型仓库获取）；本文未能取得其原文。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 1993,
+            "end": 2120,
+            "quote": "dist.init_process_group(\n    \"hccl\",\n    rank=(args.node_rank)*(args.nproc_per_node) + local_rank,\n    world_size=world_size,\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 5932,
+            "end": 6041,
+            "quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=(args.node_rank)*(args.nproc_per_node) + local_rank)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 4382,
+            "end": 4536,
+            "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR \\\n  --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+            "field": "response",
+            "sha256": "40fab8e09b7601404bc2826d3b97875996ecd758184305b3b617b7e3e6c0d8be",
+            "start": 3418,
+            "end": 3568,
+            "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-34",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 3367,
+            "end": 3487,
+            "quote": "MASTER_ADDR=xxxx              # 主节点IP\nMASTER_PORT=6004              # 未占用端口\nNODE_RANK=0                   # 主节点为0，其他节点按序",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-35",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 11793,
+            "end": 11980,
+            "quote": "MASTER_ADDR=xxxx                               # 主节点IP地址\n   MASTER_PORT=6004                               # 端口号选一个未被占用的端口即可\n   NODE_RANK=0                                    # 本机序号，主节点为0",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-36",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 4013,
+            "end": 4044,
+            "quote": "export HCCL_WHITELIST_DISABLE=1",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-37",
+            "event_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+            "field": "response",
+            "sha256": "876e6b19dd2d64b93bbc726f56e58e502914840652512e38ddfd79406e3a40cf",
+            "start": 10970,
+            "end": 11001,
+            "quote": "export HCCL_WHITELIST_DISABLE=1",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-38",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 2122,
+            "end": 2239,
+            "quote": "torch_npu.npu.set_device(local_rank)          # 用 local_rank 自动获取 device 号\ndevice = torch.device(f'npu:{local_rank}')",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-39",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f25a8f9ce315a28ec09ea3ebdad024ca3509976a5ca4a5cd84e02338a86fb045",
+            "start": 2410,
+            "end": 2588,
+            "quote": "train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank)\ntrain_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-40",
+            "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+            "field": "response",
+            "sha256": "bb1b688abdcf2d5fd0dff366b857e163f9f2f28b1e787a581c26961f180a6b0e",
+            "start": 10702,
+            "end": 10892,
+            "quote": "train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank)\n       train_loader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-9726a2c06b3f-predictors.json": "428d2c5a85f0116e773de2591eb02ef1e3c964f08a42d95cf4ab10f6a8862f9f",
+          "reviewed/development/case-9726a2c06b3f-outcome.json": "233463a354546bfe7834a82783fca39f87b0a9a9643d4a67fbbebc2d1abda519"
+        },
+        "m2_documents": [
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0022.html",
+            "version": "TorchNPU6.0.0",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/700/ptmoddevg/Frameworkfeatures/featuresguide_00007.html",
+            "version": "TorchNPU7.0.0",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0024.html",
+            "version": "TorchNPU6.0.RC1",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0086.html",
+            "version": "TorchNPU6.0.RC1",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0074.html",
+            "version": "TorchNPU6.0.0",
+            "status": "title_metadata_only",
+            "score_range": [
+              2,
+              2
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/2600/ptmoddevg/Frameworkfeatures/docs/zh/framework_feature_guide_pytorch/torch_npu_run.md",
+            "version": "TorchNPU26.0.0",
+            "status": "title_metadata_only",
+            "score_range": [
+              2,
+              2
+            ]
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "多机 HCCL 的 rank table 要求、网卡环境变量、版本配套这些关键操作性细节必须检索官方 CANN/昇腾文档核实"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+                "quote": "torch_npu.npu.set_device(local_rank)\n      #获取device号\n      device = torch.device(f'npu:{local_rank}')"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

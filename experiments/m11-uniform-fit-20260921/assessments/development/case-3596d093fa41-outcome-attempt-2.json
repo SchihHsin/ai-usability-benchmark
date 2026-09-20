@@ -1,0 +1,321 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "dummy_input = torch.randn(BATCH_SIZE, 3, 224, 224)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_FZywUOX7f8Ue0kn4mJJv3099.result",
+      "evidence_quote": "BATCH_SIZE = 32\n   dummy_input=torch.randn(BATCH_SIZE, 3, 224, 224)",
+      "verification": "source",
+      "reason": "最终答案给出 torch.onnx.export 接口与 dummy input shape (32,3,224,224)，与官方文档示例一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_FZywUOX7f8Ue0kn4mJJv3099.result",
+      "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "verification": "source",
+      "reason": "答案给出 trtexec 完整命令及 Python API（builder.build_serialized_network）两条构建路径，均与官方来源一致。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "--memPoolSize=<pool_spec> | workspace/tactic 内存池（如 workspace:1G）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_zMDkoJ219VsuERE82WI10253.result",
+      "evidence_quote": "–-memPoolSize=<pool_spec>",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案覆盖 workspace（--memPoolSize、set_memory_pool_limit）、精度（--fp16/--int8/--stronglyTyped）与 optimization profile（--minShapes/--optShapes/--maxShapes），均有官方来源支持。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "engine = runtime.deserialize_cuda_engine(engine_bytes)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_JI5pY5IUAwmiQprKEyEI0489.result",
+      "evidence_quote": "engine = runtime.deserialize_cuda_engine(engine_bytes)",
+      "verification": "source",
+      "reason": "答案给出 Python 反序列化接口及 trtexec --loadEngine 方式，与官方 Python API 文档一致。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "context.set_tensor_address(input_name, int(d_input))",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_JI5pY5IUAwmiQprKEyEI0489.result",
+      "evidence_quote": "context.execute_async_v3(stream)",
+      "verification": "source",
+      "reason": "答案给出 execute_async_v3 + set_tensor_address 推理接口及 ONNXClassifierWrapper.predict 封装，均有官方来源。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "序列化 engine **不跨平台/跨 GPU 型号可移植**；跨版本需 `--versionCompatible` 并用 lean/dispatch runtime。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_ixoWKkusMdlCMRSAqshO9327.result",
+      "evidence_quote": "Serialized engines are not portable across platforms",
+      "verification": "source",
+      "reason": "答案列出可核验检查点：SM 7.5+、驱动 r535+/r580+、engine 不跨平台/GPU、--versionCompatible 跨版本限制、ORT 1.27+ 配 TRT 11.x，均有官方来源支持。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "所有关键组件均定到具体版本且有依据：TensorRT 11.3.0、CUDA 13.4（TRT 11.3.0 包）、驱动 r535+/CUDA13 需 r580+、ONNX 1.20.0/opset ≤25、PyTorch ≥2.0（官方测试范围）、ORT 1.27+，配套关系无未解决冲突，并列出来源表。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "TensorRT 当前主线：11.3.0"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "Debian/RPM/tar/zip 包基于 **CUDA Toolkit 13.4**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "命令与代码完整可照抄：安装、导出、trtexec 命令（含动态 shape/FP16/INT8 变体）、可直接运行的端到端 Python 脚本、ONNXClassifierWrapper 用法及 cuda-python 补丁步骤，前置条件（pip 不含 trtexec 等）明确，仅需替换路径/模型名等环境值；答案如实声明未实际运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "python3 trt_end_to_end.py resnet50-v1-12.onnx"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "pip install tensorrt            # 或 tensorrt-cu13 / tensorrt-cu12，与驱动/CUDA 匹配"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "--memPoolSize=<pool_spec> | workspace/tactic 内存池（如 workspace:1G）"
+        }
+      ]
+    }
+  ],
+  "case": "case-3596d093fa41",
+  "task_id": "A",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "dummy_input = torch.randn(BATCH_SIZE, 3, 224, 224)",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_FZywUOX7f8Ue0kn4mJJv3099.result",
+        "evidence_quote": "BATCH_SIZE = 32\n   dummy_input=torch.randn(BATCH_SIZE, 3, 224, 224)",
+        "verification": "source",
+        "reason": "最终答案给出 torch.onnx.export 接口与 dummy input shape (32,3,224,224)，与官方文档示例一致。"
+      },
+      {
+        "id": 2,
+        "status": "supported",
+        "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_FZywUOX7f8Ue0kn4mJJv3099.result",
+        "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "verification": "source",
+        "reason": "答案给出 trtexec 完整命令及 Python API（builder.build_serialized_network）两条构建路径，均与官方来源一致。"
+      },
+      {
+        "id": 3,
+        "status": "supported",
+        "answer_quote": "--memPoolSize=<pool_spec> | workspace/tactic 内存池（如 workspace:1G）",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_zMDkoJ219VsuERE82WI10253.result",
+        "evidence_quote": "–-memPoolSize=<pool_spec>",
+        "verification": "source",
+        "reason": "答案覆盖 workspace（--memPoolSize、set_memory_pool_limit）、精度（--fp16/--int8/--stronglyTyped）与 optimization profile（--minShapes/--optShapes/--maxShapes），均有官方来源支持。"
+      },
+      {
+        "id": 4,
+        "status": "supported",
+        "answer_quote": "engine = runtime.deserialize_cuda_engine(engine_bytes)",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_JI5pY5IUAwmiQprKEyEI0489.result",
+        "evidence_quote": "engine = runtime.deserialize_cuda_engine(engine_bytes)",
+        "verification": "source",
+        "reason": "答案给出 Python 反序列化接口及 trtexec --loadEngine 方式，与官方 Python API 文档一致。"
+      },
+      {
+        "id": 5,
+        "status": "supported",
+        "answer_quote": "context.set_tensor_address(input_name, int(d_input))",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_JI5pY5IUAwmiQprKEyEI0489.result",
+        "evidence_quote": "context.execute_async_v3(stream)",
+        "verification": "source",
+        "reason": "答案给出 execute_async_v3 + set_tensor_address 推理接口及 ONNXClassifierWrapper.predict 封装，均有官方来源。"
+      },
+      {
+        "id": 6,
+        "status": "supported",
+        "answer_quote": "序列化 engine **不跨平台/跨 GPU 型号可移植**；跨版本需 `--versionCompatible` 并用 lean/dispatch runtime。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_ixoWKkusMdlCMRSAqshO9327.result",
+        "evidence_quote": "Serialized engines are not portable across platforms",
+        "verification": "source",
+        "reason": "答案列出可核验检查点：SM 7.5+、驱动 r535+/r580+、engine 不跨平台/GPU、--versionCompatible 跨版本限制、ORT 1.27+ 配 TRT 11.x，均有官方来源支持。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 5,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "所有关键组件均定到具体版本且有依据：TensorRT 11.3.0、CUDA 13.4（TRT 11.3.0 包）、驱动 r535+/CUDA13 需 r580+、ONNX 1.20.0/opset ≤25、PyTorch ≥2.0（官方测试范围）、ORT 1.27+，配套关系无未解决冲突，并列出来源表。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "TensorRT 当前主线：11.3.0"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "Debian/RPM/tar/zip 包基于 **CUDA Toolkit 13.4**"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "命令与代码完整可照抄：安装、导出、trtexec 命令（含动态 shape/FP16/INT8 变体）、可直接运行的端到端 Python 脚本、ONNXClassifierWrapper 用法及 cuda-python 补丁步骤，前置条件（pip 不含 trtexec 等）明确，仅需替换路径/模型名等环境值；答案如实声明未实际运行。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "python3 trt_end_to_end.py resnet50-v1-12.onnx"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "pip install tensorrt            # 或 tensorrt-cu13 / tensorrt-cu12，与驱动/CUDA 匹配"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "233c1da315e640538a380e27d022a61b",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "f91d04829ecb43daea96e91ab2bf598d",
+        "conversationRequestId": "f91d04829ecb43daea96e91ab2bf598d",
+        "agent": "cli"
+      },
+      {
+        "messageId": "233c1da315e640538a380e27d022a61b",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "f91d04829ecb43daea96e91ab2bf598d",
+        "conversationRequestId": "f91d04829ecb43daea96e91ab2bf598d",
+        "rawUsage": {
+          "prompt_tokens": 30276,
+          "completion_tokens": 1942,
+          "total_tokens": 32218,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 830,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 30276,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 830,
+          "credit": 5.93,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 30276,
+          "outputTokens": 1942,
+          "totalTokens": 32218,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 830
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "50e59759037e641c4a87e167b4dfbf40c0cea5c2fab3ab33c0751f7d82fcbc53",
+    "process_sha256": "611d6abc8808373b703d32740211419d67f54190aa64e5ae5bf9f722a19af6fa",
+    "elapsed_seconds": 62.48,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-24b0e19a2fa94324a99b68a972193dbe",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

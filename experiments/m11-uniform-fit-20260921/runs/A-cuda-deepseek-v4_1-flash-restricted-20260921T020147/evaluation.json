@@ -146,6 +146,714 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T18:33:32.801022+00:00",
+      "process_sha256": "79d79f93e71da86f77f9663c69c374a7f0ce0639a51c3193ec1b88bc26b6fec3",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)  # [官方] 导出",
+            "answer_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出导出接口 torch.onnx.export 及输入示例 dummy_input = torch.randn(BATCH_SIZE, 3, 224, 224)（含 shape 32x3x224x224），与官方抓取页 Exporting to ONNX from PyTorch 一节逐字一致，属 run-end 来源正文。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-12",
+              "ev-13"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "answer_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出官方 trtexec 完整构建命令，含 --onnx、--saveEngine、--stronglyTyped 三个参数，与来源正文 Convert the Model 节完全一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "TensorRT 支持 **FP32、FP16、FP8、BF16、INT8，以及对 INT4 权重的有限支持**；示例从 FP32 开始",
+            "answer_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_quote": "TensorRT supports FP32, FP16, FP8, BF16, and INT8 precisions, along with limited support for INT4 weights.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；精度设置（FP32 起步、支持精度清单、--stronglyTyped 强类型转换）有官方来源支持；答案还以先验补充形式给出 --fp16/--memPoolSize=workspace/--minShapes 等，并如实标注未经本轮来源核实，精度方面已满足该 criterion。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+            "answer_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_quote": "the wrapper loads and initializes the engine when running the first batch",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案通过 ONNXClassifierWrapper 加载 engine 文件，并说明 wrapper 在首批数据时才加载并初始化 engine；两者均与官方抓取页 Deploy the Model 节一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "predictions = trt_model.predict(dummy_input_batch)",
+            "answer_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_quote": "predictions = trt_model.predict(dummy_input_batch)",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出具体推理调用 trt_model.predict(dummy_input_batch)，并附 dummy batch 构造代码，与来源正文 Feed a batch of data 步骤一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "需 **ONNX Runtime 1.27 或更高** 搭配 **TensorRT 11.x**；更早的 ONNX Runtime 引用了在 **TensorRT 11.0** 中已移除的 API **[官方]**",
+            "answer_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "evidence_quote": "use ONNX Runtime 1.27 or later with TensorRT 11.x. Earlier ONNX Runtime releases reference APIs removed in TensorRT 11.0.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；版本不兼容的可核验检查点（ORT 1.27+/TRT 11.x 配套、TRT 11.0 移除 API、release notes 与 10.x→11.x 迁移参考链接）有官方来源支持；GPU/sm_xx 部分标注为先验未核实，但版本侧检查点已满足。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-22"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为NVIDIA TensorRT官方文档（Example Deployment Using ONNX），官方可发现性最佳档。",
+            "evidence": [
+              {
+                "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+                "quote": "## 1. [Example Deployment Using ONNX — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-onnx-deployment.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；单一独立官方文档（NVIDIA TensorRT quick-start-onnx-deployment）取得直接正文，含多个完整章节、逐字代码块与章节标题，末尾以正常参考链接收束，无截断或缺页证据，页面起止可核对。",
+            "evidence": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "**标题**: Example Deployment Using ONNX — NVIDIA TensorRT"
+              },
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "For a deeper look at the TensorRT C++ and Python runtime APIs, refer to the [Using the TensorRT Runtime API]"
+              }
+            ],
+            "m2_docs_note": "见m2_documents",
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "正文含torch.onnx.export导出（含dummy_input示例）、trtexec构建命令、精度选择与推理调用，主流程完整；但原题明确要求的workspace/optimization profile（--minShapes/--optShapes/--maxShapes、memPool）构建参数完全缺失，engine显式反序列化API与GPU/版本兼容检查点仅有间接或零散信息。",
+            "evidence": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)"
+              },
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+              },
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "TensorRT supports FP32, FP16, FP8, BF16, and INT8 precisions"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "页内出现版本信息（TensorRT 11.x、ONNX Runtime 1.27+、10x→11x迁移参考），可确定当前主线为TRT 11.x，但TensorRT与CUDA/GPU compute capability的配套选择条件在已取得正文中缺失，无法据本页确定有明确依据的适用版本选择。",
+            "evidence": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "use ONNX Runtime **1.27 or later** with TensorRT 11.x"
+              },
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "Earlier ONNX Runtime releases reference APIs removed in TensorRT 11.0."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "搜索结果中除1条官方源外有4条独立第三方来源（CSDN博客两篇、devpress、wenku.csdn专栏），按标题均与PyTorch→ONNX→TensorRT主题相关，去重计数4条，落在3—4档；因仅见摘要未取正文，保留上界到4的区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+                "quote": "## 2. [TensorRT与ONNX Runtime部署实战：从PyTorch到GPU加速 ...]"
+              },
+              {
+                "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+                "quote": "## 4. [PyTorch → ONNX → TensorRT：模型转换实战全流程与踩坑指南]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "存在第三方来源（搜索结果4条），但其正文均未抓取，仅有标题与摘要片段，无法评估作者可靠性、日期新鲜度或关键说法的可追溯依据与多源一致性，不能据标题片段打分。",
+            "evidence": [
+              {
+                "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+                "quote": "2025年4月11日 · ONNX（Open Neural Network Exchange） 是由 Facebook 和 Microsoft 推出的通用模型格式，旨在实现跨框架部署 …"
+              }
+            ],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已覆盖原题全部六方面：导出接口与dummy input shape（含dynamic_axes/opset）、trtexec构建命令、workspace/精度/optimization profile参数（--workspace、--fp16、--minShapes/--optShapes/--maxShapes及set_memory_pool_limit）、engine反序列化（trt.Runtime deserialize_cuda_engine）、推理执行（trtexec --loadEngine命令）、GPU/版本兼容检查点（engine不跨版本/GPU、CUDA与compute capability配套），且与官方正文核对未见矛盾（trtexec --onnx/--saveEngine用法一致）。自陈不确定处为精确版本配套矩阵等超纲细节，故保留下界4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "torch.onnx.export(\n    model,\n    dummy,\n    \"model.onnx\","
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "trtexec \\\n  --onnx=model.onnx \\\n  --saveEngine=model.engine \\\n  --fp16 \\"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "engine 不跨平台/跨版本通用，需在目标机器或同构环境构建。"
+              }
+            ],
+            "prior_event_id": "client-note-00005",
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=2",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_MVILUDoOVZSJIWPUMcgk1226.dispatch",
+              "call_00_ICt3Z0hEMlqWFve4yEVK3147.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "N/A",
+            "reason": "原题要求的是 PyTorch→ONNX→TensorRT 的完整步骤与命令，未要求锁定库/工具链具体版本，属无版本需要的任务，记 N/A；答案虽附带 TRT 11.x/ORT 1.27 兼容约束，但不构成本题定版要求。",
+            "evidence": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "This section walks through converting a pre-trained ResNet-50 model from the ONNX model zoo into a TensorRT engine using the ONNX-TRT parser and `trtexec`."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "主线操作链完整可照抄：导出代码、trtexec 命令、wget helper、cuda-python 返回元组的补丁脚本、wrapper 加载与 predict 推理，前置条件（numpy、补丁后的 onnx_helper.py、连续脚本会话）均明确；先验补充内容被清楚标注为未核实且非主线必需，无需补写或修正即可直接执行。答案如实声明所有命令未在本机运行，不构成降分依据。",
+            "evidence": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "The next three Python blocks are one continuous script. Paste them together (or keep the same interpreter session)."
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；单一独立官方文档（NVIDIA TensorRT quick-start-onnx-deployment）取得直接正文，含多个完整章节、逐字代码块与章节标题，末尾以正常参考链接收束，无截断或缺页证据，页面起止可核对。"
+              },
+              {
+                "metric": "M5",
+                "status": "bounded",
+                "reason": "搜索结果中除1条官方源外有4条独立第三方来源（CSDN博客两篇、devpress、wenku.csdn专栏），按标题均与PyTorch→ONNX→TensorRT主题相关，去重计数4条，落在3—4档；因仅见摘要未取正文，保留上界到4的区间。"
+              },
+              {
+                "metric": "M6",
+                "status": "bounded",
+                "reason": "存在第三方来源（搜索结果4条），但其正文均未抓取，仅有标题与摘要片段，无法评估作者可靠性、日期新鲜度或关键说法的可追溯依据与多源一致性，不能据标题片段打分。"
+              },
+              {
+                "metric": "M7",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已覆盖原题全部六方面：导出接口与dummy input shape（含dynamic_axes/opset）、trtexec构建命令、workspace/精度/optimization profile参数（--workspace、--fp16、--minShapes/--optShapes/--maxShapes及set_memory_pool_limit）、engine反序列化（trt.Runtime deserialize_cuda_engine）、推理执行（trtexec --loadEngine命令）、GPU/版本兼容检查点（engine不跨版本/GPU、CUDA与compute capability配套），且与官方正文核对未见矛盾（trtexec --onnx/--saveEngine用法一致）。自陈不确定处为精确版本配套矩阵等超纲细节，故保留下界4。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；单一独立官方文档（NVIDIA TensorRT quick-start-onnx-deployment）取得直接正文，含多个完整章节、逐字代码块与章节标题，末尾以正常参考链接收束，无截断或缺页证据，页面起止可核对。"
+            },
+            {
+              "metric": "M5",
+              "status": "bounded",
+              "reason": "搜索结果中除1条官方源外有4条独立第三方来源（CSDN博客两篇、devpress、wenku.csdn专栏），按标题均与PyTorch→ONNX→TensorRT主题相关，去重计数4条，落在3—4档；因仅见摘要未取正文，保留上界到4的区间。"
+            },
+            {
+              "metric": "M6",
+              "status": "bounded",
+              "reason": "存在第三方来源（搜索结果4条），但其正文均未抓取，仅有标题与摘要片段，无法评估作者可靠性、日期新鲜度或关键说法的可追溯依据与多源一致性，不能据标题片段打分。"
+            },
+            {
+              "metric": "M7",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已覆盖原题全部六方面：导出接口与dummy input shape（含dynamic_axes/opset）、trtexec构建命令、workspace/精度/optimization profile参数（--workspace、--fp16、--minShapes/--optShapes/--maxShapes及set_memory_pool_limit）、engine反序列化（trt.Runtime deserialize_cuda_engine）、推理执行（trtexec --loadEngine命令）、GPU/版本兼容检查点（engine不跨版本/GPU、CUDA与compute capability配套），且与官方正文核对未见矛盾（trtexec --onnx/--saveEngine用法一致）。自陈不确定处为精确版本配套矩阵等超纲细节，故保留下界4。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+            "field": "response",
+            "sha256": "1ba61791c07ddc640b332dae61ad82a7346f763280c95e195ff5bc57e5c0ce64",
+            "start": 102,
+            "end": 260,
+            "quote": "## 1. [Example Deployment Using ONNX — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-onnx-deployment.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 0,
+            "end": 55,
+            "quote": "**标题**: Example Deployment Using ONNX — NVIDIA TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 11109,
+            "end": 11189,
+            "quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 4487,
+            "end": 4577,
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 3489,
+            "end": 3549,
+            "quote": "TensorRT supports FP32, FP16, FP8, BF16, and INT8 precisions",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 837,
+            "end": 890,
+            "quote": "use ONNX Runtime **1.27 or later** with TensorRT 11.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 892,
+            "end": 962,
+            "quote": "Earlier ONNX Runtime releases reference APIs removed in TensorRT 11.0.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+            "field": "response",
+            "sha256": "1ba61791c07ddc640b332dae61ad82a7346f763280c95e195ff5bc57e5c0ce64",
+            "start": 503,
+            "end": 555,
+            "quote": "## 2. [TensorRT与ONNX Runtime部署实战：从PyTorch到GPU加速 ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_MVILUDoOVZSJIWPUMcgk1226.result",
+            "field": "response",
+            "sha256": "1ba61791c07ddc640b332dae61ad82a7346f763280c95e195ff5bc57e5c0ce64",
+            "start": 1025,
+            "end": 1073,
+            "quote": "## 4. [PyTorch → ONNX → TensorRT：模型转换实战全流程与踩坑指南]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 591,
+            "end": 746,
+            "quote": "This section walks through converting a pre-trained ResNet-50 model from the ONNX model zoo into a TensorRT engine using the ONNX-TRT parser and `trtexec`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 7691,
+            "end": 7806,
+            "quote": "The next three Python blocks are one continuous script. Paste them together (or keep the same interpreter session).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b2783d4e791f90d4ea74f8e6266d6d1c3c48e506fb8e6e72643c276e5eb551c5",
+            "start": 1338,
+            "end": 1429,
+            "quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)  # [官方] 导出",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 11109,
+            "end": 11189,
+            "quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b2783d4e791f90d4ea74f8e6266d6d1c3c48e506fb8e6e72643c276e5eb551c5",
+            "start": 2699,
+            "end": 2789,
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 4487,
+            "end": 4577,
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b2783d4e791f90d4ea74f8e6266d6d1c3c48e506fb8e6e72643c276e5eb551c5",
+            "start": 3196,
+            "end": 3264,
+            "quote": "TensorRT 支持 **FP32、FP16、FP8、BF16、INT8，以及对 INT4 权重的有限支持**；示例从 FP32 开始",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 3489,
+            "end": 3595,
+            "quote": "TensorRT supports FP32, FP16, FP8, BF16, and INT8 precisions, along with limited support for INT4 weights.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b2783d4e791f90d4ea74f8e6266d6d1c3c48e506fb8e6e72643c276e5eb551c5",
+            "start": 4872,
+            "end": 4959,
+            "quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 8634,
+            "end": 8707,
+            "quote": "the wrapper loads and initializes the engine when running the first batch",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b2783d4e791f90d4ea74f8e6266d6d1c3c48e506fb8e6e72643c276e5eb551c5",
+            "start": 5051,
+            "end": 5101,
+            "quote": "predictions = trt_model.predict(dummy_input_batch)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 8565,
+            "end": 8615,
+            "quote": "predictions = trt_model.predict(dummy_input_batch)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b2783d4e791f90d4ea74f8e6266d6d1c3c48e506fb8e6e72643c276e5eb551c5",
+            "start": 5353,
+            "end": 5460,
+            "quote": "需 **ONNX Runtime 1.27 或更高** 搭配 **TensorRT 11.x**；更早的 ONNX Runtime 引用了在 **TensorRT 11.0** 中已移除的 API **[官方]**",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-1bc9b4af97fb-predictors.json": "b1f9d4650a262ad4b471f7cc142afb9bf25c19a38bae9b933248046b8d96f9c2",
+          "reviewed/development/case-1bc9b4af97fb-outcome.json": "e610d38fcbf8ce127b3c37bd2414dc872f109dee54154784725b285e9add961a"
+        },
+        "m2_documents": [
+          {
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-onnx-deployment.html",
+            "title": "Example Deployment Using ONNX — NVIDIA TensorRT",
+            "fetch_event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+            "representation": "direct_body",
+            "completeness": "complete_no_truncation_evidence",
+            "score": 5
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M2",
+            "bad_refs": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "For a deeper look at the TensorRT C++ and Python runtime APIs, refer to the [Using the TensorRT Runtime API]"
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "text": "torch.onnx.export(\n    model,\n    dummy,\n    \"model.onnx\","
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "trtexec \\\n  --onnx=model.onnx \\\n  --saveEngine=model.engine \\\n  --fp16 \\"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "engine 不跨平台/跨版本通用，需在目标机器或同构环境构建。"
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)  # [官方] 导出"
+              }
+            ]
+          },
+          {
+            "requirement": 2,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "TensorRT 支持 **FP32、FP16、FP8、BF16、INT8，以及对 INT4 权重的有限支持**；示例从 FP32 开始"
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "predictions = trt_model.predict(dummy_input_batch)"
+              }
+            ]
+          },
+          {
+            "requirement": 6,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "需 **ONNX Runtime 1.27 或更高** 搭配 **TensorRT 11.x**；更早的 ONNX Runtime 引用了在 **TensorRT 11.0** 中已移除的 API **[官方]**"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "use ONNX Runtime 1.27 or later with TensorRT 11.x. Earlier ONNX Runtime releases reference APIs removed in TensorRT 11.0."
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "call_00_ICt3Z0hEMlqWFve4yEVK3147.result",
+                "quote": "The next three Python blocks are one continuous script. Paste them together (or keep the same interpreter session)."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
