@@ -5,12 +5,13 @@ import json
 def render(metrics,refs,root,reading_log):
     baseline=json.loads((root/'original-metric-baseline.json').read_text())
     originals={d['id']:d for d in baseline['metrics']}
-    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M10名称为“操作可执行性”；M11分界固定为0.20、0.40、0.60、0.80；等宽分类不代表效度或概率校准，历史阈值仅供对照。</mark></p>']
+    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M10名称为“操作可执行性”；M11采用0—100连续分，不转为1—5档；历史阈值仅供对照。</mark></p>']
     parts.append('<p>概念基线：<a href="file://'+baseline['source']+'#s4">18_metric_definition.html 第4节</a>。原定义逐字保留；旧分档和公式仅用于对照，不替换已确认的修订。</p>')
     nav=''.join(f'<a href="#{d["id"].lower()}">{d["id"]} · {H(d["name"])}</a>' for d in metrics)
     for d in metrics:
         key=d['id'];o=originals[key]
         parts.append(f'<section id="{key.lower()}" class="metric-review"><h2>{key} · {H(d["name"])}</h2><p><b>原名称：</b>{H(o["name"])}</p><p><b>原定义：</b>{H(o["definition"])}</p><p><b>原评价目的：</b>{H(o["purpose"])}</p><h3>拟采用评分规则</h3><table class="score-table"><thead><tr><th>分值</th><th>怎么判定</th></tr></thead><tbody>')
+        if key=='M11':parts.append('<tr><th>0–100</th><td><mark>M11＝100 × 原综合指数C；展示一位小数，保存完整精度。不划分五档。</mark></td></tr>')
         for n,t in enumerate(d['bands'],1):
             t=H(t)
             if key not in {'M2','M8'}:t='<mark>'+t+'</mark>'
@@ -19,9 +20,9 @@ def render(metrics,refs,root,reading_log):
         for r in d['refs']:
             title,url,scope,limit=refs[r]
             parts.append(f'<p><a href="{H(url)}">{H(title)}</a><br>{H(scope)}<br><b>不能据此推断：</b>{H(limit)}</p>')
-        if key=='M11':parts.append('<p><b>分档方法来源：</b><a href="https://pro.arcgis.com/en/pro-app/latest/help/mapping/layer-properties/data-classification-methods.htm">Esri ArcGIS Pro官方文档：Data classification methods — Equal interval</a>。本轮已读正文，明确定义将数值范围划成等宽子区间。该来源属于数值分类技术文档，不是AI置信度量表研究，只支持分档算法。OECD/JRC综合指标手册用于说明综合指标构造与稳健性审查，不提供本指标的阈值；本轮官网访问403，不能称为新读全文。</p>')
         if key=='M1':parts.append((root/'m1-session-literature.html').read_text()+(root/'m1-replay.html').read_text())
         parts.append('<p><b>自定部分：</b>'+H(d['own'])+'</p><details><summary>对照：最初分档与公式</summary><p>'+H(o['rubric'])+'</p><p>'+H(o['formula'])+'</p></details></section>')
+    parts.append((root/'m11-pilot-report.html').read_text())
     parts.append('<div id="supporting-materials"><h2>补充材料</h2><p>评分审阅主体在上方；过程材料保留在这里，按需展开。</p>')
     parts.append('<details><summary>文献查阅与采用过程</summary>'+''.join(reading_log)+'</details>')
     for file,label in [('m3-evidence-2026-09-20.html','此前M3讨论与原始例子（历史方案）'),('six-run-review-fragment.html','六轮材料检查与实际返回'),('two-hour-plan-fragment.html','执行计划和耗时估算')]:
