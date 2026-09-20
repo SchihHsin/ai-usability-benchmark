@@ -5,16 +5,16 @@ import json
 def render(metrics,refs,root,reading_log):
     baseline=json.loads((root/'original-metric-baseline.json').read_text())
     originals={d['id']:d for d in baseline['metrics']}
-    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M10名称为“操作可执行性”；M11采用0—100连续分，不转为1—5档；历史阈值仅供对照。</mark></p>']
+    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M8保留此前方案；M2按本轮实测修订。M10名称为“操作可执行性”；M11采用0—100连续分，不转为1—5档；历史阈值仅供对照。</mark></p>']
     parts.append('<p>概念基线：<a href="file://'+baseline['source']+'#s4">18_metric_definition.html 第4节</a>。原定义逐字保留；旧分档和公式仅用于对照，不替换已确认的修订。</p>')
     nav=''.join(f'<a href="#{d["id"].lower()}">{d["id"]} · {H(d["name"])}</a>' for d in metrics)
     for d in metrics:
         key=d['id'];o=originals[key]
         parts.append(f'<section id="{key.lower()}" class="metric-review"><h2>{key} · {H(d["name"])}</h2><p><b>原名称：</b>{H(o["name"])}</p><p><b>原定义：</b>{H(o["definition"])}</p><p><b>原评价目的：</b>{H(o["purpose"])}</p><h3>拟采用评分规则</h3><table class="score-table"><thead><tr><th>分值</th><th>怎么判定</th></tr></thead><tbody>')
-        if key=='M11':parts.append('<tr><th>0–100</th><td><mark>M11＝100 × 原综合指数C；展示一位小数，保存完整精度。不划分五档。</mark></td></tr>')
+        if key=='M11':parts.append('<tr><th>0–100</th><td><mark>M11＝100 × 三渠道均值 × 版本因子 × 成本因子；详见下方明确公式。展示一位小数，不划分五档。</mark></td></tr>')
         for n,t in enumerate(d['bands'],1):
             t=H(t)
-            if key not in {'M2','M8'}:t='<mark>'+t+'</mark>'
+            if key not in {'M8'}:t='<mark>'+t+'</mark>'
             parts.append(f'<tr><th>{n}分</th><td>{t}</td></tr>')
         parts.append('</tbody></table><p><b>判定、证据与边界：</b>'+H(d['action'])+'</p><h3>参考文献及支持范围</h3>')
         for r in d['refs']:
