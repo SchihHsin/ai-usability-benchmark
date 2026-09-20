@@ -1,0 +1,98 @@
+{
+  "case": "case-6f3a052d",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "__global__ void muladd_kernel(const float* __restrict__ a, ... out[idx] = a[idx] * b[idx] + c;",
+      "evidence_id": "call_00_jARnImOU7uNaSl0W1A8D4495.result",
+      "evidence_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) { int idx = blockIdx.x * blockDim.x + threadIdx.x; if (idx < numel) result[idx] = a[idx] * b[idx] + c; }",
+      "verification": "source",
+      "reason": "给出了具体可编译的 muladd CUDA kernel，逻辑与官方教程的 muladd_kernel 逐元素语义一致；边界判断、索引计算经代码检视正确。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "torch::Tensor muladd_cuda(torch::Tensor a, torch::Tensor b, double c) { auto out = torch::empty_like(a); ... muladd_kernel<<<blocks, threads, 0, stream>>>(...)",
+      "evidence_id": "call_00_jARnImOU7uNaSl0W1A8D4495.result",
+      "evidence_quote": "at::Tensor mymuladd_cuda(const at::Tensor& a, const at::Tensor& b, double c) { ... cudaStream_t stream = at::cuda::getCurrentCUDAStream(); muladd_kernel<<<(numel+255)/256, 256, 0, stream>>>(numel, a_ptr, b_ptr, c, result_ptr);",
+      "verification": "source",
+      "reason": "宿主入口（校验 + empty_like + 当前流启动）与官方 non-ABI-stable 示例结构一致；.cpp 中 TORCH_CHECK 前置校验与 schema \"mymuladd(Tensor a, Tensor b, float c) -> Tensor\" 齐备。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) { m.def(\"muladd\", &muladd, \"muladd: a*b+c (CUDA)\"); } ... TORCH_LIBRARY(muladd, m) { m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\"); } TORCH_LIBRARY_IMPL(muladd, CUDA, m) { m.impl(\"mymuladd\", &muladd_cuda); }",
+      "evidence_id": "call_00_jARnImOU7uNaSl0W1A8D4495.result",
+      "evidence_quote": "TORCH_LIBRARY(extension_cpp, m) { m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\"); } TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) { m.impl(\"mymuladd\", &mymuladd_cuda); }",
+      "verification": "source",
+      "reason": "两条注册路线（pybind11 与 TORCH_LIBRARY/IMPL）均给出具体代码，写法与官方教程一致，TORCH_BOX 备注（Stable ABI）也与参考一致。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "CUDAExtension( name=\"muladd\", sources=[\"muladd.cpp\", \"muladd_kernel.cu\"], extra_compile_args={\"cxx\": [\"-O3\"], \"nvcc\": [\"-O3\"]}, ) ... cmdclass={\"build_ext\": BuildExtension}",
+      "evidence_id": "call_00_lRoljcaEl0tEFTp52cua6351.result",
+      "evidence_quote": "CUDAExtension( name='cuda_extension', sources=['extension.cpp', 'extension_kernel.cu'], extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}, ...) ... cmdclass={ 'build_ext': BuildExtension }",
+      "verification": "source",
+      "reason": "setup.py 与官方 CUDAExtension 示例同构；构建命令 pip install --no-build-isolation -e .（f004 官方仓库）与 python setup.py install（经典教程）均有出处；JIT load() 用法与官方 load() 文档一致。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "import muladd ... out = muladd.muladd(a, b, 3.14) ... out2 = torch.ops.muladd.mymuladd(a, b, 3.14)",
+      "evidence_id": "call_00_jARnImOU7uNaSl0W1A8D4495.result",
+      "evidence_quote": "result = torch.ops.extension_cpp.mymuladd(*args)",
+      "verification": "source",
+      "reason": "安装/加载（import 触发注册、torch.ops.load_library、JIT load）与框架调用（pybind11 模块函数、torch.ops 命名空间）均给出可执行代码，调用方式与官方教程一致。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "torch.testing.assert_close(out, a * b + 3.14) ... torch.library.opcheck(torch.ops.muladd.mymuladd.default, (a, b, 3.14)) ... Compiling toolchains are not included when you install torch and must be additionally installed",
+      "evidence_id": "call_00_jARnImOU7uNaSl0W1A8D4495.result",
+      "evidence_quote": "torch.testing.assert_close(result, expected) ... torch.library.opcheck(torch.ops.extension_cpp.mymuladd.default, args)",
+      "verification": "source",
+      "reason": "给出 assert_close 数值对比与 opcheck 用法，并如实声明 opcheck 不验证梯度数学；前提约束（nvcc 需另装、ABI 兼容、TORCH_CUDA_ARCH_LIST/CUDA_HOME、Ninja/RDC）均来自官方文档原文。全部代码未经实机执行，但该要求为提供测试与前提，非运行验证。"
+    }
+  ],
+  "limitations": [
+    "全程未实机编译运行，runtime_validation=not_executed，代码正确性基于与官方源文对照及代码检视",
+    "过程日志未接入记录器，sha256/字符区间均为 null，引文以参考材料原文核对",
+    "官方经典 cpp_extension 教程与 Custom Operators Manual 原页未取得（仅 landing page），部分依据 docs.pytorch.ac.cn 镜像与官方 API 文档组合"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "403454363fdc37088f1b29b9e1f4b64f752eec74f2b63a55f6711f3114c19ebc",
+    "packet_sha256": "2699ab5bd29d319aa21f4653b8e30b33eeb6d8d6a312f8769764a2e1ba149f4d",
+    "process_sha256": "70e03ae452e8b4376926757bf0e0f7634874424df20ef44b1eb7757ee8f368f5",
+    "elapsed_seconds": 32.2,
+    "exit_code": 0,
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "fit-244675eba08f4654a80de851ee88a1be",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "case": "case-beae4991",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "__global__ __aicore__ void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z,\n                                      AddCustomTilingData tiling)",
+      "evidence_id": "call_00_DNd9VFm74RZdcbFBQ1ve7809.result",
+      "evidence_quote": "__global__ __aicore__ void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z,\n                                      AddCustomTilingData tiling)",
+      "verification": "source",
+      "reason": "答案给出完整 KernelAdd 五段式实现（Init/Process/CopyIn/Compute/CopyOut、TQue 双缓冲、Add(zL, xL, yL, tileLength)）及 __global__ __aicore__ 核函数入口，与证据源文逐字一致；答案还如实标注该写法为第三方教学简化版（tiling 结构体按值传参，非工程标准宏），未冒充官方写法。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "OP_ADD(AddCustom);",
+      "evidence_id": "call_00_UnO2K4i0ETU3qdUU4B1w0697.result",
+      "evidence_quote": "OP_ADD(AddCustom);",
+      "verification": "source",
+      "reason": "Host 侧要件齐全：TilingFunc（context->GetTilingData<AddCustomTilingData>()、SetBlockDim）、AddCustomTilingData 结构体、OpDef 原型注册（Input/Output 的 ParamType/DataType/Format、SetTiling、AddConfig 各 SOC、OP_ADD）均与证据源文逐字对应；且与 add_custom.json 原型一一对应的关系也有源文佐证。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);   // 内部调用 aclnn 两段式",
+      "evidence_id": "call_00_bzCFkdQsQ2TcIj8e4a6r4472.result",
+      "evidence_quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+      "verification": "source",
+      "reason": "框架绑定完整且与官方 TorchNPU 7.1.0 文档逐字一致：TORCH_LIBRARY(myops) schema、TORCH_LIBRARY_IMPL(myops, PrivateUse1/AutogradPrivateUse1)、AddCustomFunction 前反向绑定、pybind 导出均对得上；PyTorch>=2.1 用 PrivateUse1、以下用 XLA 的约束也是官方原文的转述。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "bash build.sh                       # 编译（CMake 驱动）",
+      "evidence_id": "call_00_CpHs6CvPp43ZKhjQ1eoH6505.result",
+      "evidence_quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom",
+      "verification": "source",
+      "reason": "构建链路完整：msopgen gen 命令、生成目录结构、./build.sh 编译、custom_opp_<target_os>_<target_architecture>.run 产物均与官方 msOpGen 文档一致；setup.py 打包命令（python3 setup.py build bdist_wheel）与官方 PyTorch 适配文档（call_00_bzCFkdQsQ2TcIj8e4a6r4472）一致。答案对 -f/-c 参数权威语义如实标注未核实，不影响已给出的命令本身有源可依。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run --install-path=\"xxx/MatmulCustom/installed\"",
+      "evidence_id": "call_00_CpHs6CvPp43ZKhjQ1eoH6505.result",
+      "evidence_quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run --install-path=\"xxx/MatmulCustom/installed\"",
+      "verification": "source",
+      "reason": "部署命令与官方文档逐字一致；安装后 aclnn_add_custom.h 出现在 .../opp/vendors/customize/op_api/ 有 gitcode（call_00_UnO2K4i0ETU3qdUU4B1w0697）与知乎实测（call_01_c5kQEDZs6DYDcO3iB2hy1994）佐证；Python 侧调用（custom_ops_lib.add_custom / npu_add_custom）与官方 PyTorch 文档一致。答案对 ASCEND_CUSTOM_OPP_PATH 的必要性如实标注未核实。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "跑通 `test pass`",
+      "evidence_id": "call_00_UnO2K4i0ETU3qdUU4B1w0697.result",
+      "evidence_quote": "Ascend 950PR / Ascend 950DT >= CANN 9.1.0",
+      "verification": "source",
+      "reason": "前提约束具体且有源：CANN 版本表（950PR/950DT>=9.1.0、A2/A3>=9.0.0）、source ${install_path}/cann/set_env.sh、torch_npu 安装，均与 gitcode 样例 README 及官方文档一致；正确性验证路径具体：aclnn 两段式调用（含 aclrtSynchronizeStream 后再读结果、golden 对比、输出 test pass）与证据源文的 main.cpp 流程和预期输出一致，另有与 x+y 对精度的建议。"
+    }
+  ],
+  "limitations": [
+    "本次评估仅比对所给参考文本，未执行任何代码或访问任何链接，'supported' 均指与来源文本逐字/逻辑一致，非运行验证。",
+    "Kernel 示例源自第三方教学文，采用 tiling 按值传参的非工程写法；答案声称的正式写法 REGISTER_TILING_DEFAULT/GET_TILING_DATA 在证据中仅有 gitcode 一句提及（'Host 侧通过…写入，Kernel 侧通过 REGISTER_TILING_DEFAULT / GET_TILING_DATA 读出'），无官方原文逐字确认，但答案已如实标注为未核实项。",
+    "答案步骤 10 中 torch.ops.myops.add_custom(x.npu(), y.npu()) 的调用形式在证据文本中未逐字出现（证据为 custom_ops_lib.add_custom / npu_add_custom），该具体调用形式属未核实。",
+    "CSDN 文的 aclnnTensorDesc 系列 API 被答案判定不可靠，与证据（官方样例用 aclTensor/aclCreateTensor）的矛盾判断一致，属合理存疑而非错误。",
+    "两个 hiascend 页面（call_00_6q2R4cMTC10JwUxQk7QP0902、call_01_lk82CSrgTtLGjsYySazv9911）仅返回标题/评分占位，未取得正文，相关内容只能依托其他来源。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "repair": "Inserted missing closing object brace before requirements array terminator; no semantic content changed.",
+    "original_response_sha256": "ba3e6c5894c31889b3914d3085298641e6f44903328e6c322bb7ad1234ece614",
+    "process_sha256": "f9a9eb6879c6ac4ffef836806606f11a16c1f38143dcfd8cfeb1ebfeec417776",
+    "packet_sha256": "eb2d510138d58f6e186f966f4eb0e63d68cc6126d93f3283ffd563bf5c078403",
+    "prompt_sha256": "17aab5ba52b243969925a8c8f2db92c6ecfe1d0be8e6781f0c9b26f5e78372cd"
+  },
+  "_review": {
+    "method": "Conservative quote validation, rubric consistency and limited explicit root content review; reviewer is not blinded; interim fitting diagnostics existed, changes follow explicit rubric and citation checks rather than a coefficient target",
+    "source_assessment_sha256": "ba7b5dfd240fcab930b3ffc60eb53e6809f189755e5a8f94d928e7c3920d8fee"
+  }
+}

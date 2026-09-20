@@ -1,0 +1,98 @@
+{
+  "case": "case-ca1435c0",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "__global__ void muladd_kernel(int numel, const float* __restrict__ a, ... result[idx] = a[idx] * b[idx] + c;",
+      "evidence_id": "call_00_7nAjJGoHU8P5lz8lnzkI6115.result",
+      "evidence_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) { ... if (idx < numel) result[idx] = a[idx] * b[idx] + c; }",
+      "verification": "source",
+      "reason": "给出了完整的 CUDA kernel 和 CPU 参考实现（逐元素 muladd 循环），与官方教程 Non-ABI-Stable 代码逐行一致，含边界检查、contiguous 处理和流式启动。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+      "evidence_id": "call_00_7nAjJGoHU8P5lz8lnzkI6115.result",
+      "evidence_quote": "TORCH_LIBRARY(extension_cpp, m) { m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\"); }",
+      "verification": "source",
+      "reason": "schema 定义（含 'float 对应 C++ double' 的说明）、CPU 实现入口和 PyInit__C Python 模块入口均在答案中给出，与教程 Non-ABI-Stable 路径及 Option 2 的 PyInit__C 代码一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) { m.impl(\"mymuladd\", &mymuladd_cuda); }",
+      "evidence_id": "call_00_7nAjJGoHU8P5lz8lnzkI6115.result",
+      "evidence_quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) { m.impl(\"mymuladd\", &mymuladd_cuda); }",
+      "verification": "source",
+      "reason": "CPU/CUDA dispatcher 注册、pybind11 备选路径与 torch.ops.load_library 加载方式均给出，且教程明确 'This makes the operator available in Python via torch.ops.extension_cpp.mymuladd'。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "from torch.utils.cpp_extension import CUDAExtension, BuildExtension ... cmdclass={\"build_ext\": BuildExtension}",
+      "evidence_id": "call_00_AwILguN08bJgjWo9J5317964.result",
+      "evidence_quote": "from torch.utils.cpp_extension import ( CppExtension, CUDAExtension, BuildExtension, CUDA_HOME, ) ... cmdclass={\"build_ext\": BuildExtension}",
+      "verification": "source",
+      "reason": "setup.py 与官方 extension-cpp 仓库 setup.py 原文一致（含 CUDA/Cpp 自动切换、Py_LIMITED_API、bdist_wheel cp39），另提供最简 CUDAExtension 版本，构建命令 'pip install --no-build-isolation -e .' 见仓库 README（call_00_heg8KJQ6dg4Bi91xtCzQ4029.result）。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "from extension_cpp import _C          # import 触发注册 ... result = torch.ops.extension_cpp.mymuladd(a, b, c)",
+      "evidence_id": "call_00_7nAjJGoHU8P5lz8lnzkI6115.result",
+      "evidence_quote": "The import from Python will load the .so consisting of this file in this extension, so that the TORCH_LIBRARY static initializers below are run.",
+      "verification": "source",
+      "reason": "安装（pip install --no-build-isolation -e .）、加载（import _C / torch.ops.load_library）与框架调用（torch.ops.extension_cpp.mymuladd）三步均给出且有官方出处。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "torch.testing.assert_close(result, expected) ... torch.library.opcheck(torch.ops.extension_cpp.mymuladd.default, (a, b, c))",
+      "evidence_id": "call_00_7nAjJGoHU8P5lz8lnzkI6115.result",
+      "evidence_quote": "torch.testing.assert_close(result, expected) ... torch.library.opcheck(torch.ops.extension_cpp.mymuladd.default, args)",
+      "verification": "source",
+      "reason": "数值正确性测试（assert_close 对比 a*b+c）与 opcheck 注册检查均给出，且保留了官方 'opcheck does not test that the gradients are mathematically correct' 的告诫；前提约束（PyTorch>=2.4 / 2.10、nvcc 需另装、Ninja RDC 必备）均有官方文档依据。"
+    }
+  ],
+  "limitations": [
+    "答案自述沙箱为 macOS 无 NVIDIA GPU，代码未实际编译运行，本评估仅为来源与代码核对，非执行验证。",
+    "教程页本身未内联 CLI 构建命令与 load() 示例，答案从官方 extension-cpp 仓库补全，来源一致性已核对。",
+    "部分版本约束（如 torch.version.cuda 与 nvcc 大版本匹配）答案明确标注来自第三方未经官方确认，未计入任何 requirement 的支撑。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "bd9590bf68f25442ec4e1e6d4f769f0f468821726ca6704792cebe702259e9bf",
+    "packet_sha256": "47a9db99d7174196ae53c895df1e57eeee80d0705f5f916bc6e4b555653d5216",
+    "process_sha256": "3e3c13a29f7cbd18bda4f8128a93b3d7d582797c70387d616a22f99c8dba9d2d",
+    "elapsed_seconds": 20.7,
+    "exit_code": 0,
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "fit-bd861f5da2da49afa3c72cf76b7f011e",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ]
+  }
+}

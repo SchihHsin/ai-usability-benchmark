@@ -1,0 +1,77 @@
+{
+  "case": "case-35ce563d",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "absent",
+      "answer_quote": "工程内 op_host/*.cpp（原型注册+InferShape/InferDataType+Tiling）与 op_kernel/*.cpp（Kernel 实现）需自行编写；**具体 Kernel/Host 代码本次未取回**（官方页面指向《Ascend C 算子开发指南》）。",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案明确承认未取回任何具体的算子计算实现代码。msOpGen 仅提供空工程模板（官方原文：'msOpGen工具仅生成空的算子工程模板，需要用户自行添加算子实现'），答案中唯一出现的 Kernel 签名 `extern \"C\" __global__ __aicore__ void matmul_custom(...)` 被答案自身标注为'模型先验、未经本次证据支持'。缺少最小可运行的计算逻辑。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "**步骤 1：准备算子原型 JSON** [{\"op\": \"MatmulCustom\", \"language\": \"cpp\", \"input_desc\": [...], \"output_desc\": [...]}]",
+      "evidence_id": "call_00_8NDg9bFUHxXv8PW2VrA08329.result",
+      "evidence_quote": "参考以下json文件，准备算子原型文件（以MatmulCustom算子为例）...\"op\": \"MatmulCustom\", \"language\": \"cpp\", \"input_desc\": [...], \"output_desc\": [...]",
+      "verification": "source",
+      "reason": "算子原型 JSON 完整引自官方 msOpGen 实践页，包含输入/输出描述、参数类型、格式与数据类型，与证据逐字段一致。"
+    },
+    {
+      "id": 3,
+      "status": "absent",
+      "answer_quote": "B1 已确认存在的官方入口（仅标题/摘要级证据，正文因 SPA 未取回）……具体文件、yaml 字段、编译命令**均为本次未核实的缺口**。",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "PyTorch 框架绑定的具体注册代码（OpPlugin yaml、TORCH_LIBRARY 绑定、C++ extensions 步骤）均未取回。答案自己指出来自 cnblogs 的第三方代码'与官方机制细节矛盾，可信度低'且'不采用为操作依据'（如 TORCH_LIBRARY_IMPL(npu, CPU, m) 的 CPU dispatch key 自相矛盾）。缺少可信的框架注册实现。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "**步骤 4：编译** ./build.sh …… cmake ../src -DCMAKE_SKIP_RPATH=TRUE / make …… \"ENABLE_BINARY_PACKAGE\": {\"type\": \"BOOL\", \"value\": \"True\"}",
+      "evidence_id": "call_00_8NDg9bFUHxXv8PW2VrA08329.result",
+      "evidence_quote": "4. 执行算子工程编译。./build.sh",
+      "verification": "source",
+      "reason": "编译命令（./build.sh、cmake/make）与编译配置（CMakePresets.json 的 ENABLE_BINARY_PACKAGE）分别由官方 msOpGen 页与 aclnn 单算子调用页正文佐证，命令与配置内容逐字一致。问题未明确要求 setup.py。"
+    },
+    {
+      "id": 5,
+      "status": "absent",
+      "answer_quote": "步骤 2–3 的**具体文件、yaml 字段、编译命令本次未取回，不能视为已给出**。",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "算子包安装命令（.run 部署）已由官方来源支持，但本需求还要求框架（PyTorch）调用方式。PyTorch 侧调用代码（torch.ops.npu.* 注册与调用）因 TorchNPU 正文未取回而缺失，仅 aclnn C++ 直接调用有证据。整体需求未完整满足，按部分满足记为 absent。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "**步骤 6：功能测试（msOpST）** msopst create -i \"xxx/MatmulCustom/op_host/matmul_custom.cpp\" -out ./st …… msopst run -i ./st/xxx.json -soc Ascendxxxyy -out ./st/out",
+      "evidence_id": "call_00_8NDg9bFUHxXv8PW2VrA08329.result",
+      "evidence_quote": "6. 执行以下命令，生成ST测试用例。msopst create -i \"xxx/MatmulCustom/op_host/matmul_custom.cpp\" -out ./st …… msopst run -i ./st/xxx.json -soc Ascendxxxyy -out ./st/out",
+      "verification": "source",
+      "reason": "ST 测试命令（msopst create/run）及前置环境变量（DDK_PATH、NPU_HOST_LIB）均由官方 msOpGen 页正文直接佐证，答案还补充了与 PyTorch 原生实现比对的建议。"
+    }
+  ],
+  "limitations": [
+    "TorchNPU 7.1.0 OpPlugin/C++ extensions 页面因 SPA 未能取回正文，PyTorch 集成路径仅到'机制名确认'层级，无法评估其具体正确性。",
+    "答案自身披露的第三方 cnblogs 流程存在已识别的自相矛盾（CPU dispatch key、yaml 结构），不宜作为 R3/R5 的替代证据。",
+    "msOpGen 使用前准备页（atlasopdev_16_0019）与 COMPATIBILITY.md 正文未取回，依赖清单与版本配套无法核实。",
+    "本评估仅基于所提供 reference_material 文本与答案自述，未执行任何代码验证。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "db3bd4b875a5bb909396f8b65ab83f7dbb20cf7186c9553806fc8cae36712775",
+    "process_sha256": "e6b64a4e3a8e9fae52a541cb58d2310b3da0c823e03bb7358a3ce3cae4be71ef",
+    "packet_sha256": "6562d2e7393127e0b4f493d2a21775be245b63ea759f04185ab50e13e1006de9",
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "duration_ms": 33875,
+    "client_is_error": false,
+    "note": "CLI list envelope recovered without a new model call; reasoning payloads excluded."
+  }
+}

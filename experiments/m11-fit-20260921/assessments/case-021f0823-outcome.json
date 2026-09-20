@@ -1,0 +1,98 @@
+{
+  "case": "case-021f0823",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "__global__ void muladd_kernel(int64_t numel, const float* __restrict__ a, const float* __restrict__ b, float c, float* __restrict__ result) { int64_t idx = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; if (idx < numel) result[idx] = a[idx] * b[idx] + c; }",
+      "evidence_id": "call_01_yu4fm0o4edsGhdDkw3H34484.result",
+      "evidence_quote": "__global__ void muladd_kernel(int numel, const float* a, const float* b, float c, float* result) { int idx = blockIdx.x * blockDim.x + threadIdx.x; if (idx < numel) result[idx] = a[idx] * b[idx] + c; }",
+      "verification": "source",
+      "reason": "答案给出了完整的 CUDA muladd kernel（含边界检查）以及 CPU 参考实现 mymuladd_cpu，与官方教程的非 ABI 稳定版本一致（答案用 int64_t 索引并加 __restrict__，属合理增强）。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+      "evidence_id": "call_01_yu4fm0o4edsGhdDkw3H34484.result",
+      "evidence_quote": "TORCH_LIBRARY(extension_cpp, m) { // Note that \"float\" in the schema corresponds to the C++ double type... m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\"); }",
+      "verification": "source",
+      "reason": "答案同时给出 TORCH_LIBRARY schema 定义、CPU 宿主实现以及备选 pybind11 入口（PYBIND11_MODULE），满足所选路线所需的接口与宿主侧入口。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "TORCH_LIBRARY_IMPL(my_ext, CUDA, m) { m.impl(\"mymuladd\", &mymuladd_cuda); }",
+      "evidence_id": "call_01_yu4fm0o4edsGhdDkw3H34484.result",
+      "evidence_quote": "TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) { m.impl(\"mymuladd\", &mymuladd_cuda); }",
+      "verification": "source",
+      "reason": "答案给出 CPU/CUDA 双后端的 TORCH_LIBRARY_IMPL 注册、__init__.py 中 from . import _C 触发静态注册，以及 torch.ops.my_ext.mymuladd 调用路径，与教程第 5/6/7 节一致；还提供纯 pybind11 替代方案并说明其不能与 torch.compile 组合的约束。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "cpp_extension.CUDAExtension( name=\"my_ext._C\", sources=[ \"csrc/my_ops.cpp\", \"csrc/my_ops_cuda.cu\", ], ... ) ... cmdclass={\"build_ext\": cpp_extension.BuildExtension},",
+      "evidence_id": "call_00_RVgGpp7k83ySijM2ClgG6442.result",
+      "evidence_quote": ">>> CUDAExtension( name='cuda_extension', sources=['extension.cpp', 'extension_kernel.cu'], extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}, ...) ... cmdclass={'build_ext': BuildExtension}",
+      "verification": "source",
+      "reason": "答案给出完整可用的 setup.py（CUDAExtension + BuildExtension + extra_compile_args 字典），结构来自 cpp_extension 官方示例（答案自述非逐字复制 extension-cpp 仓库，因两次抓取均 404，但组合方式与官方 API 文档一致）。还包含构建命令 TORCH_CUDA_ARCH_LIST/MAX_JOBS 用法，均有官方语义支持。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "pip install -e . --no-build-isolation ... print(torch.allclose(my_ext.mymuladd(a, b, 1.0), a * b + 1.0))",
+      "evidence_id": "call_01_yu4fm0o4edsGhdDkw3H34484.result",
+      "evidence_quote": "result = torch.ops.extension_cpp.mymuladd(*args)",
+      "verification": "source",
+      "reason": "答案给出安装/原地构建命令（pip install -e . / python setup.py build_ext --inplace）、包加载路径（__init__.py 触发注册）及框架调用方式 torch.ops.my_ext.mymuladd(a, b, c)，与教程 torch.ops.extension_cpp.mymuladd 调用方式一致。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "用 torch.library.opcheck(torch.ops.my_ext.mymuladd.default, args) 检查注册是否正确；opcheck 不校验梯度数学，需另写 torch.autograd.gradcheck。",
+      "evidence_id": "call_01_yu4fm0o4edsGhdDkw3H34484.result",
+      "evidence_quote": "torch.library.opcheck(torch.ops.extension_cpp.mymuladd.default, args) ... opcheck does not verify the math of gradients. Write separate tests, e.g. torch.autograd.gradcheck.",
+      "verification": "source",
+      "reason": "答案给出具体正确性测试（allclose 数值对比、opcheck、gradcheck 提示）以及前提/约束（需本机编译器与 CUDA toolkit、CUDA_HOME、TORCH_CUDA_ARCH_LIST 语义、stream/contiguous 要求），与官方文档一致。"
+    }
+  ],
+  "limitations": [
+    "答案自述 setup.py 为官方 API 文档与教程组合而成，extension-cpp 仓库 raw 链接两次返回 404（call_01_erOJDkgjr5MoqYSa3oxt7478.result / call_00_FIhfNd2AfLuUTDEnRl1U6569.result），无法逐字核对；但结构有官方示例支撑。",
+    "C++11 ABI 不匹配、grid 维度 2^31-1 上限、--use_fast_math/-gencode 具体取值、pyproject.toml 模板等点答案已自标为经验补充/部分未核实，所给参考来源（runebook.dev 第三方镜像）不在本次证据集中。",
+    "代码未实际编译运行，supported 判断基于与官方文档源文本的一致性比对（source），非 code_inspection 或执行验证。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "78155f89d442946e6194541e5d1b34d92dd2b7ab8c1215efb3bd795f8d8ca1c8",
+    "packet_sha256": "24e2c584a17302da60a7023e284a090ca93b87faeaabb1bb572f2da96ee06164",
+    "process_sha256": "06269f4992ff0ecb382ca80698eedbeee62c644a681be3286a7b5fb17b9a6601",
+    "elapsed_seconds": 30.6,
+    "exit_code": 0,
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "fit-2ea225683cc54253ae291476cb25f5d7",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ]
+  }
+}

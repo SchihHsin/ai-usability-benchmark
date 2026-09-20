@@ -1,0 +1,81 @@
+{
+  "case": "case-482bf22d",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "pip install tensorrt                 # 版本须匹配 CUDA 12.x 或 13.x",
+      "evidence_id": "call_00_ET_L4qABb5R0dupp4F2l5xj9534.result",
+      "evidence_quote": "TensorRT supports NVIDIA hardware with compute capability SM 7.5 or higher.",
+      "verification": "source",
+      "reason": "答案列出环境检查（nvidia-smi/nvcc）与工具安装（torch/onnx/onnxruntime/onnxsim/tensorrt），并给出版本前提：TRT 11.x、CUDA 12.9/13.4 两套构建、Python 3.10–3.14、SM 7.5+。Support Matrix 脚注逐条印证（'Built with CUDA Toolkit 12.9. Compatible with CUDA 12.x versions only'、'Built with CUDA Toolkit 13.4...CUDA 13.x only'、'Wheel packages...support Python 3.10, 3.11, 3.12, 3.13, and 3.14'、SM 7.5）；onnx 1.20.0、opset 9–25 由 ONNX Opset Guide 印证。输入前提（已训练 PyTorch 模型 + dummy input）亦明确。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "dynamo=True,          # 基于 torch.export.ExportedProgram（官方推荐）",
+      "evidence_id": "call_00_krxrmXtYKDUA0kxvugc50926.result",
+      "evidence_quote": "This is the recommended and default way to export models to ONNX.",
+      "verification": "source",
+      "reason": "导出准备完整且正确：model.eval()、dummy input 形状与推理一致、dynamo=True 推荐路径、dynamic_shapes（dynamo=True）与 dynamic_axes（dynamo=False）分工、旧路径示例，均与 PyTorch main 文档吻合，含 'Changed in version 2.9: dynamo is now True by default'、'dynamic_axes...Deprecated: Prefer specifying dynamic_shapes when dynamo=True'、ExportedProgram 三级降级策略（strict=False→strict=True）。答案自述 dynamic_shapes 示例键名 'x' 需按实际输入名调整，属使用提示而非错误。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "evidence_id": "call_00_CTJ3JC0gDchGo0J4Coqj0992.result",
+      "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "verification": "source",
+      "reason": "转换命令与官方 Quick Start 逐字一致；静态/动态/FP16 变体及关键 flag（--minShapes/--optShapes/--maxShapes、--memPoolSize、--workspace 已弃用）与官方 trtexec 标志说明吻合（'该标志已被弃用。您可以改用--memPoolSize'）。Python API 路径（build_serialized_network 等）未在抓取来源中核实（答案第 8 节自述），但本要求以具体命令即已满足。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "--minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:32x3x224x224",
+      "evidence_id": "call_00_CeMuDVTdLH0OCUWowhaS1529.result",
+      "evidence_quote": "如果输入模型是 ONNX 格式，请使用`--minShapes` 、 `--optShapes` 、 `--maxShapes`标志来控制输入形状的范围，包括批量大小。",
+      "verification": "source",
+      "reason": "张量名（input）、min/opt/max 形状（1/8/32x3x224x224）、精度条件（--fp16/--int8/--stronglyTyped、Python set_flag(FP16)、STRONGLY_TYPED）均具体给出。来源印证：ONNX 输入形状范围只认三组 Shapes 标志、--maxBatch 仅对 UFF/Caffe 有效、推理用 --shapes 而非 --batch、'--fp16、--int8、--noTF32、--best：指定网络级精度'；'trtexec 不提供校准功能'亦与答案 INT8 注记一致。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "trtexec --loadEngine=model_dynamic.engine --shapes=input:1x3x224x224",
+      "evidence_id": "call_00_CeMuDVTdLH0OCUWowhaS1529.result",
+      "evidence_quote": "`--loadEngine=<file>` ：从序列化计划文件加载引擎，而不是从输入 ONNX、UFF 或 Caffe 模型构建引擎。",
+      "verification": "source",
+      "reason": "产物明确（model.onnx、*.engine）。验证方法具体可执行：ONNX 用 onnxruntime InferenceSession 实跑并检查输出形状；engine 用 trtexec --loadEngine 加载运行 benchmark；官方 Opset Guide 亦建议 'verify import with TensorRT (trtexec --onnx=...)'。polygraphy 数值比对命令语法未经来源逐字核实（列入局限），但不影响 ONNX 与 engine 两级验证的完整性。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "序列化 engine 不跨平台（Linux/Windows 之间不可移植）；不跨 GPU 架构（除非开了 hardware compatibility mode，且依赖所选 compatibility level）",
+      "evidence_id": "call_00_ET_L4qABb5R0dupp4F2l5xj9534.result",
+      "evidence_quote": "Engines built with the version-compatible flag can run with newer TensorRT versions within the same major version.",
+      "verification": "source",
+      "reason": "部署方式与 Quick Start 一致：ONNXClassifierWrapper 加载 engine 并 predict（来源含该 helper 的 wget 与补丁说明），并给出底层 Runtime API（deserialize_cuda_engine/create_execution_context/set_input_shape）。约束条件与 Support Matrix 'Engine Portability' 三条逐条对应：不跨平台、版本兼容仅限同一大版本内、硬件兼容模式才可跨 GPU 架构。"
+    }
+  ],
+  "limitations": [
+    "TensorRT Python API 细节（EXPLICIT_BATCH 在 TRT 10/11 是否需显式传入、build_serialized_network 返回形态、build_engine 移除的具体版本）未在抓取来源中核实，答案第 8 节亦自述未核实。",
+    "torch.onnx.dynamo_export 的确切弃用版本、Polygraphy 在 TRT 11 下的最新子命令语法、dynamic_shapes 示例键名均未经来源核实（答案自述为未确定项）。",
+    "Support Matrix 为交互式页面，抓取仅得脚注；TRT 11.x 各小版本与 CUDA 12.9/13.4 构建、驱动最低版本的精确对应未逐项确认，仅能证明两套构建并存及 Python/SM 要求。",
+    "全部判断基于文档来源文本比对（verification=source），未实际执行任何命令或代码。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "bd1c80283f7fa030df56e8fba852fc8fd16e9f35a4c2565f9333a75591ab9b69",
+    "process_sha256": "1520677164456c8e3e0d93818292855c45b30fe5d479b91c09560d26045236cf",
+    "packet_sha256": "ac2b7205d20073123b91aa43aae229dbe3ef66833989e6fb13b7d38ce89afefc",
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "duration_ms": 131184,
+    "client_is_error": false,
+    "note": "CLI list envelope recovered without a new model call; reasoning payloads excluded."
+  },
+  "_review": {
+    "method": "Conservative quote validation, rubric consistency and limited explicit root content review; reviewer is not blinded; interim fitting diagnostics existed, changes follow explicit rubric and citation checks rather than a coefficient target",
+    "source_assessment_sha256": "4628133ee0a536bc16e99866edfa32bf63e851c0b9b2ead361775be13400ee21"
+  }
+}

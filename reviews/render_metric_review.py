@@ -20,6 +20,7 @@ def render(metrics,refs,root,reading_log):
         for r in d['refs']:
             title,url,scope,limit=refs[r]
             parts.append(f'<p><a href="{H(url)}">{H(title)}</a><br>{H(scope)}<br><b>不能据此推断：</b>{H(limit)}</p>')
+        if key=='M11':parts.append((root/'m11-fitting-fragment.html').read_text())
         if key=='M11':parts.append((root/'m11-coefficients-fragment.html').read_text())
         if key=='M1':parts.append((root/'m1-session-literature.html').read_text()+(root/'m1-replay.html').read_text())
         parts.append('<p><b>自定部分：</b>'+H(d['own'])+'</p><details><summary>对照：最初分档与公式</summary><p>'+H(o['rubric'])+'</p><p>'+H(o['formula'])+'</p></details></section>')
@@ -27,6 +28,7 @@ def render(metrics,refs,root,reading_log):
     parts.append((root/'skill-ab-report.html').read_text())
     parts.append((root/'m11-pilot-report.html').read_text())
     parts.append('<details><summary>M2/M11参考依据与试跑版本说明</summary><pre style="white-space:pre-wrap">'+H((root/'m2-m11-reference-and-run-scope.md').read_text())+'</pre></details>')
+    parts.append((root/'conversation-literature-fragment.html').read_text())
     parts.append('<div id="supporting-materials"><h2>补充材料</h2><p>评分审阅主体在上方；过程材料保留在这里，按需展开。</p>')
     parts.append('<details><summary>文献查阅与采用过程</summary>'+''.join(reading_log)+'</details>')
     for file,label in [('m3-evidence-2026-09-20.html','此前M3讨论与原始例子（历史方案）'),('six-run-review-fragment.html','六轮材料检查与实际返回'),('two-hour-plan-fragment.html','执行计划和耗时估算')]:

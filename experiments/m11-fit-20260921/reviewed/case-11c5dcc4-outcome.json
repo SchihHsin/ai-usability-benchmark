@@ -1,0 +1,82 @@
+{
+  "case": "case-11c5dcc4",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "extern \"C\" __global__ __aicore__ void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR workspace, GM_ADDR tiling)",
+      "evidence_id": "call_00_gT2ZuB4hXTTIMWP1yGs80016.result",
+      "evidence_quote": "extern \"C\" __global__ __aicore__ void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR workspace, GM_ADDR tiling)",
+      "verification": "source",
+      "reason": "答案完整给出最小加法算子的三部分实现：tiling 结构（BEGIN_TILING_DATA_DEF/totalLength/tileNum）、Host 侧 TilingFunc（set_totalLength/SetBlockDim）和 Kernel 侧 KernelAdd（Init/CopyIn/Compute/CopyOut/Process，GM→UB→Add→GM），与官方 quick_start 源文逐行一致，仅变量名等无害简写。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "this->Input(\"x\").ParamType(REQUIRED).DataType({ge::DT_FLOAT16}).Format({ge::FORMAT_ND}); ... this->AICore().SetTiling(optiling::TilingFunc); ... OP_ADD(AddCustom);",
+      "evidence_id": "call_00_gT2ZuB4hXTTIMWP1yGs80016.result",
+      "evidence_quote": "this->Input(\"x\").ParamType(REQUIRED).DataType({ge::DT_FLOAT16}).Format({ge::FORMAT_ND}); ... this->AICore().SetTiling(optiling::TilingFunc); ... OP_ADD(AddCustom);",
+      "verification": "source",
+      "reason": "所选路线（msOpGen+aclnn）所需接口均具体给出：原型 JSON（op/input_desc/output_desc/param_type/format/type）、OpDef 原型注册与 Tiling 绑定（OP_ADD/AddConfig）、生成命令 msopgen gen -c ai_core-<soc_version> -lan cpp 及 -f aclnn 说明，与 quick_start 和用户指南（'当用户使用 -f aclnn 时，生成 Ascend C 算子工程'）一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "TORCH_LIBRARY(myops, m) { m.def(\"add_custom(Tensor self, Tensor other) -> Tensor\"); ... EXEC_NPU_CMD(aclnnAddCustom, self, other, result); ... TORCH_LIBRARY_IMPL(myops, PrivateUse1, m)",
+      "evidence_id": "call_00_U1Ohv1b1B5K5XZqY7Qib2590.result",
+      "evidence_quote": "TORCH_LIBRARY(myops, m) { m.def(\"add_custom(Tensor self, Tensor other) -> Tensor\");       // 注册正向接口 ... EXEC_NPU_CMD(aclnnAddCustom, self, other, result); ... TORCH_LIBRARY_IMPL(myops, PrivateUse1, m)",
+      "verification": "source",
+      "reason": "框架绑定完整且与 TorchNPU 7.1.0 官方文档几乎逐字一致：schema 注册、autograd Function 前反向、PrivateUse1/AutogradPrivateUse1（含 2.1 以下改 XLA 的说明）、PYBIND11 导出及可选 TorchAir converter 均有出处。"
+    },
+    {
+      "id": 4,
+      "status": "absent",
+      "answer_quote": "python3 setup.py build bdist_wheel",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "code_inspection",
+      "reason": "最终答案仅列setup.py文件名及python3 setup.py build bdist_wheel，未给该构建配置内容；自定义算子与框架轮子构建链不能仅据命令视为完整。"
+    },
+    {
+      "id": 5,
+      "status": "absent",
+      "answer_quote": "python test/test_add_custom.py",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "code_inspection",
+      "reason": "最终答案未给框架wheel安装命令/实际张量调用用例；列出包装函数与测试文件名不能代替完整安装调用。"
+    },
+    {
+      "id": 6,
+      "status": "absent",
+      "answer_quote": "curl -fLO .../example/quick_start/msopgen/caller/",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "code_inspection",
+      "reason": "列出test_add_custom.py文件名但未提供其内容，caller下载命令还含...占位；不能认定已有具体可核验的正确性测试。"
+    }
+  ],
+  "limitations": [
+    "两条参考来源（call_00_fE32cgw88MDE4LTx3POW5245、call_00_dzw3l1VuHytlWS34UTTW7503）仅含标题与评级，无正文，未参与核对。",
+    "答案自述 aclnn '两段式'接口细节本轮未取到原文，caller 的 main.cpp 具体调用代码未随证据提供，该细节无法核实。",
+    "答案提到的 CANN 9.2beta1 版本引用未在所给证据文本中出现，无法佐证。",
+    "setup.py 文件内容未在答案与任何证据中给出（仅有命令）；因问题未明确要求其内容，未据此判 R4 缺失。",
+    "全部判定基于来源文本逐字比对，未执行任何命令或编译（答案亦声明 not_executed）。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "df5c17fc66ef25790c88428c716b27759278d45b4c25452ab8d1c18aa447d1b5",
+    "process_sha256": "2a270826d50412463696728aeed64b72d340c819a4818bba836ff750a22019c1",
+    "packet_sha256": "e7ac10d644c6ca221fa8644086174f097f50d53ae1c6e1d584b3c3e9975dce12",
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "duration_ms": 75223,
+    "client_is_error": false,
+    "note": "CLI list envelope recovered without a new model call; reasoning payloads excluded."
+  },
+  "_review": {
+    "method": "Conservative quote validation, rubric consistency and limited explicit root content review; reviewer is not blinded; interim fitting diagnostics existed, changes follow explicit rubric and citation checks rather than a coefficient target",
+    "source_assessment_sha256": "e98a675b39300860b8ea372c57ff15f91d882f646027df2d7950c74e56e7169f"
+  }
+}

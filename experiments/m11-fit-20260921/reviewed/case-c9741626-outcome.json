@@ -1,0 +1,103 @@
+{
+  "case": "case-c9741626",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "import torch; print(torch.__version__); print(torch.version.cuda); print(torch.backends.cudnn.version()) ... nvcc --version ... nvidia-smi ... cat /usr/include/cudnn_version.h | grep CUDNN_MAJOR -A 2",
+      "evidence_id": "call_00_BMgm8r1yY26PYhxCBnUH7955.result",
+      "evidence_quote": "$ nvidia-smi ... Driver Version: 580.65.06    CUDA Version: 13.0",
+      "verification": "source",
+      "reason": "回答给出 PyTorch/CUDA toolkit/驱动/cuDNN 四类组件的查询命令（第二节），命令本身为标准用法；nvidia-smi 输出格式与来源中的示例一致，其余命令属通用常识且与来源文档口径不冲突。"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "nvidia-smi 顶部的 \"CUDA Version\" ≠ 已安装的 toolkit 版本。它是「该驱动支持的最高 CUDA Runtime 版本」... 驱动向后兼容：新驱动可跑旧 CUDA；旧驱动跑不了超出其上限的新 CUDA",
+      "evidence_id": "call_00_BMgm8r1yY26PYhxCBnUH7955.result",
+      "evidence_quote": "applications built against any of the older CUDA Toolkits always continued to function on newer drivers due to binary backward compatibility, before CUDA 11, applications built against newer CUDA Toolkit releases were not supported on older drivers",
+      "verification": "source",
+      "reason": "回答第一节用四层结构区分驱动/CUDA runtime/toolkit/cuDNN/PyTorch wheel，并正确解释 nvidia-smi 顶部 CUDA Version 的含义与驱动向后兼容原则，与 NVIDIA 官方兼容性文档一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "PyTorch 官方发布/兼容矩阵：https://github.com/pytorch/pytorch/blob/main/RELEASE.md ... cuDNN 支持矩阵 ... NVIDIA CUDA 兼容性（最低驱动表）",
+      "evidence_id": "call_01_v6SQi4MfnDCn9sGldAJS2320.result",
+      "evidence_quote": "The page provides a **Release Compatibility Matrix** covering PyTorch versions 1.12 through 2.14",
+      "verification": "source",
+      "reason": "第七节列出 PyTorch RELEASE.md、pytorch.org 安装页/历史版本页、NVIDIA cuDNN Support Matrix、CUDA Compatibility、CUDA Toolkit Release Notes 等官方一手来源，且这些来源均在 reference_material 中被实际抓取核验。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "nvidia-smi 的 CUDA Version ≥ torch.version.cuda → runtime 层兼容 ... 编译自定义扩展时：本机 nvcc --version 的大版本必须等于 torch.version.cuda 的大版本 ... 选 wheel 时只需选对 CUDA 变体",
+      "evidence_id": "call_00_rYiN800p65uCL4gKhEgE0492.result",
+      "evidence_quote": "CUDA variant availability is version-specific. For example, `cu132` only appears for v2.12.0+; `cu124` spans v2.4.0–v2.6.0",
+      "verification": "source",
+      "reason": "第四节给出从实测版本选择配套组合的判定规则，第五节给出按 CUDA 变体选择 wheel 的具体安装命令，与官方 previous-versions 页的版本-变体映射一致。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 ... 编译自定义扩展时：本机 nvcc --version 的大版本必须等于 torch.version.cuda 的大版本，否则报 CUDA version mismatch",
+      "evidence_id": "call_00_rYiN800p65uCL4gKhEgE0492.result",
+      "evidence_quote": "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
+      "verification": "source",
+      "reason": "第五节的 pip 安装命令与官方 previous-versions 页逐字一致（2.6.0/cu124、2.7.1/cu128、2.13.0/cu132 均核对无误），并配合第四节规则形成不依赖猜测用户环境的条件化修复流程；回答也明确声明未在本机执行命令。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "cudaErrorCallRequiresNewerDriver | 用了 minor version compat 但特性需要新驱动 ... 实际数值请用第二节命令自查",
+      "evidence_id": "call_00_BMgm8r1yY26PYhxCBnUH7955.result",
+      "evidence_quote": "an application that relies on features introduced in a newer version of the toolkit and driver may return the following error on older drivers: `cudaErrorCallRequiresNewerDriver`",
+      "verification": "source",
+      "reason": "第六节给出修复后常见报错→原因→处置的对照表（含 no kernel image、driver too old、CUDA version mismatch、is_available()==False 等），并指示用第二节命令复查；cudaErrorCallRequiresNewerDriver 的成因与 NVIDIA 文档原文一致。注意：部分报错文案（如 driver too old 原句）未在来源中直接出现，属常识性内容，未执行验证。"
+    }
+  ],
+  "limitations": [
+    "所有判断基于 reference_material 中的抓取摘要而非完整原始页面，无法排除摘要遗漏或转述偏差",
+    "回答中 PyTorch 2.13/2.14 的 cuDNN 小版本号、PyTorch 2.3 及更早的 cuDNN 8.x CUDA 映射均未被 NVIDIA 侧来源交叉印证，回答第八节也自认未核实",
+    "第六节部分报错文案（The NVIDIA driver on your system is too old 等）无来源直接印证，且未在任何环境实际执行验证",
+    "未执行任何命令或代码，全部为文档级核验"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "229949683da32c6d685a799dc5e5d694209848089b0ecc005cd116627cda94b8",
+    "packet_sha256": "7ee8995aae944c5b58545cae595633c5ec503f648507b12e0fd972e02c5bbe38",
+    "process_sha256": "dbcf82953bda75592047002865a48564bf54fd17c3b383ed3646545289909f8a",
+    "elapsed_seconds": 37.5,
+    "exit_code": 0,
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "fit-049f72ae06c24c51b27a84010e00bd32",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ]
+  },
+  "_review": {
+    "method": "Conservative quote validation, rubric consistency and limited explicit root content review; reviewer is not blinded; interim fitting diagnostics existed, changes follow explicit rubric and citation checks rather than a coefficient target",
+    "source_assessment_sha256": "1b623f562eebad8cb19d24537e7e1ec64687461dd57804d00e3978593fa5cd71"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "case": "case-1e0fab07",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "npu-smi info                     # 看输出里的 Driver Version / Firmware Version\ncat /usr/local/Ascend/driver/version.info\ncat /usr/local/Ascend/ascend-toolkit/latest/version.cfg",
+      "evidence_id": "call_00_S2zJfrMiCLP18G4l155F5537.result",
+      "evidence_quote": "执行以下命令查看当前设备的固件（Firmware）和驱动（Driver）版本信息：npu-smi info ... 驱动包的安装信息文件通常位于 /usr/local/Ascend/driver/version.info",
+      "verification": "source",
+      "reason": "答案给出查询固件/驱动（npu-smi、version.info）、CANN（version.cfg、ascend_toolkit_install.info）、PyTorch/torch_npu（pip show、__version__）的完整命令，与CSDN博客和掘金文章中的命令一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "固件(Firmware) → 驱动(Driver/HDK) → CANN → torch_npu → PyTorch ... 注意区分两种编号（官方命名规则）：TorchNPU 产品版本 ... TorchNPU 安装包版本",
+      "evidence_id": "call_00_mXDKBCHraJEEh4YPF3IS5490.result",
+      "evidence_quote": "TorchNPU版本：标识产品的发布版本，采用独立于PyTorch的版本编号 ... TorchNPU安装包版本：以配套的PyTorch版本号为基础，通常采用`{PyTorch版本}`或`{PyTorch版本}.postN`的形式",
+      "verification": "source",
+      "reason": "答案的分层依赖关系和产品版本/安装包版本区分与官方COMPATIBILITY.md内容逐条对应；torch_npu编译期绑定CANN的说法也有掘金文章支持（编译时链接特定版本的CANN动态库）。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "官方配套表（**首选**）：`https://github.com/Ascend/pytorch/blob/master/COMPATIBILITY.md` ... 兼容性查询助手（按硬件型号+OS 查固件/驱动/CANN）：`https://www.hiascend.com/hardware/compatibility`",
+      "evidence_id": "call_00_mXDKBCHraJEEh4YPF3IS5490.result",
+      "evidence_quote": "固件与驱动的版本配套与所使用的昇腾硬件及CANN版本相关，具体选择请参考 [固件与驱动安装页面](https://www.hiascend.com/hardware/firmware-drivers/commercial)",
+      "verification": "source",
+      "reason": "答案列出官方配套表、gitcode发行版说明、兼容性查询助手、固件驱动安装页等来源；参考材料中官方COMPATIBILITY.md和固件驱动安装页链接均被印证，CSDN也提到兼容性查询助手入口。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "1. `torch.__version__` 的主段必须等于 `torch_npu.__version__` 的主段 ... 2. 拿 torch_npu 安装包版本去官方配套表查出它**要求哪个 CANN 版本** ... 4. 再用「兼容性查询助手」按硬件型号查该 CANN 所需的**驱动/固件**范围",
+      "evidence_id": "call_00_mXDKBCHraJEEh4YPF3IS5490.result",
+      "evidence_quote": "TorchNPU 26.1.0配套PyTorch 2.7.1时，安装包版本为2.7.1.post8；配套PyTorch 2.12.0时，安装包版本为2.12.0 ... TorchNPU产品版本、安装包版本及依赖版本的对应关系以下表为准",
+      "verification": "source",
+      "reason": "答案给出由本机观测版本出发、经配套表逐级核对到固件/驱动的完整选型流程，且其配套表与官方COMPATIBILITY.md当前活跃版本表逐行一致（如26.1.0/2.7.1.post8/CANN 9.1.0）。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "2. `pip uninstall torch-npu && pip install torch-npu==<与CANN配套的安装包版本>` ... 3. 确认只有一个 CANN：`ls /usr/local/Ascend/`，并 `source .../set_env.sh` ... 4. 仍失败再考虑源码编译：clone `Ascend/pytorch` 后用当前 CANN `bash ci/build.sh --torch_npu`",
+      "evidence_id": "call_00_ViKXlMWJOEXQMsiYSfYo7225.result",
+      "evidence_quote": "重装匹配版本：`pip uninstall torch-npu && pip install torch-npu==2.1.0.post3` ... 仍不行则源码重编（最可靠）：clone pytorch 仓后 `bash ci/build.sh --torch_npu`，用当前 CANN 编译",
+      "verification": "source",
+      "reason": "修复步骤（按表选组合、重装匹配版本、排查多CANN冲突并source set_env.sh、最后源码编译）与掘金排查文章一致，且以配套表为准而非猜测用户环境。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "5. 验证：`torch.npu.is_available()` 为 `True`，并跑一个 `.npu()` 矩阵乘。",
+      "evidence_id": "call_00_ViKXlMWJOEXQMsiYSfYo7225.result",
+      "evidence_quote": "修复后验证：`torch.npu.is_available()` 为 True，且 `t = torch.randn(100,100).npu(); t @ t.T` 正常返回",
+      "verification": "source",
+      "reason": "验证方法（is_available + .npu()矩阵乘）有掘金来源直接支持；对剩余不确定项（CANN↔驱动矩阵、get_cann_version版本要求）答案在第六节明确标注未核实并建议以官方查询助手复查，未隐瞒缺口。"
+    }
+  ],
+  "limitations": [
+    "CANN与固件/驱动/Ascend HDK的精确配套矩阵未从官方页面直接取得（答案自述hiascend页面为JS动态渲染），CANN 8.0.0配套驱动24.1.0的说法仅为第三方CSDN来源，未获官方文本印证。",
+    "`torch_npu.utils.get_cann_version()` 需 torch_npu>=2.3 的版本要求仅为第三方说法，无官方API文档佐证。",
+    "配套表数据标注为2026-09-20抓取的master版本，时效性由答案自行声明需复查，评估无法验证其当下准确性。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "0bfd50c19f079861cfe7bfdef2cc20314fef3c74d5f954f8ff7e957936cfa938",
+    "packet_sha256": "18391744db678c9d750e747425ee4b37c03203fa1b387efcc7683e2321decb2e",
+    "process_sha256": "ddc43ebde1831647babd632a8280240a5542ec56bdc1538edb6b1b63d2ce5ea6",
+    "elapsed_seconds": 30.7,
+    "exit_code": 0,
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "fit-fa38e44f9f9e4be1a37ff34c64b1121b",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ]
+  }
+}

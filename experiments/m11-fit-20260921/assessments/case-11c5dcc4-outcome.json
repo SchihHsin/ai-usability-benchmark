@@ -1,0 +1,78 @@
+{
+  "case": "case-11c5dcc4",
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "extern \"C\" __global__ __aicore__ void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR workspace, GM_ADDR tiling)",
+      "evidence_id": "call_00_gT2ZuB4hXTTIMWP1yGs80016.result",
+      "evidence_quote": "extern \"C\" __global__ __aicore__ void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR workspace, GM_ADDR tiling)",
+      "verification": "source",
+      "reason": "答案完整给出最小加法算子的三部分实现：tiling 结构（BEGIN_TILING_DATA_DEF/totalLength/tileNum）、Host 侧 TilingFunc（set_totalLength/SetBlockDim）和 Kernel 侧 KernelAdd（Init/CopyIn/Compute/CopyOut/Process，GM→UB→Add→GM），与官方 quick_start 源文逐行一致，仅变量名等无害简写。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "this->Input(\"x\").ParamType(REQUIRED).DataType({ge::DT_FLOAT16}).Format({ge::FORMAT_ND}); ... this->AICore().SetTiling(optiling::TilingFunc); ... OP_ADD(AddCustom);",
+      "evidence_id": "call_00_gT2ZuB4hXTTIMWP1yGs80016.result",
+      "evidence_quote": "this->Input(\"x\").ParamType(REQUIRED).DataType({ge::DT_FLOAT16}).Format({ge::FORMAT_ND}); ... this->AICore().SetTiling(optiling::TilingFunc); ... OP_ADD(AddCustom);",
+      "verification": "source",
+      "reason": "所选路线（msOpGen+aclnn）所需接口均具体给出：原型 JSON（op/input_desc/output_desc/param_type/format/type）、OpDef 原型注册与 Tiling 绑定（OP_ADD/AddConfig）、生成命令 msopgen gen -c ai_core-<soc_version> -lan cpp 及 -f aclnn 说明，与 quick_start 和用户指南（'当用户使用 -f aclnn 时，生成 Ascend C 算子工程'）一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "TORCH_LIBRARY(myops, m) { m.def(\"add_custom(Tensor self, Tensor other) -> Tensor\"); ... EXEC_NPU_CMD(aclnnAddCustom, self, other, result); ... TORCH_LIBRARY_IMPL(myops, PrivateUse1, m)",
+      "evidence_id": "call_00_U1Ohv1b1B5K5XZqY7Qib2590.result",
+      "evidence_quote": "TORCH_LIBRARY(myops, m) { m.def(\"add_custom(Tensor self, Tensor other) -> Tensor\");       // 注册正向接口 ... EXEC_NPU_CMD(aclnnAddCustom, self, other, result); ... TORCH_LIBRARY_IMPL(myops, PrivateUse1, m)",
+      "verification": "source",
+      "reason": "框架绑定完整且与 TorchNPU 7.1.0 官方文档几乎逐字一致：schema 注册、autograd Function 前反向、PrivateUse1/AutogradPrivateUse1（含 2.1 以下改 XLA 的说明）、PYBIND11 导出及可选 TorchAir converter 均有出处。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "cd AddCustom\n./build.sh ... 成功后 `build_out/` 生成自定义算子安装包 `custom_opp_<target_os>_<target_architecture>.run` ... python3 setup.py build bdist_wheel     # wheel 在 dist/",
+      "evidence_id": "call_00_gJEhtlQzo2y8aRiPq3Qu9861.result",
+      "evidence_quote": "在算子工程目录下执行如下命令，进行算子工程编译：./build.sh ... 生成自定义算子安装包 custom_opp_<target_os>_<target_architecture>.run",
+      "verification": "source",
+      "reason": "编译配置（CMakePresets.json 的 ASCEND_COMPUTE_UNIT/vendor_name/ENABLE_SOURCE_PACKAGE、add_ops_compile_options(ALL OPTIONS -g -O0)）与命令（./build.sh、sed 改 -j1、python3 setup.py build bdist_wheel）均有来源支撑；问题未明确要求 setup.py 文件内容，且参考文档同样只给命令。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run\n# 或指定目录：./custom_opp_*.run --install-path=<path> ... export LD_LIBRARY_PATH=${ASCEND_OPP_PATH}/vendors/customize/op_api/lib:$LD_LIBRARY_PATH",
+      "evidence_id": "call_00_gJEhtlQzo2y8aRiPq3Qu9861.result",
+      "evidence_quote": "./custom_opp_<target_os>_<target_architecture>.run --install-path=<path>  # 其中--install-path为可选参数 ... 需要 `source <path>/vendors/<vendor_name>/bin/set_env.bash` 命令",
+      "verification": "source",
+      "reason": "安装与加载完整：默认/指定路径部署、set_env.bash（ASCEND_CUSTOM_OPP_PATH）、LD_LIBRARY_PATH 追加（quick_start 原文一致）、多算子包优先级 config.ini/load_priority，调用侧 wheel 导入 custom_ops_lib.add_custom 亦与 TorchNPU 文档一致。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "bash ./run.sh            # 可选传 NPU 卡号：bash ./run.sh 2\n# 期望输出：result is: 3.0 ... / test pass ... eager 验证：python test/test_add_custom.py",
+      "evidence_id": "call_00_gT2ZuB4hXTTIMWP1yGs80016.result",
+      "evidence_quote": "bash ./run.sh ... result is:\n3.0 3.0 3.0 3.0 3.0 3.0 3.0 3.0 3.0 3.0 \ntest pass",
+      "verification": "source",
+      "reason": "给出具体验证（run.sh 执行 1.0+2.0 预期 3.0、可指定卡号）及前提约束：CANN Toolkit+ops 安装并 source set_env.sh（安装指南原文）、Python 3.7–3.11（'3.7 <= python版本要求 <=3.11'）、umask≥0027/非 root（用户指南约束章节）、SoC 型号须与实机一致、ACLN 头文件缺失时 unset ASCEND_CUSTOM_OPP_PATH 的 FAQ 处理，均有出处。"
+    }
+  ],
+  "limitations": [
+    "两条参考来源（call_00_fE32cgw88MDE4LTx3POW5245、call_00_dzw3l1VuHytlWS34UTTW7503）仅含标题与评级，无正文，未参与核对。",
+    "答案自述 aclnn '两段式'接口细节本轮未取到原文，caller 的 main.cpp 具体调用代码未随证据提供，该细节无法核实。",
+    "答案提到的 CANN 9.2beta1 版本引用未在所给证据文本中出现，无法佐证。",
+    "setup.py 文件内容未在答案与任何证据中给出（仅有命令）；因问题未明确要求其内容，未据此判 R4 缺失。",
+    "全部判定基于来源文本逐字比对，未执行任何命令或编译（答案亦声明 not_executed）。"
+  ],
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_model": "glm-5.3",
+    "prompt_sha256": "df5c17fc66ef25790c88428c716b27759278d45b4c25452ab8d1c18aa447d1b5",
+    "process_sha256": "2a270826d50412463696728aeed64b72d340c819a4818bba836ff750a22019c1",
+    "packet_sha256": "e7ac10d644c6ca221fa8644086174f097f50d53ae1c6e1d584b3c3e9975dce12",
+    "kind": "outcome",
+    "automatic_assessment": true,
+    "duration_ms": 75223,
+    "client_is_error": false,
+    "note": "CLI list envelope recovered without a new model call; reasoning payloads excluded."
+  }
+}
