@@ -5,7 +5,7 @@ import json
 def render(metrics,refs,root,reading_log):
     baseline=json.loads((root/'original-metric-baseline.json').read_text())
     originals={d['id']:d for d in baseline['metrics']}
-    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M11暂不计算新结果。</mark></p>']
+    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M10名称为“可执行性”；M11保留五档，新区间尚未确定，历史阈值不作为当前标准。</mark></p>']
     parts.append('<p>概念基线：<a href="file://'+baseline['source']+'#s4">18_metric_definition.html 第4节</a>。原定义逐字保留；旧分档和公式仅用于对照，不替换已确认的修订。</p>')
     nav=''.join(f'<a href="#{d["id"].lower()}">{d["id"]} · {H(d["name"])}</a>' for d in metrics)
     for d in metrics:
