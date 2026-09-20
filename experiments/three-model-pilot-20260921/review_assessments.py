@@ -5,6 +5,7 @@ import assess
 R=Path(__file__).resolve().parent
 items=json.loads((R/'assessment-input/development.json').read_text());out=R/'reviewed/development';out.mkdir(parents=True,exist_ok=True);log=[]
 m2_by_run={x['run_id']:x for x in json.loads((R/'m2-document-audit.json').read_text())}
+m4_decisions={x['case']:x for x in json.loads((R/'m4-adjudication.json').read_text())['decisions']}
 allowed={'scored','bounded','not_applicable','insufficient_evidence','blocked'}
 for item in items:
  for kind in ('predictors','outcome'):
@@ -26,10 +27,24 @@ for item in items:
   for m in raw.get('metrics',[])+raw.get('m9_m10',[]):
    if m.get('score') is not None and m.get('status') not in allowed:
     changes.append({'field':'status','id':m['id'],'before':m.get('status'),'after':'scored','basis':'numeric judgment; evidence audited separately'});m['raw_status_label']=m.get('status');m['status']='scored'
+  recovered_item_path=R/'prior-recovery'/(item['case']+'-input.json')
+  if kind=='predictors' and recovered_item_path.exists():
+   recovered_output=R/'prior-recovery/assessments/development'/(item['case']+'-predictors.json')
+   if recovered_output.exists():
+    recovered=json.loads(recovered_output.read_text())
+    if not recovered.get('error'):
+     item=json.loads(recovered_item_path.read_text())
+     replacement=next(x for x in recovered['raw_assessment']['metrics'] if x['id']=='M7')
+     raw['metrics']=[copy.deepcopy(replacement) if m['id']=='M7' else m for m in raw['metrics']]
+     changes.append({'field':'M7','basis':'recovered unclosed pre-tool prior; targeted post-evaluation repair','source':str(recovered_output.relative_to(R))})
   val=assess.audit(raw,item,kind)
   for m in val.get('metrics',[])+val.get('m9_m10',[]):
    if m.get('lower') is not None and m.get('upper') is not None and m['lower']<m['upper']:m['score']=None;m['status']='bounded'
+   if m['id'] in ('M9','M10') and m.get('score') is not None and not m.get('evidence'):
+    m.update(score=None,status='insufficient_evidence',reason='最终回答评分未给出可核对原文引用；原评分保留在原始后评文件')
    if m['id']=='M7' and not item['prior']:m.update(score=None,status='insufficient_evidence',reason='未保存检索前回答')
+   if m['id']=='M4' and item['case'] in m4_decisions:
+    m['raw_model_score']=m.get('score');m['raw_model_status']=m.get('status');m.update({k:v for k,v in m4_decisions[item['case']].items() if k not in ('case','metric')})
    if m['id']=='M2':
     document_review=m2_by_run[item['run_name']]
     m['raw_model_score']=m.get('score');m['raw_model_status']=m.get('status')

@@ -49,7 +49,7 @@ def main():
             m['evidence_refs']=refs;m['event_refs']=[]
             if m.get('lower') is not None and m.get('upper') is not None and m['lower']<m['upper']:
                 m['score']=None;m['status']='bounded'
-            if m['id']=='M7' and not item['prior']:m.update(score=None,lower=1,upper=5,status='insufficient_evidence')
+            if m['id']=='M7' and not item['prior'] and not (ROOT/'prior-recovery'/(item['case']+'-input.json')).exists():m.update(score=None,lower=1,upper=5,status='insufficient_evidence')
             if m['id']=='M8':
                 c=sum(item['counts'].values());sc=1 if c>=9 else 2 if c>=7 else 3 if c>=5 else 4 if c>=3 else 5 if c>=1 else None
                 m.update(score=sc,lower=sc,upper=sc,status='scored' if sc else 'insufficient_evidence');m['event_refs']=[x['id'] for x in events if x['type']=='tool_dispatch']
@@ -63,8 +63,16 @@ def main():
                 ref=add_ref(eid,q)
                 if ref:r['evidence_refs'].append(ref)
             requirements.append(r)
+        issues=[]
+        documents=p.get('m2_documents',[])
+        for doc in documents:
+            if doc.get('score') not in (1,2):continue
+            first_id=doc.get('selected_final_event_id');first_seq=byid.get(first_id,{}).get('seq',0)
+            alternatives=[other.get('selected_final_event_id') for other in documents if other.get('lower',0)>=4 and byid.get(other.get('selected_final_event_id'),{}).get('seq',0)>first_seq]
+            refs=[add_ref(e.get('event_id'),e.get('quote')) for e in doc.get('evidence',[])]
+            issues.append({'id':'fetch-'+doc['document_id'],'type':'target_body_not_obtained','url':doc['url'],'initial_obstacle_event_id':first_id,'evidence_refs':[x for x in refs if x],'alternative_body_event_ids':alternatives,'recovery_status':'other_body_obtained_later' if alternatives else 'no_later_body_observed','task_resolution':'not_inferred_from_fetch_state; consult final requirements and answer','reason':doc['reason']})
         overall=overall_score.calculate({m['id']:m for m in metrics})
-        value={'rubric_version':events[0]['metadata']['rubric_version'],'assessor':{'id':'glm-5.3-with-deterministic-evidence-audit','method':'separate source/prior and outcome contexts; automatic assessment, not human gold'},'limitations':['No hardware execution. Literal evidence auditing cannot establish complete technical correctness.','M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted.'],'requirements':requirements,'metrics':metrics+[{'id':'M11',**overall}],'overall':overall,'evidence':evidence,'issues':[],'assessment_files':hashes,'m2_documents':p.get('m2_documents',[]),'quote_audit':p.get('quote_audit',[])+o.get('quote_audit',[])}
+        value={'rubric_version':events[0]['metadata']['rubric_version'],'assessor':{'id':'glm-5.3-with-deterministic-evidence-audit','method':'separate source/prior and outcome contexts; automatic assessment, not human gold'},'limitations':['No hardware execution. Literal evidence auditing cannot establish complete technical correctness.','M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted.'],'requirements':requirements,'metrics':metrics+[{'id':'M11',**overall}],'overall':overall,'evidence':evidence,'issues':issues,'assessment_files':hashes,'m2_documents':p.get('m2_documents',[]),'quote_audit':p.get('quote_audit',[])+o.get('quote_audit',[])}
         run_log.save_evaluation(dest,value);check=run_log.check(dest)
         summary.append({'case':item['case'],'status':'saved','evidence_count':len(evidence),'check':check})
     (ROOT/f'{args.split}-consolidation.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')

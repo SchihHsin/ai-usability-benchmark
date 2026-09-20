@@ -1,0 +1,159 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "CUDA_LAUNCH_BLOCKING=1 python train.py",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_2EuGzmHbgqzE7YFIBevr4533.result",
+      "evidence_quote": "CUDA_LAUNCH_BLOCKING — If set to 1, makes CUDA calls synchronous. This can be useful for debugging.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出多种同步/调试方法（CUDA_LAUNCH_BLOCKING、compute-sanitizer、PYTORCH_USE_CUDA_DSA），且解释了为何异步执行导致栈指向错误位置，官方源确认了环境变量定义。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "compute-sanitizer --tool memcheck --launch-timeout 0 python train.py",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_01_xbwu6ftRQR2MHX9LIpiU6677.result",
+      "evidence_quote": "compute-sanitizer --tool memcheck [sanitizer_options] app_name [app_options]",
+      "verification": "source",
+      "reason": "答案给出完整可执行命令（CUDA_LAUNCH_BLOCKING、compute-sanitizer、TORCH_SHOW_CPP_STACKTRACES），官方文档确认了 compute-sanitizer 命令格式。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "Name of kernel launched that led to failure = ...",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_u7Gy3Vf8V09L7ceaxs9u1521.result",
+      "evidence_quote": "oss << \"  Name of kernel launched that led to failure = \" << launch_info.kernel_name << std::endl;",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案详细说明 compute-sanitizer 和 DSA 如何输出 kernel 名称、断言文件行号、backtrace 等缩小范围的信息，PyTorch 源码确认了这些字段。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "assert labels.min().item() >= 0 and labels.max().item() < num_classes",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_01_uWtcdyNyP3xLa7f6nozN2426.result",
+      "evidence_quote": "在进行索引操作之前，确保索引值在张量的有效范围内。对于分类任务，确保目标标签的索引值在类别数的范围内。",
+      "verification": "source",
+      "reason": "答案给出了具体的 assert 检查命令（索引边界、label 范围），社区文章确认了索引越界是常见根因。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "torch.cuda.synchronize()   # 在两段代码之间插入",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_01_DLnWIoXQAMmzIGdgK9oF3231.result",
+      "evidence_quote": "You can force synchronous computation by setting environment variable CUDA_LAUNCH_BLOCKING=1. This can be handy when an error occurs on the GPU.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案方法E描述了通过同步点二分定位，方法A通过CUDA_LAUNCH_BLOCKING同步复现，配合§6的根因检查。同步复现方面有覆盖，最小输入方面未显式提及但'或'条件已满足。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "absent",
+      "answer_quote": "assert 一旦触发，CUDA context 已损坏：同一进程后续调用会继续报错或报 unspecified launch failure，必须重启进程再继续排查。",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案列出了各工具的输出字段（DSA 输出、compute-sanitizer 输出格式），但没有显式指出排查后应保留哪些错误栈、kernel 名称或复现样例，缺乏对保存排查产物的明确指导。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为调试方法论问题，不要求锁定库版本或工具链版本。答案提供的环境变量和工具跨版本适用，无需定版。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "PYTORCH_USE_CUDA_DSA=1 python train.py"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "所有命令完整可执行（含必要参数和环境变量组合），前置条件明确说明（如 DSA 需 compute capability ≥ 6、-lineinfo 需编译选项），仅需替换脚本名 train.py 为用户实际脚本。答案还标注了各方法的适用前提和代价。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "PYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 python train.py"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "TORCH_SHOW_CPP_STACKTRACES=1 python train.py"
+        }
+      ],
+      "raw_status_label": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_2EuGzmHbgqzE7YFIBevr4533.result",
+          "quote": "CUDA_LAUNCH_BLOCKING — If set to 1, makes CUDA calls synchronous. This can be useful for debugging."
+        }
+      ]
+    },
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_u7Gy3Vf8V09L7ceaxs9u1521.result",
+          "quote": "oss << \"  Name of kernel launched that led to failure = \" << launch_info.kernel_name << std::endl;"
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_01_DLnWIoXQAMmzIGdgK9oF3231.result",
+          "quote": "You can force synchronous computation by setting environment variable CUDA_LAUNCH_BLOCKING=1. This can be handy when an error occurs on the GPU."
+        }
+      ]
+    }
+  ],
+  "case": "case-6efe6e0fcc08",
+  "task_id": "E",
+  "ecosystem": "cuda",
+  "kind": "outcome",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-6efe6e0fcc08-outcome.json",
+    "sha256": "ac93bbb75404224a6cc65ca7cb87af6e74b94609db6ddc4dbd2753873cc34797",
+    "process_sha256": "bf32414f375414fd16f3983345d60b3dca1a2732cbebc95072ec6e446980db35",
+    "changes": [
+      {
+        "field": "status",
+        "id": "M10",
+        "before": "supported",
+        "after": "scored",
+        "basis": "numeric judgment; evidence audited separately"
+      }
+    ],
+    "policy": "post-run deterministic event-ID/status repair; exact quotes only; M2 independently reviewed per document and aggregated with all unknown intervals included; not a new scoring rubric"
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "BATCH_SIZE = 32\ndummy_input = torch.randn(BATCH_SIZE, 3, 224, 224)\n\nimport torch.onnx\ntorch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+      "evidence_quote": "BATCH_SIZE = 32\ndummy_input=torch.randn(BATCH_SIZE, 3, 224, 224)",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 dummy input shape（32,3,224,224）、.eval() 前置与 torch.onnx.export 调用，与 NVIDIA 官方正文逐字一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+      "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "verification": "source",
+      "reason": "答案给出官方 trtexec 完整转换命令，来源正文同句可核。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "--memPoolSize=<pool_spec>`：设置 workspace/tactic 显存池大小（pool 类型含 `workspace`、`dlaSRAM` 等）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_C4YU63Gsn2MNlmrAyeIv7809.result",
+      "evidence_quote": "Specify the maximum size of the workspace tactics allowed to be used and the sizes of the memory pools that DLA will allocate per loadable. Supported pool types include `workspace`, `dlaSRAM`",
+      "verification": "source",
+      "reason": "答案覆盖 workspace（--memPoolSize）、精度（--fp16/--int8/--calib 警告）与 optimization profile（--minShapes/--optShapes/--maxShapes）三类参数，均有官方 flag 表正文支持。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+      "evidence_quote": "trt_model = ONNXClassifierWrapper(\n       \"resnet_engine_intro.engine\", target_dtype=PRECISION\n   )",
+      "verification": "source",
+      "reason": "答案说明用 ONNXClassifierWrapper 从 engine 文件加载，并转述官方说明 wrapper 在第一次推理时加载并初始化 engine；另提 --loadEngine 从序列化 plan 加载。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "predictions = trt_model.predict(dummy_input_batch)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+      "evidence_quote": "predictions = trt_model.predict(dummy_input_batch)",
+      "verification": "source",
+      "reason": "答案给出 wrapper.predict 的具体推理调用代码及输入构造，与官方正文一致。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "--versionCompatible/--vc`：版本兼容模式（同 OS 上可在更新版 TensorRT 上运行，仅支持 explicit batch）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+      "evidence_quote": "If you integrate TensorRT through **ONNX Runtime's TensorRT Execution Provider** instead, use ONNX Runtime **1.27 or later** with TensorRT 11.x.",
+      "verification": "source",
+      "reason": "答案给出了版本配套约束（ORT 1.27+/TRT 11.x）与 --versionCompatible 旗标，但未给出 engine 与 GPU 不兼容时的可核验检查点（如 --getPlanVersionOnly 或 GPU 架构检查），来源亦未覆盖该检查点，故记 unverified。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "not_applicable",
+      "reason": "原题要求的是 PyTorch→ONNX→TensorRT 的步骤与命令，未要求锁定具体库/工具链版本。答案额外给出的版本信息（TRT 11.x、ORT 1.27+、CUDA 11.8/cu130 示例）均有官方依据，但按冻结规则无版本需要记 N/A。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "训练好的 PyTorch 模型怎么导出成 TensorRT engine 部署？给出 PyTorch→ONNX→TensorRT 完整步骤和命令。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "status": "supported",
+      "reason": "主路径（导出 ONNX→trtexec 转换→下载并补丁 helper→加载 engine→predict 推理）的命令、代码、参数与前置条件（TensorRT/trtexec 已装、PRECISION 复用说明、cuda-python 补丁警告）完整且来自官方正文，仅需替换用户自己的模型路径即可执行；答案明确声明未实际运行，不宣称复现。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "以上命令与代码**均未在本环境执行**（本会话仅使用 WebSearch/WebFetch，未运行任何本地代码），因此不宣称可复现通过"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+          "quote": "BATCH_SIZE = 32\ndummy_input=torch.randn(BATCH_SIZE, 3, 224, 224)"
+        }
+      ]
+    }
+  ],
+  "case": "case-a118842f32d3",
+  "task_id": "A",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "BATCH_SIZE = 32\ndummy_input = torch.randn(BATCH_SIZE, 3, 224, 224)\n\nimport torch.onnx\ntorch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+        "evidence_quote": "BATCH_SIZE = 32\ndummy_input=torch.randn(BATCH_SIZE, 3, 224, 224)",
+        "verification": "source",
+        "reason": "答案给出 dummy input shape（32,3,224,224）、.eval() 前置与 torch.onnx.export 调用，与 NVIDIA 官方正文逐字一致。"
+      },
+      {
+        "id": 2,
+        "status": "supported",
+        "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+        "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "verification": "source",
+        "reason": "答案给出官方 trtexec 完整转换命令，来源正文同句可核。"
+      },
+      {
+        "id": 3,
+        "status": "supported",
+        "answer_quote": "--memPoolSize=<pool_spec>`：设置 workspace/tactic 显存池大小（pool 类型含 `workspace`、`dlaSRAM` 等）。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_C4YU63Gsn2MNlmrAyeIv7809.result",
+        "evidence_quote": "Specify the maximum size of the workspace tactics allowed to be used and the sizes of the memory pools that DLA will allocate per loadable. Supported pool types include `workspace`, `dlaSRAM`",
+        "verification": "source",
+        "reason": "答案覆盖 workspace（--memPoolSize）、精度（--fp16/--int8/--calib 警告）与 optimization profile（--minShapes/--optShapes/--maxShapes）三类参数，均有官方 flag 表正文支持。"
+      },
+      {
+        "id": 4,
+        "status": "supported",
+        "answer_quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+        "evidence_quote": "trt_model = ONNXClassifierWrapper(\n       \"resnet_engine_intro.engine\", target_dtype=PRECISION\n   )",
+        "verification": "source",
+        "reason": "答案说明用 ONNXClassifierWrapper 从 engine 文件加载，并转述官方说明 wrapper 在第一次推理时加载并初始化 engine；另提 --loadEngine 从序列化 plan 加载。"
+      },
+      {
+        "id": 5,
+        "status": "supported",
+        "answer_quote": "predictions = trt_model.predict(dummy_input_batch)",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+        "evidence_quote": "predictions = trt_model.predict(dummy_input_batch)",
+        "verification": "source",
+        "reason": "答案给出 wrapper.predict 的具体推理调用代码及输入构造，与官方正文一致。"
+      },
+      {
+        "id": 6,
+        "status": "unverified",
+        "answer_quote": "--versionCompatible/--vc`：版本兼容模式（同 OS 上可在更新版 TensorRT 上运行，仅支持 explicit batch）。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_4z4v0MVwEDjWpOLIr1vk3680.result",
+        "evidence_quote": "If you integrate TensorRT through **ONNX Runtime's TensorRT Execution Provider** instead, use ONNX Runtime **1.27 or later** with TensorRT 11.x.",
+        "verification": "source",
+        "reason": "答案给出了版本配套约束（ORT 1.27+/TRT 11.x）与 --versionCompatible 旗标，但未给出 engine 与 GPU 不兼容时的可核验检查点（如 --getPlanVersionOnly 或 GPU 架构检查），来源亦未覆盖该检查点，故记 unverified。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": null,
+        "status": "not_applicable",
+        "reason": "原题要求的是 PyTorch→ONNX→TensorRT 的步骤与命令，未要求锁定具体库/工具链版本。答案额外给出的版本信息（TRT 11.x、ORT 1.27+、CUDA 11.8/cu130 示例）均有官方依据，但按冻结规则无版本需要记 N/A。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "训练好的 PyTorch 模型怎么导出成 TensorRT engine 部署？给出 PyTorch→ONNX→TensorRT 完整步骤和命令。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "status": "supported",
+        "reason": "主路径（导出 ONNX→trtexec 转换→下载并补丁 helper→加载 engine→predict 推理）的命令、代码、参数与前置条件（TensorRT/trtexec 已装、PRECISION 复用说明、cuda-python 补丁警告）完整且来自官方正文，仅需替换用户自己的模型路径即可执行；答案明确声明未实际运行，不宣称复现。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "以上命令与代码**均未在本环境执行**（本会话仅使用 WebSearch/WebFetch，未运行任何本地代码），因此不宣称可复现通过"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "4cf2367f95bf42caa17786e53e26fcc1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "ff6202ee7f9396d5333b9967fd238163",
+        "conversationRequestId": "ff6202ee7f9396d5333b9967fd238163",
+        "agent": "cli"
+      },
+      {
+        "messageId": "4cf2367f95bf42caa17786e53e26fcc1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "ff6202ee7f9396d5333b9967fd238163",
+        "conversationRequestId": "ff6202ee7f9396d5333b9967fd238163",
+        "rawUsage": {
+          "prompt_tokens": 20330,
+          "completion_tokens": 2324,
+          "total_tokens": 22654,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 937,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 20330,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 937,
+          "credit": 4.55,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 20330,
+          "outputTokens": 2324,
+          "totalTokens": 22654,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 937
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "e90cfe2346f211cf25439ae468b8c81272e338fab1fc47c74e8ba7efec9b08f4",
+    "process_sha256": "252604c65dfb9eb296dcd16a4446035d17f1c593f68d2d2aa38065c53268b4e9",
+    "elapsed_seconds": 37.1,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-86500fb7f1bb4340b9049dd8cd31ca10",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

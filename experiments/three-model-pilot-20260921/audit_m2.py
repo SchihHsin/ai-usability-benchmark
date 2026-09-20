@@ -1,6 +1,6 @@
 """Conservative document-level evidence review; arithmetic never fills unknowns."""
 from pathlib import Path
-import json,re,base64,hashlib
+import json,re,base64,hashlib,difflib
 from html.parser import HTMLParser
 R=Path(__file__).resolve().parent
 class Article(HTMLParser):
@@ -20,9 +20,9 @@ def markdown_text(s):
  return s
 refs={x['url']:x for x in map(json.loads,(R/'m2-reference-acquisition.jsonl').read_text().splitlines())}
 # Reviewed UI-only/wrong-target and explicit tool-summary examples. IDs are URL hashes, not scores from old experiments.
-framework={'af63c1f4b01e','d1366366b442','12a97a98e397','9a3ea995e1e7','4efb28d38454','4bfbee5be721','88d91840c670','1e83ea7b41d1','eb1fa63b388a'}
+framework={'af63c1f4b01e','d1366366b442','12a97a98e397','9a3ea995e1e7','4efb28d38454','4bfbee5be721','88d91840c670','1e83ea7b41d1','eb1fa63b388a','bacab653e6d9','5ec91304c38d'}
 wrong_target={'3b3cf30e1702'}
-summary={'b24b12f6da97','7fed73253552','00b7c2147639'}
+summary={'b24b12f6da97','7fed73253552','00b7c2147639','064444a5bc62','bd8cdd4c9758','5f01f9b067b5','83eaea8cf37d','0dddd3a819b7'}
 allcases=[]
 for case in json.loads((R/'m2-inventory.json').read_text()):
  docs=[]
@@ -31,14 +31,16 @@ for case in json.loads((R/'m2-inventory.json').read_text()):
   if ident in wrong_target or re.search(r'(?:Page [Nn]ot [Ff]ound|File not found|Error fetching|Failed to fetch|HTTP(?: Error)? 40[34])',t[:500]):lo=hi=1;reason='返回错误页或已核对为非目标页面；目标正文未取得'
   elif ident in framework or (len(t)<220 and any(x in t for x in ('获取效率','Findability','文档评分'))):lo=hi=2;reason='返回目标标题及界面标签，没有可识别正文'
   elif ident in summary:lo=hi=3;reason='返回为工具整理的摘要/摘录表示，非可核对的直接正文'
-  elif t.startswith('**标题**') and len(t)>220:lo,hi=4,5;reason='有直接正文；同版完整起止尚不能充分核对，保留4—5范围'
+  elif (t.startswith('**标题**') or t.startswith('```')) and len(t)>220:lo,hi=4,5;reason='有直接正文；同版完整起止尚不能充分核对，保留4—5范围'
   else:lo,hi=3,5;reason='有正文内容，但摘要/直接正文表示或完整性证据未充分确定，保留3—5范围'
   # Only an entire article text match supplies independent full-text support; no percentage cut-off.
   if lo==4 and ref.get('body_base64'):
-   h=base64.b64decode(ref['body_base64']).decode('utf-8','replace');p=Article();p.feed(h);raw=''.join(p.text);n=norm(raw);actual=norm(markdown_text(t))
-   if n and n in actual:
-    lo=hi=5;reason='同URL事后HTTP参照的article全文，经去格式符号规范化后完整连续匹配工具返回；未见缺失'
-    proof={'url':d['url'],'acquired_at':ref['time'],'reference_sha256':ref['sha256'],'article_text_sha256':hashlib.sha256(raw.encode()).hexdigest(),'normalized_full_article_match':True,'note':'same URL post-run reference, not immutable remote snapshot'}
+   h=base64.b64decode(ref['body_base64']).decode('utf-8','replace');p=Article();p.feed(h);raw=h if str(ref.get('content_type','')).startswith('text/plain') else ''.join(p.text);n=norm(raw);actual=norm(markdown_text(t))
+   ops=difflib.SequenceMatcher(None,n,actual,autojunk=False).get_opcodes() if n else []
+   retained=bool(n) and all(op[0] in ('equal','insert') for op in ops)
+   if retained:
+    lo=hi=5;reason='同URL事后HTTP参照的article/纯文本全文，经去格式符号规范化后按原顺序完整匹配工具返回（允许额外链接/行号）；未见删除或替换'
+    proof={'url':d['url'],'acquired_at':ref['time'],'reference_sha256':ref['sha256'],'article_text_sha256':hashlib.sha256(raw.encode()).hexdigest(),'normalized_full_article_match':True,'alignment_has_no_deletions_or_replacements':True,'inserted_text':[actual[j:k] for op,a,b,j,k in ops if op=='insert'],'note':'same URL post-run reference, not immutable remote snapshot'}
   quote=t[:min(240,len(t))]
   if lo>=4:
    meaningful=[line for line in t.splitlines() if len(line.strip())>25 and not line.startswith(('**标题**','**发布时间**','#','[','!','http','Back to'))]

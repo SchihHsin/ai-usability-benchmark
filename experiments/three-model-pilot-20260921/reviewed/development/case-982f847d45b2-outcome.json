@@ -1,0 +1,144 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "`errcode / errorStr`：AI Core 错误码和描述（如 0x10 = Illegal instruction，常由 UUB 地址不对齐引起）",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_fd175d11.result",
+      "evidence_quote": "errcode、errorStr：分别表示AI Core Error的报错错误码、错误描述",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案说明从报错日志的 errcode/errorStr、chipId/core id、fault kernel_name 等扩展字段取得错误描述与模块，与官方 8.5.0 文档的报错日志解读一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "Driver安装目录/driver/tools/msnpureport -f",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_5_98b67ee5.result",
+      "evidence_quote": "Driver安装目录/driver/tools/msnpureport -f",
+      "verification": "source",
+      "reason": "答案给出具体收集路径（${HOME}/ascend/log、atrace、extra-info/data-dump/{device_id}）、环境变量设置及命令（msnpureport -f、asys collect/launch），与官方收集文档一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "`chipId / dieId`：报错芯片，判断是否固定卡",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_4_8d373cf5.result",
+      "evidence_quote": "找到发生AI Core Error问题附近时间、对应Device的系统日志",
+      "verification": "source",
+      "reason": "答案用 chipId/core id 判断固定卡/固定核、用 plog-*pid* 文件名含进程号、slog/dev-os-*id* 含设备号定位对应日志，并要求从首报错算子开始查，与官方按时间和 Device 关联日志的方法一致。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "1. **RAS 硬件故障**：查 `slog/dev-os-*id*/run/event/event_*.log` 中是否有 `event_id` 关键字",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_4_8d373cf5.result",
+      "evidence_quote": "检查日志中是否存在“event_id”关键字，若不存在，则跳转到[2]继续排查；若存在，则获取“event_id”的值",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出可核验的分支链：RAS event_id → ECC/固定chipId → 0x800000 索引类报错 → msaicerr 分类（atomic add 溢出、内存越界等），每步均有官方定位思路文档对应。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "可自动生成 `test_single_op.py` 单算子复现脚本",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_6_84eff1bd.result",
+      "evidence_quote": "表示工具自动生成了单算子用例脚本，您可以执行该脚本复现单算子问题",
+      "verification": "source",
+      "reason": "答案给出 ascend-dmi 压测、换 Device 复跑交叉验证、msaicerr 生成单算子复现脚本、msSanitizer/op_debug_config=oom 内存检测等排除手段，均有官方来源支撑。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "定位不了就把 msaicerr 结果 + 最小集日志提交昇腾技术支持。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_4_8d373cf5.result",
+      "evidence_quote": "将执行msaicerr工具的结果数据（包括分析AI Core Error问题的最小集信息、分析报告等）提供给技术支持",
+      "verification": "source",
+      "reason": "答案指出排查后应保留 msaicerr 分析结果（info.txt）、最小集日志及收集的 exception dump/算子编译信息，与官方要求提供最小集信息和分析报告一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为故障定位/排查方法问题，无需锁定库或工具链版本；答案仅说明流程依据 CANN 8.2.RC1 与 8.5.0 文档且提示部分工具约束随版本变化，无定版需求。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "上述流程取自 CANN 社区版 8.2.RC1 与商用版 8.5.0 文档，两版内容一致"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "命令行完整（msnpureport -f、asys collect --output=path、ascend-dmi --dg -i aicore -s、python3 msaicerr.py -p ... -out ...、pip3 install 依赖），前置条件明确（root 执行、source set_env.sh、python3.7.5+）；仅需替换 Driver安装目录、output 路径等明确标识的环境参数，另 msaicerr 不可在 -p 目录内执行等约束已说明，故给 4 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "Device 侧系统日志（slog/syslog/黑匣子），Host 上 root 执行"
+        }
+      ],
+      "raw_status_label": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "WebFetch_1_fd175d11.result",
+          "quote": "errcode、errorStr：分别表示AI Core Error的报错错误码、错误描述"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "WebFetch_4_8d373cf5.result",
+          "quote": "检查日志中是否存在“event_id”关键字，若不存在，则跳转到[2]继续排查；若存在，则获取“event_id”的值"
+        }
+      ]
+    }
+  ],
+  "case": "case-982f847d45b2",
+  "task_id": "E",
+  "ecosystem": "cann",
+  "kind": "outcome",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-982f847d45b2-outcome.json",
+    "sha256": "049dd84d36c64e572991bcf1b6674bb0160d88513b9a50bba3ae66d3fcc6b143",
+    "process_sha256": "16a7956b3de1d295d4221974f9ee4e2643fea1db2a89bc69c087624c916bc6cf",
+    "changes": [
+      {
+        "field": "status",
+        "id": "M10",
+        "before": "supported",
+        "after": "scored",
+        "basis": "numeric judgment; evidence audited separately"
+      }
+    ],
+    "policy": "post-run deterministic event-ID/status repair; exact quotes only; M2 independently reviewed per document and aggregated with all unknown intervals included; not a new scoring rubric"
+  }
+}

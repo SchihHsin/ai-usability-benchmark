@@ -1,0 +1,325 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_4c137fb7.result",
+      "evidence_quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+      "verification": "source",
+      "reason": "最终答案给出 dummy input（BATCH_SIZE=32, 3,224,224）与导出接口 torch.onnx.export，并注明需 .eval()，与官方文档示例逐字一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_4c137fb7.result",
+      "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "verification": "source",
+      "reason": "答案给出完整 trtexec 构建命令及各参数含义，与官方文档命令一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "FP32 是各框架训练默认精度，可先用 FP32 起步，再按需启用 FP16/INT8。",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_4c137fb7.result",
+      "evidence_quote": "TensorRT supports FP32, FP16, FP8, BF16, and INT8 precisions, along with limited support for INT4 weights.",
+      "verification": "source",
+      "reason": "答案说明精度选择（FP32 起步、可选 FP16/INT8）及 --stronglyTyped 构建参数并解释其含义，均有官方来源支撑；optimization profile 与 FP16 flag 拼写答案已如实标注未核实，精度设置这一相关方面已满足。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_4c137fb7.result",
+      "evidence_quote": "\"resnet_engine_intro.engine\", target_dtype=PRECISION",
+      "verification": "source",
+      "reason": "答案通过 ONNXClassifierWrapper 以 engine 文件路径实例化完成加载，来源确认该 wrapper 在首批推理时加载并初始化 engine。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "predictions = trt_model.predict(dummy_input_batch)",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_4c137fb7.result",
+      "evidence_quote": "predictions = trt_model.predict(dummy_input_batch)",
+      "verification": "source",
+      "reason": "答案给出具体推理接口调用及 dummy batch 构造方式，与官方示例一致。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "CUDA：**13.3**（11.1.0 基线；Hopper 上建议 ≥13.2）",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_2_54ffb654.result",
+      "evidence_quote": "Updates the CUDA Toolkit baseline to CUDA 13.3 across Linux x86-64, Windows x64, and SBSA platforms.",
+      "verification": "source",
+      "reason": "答案给出可核验的版本配套检查点：TensorRT 11.1.0↔CUDA 13.3 基线（release notes 证实）、ONNX Runtime 1.27+ 配 TensorRT 11.x（WebFetch_1 证实）；GPU 架构层面的 engine 可移植性未显式讨论，但版本不兼容检查点已有据可查。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "supported",
+      "reason": "核心组件已定到具体版本且有依据：TensorRT 11.1.0、CUDA 13.3（release notes 证实基线）、ONNX Runtime 1.27+（如走 EP 路线），配套关系无冲突；但 ONNX opset 推荐值答案明确标注未能核实，属至少一项相关组件未定到具体版本，故为 4 而非 5。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "TensorRT：**11.1.0**（当前 latest 文档对应版本；11.0.0 有已知问题，11.1.0 修复多项）"
+        },
+        {
+          "event_id": "final",
+          "quote": "CUDA：**13.3**（11.1.0 基线；Hopper 上建议 ≥13.2）"
+        },
+        {
+          "event_id": "final",
+          "quote": "PyTorch opset：官方示例未指定 opset_version，**未能核实官方推荐值**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "supported",
+      "reason": "命令与代码完整可照抄：trtexec 完整命令、torch.onnx.export 代码、wget 下载 helper、cuda-python 补丁的两处精确替换说明、推理代码及环境前提（GPU/CUDA/tensorrt 安装）均齐备；仅需替换用户自己的模型路径与输入 shape 等环境参数。答案如实声明命令未实际运行（仅内容核查），不影响评级；补丁描述含'等'字略有压缩但两处替换即来源中的完整补丁内容，未构成需修正的错误。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+        },
+        {
+          "event_id": "final",
+          "quote": "将 `err = cudart.cudaMemcpyAsync(` 改为 `err, = ...` 等"
+        },
+        {
+          "event_id": "final",
+          "quote": "上述命令未在本机实际运行（仅内容核查）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "case": "case-730dafa017da",
+  "task_id": "A",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_4c137fb7.result",
+        "evidence_quote": "torch.onnx.export(resnet50, dummy_input, \"resnet50_pytorch.onnx\", verbose=False)",
+        "verification": "source",
+        "reason": "最终答案给出 dummy input（BATCH_SIZE=32, 3,224,224）与导出接口 torch.onnx.export，并注明需 .eval()，与官方文档示例逐字一致。"
+      },
+      {
+        "id": 2,
+        "status": "supported",
+        "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_4c137fb7.result",
+        "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "verification": "source",
+        "reason": "答案给出完整 trtexec 构建命令及各参数含义，与官方文档命令一致。"
+      },
+      {
+        "id": 3,
+        "status": "supported",
+        "answer_quote": "FP32 是各框架训练默认精度，可先用 FP32 起步，再按需启用 FP16/INT8。",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_4c137fb7.result",
+        "evidence_quote": "TensorRT supports FP32, FP16, FP8, BF16, and INT8 precisions, along with limited support for INT4 weights.",
+        "verification": "source",
+        "reason": "答案说明精度选择（FP32 起步、可选 FP16/INT8）及 --stronglyTyped 构建参数并解释其含义，均有官方来源支撑；optimization profile 与 FP16 flag 拼写答案已如实标注未核实，精度设置这一相关方面已满足。"
+      },
+      {
+        "id": 4,
+        "status": "supported",
+        "answer_quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_4c137fb7.result",
+        "evidence_quote": "\"resnet_engine_intro.engine\", target_dtype=PRECISION",
+        "verification": "source",
+        "reason": "答案通过 ONNXClassifierWrapper 以 engine 文件路径实例化完成加载，来源确认该 wrapper 在首批推理时加载并初始化 engine。"
+      },
+      {
+        "id": 5,
+        "status": "supported",
+        "answer_quote": "predictions = trt_model.predict(dummy_input_batch)",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_4c137fb7.result",
+        "evidence_quote": "predictions = trt_model.predict(dummy_input_batch)",
+        "verification": "source",
+        "reason": "答案给出具体推理接口调用及 dummy batch 构造方式，与官方示例一致。"
+      },
+      {
+        "id": 6,
+        "status": "supported",
+        "answer_quote": "CUDA：**13.3**（11.1.0 基线；Hopper 上建议 ≥13.2）",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_2_54ffb654.result",
+        "evidence_quote": "Updates the CUDA Toolkit baseline to CUDA 13.3 across Linux x86-64, Windows x64, and SBSA platforms.",
+        "verification": "source",
+        "reason": "答案给出可核验的版本配套检查点：TensorRT 11.1.0↔CUDA 13.3 基线（release notes 证实）、ONNX Runtime 1.27+ 配 TensorRT 11.x（WebFetch_1 证实）；GPU 架构层面的 engine 可移植性未显式讨论，但版本不兼容检查点已有据可查。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": 4,
+        "upper": 4,
+        "status": "supported",
+        "reason": "核心组件已定到具体版本且有依据：TensorRT 11.1.0、CUDA 13.3（release notes 证实基线）、ONNX Runtime 1.27+（如走 EP 路线），配套关系无冲突；但 ONNX opset 推荐值答案明确标注未能核实，属至少一项相关组件未定到具体版本，故为 4 而非 5。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "TensorRT：**11.1.0**（当前 latest 文档对应版本；11.0.0 有已知问题，11.1.0 修复多项）"
+          },
+          {
+            "event_id": "final",
+            "quote": "CUDA：**13.3**（11.1.0 基线；Hopper 上建议 ≥13.2）"
+          },
+          {
+            "event_id": "final",
+            "quote": "PyTorch opset：官方示例未指定 opset_version，**未能核实官方推荐值**"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": 4,
+        "upper": 4,
+        "status": "supported",
+        "reason": "命令与代码完整可照抄：trtexec 完整命令、torch.onnx.export 代码、wget 下载 helper、cuda-python 补丁的两处精确替换说明、推理代码及环境前提（GPU/CUDA/tensorrt 安装）均齐备；仅需替换用户自己的模型路径与输入 shape 等环境参数。答案如实声明命令未实际运行（仅内容核查），不影响评级；补丁描述含'等'字略有压缩但两处替换即来源中的完整补丁内容，未构成需修正的错误。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+          },
+          {
+            "event_id": "final",
+            "quote": "将 `err = cudart.cudaMemcpyAsync(` 改为 `err, = ...` 等"
+          },
+          {
+            "event_id": "final",
+            "quote": "上述命令未在本机实际运行（仅内容核查）"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "d55f289ccd2a46f3bb738852926d11da",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "fae07bbf482379bec9eebcf6c9029091",
+        "conversationRequestId": "fae07bbf482379bec9eebcf6c9029091",
+        "agent": "cli"
+      },
+      {
+        "messageId": "d55f289ccd2a46f3bb738852926d11da",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "fae07bbf482379bec9eebcf6c9029091",
+        "conversationRequestId": "fae07bbf482379bec9eebcf6c9029091",
+        "rawUsage": {
+          "prompt_tokens": 10697,
+          "completion_tokens": 6983,
+          "total_tokens": 17680,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 5720,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 10697,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 5720,
+          "credit": 5.62,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 10697,
+          "outputTokens": 6983,
+          "totalTokens": 17680,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 5720
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "4cee22572488704a38829d19d4b68eef8bcec01a6c54a224a25f3fa7098951e0",
+    "process_sha256": "c8e91d16e3759819282258f65a6fca37dc4d1a5cdf8f90da23de15b6e731f361",
+    "elapsed_seconds": 187.76,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-9f4a2acbd20b473f86955160724fd05f",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

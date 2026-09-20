@@ -1,0 +1,133 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "`--soc_version`：昇腾 AI 处理器型号。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_efd904a9.result",
+      "evidence_quote": "在查询到的“Name”前增加Ascend信息，例如“Name”对应取值为*xxxyy*，实际配置的*<soc_version>*值为Ascend*xxxyy*。",
+      "verification": "source",
+      "reason": "最终答案以参数表说明 --model（ONNX 输入）、--output（.om 输出）与 --soc_version（目标芯片）的对应关系，并给出由 npu-smi info 的 Name 推导 soc_version 的方法，与官方快速入门页一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "atc --model=resnet50.onnx --framework=5 --output=resnet50 --input_shape=\"actual_input_1:1,3,224,224\"  --soc_version=<soc_version>",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_efd904a9.result",
+      "evidence_quote": "atc --model=resnet50.onnx --framework=5 --output=resnet50 --input_shape=\"actual_input_1:1,3,224,224\"  --soc_version=<soc_version>",
+      "verification": "source",
+      "reason": "答案给出含 --framework=5、--input_shape（输入节点名+shape）、--soc_version 的完整 ATC 命令格式，与官方 ResNet-50 示例命令逐字一致，并补充了查询 ONNX 输入节点名的 Python 片段。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "如需动态 batch，通常使用 `--dynamic_batch_size` 与 `--input_shape` 配合",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebSearch_4_a63b0130.result",
+      "evidence_quote": "When [--dynamic_batch_size] is included, only batch size N can be –1 in [--input_shape].",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明了动态输入的两种处理路线（固定为静态，或用 --dynamic_batch_size 配合 batch 维为 -1 的 --input_shape），并给出示例命令；搜索结果中官方动态 shape 案例佐证了该参数配合关系，答案也如实声明动态参数互斥约束未从官方正文核实。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "`--output`：输出 OM 的路径和文件名前缀；上面会生成 `model.om`。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_efd904a9.result",
+      "evidence_quote": "--output：离线om模型的路径以及文件名，此处文件名配置为resnet50，直接存储在当前目录下。",
+      "verification": "source",
+      "reason": "答案说明 .om 生成位置（当前目录）、命名规则（--output 前缀 + .om），并给出 `ls -lh model_ascend.om` 检查方式，与官方对 --output 参数的说明一致。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "aclmdlLoadFromFile(modelPath, &modelId);",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_9_31f710fa.result",
+      "evidence_quote": "支持以下方式**加载模型**，模型加载成功后，返回标识模型的模型ID：",
+      "verification": "source",
+      "reason": "答案给出系统管理内存的 aclmdlLoadFromFile 和用户管理内存的 aclmdlQuerySize/aclrtMalloc/aclmdlLoadFromFileWithMem 完整加载路径，以及 aclInit/aclmdlUnload/aclFinalize 调用序列，均与官方模型加载文档一致。"
+    },
+    {
+      "id": 6,
+      "status": "absent",
+      "answer_quote": "ATC 在转换时会做 Parser 解析、图准备、图拆分、图优化、图编译、算子调度优化、权重数据重排和内存优化",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "最终答案仅描述转换成功路径和 OM 生成结果，未给出 ATC 转换失败时的任何可核验定位点（如 ATC 日志路径/级别、命令返回码或参数检查方法）；代码中的 aclError ret 属于 AscendCL 加载阶段的返回码，不针对 ATC 转换失败。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题为流程与命令类任务，未要求锁定具体库/工具链版本；答案以 CANN 8.0 官方文档为依据，soc_version 属于依用户硬件而定的环境参数，答案给出通过 npu-smi info 确定的方法即可，无需定版。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "以昇腾官方 CANN 8.0 文档为准；示例中的芯片型号、输入名和 shape 需要替换成你的实际值。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "scored",
+      "reason": "第 6 节给出从环境加载（set_env.sh）、npu-smi info、完整 atc 命令到 ls 检查的可直接执行命令序列，仅需替换明确标识且有说明的环境值（输入名 images、shape、soc_version、模型路径）；AscendCL 部分为含省略号的骨架代码，但核心转换命令链完整无误，未发现需修正的内容错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "source /usr/local/Ascend/ascend-toolkit/set_env.sh"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "假设 ONNX 输入名为 `images`，静态 shape 为 `1,3,224,224`，芯片为 `Ascend910B`"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "aclInit(nullptr);\n// 设置 device/context/stream ..."
+        }
+      ],
+      "raw_status_label": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "WebSearch_4_a63b0130.result",
+          "quote": "When [--dynamic_batch_size] is included, only batch size N can be –1 in [--input_shape]."
+        }
+      ]
+    }
+  ],
+  "case": "case-a90dccd9ee6b",
+  "task_id": "A",
+  "ecosystem": "cann",
+  "kind": "outcome",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-a90dccd9ee6b-outcome.json",
+    "sha256": "ae14aa41e53bbfee8218d2bef701bda79fe1813afeb653672c937363d772c888",
+    "process_sha256": "f5ed9c26b3f5ffba407ee6fa570989d68038123f2195a88390086e3ce0380d82",
+    "changes": [
+      {
+        "field": "status",
+        "id": "M10",
+        "before": "supported",
+        "after": "scored",
+        "basis": "numeric judgment; evidence audited separately"
+      }
+    ],
+    "policy": "post-run deterministic event-ID/status repair; exact quotes only; M2 independently reviewed per document and aggregated with all unknown intervals included; not a new scoring rubric"
+  }
+}

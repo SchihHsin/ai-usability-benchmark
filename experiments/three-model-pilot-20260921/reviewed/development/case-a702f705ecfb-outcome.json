@@ -1,0 +1,121 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "onnx_program = torch.onnx.export(resnet50, (dummy_input,), dynamo=True)",
+      "answer_event_id": "final",
+      "evidence_id": "call_78634d65be224bf3b37b3356.result",
+      "evidence_quote": "onnx_program = torch.onnx.export(torch_model, example_inputs, dynamo=True)",
+      "verification": "source",
+      "reason": "答案给出 dummy 输入 shape（torch.randn(BATCH_SIZE, 3, 224, 224)）及 dynamo 与 legacy 两种 torch.onnx.export 导出接口，与 PyTorch 官方教程的 example_inputs=(torch.randn(1, 1, 32, 32),) 加 dynamo=True 导出方式一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "answer_event_id": "final",
+      "evidence_id": "call_4ce223136ab148519b9cfd9b.result",
+      "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "verification": "source",
+      "reason": "答案给出的构建命令与 NVIDIA 官方快速上手文档中的 trtexec 转换命令逐字一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "trtexec --onnx=model.onnx --saveEngine=model_fp16.engine --fp16",
+      "answer_event_id": "final",
+      "evidence_id": "call_72bcbc85b5a64fdcb39484e9.result",
+      "evidence_quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+      "verification": "source",
+      "reason": "答案覆盖精度参数（--fp16/--int8/--best/--stronglyTyped 及互斥说明）与 optimization profile（--minShapes/--optShapes/--maxShapes），均与官方 trtexec README 一致；workspace（--memPoolSize）答案明示未能核实，但精度与 profile 已满足该方面。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "trt_model = ONNXClassifierWrapper(\"resnet_engine_intro.engine\", target_dtype=PRECISION)",
+      "answer_event_id": "final",
+      "evidence_id": "call_4ce223136ab148519b9cfd9b.result",
+      "evidence_quote": "\"resnet_engine_intro.engine\", target_dtype=PRECISION",
+      "verification": "source",
+      "reason": "答案以官方 ONNXClassifierWrapper 加载生成的 engine 文件进行部署，来源页确认 wrapper 在首个 batch 加载并初始化 engine（'the wrapper loads and initializes the engine when running the first batch'），属有效的加载方式。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "predictions = trt_model.predict(dummy_input_batch)",
+      "answer_event_id": "final",
+      "evidence_id": "call_4ce223136ab148519b9cfd9b.result",
+      "evidence_quote": "predictions = trt_model.predict(dummy_input_batch)",
+      "verification": "source",
+      "reason": "答案给出加载 engine 后执行推理的具体接口 trt_model.predict(dummy_input_batch)，与 NVIDIA 官方部署步骤一致。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "engine 与 GPU 架构及 TensorRT 版本绑定，换卡/换版本需重新构建",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案仅给出原则性表述且自认'engine 文件跨 GPU/版本不可移植的表述为通用常识，未在本次抓取正文中逐字核对'，未提供可核验检查点（如具体报错信息或版本核查命令）；ONNX Runtime 1.27+/TensorRT 11.x 的版本配套虽有来源支持，但不构成 engine 与 GPU/版本不兼容的检查点。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题仅要求 PyTorch→ONNX→TensorRT 的完整步骤和命令，未要求锁定具体库/工具链版本，按规则记 N/A。答案自愿给出的版本信息均为有依据的范围（PyTorch 2.5+ 提供 dynamo 导出器、文档页 PyTorch 2.14.0+cu130、TensorRT 11.x、ONNX Runtime ≥1.27 配 TRT 11.x），而非定版到单一具体版本。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "NVIDIA 文档当前主线为 TensorRT 11.x（文档提及 TensorRT 11.0.0/11.1.0 release notes，及 ONNX Runtime ≥1.27 配 TensorRT 11.x）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "操作指导完整：前置条件（model.eval()、依赖安装、trtexec 位置）列明，导出代码、trtexec 各变体命令、wget 下载 helper、ONNXClassifierWrapper 推理代码均可照抄，仅需替换模型路径、输入名、shape 等明确标识的环境参数。未达 5 分因答案自标两处未逐字核实内容：dynamo 导出器 dynamic_shapes 参数写法需查 docstring，cuda-python 变更后 helper 补丁脚本仅指示查官方文档而未在答案内完整给出。所有命令仅内容核查未实际运行，按规则不影响档位。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+        },
+        {
+          "event_id": "final",
+          "quote": "predictions = trt_model.predict(dummy_input_batch)"
+        }
+      ],
+      "raw_status_label": "supported"
+    }
+  ],
+  "quote_audit": [],
+  "case": "case-a702f705ecfb",
+  "task_id": "A",
+  "ecosystem": "cuda",
+  "kind": "outcome",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-a702f705ecfb-outcome.json",
+    "sha256": "88524d7a3d45b58eed480813fff1faba1e62b8977477e99f1d1d267a18937a04",
+    "process_sha256": "44a072801450206d52e5b2a0a01007a4da0e348dd85048ebe3064fde220122c5",
+    "changes": [
+      {
+        "field": "status",
+        "id": "M10",
+        "before": "supported",
+        "after": "scored",
+        "basis": "numeric judgment; evidence audited separately"
+      }
+    ],
+    "policy": "post-run deterministic event-ID/status repair; exact quotes only; M2 independently reviewed per document and aggregated with all unknown intervals included; not a new scoring rubric"
+  }
+}

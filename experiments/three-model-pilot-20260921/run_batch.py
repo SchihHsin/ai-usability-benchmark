@@ -1,4 +1,4 @@
-"""Fixed pilot order; resume completed cells without rerunning their scores."""
+"""Fixed pilot order; execute once. Do not restart this script to resume."""
 from pathlib import Path
 from types import SimpleNamespace
 import concurrent.futures,json

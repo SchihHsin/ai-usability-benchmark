@@ -1,0 +1,124 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "`errcode` / `errorStr` | AI Core Error 的具体错误码与描述（如 `0x10 Illegal instruction, usually caused by unaligned UUB addresses`）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_b718cfdddc43414bb0f11979.result",
+      "evidence_quote": "errcode、errorStr：分别表示AI Core Error的报错错误码、错误描述",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明从EZ9999报错正文中提取errcode/errorStr等字段获得具体错误描述，并给出fault kernel_name指向出错算子，与官方现象描述页一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "export ASCEND_WORK_PATH=${HOME}/aic_err_info        # 生成 plog、atrace 目录",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_31cd75c43115494cb88f11a2.result",
+      "evidence_quote": "export ASCEND_WORK_PATH=${HOME}/aic_err_info",
+      "verification": "source",
+      "reason": "答案给出具体环境变量设置（ASCEND_WORK_PATH/ASCEND_PROCESS_LOG_PATH/NPU_COLLECT_PATH）、默认日志路径、msnpureport -f与asys collect命令，均与官方收集页一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "在 `slog/dev-os-*id*/run/event/event_*.log` 中查 `event_id` 关键字",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_b8d93d0f4d1e4addb5fbb5af.result",
+      "evidence_quote": "在slog/dev-os-*id*/run/event/event_*.log中找到发生AI Core Error问题附近时间、对应Device的系统日志",
+      "verification": "source",
+      "reason": "答案引用按错误发生附近时间与对应Device关联slog系统日志，且plog按pid命名（plog-*pid*_*.log）、chipId判断同一芯片，覆盖时间/进程/设备三维度关联。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "存在→按《健康管理故障定义》手册（support.huawei.com，Ascend HDK pid-252764743）查对应故障处理（典型：HBM 比特 ECC、icache 校验、AI Core 超时）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_b8d93d0f4d1e4addb5fbb5af.result",
+      "evidence_quote": "若存在，则获取“event_id”的值（即RAS硬件故障码）",
+      "verification": "source",
+      "reason": "答案给出RAS硬件故障→NPU硬件故障（ECC/chipId+ascend-dmi压测）→软件故障（0x800000索引越界/msaicerr）的可核验分支树，与官方定位思路页一致。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "单算子实现异常（可自动生成单算子复现脚本 `test_single_op.py`）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_1578b179af57415dab124966.result",
+      "evidence_quote": "工具自动生成了单算子用例脚本，您可以执行该脚本复现单算子问题",
+      "verification": "source",
+      "reason": "答案含复现手段（ASCEND_LAUNCH_BLOCKING=1复跑、test_single_op.py单算子复现、换Device复跑判断）与内存检查（msSanitizer、op_debug_config=oom），均见于官方来源。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "软件类问题若为内置算子或无法定位，携带 msaicerr 结果联系技术支持",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_b8d93d0f4d1e4addb5fbb5af.result",
+      "evidence_quote": "将执行msaicerr工具的结果数据（包括分析AI Core Error问题的最小集信息、分析报告等）提供给技术支持",
+      "verification": "source",
+      "reason": "答案明确排查后应保留plog、exception dump、算子.o/.json、msnpureport系统日志与msaicerr输出（info.txt），与官方要求提供最小集信息给技术支持一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为故障排查类问题，不要求锁定库/工具链/soc_version等具体版本；答案主线基于CANN商用版8.5.0文档并说明社区版细节可能不同，属合理标注而非定版缺陷，无版本需要记N/A。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "本答案主线基于 CANN 商用版 8.5.0 文档，社区版（如 8.2.RC1.alpha001）有对应专题但细节可能不同。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "命令与前置条件基本齐全可直接照抄：export环境变量、msnpureport -f、ascend-dmi --dg -i aicore -s、python3 msaicerr.py -p/-out均给出完整参数，并注明root执行、python≥3.7.5、缺库pip安装、不能在-p目录内执行等前提；仅需替换${HOME}、${install_path}、path等明确标识的环境参数。msaicerr安装路径需用户自行确认、ascend-dmi安装细节未核实，属环境准备缺口而非命令错误，故4分而非5分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "（约束：本地分析；python≥3.7.5；不支持 RC 形态；不支持 MatmulAllReduce 类等算子；不能在 -p 目录内执行；缺库时 `pip3 install protobuf/chardet/bfloat16ext --user`。）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_b718cfdddc43414bb0f11979.result",
+          "quote": "errcode、errorStr：分别表示AI Core Error的报错错误码、错误描述"
+        }
+      ]
+    }
+  ],
+  "case": "case-ed1ce62fae72",
+  "task_id": "E",
+  "ecosystem": "cann",
+  "kind": "outcome",
+  "split": "development",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/development/case-ed1ce62fae72-outcome.json",
+    "sha256": "818249ffb5c6959957eeda9ff52e170ff95c1e03684d132c4c807887f55f8d9a",
+    "process_sha256": "15dee1caa50bf490b11a03f1ea410a6f49720094513a4b4f48bc6a35a2ab3ed5",
+    "changes": [],
+    "policy": "post-run deterministic event-ID/status repair; exact quotes only; M2 independently reviewed per document and aggregated with all unknown intervals included; not a new scoring rubric"
+  }
+}
