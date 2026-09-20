@@ -5,7 +5,7 @@ import json
 def render(metrics,refs,root,reading_log):
     baseline=json.loads((root/'original-metric-baseline.json').read_text())
     originals={d['id']:d for d in baseline['metrics']}
-    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M10名称为“操作可执行性”；M11展示可复算的参照剖面中点候选区间，尚未校准，历史阈值仅供对照。</mark></p>']
+    parts=['<span id="current-diff"></span><h1>11项指标：评分规则修订稿</h1><p>保留原名称、定义和评价目的 · 仅供审阅，尚未写入Skill</p><p>先固定评价对象，再明确五档与证据边界，最后复用已有记录检查分歧。确认后统一写入Skill并开展正式运行。<mark>黄色为本轮修订；M2、M8保留此前方案。M10名称为“操作可执行性”；M11分界固定为0.20、0.40、0.60、0.80；等宽分类不代表效度或概率校准，历史阈值仅供对照。</mark></p>']
     parts.append('<p>概念基线：<a href="file://'+baseline['source']+'#s4">18_metric_definition.html 第4节</a>。原定义逐字保留；旧分档和公式仅用于对照，不替换已确认的修订。</p>')
     nav=''.join(f'<a href="#{d["id"].lower()}">{d["id"]} · {H(d["name"])}</a>' for d in metrics)
     for d in metrics:
@@ -19,6 +19,7 @@ def render(metrics,refs,root,reading_log):
         for r in d['refs']:
             title,url,scope,limit=refs[r]
             parts.append(f'<p><a href="{H(url)}">{H(title)}</a><br>{H(scope)}<br><b>不能据此推断：</b>{H(limit)}</p>')
+        if key=='M11':parts.append('<p><b>分档方法来源：</b><a href="https://pro.arcgis.com/en/pro-app/latest/help/mapping/layer-properties/data-classification-methods.htm">Esri ArcGIS Pro官方文档：Data classification methods — Equal interval</a>。本轮已读正文，明确定义将数值范围划成等宽子区间。该来源属于数值分类技术文档，不是AI置信度量表研究，只支持分档算法。OECD/JRC综合指标手册用于说明综合指标构造与稳健性审查，不提供本指标的阈值；本轮官网访问403，不能称为新读全文。</p>')
         if key=='M1':parts.append((root/'m1-session-literature.html').read_text()+(root/'m1-replay.html').read_text())
         parts.append('<p><b>自定部分：</b>'+H(d['own'])+'</p><details><summary>对照：最初分档与公式</summary><p>'+H(o['rubric'])+'</p><p>'+H(o['formula'])+'</p></details></section>')
     parts.append('<div id="supporting-materials"><h2>补充材料</h2><p>评分审阅主体在上方；过程材料保留在这里，按需展开。</p>')
