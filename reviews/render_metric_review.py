@@ -11,7 +11,7 @@ def render(metrics,refs,root,reading_log):
     for d in metrics:
         key=d['id'];o=originals[key]
         parts.append(f'<section id="{key.lower()}" class="metric-review"><h2>{key} · {H(d["name"])}</h2><p><b>原名称：</b>{H(o["name"])}</p><p><b>原定义：</b>{H(o["definition"])}</p><p><b>原评价目的：</b>{H(o["purpose"])}</p><h3>拟采用评分规则</h3><table class="score-table"><thead><tr><th>分值</th><th>怎么判定</th></tr></thead><tbody>')
-        if key=='M11':parts.append('<tr><th>0–100</th><td><mark>M11＝100 × 三渠道均值 × 版本因子 × 成本因子；详见下方明确公式。展示一位小数，不划分五档。</mark></td></tr>')
+        if key=='M11':parts.append('<tr><th>0–100</th><td><mark>M11＝100 × 三渠道噪声OR合成值K × 版本因子 × 成本因子；详见下方明确公式。展示一位小数，不划分五档。</mark></td></tr>')
         for n,t in enumerate(d['bands'],1):
             t=H(t)
             if key not in {'M8'}:t='<mark>'+t+'</mark>'
