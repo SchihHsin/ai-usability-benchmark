@@ -55,7 +55,7 @@ for eco,cid in [('cann','r26'),('cuda','r58')]:
 for name,cid,startmark,endmark,question in [
  ('django','r71','What Python version can I use with Django?','What Python version should I use with Django?','Django 5.2分支支持哪些Python次版本？Python 3.14从哪个Django补丁版本开始支持？仅判断官方版本支持关系，不选择生产环境最新补丁。'),
  ('kubernetes','r39','Supported versions\n','kube-proxy\n','HA集群的kube-apiserver为1.36和1.35，哪些kubelet次版本满足官方版本偏差约束？仅评价版本偏差关系，不评价维护期限或额外部署工具约束。')]:
- s=(R/(name+'.txt')).read_text();start=s.index(startmark);end=s.index(endmark,start);excerpt=s[start:end]
+ s=(R/(name+'.txt')).read_text();start=s.rindex(startmark) if name=='kubernetes' else s.index(startmark);end=s.index(endmark,start);excerpt=s[start:end];assert len(excerpt)>500
  ev=next(json.loads(l) for l in (R/'source-acquisition.jsonl').read_text().splitlines() if json.loads(l)['event_id']=='fetch-'+name)
  cases.append({'case_id':cid,'kind':'real_official_material','question':question,'sources':[{'source_id':'fetch-'+name,'page_id':ev['url'],'url':ev['url'],'text':excerpt,'representation':'exact section excerpt from locally extracted HTML text','text_start':start,'text_end':end,'full_extracted_text_sha256':sha(R/(name+'.txt')),'http_body_sha256':ev['body_sha256']}]})
  expected[cid]={'score':None,'status':'not_prespecified'}
