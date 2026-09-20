@@ -41,7 +41,7 @@ ex_budget={b: sum(1 for x in excluded if case_budget.get(x.get('case'))==b) for 
 in_budget={b: sum(1 for x in dev if case_budget.get(x.get('case'))==b) for b in sorted({case_budget.get(x.get('case')) for x in dev if case_budget.get(x.get('case'))})}
 included_total=len(dev); candidate_total=len(dev)+len(excluded)
 frozen=load('frozen-selection.json'); held=load('heldout-data.json',[]) if frozen is not None else []
-results=load('fit-results.json'); validation=load('validation-results.json'); literature=load('literature.json',{}) or {}
+results=load('fit-results.json'); sensitivity=load('sensitivity/fit-results.json'); sensitivity_validation=load('sensitivity/validation-results.json'); validation=load('validation-results.json'); literature=load('literature.json',{}) or {}
 summary=audit.get('summary',{}); complete=summary.get('complete',0)
 status='留出验证完成' if validation else '系数已冻结，等待留出验证' if frozen is not None else '采集完成，等待拟合' if complete else '采集中/尚未拟合'
 fit=(frozen or {}).get('fit',{})
@@ -71,6 +71,12 @@ if results:
     sens=results.get('interval_distance_sensitivity',{})
     if sens: parts.append(section('替代损失敏感性（描述性）',table(['族','a','b','interval-distance MSE'],[[k,v.get('a'),v.get('b'),v.get('mse')] for k,v in sens.items()])))
 else: parts.append(section('候选族 CV、bootstrap 与敏感性',"<p class='notice'>fit-results.json 尚不存在：保持“尚未拟合”，不补造候选系数、fold 或 bootstrap 数值。</p>"))
+if sensitivity:
+    sm=sensitivity.get('models',{}); primary_original=sm.get('original',{}); ss=sm.get('cost_only',{})
+    parts.append(section('独立后设敏感性（answer-id 审计修正）',f"<p>这是独立的后设敏感性重跑，输入为修正 answer_event_id 的 eligible 开发记录；它不是原预设 primary，也不改变原 primary 结果或选择协议。结果只用于显示引用 ID 审计敏感性，不能据此宣称 M4 不重要、也不能提前做最终采纳判断。</p>"+table(['分析','族','a','b','CV worst MSE'],[['sensitivity rerun original baseline', 'original', primary_original.get('a'), primary_original.get('b'), primary_original.get('cv_worst_case_mse')],['sensitivity','cost_only',ss.get('a'),ss.get('b'),ss.get('cv_worst_case_mse')]])))
+if sensitivity_validation:
+    sv=sensitivity_validation; sb=sv['bootstrap_selected_minus_original']
+    parts.append(section('Answer-ID sensitivity: held-out validation',table(['Item','Value'],[['n',sv['n']],['selected MSE',sv['heldout_group_mse']],['original MSE',sv['baseline_original_group_mse']],['selected-original P05',sb['p05']],['selected-original P95',sb['p95']]])))
 if validation:
     b=validation.get('bootstrap_selected_minus_original',{}); parts.append(section('冻结后的留出比较',table(['项目','值'],[['留出 n',validation.get('n')],['selected family group MSE',validation.get('heldout_group_mse')],['original baseline group MSE',validation.get('baseline_original_group_mse')],['selected − baseline bootstrap mean',b.get('mean')],['描述性 P05–P95 范围（非置信区间）',f"{b.get('p05')} — {b.get('p95')}"],['留出 cases',', '.join(validation.get('rows',[]))]])))
     if validation.get('family_group_mse'): parts.append(table(['冻结前已存在的族/基线','held-out group MSE'],[[k,v] for k,v in validation['family_group_mse'].items()]))
@@ -95,8 +101,16 @@ if results:
 else: md += ['','## 拟合结果','`fit-results.json` 尚不存在，候选族、fold 和 bootstrap 保持“尚未拟合”。']
 if validation:
     b=validation.get('bootstrap_selected_minus_original',{}); md += ['','## 留出比较',md_table(['项目','值'],[['n',validation.get('n')],['selected MSE',validation.get('heldout_group_mse')],['original MSE',validation.get('baseline_original_group_mse')],['selected−baseline mean',b.get('mean')],['描述性 P05–P95（非置信区间）',f"{b.get('p05')} — {b.get('p95')}"]])]
+if sensitivity:
+    sm=sensitivity.get('models',{}).get('cost_only',{}); po=sensitivity.get('models',{}).get('original',{})
+    md += ['', '## 独立后设敏感性', f"answer_event_id 的 exact-final / event-ID 审计修正后，独立重跑选择 {sensitivity.get('selected_family')}（a={val(sensitivity.get('fit',{}).get('a'))}, b={val(sensitivity.get('fit',{}).get('b'))}），其 CV worst MSE={val(sm.get('cv_worst_case_mse'))}；同一敏感性输入下 original baseline 的 CV worst MSE={val(po.get('cv_worst_case_mse'))}。该分析不是原预设 primary，不用于宣称 M4 不重要，也不提前作最终采纳判断。"]
 md += ['','## 方法与结果叙述',f'本研究对每个自动生成答案执行后评：六项预先定义的任务需求分别记录为有界区间，保留可辩护的上下界（开发集仅 2/{included_total} 个 outcome 为点值，M2 仅 {m2_point}/{included_total} 个点值，M7 有 {m7_full}/{included_total} 个 [1,5] 区间）；以任务组为留出单位，生态与预算条件留在组内。开发集纳入 {included_total}/{candidate_total} 个候选样本，排除原因逐条保留；选择只在开发集进行，冻结后才可评估留出集。候选族通过 leave-one-development-task-group-out CV 比较，损失为区间端点的保守 worst-case 平方误差；task-group bootstrap 只作描述性稳定性。自动后评是证据支持的答案质量代理，不是人工金标准。']
 md += ['','## 限制','- 自动评委不是人工金标准；指标是答案质量代理，不是硬件成功率或校准概率。','- bootstrap 与区间用于描述性稳定性，不能证明通用最优。','- 预算是条件性设计；单一生成模型、每格单次运行，任务难度未必相等。','- worst-case 区间损失取保守的端点最大误差，不建模区间相关性；宽区间可能显著影响系数。','- m2_documents 没有逐文档语义校验，code_inspection 标签来自自动模型判断；精确引文只校验存在性。','- 无硬件执行；未知引文不静默记零；旧实验系数不参与本轮。','','## 文献 ledger']
 for x in literature.get('method_references',[]): md.append(f"- [{x.get('source')}]({x.get('url','')})：{x.get('supports','')}")
 (ROOT/'paper-methods-results.md').write_text('\n'.join(md)+'\n')
 print(f'generated {ROOT/"report.html"} and {ROOT/"paper-methods-results.md"}')
+
+if sensitivity_validation:
+    sv=sensitivity_validation; sb=sv['bootstrap_selected_minus_original']
+    with (ROOT/'paper-methods-results.md').open('a') as f:
+        f.write('\n## Answer-ID sensitivity: held-out validation\n'+md_table(['Item','Value'],[['n',sv['n']],['selected MSE',sv['heldout_group_mse']],['original MSE',sv['baseline_original_group_mse']],['selected-original P05',sb['p05']],['selected-original P95',sb['p95']]])+'\n')

@@ -128,6 +128,7 @@ def main():
             raise ValueError('frozen selection development input hash mismatch')
         if not held: raise ValueError("--validate requires non-empty heldout-data.json")
         fit=fr["fit"]; rf=Path(args.fit_results) if args.fit_results else ROOT/'fit-results.json'; prior=json.loads(rf.read_text()) if rf.exists() else {}
+        if prior and prior.get('input_sha256') != ih: raise ValueError('fit-results input hash does not match frozen selection')
         model_fits={k:v for k,v in prior.get('models',{}).items()}; model_fits['original']={'a':.3,'b':.1}
         if fr.get('selected_family') not in model_fits: model_fits[fr['selected_family']]=fit
         errors={k:group_mean(rows,row_loss(rows,v['a'],v['b'])) for k,v in model_fits.items()}
