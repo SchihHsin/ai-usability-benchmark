@@ -1,6 +1,6 @@
 """Assess completed development runs while collection continues; bounded retries."""
 from pathlib import Path
-import concurrent.futures,json,time,traceback
+import concurrent.futures,json,time,traceback,signal
 from types import SimpleNamespace
 import assess,prepare_assessment as prep
 ROOT=Path(__file__).resolve().parent
@@ -16,7 +16,9 @@ def valid(case,kind):
     return False
 
 def main():
-    running={};tried={};terminal=set();pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
+    stopping=[False]
+    signal.signal(signal.SIGINT,lambda *_:stopping.__setitem__(0,True))
+    running={};tried={};terminal=set();pool=concurrent.futures.ThreadPoolExecutor(max_workers=4)
     while True:
         items={}
         for path in (ROOT/'runs').glob('*/process.jsonl'):
@@ -34,10 +36,12 @@ def main():
         jobs=[(case,kind) for case in sorted(items) for kind in ('predictors','outcome')]
         for key in jobs:
             if valid(*key):terminal.add(key);continue
-            if key in terminal or key in running.values() or len(running)>=2:continue
+            if stopping[0] or key in terminal or key in running.values() or len(running)>=4:continue
             tried[key]=tried.get(key,0)+1
             future=pool.submit(assess.run_one,items[key[0]],key[1],SimpleNamespace(overwrite=True,timeout=300))
             running[future]=key;print(json.dumps({'assessing':key,'queue_attempt':tried[key]},ensure_ascii=False),flush=True)
+        if stopping[0] and not running:
+            pool.shutdown();print('QUEUE DRAINED',flush=True);return
         if len(items)==expected and all(key in terminal for key in jobs) and not running:break
         time.sleep(5)
     pool.shutdown()

@@ -71,6 +71,7 @@ def main():
         except Exception as e: print(f'SKIP {p}: {e}')
     args.out.mkdir(parents=True,exist_ok=True)
     for split in ('development','heldout'):
+        if args.split!='all' and split!=args.split:continue
         selected=[r for r in rows if r['split']==split]
         (args.out/f'{split}.json').write_text(json.dumps(selected,ensure_ascii=False,indent=2)+'\n')
     manifest={'protocol_sha256':hashlib.sha256((ROOT/'protocol.json').read_bytes()).hexdigest(),'tasks_sha256':hashlib.sha256((ROOT/'tasks.json').read_bytes()).hexdigest(),'runs':len(rows),'by_split':{s:sum(r['split']==s for r in rows) for s in ('development','heldout')},'cases':[r['case'] for r in rows]}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Uniform-grid fit for the pre-registered M11 noisy-OR model.
+"""Uniform-grid fit for the prospectively specified M11 noisy-OR model.
 
 Selection uses development rows only.  ``--validate`` consumes the frozen
 selection and evaluates held-out rows without searching or changing it.
@@ -99,7 +99,8 @@ def select_family(dev):
     order={"no_factors":0,"version_only":1,"cost_only":1,"both":2,"original":0}
     def key(f):
         fit=choose(dev,f); return (cv[f],order[f],fit["a"]+fit["b"],fit["a"],fit["b"])
-    selected=min(FAMILIES,key=key); fit=choose(dev,selected)
+    minimum=min(cv.values()); candidates=[f for f in FAMILIES if cv[f]<=minimum+1e-12]
+    selected=min(candidates,key=lambda f:key(f)[1:]); fit=choose(dev,selected)
     models={}
     for f in FAMILIES:
         z=choose(dev,f); models[f]={**z,"cv_worst_case_mse":cv[f],"folds":folds[f],"parameter_count":order[f]}

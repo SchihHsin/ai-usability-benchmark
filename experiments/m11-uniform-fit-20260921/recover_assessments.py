@@ -12,11 +12,14 @@ def main():
     bycase={x['case']:x for x in inp}; adir=args.root/'assessments/development'; failures=[]; recovered=[]
     # 延迟导入，确保使用主 assess.extract/audit 定义，不复制评分逻辑。
     import sys; sys.path.insert(0,str(args.root)); import assess
-    files=sorted(adir.glob('*-predictors.json'))+sorted(adir.glob('*-outcome.json'))
+    files=sorted(p for p in adir.glob('*.json') if '-recovered' not in p.stem)
     if args.run: files=[p for p in files if p.name in set(args.run)]
     for p in files:
         d=json.loads(p.read_text(encoding='utf-8'))
         if 'error' not in d: continue
+        existing=p.with_name(p.stem+'-recovered.json')
+        if existing.exists():
+            recovered.append({'file':str(existing),'case':d.get('case'),'kind':d.get('kind'),'previously_recovered':True});continue
         case=d.get('case'); item=bycase.get(case); kind=d.get('kind')
         fail={'file':str(p),'case':case,'kind':kind,'original_sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
         try:
@@ -36,7 +39,7 @@ def main():
                 if [m.get('id') for m in parsed.get('requirements',[])] != list(range(1,7)): raise ValueError('requirement IDs are not exactly integer 1..6')
                 value=assess.audit(copy.deepcopy(parsed),item,kind)
             # 仅恢复结构；不采用错误文件中的评分/原因元数据，审计版直接来自 raw 分支。
-            out={**value,'case':case,'task_id':item['task_id'],'ecosystem':item['ecosystem'],'split':'development','budget':item.get('budget'),'model_identity':item.get('metadata',{}).get('model_id'),'kind':kind,'raw_assessment':parsed,'_recovery':{'original_file':p.name,'original_file_sha256':fail['original_sha256'],'method':'extract branch selection + evidence-dict-to-list normalization + assess.audit; no model call','providerData':provider,'result_type':result.get('type') if result else None}}
+            out={**value,'case':case,'task_id':item['task_id'],'ecosystem':item['ecosystem'],'split':'development','budget':item.get('budget'),'model_identity':{'requested':d.get('_audit',{}).get('model_requested'),'response_providerData':provider},'kind':kind,'raw_assessment':parsed,'_recovery':{'original_file':p.name,'original_file_sha256':fail['original_sha256'],'method':'extract branch selection + evidence-dict-to-list normalization + assess.audit; no model call','providerData':provider,'result_type':result.get('type') if result else None}}
             dest=p.with_name(p.stem+'-recovered.json')
             if dest.exists(): raise FileExistsError(str(dest))
             dest.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

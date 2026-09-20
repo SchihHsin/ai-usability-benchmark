@@ -21,6 +21,7 @@ def prompt(item, kind):
         task='''只根据 final 和 sources 评价六条 criteria，以及 M9、M10；不要读取 prior、counts 或任何分数预算（输入不会提供）。每条 requirement 输出 id、status（supported/absent/contradicted/unverified）、answer_quote、answer_event_id（必须为 run-end）、evidence_id、evidence_quote、reason。M9/M10 只引用 final，分别输出 score 1-5 或 null、status、reason、evidence（event_id 必须为 run-end）。不要因为没有实际硬件执行就否定内容；不要把来源正文替代最终答案。'''
     task += ('\n只执行predictors这一种评价。JSON顶层必须为metrics数组（按M1至M8顺序）和m2_documents，不要输出outcome/requirements。每个evidence是数组，包含event_id和quote。' if kind=='predictors' else '\n只执行outcome这一种评价。JSON顶层必须为requirements数组（id整数1至6顺序）和m9_m10数组（id M9/M10），不要输出predictors/metrics。supported须含verification=source或code_inspection；code_inspection只适用于可直接检查的具体代码语法/数据流，不可证明外部API存在或版本兼容。每个evidence是数组。')
     task += '\n每项给精确短引文，不拼接不省略。总输出不超过6500 tokens。不要用predictors/outcome包装对象。'
+    task += '\n严格返回符合这个JSON Schema的单一JSON对象（不要调用任何工具）：'+json.dumps(output_schema(kind),ensure_ascii=False)
     return COMMON+'\n'+task+'\n冻结规则（仅适用于 M1-M10）：\n'+(RULES_PRED if kind=='predictors' else RULES_OUT)+'\n输入 JSON：\n'+json.dumps(base,ensure_ascii=False)
 
 def output_schema(kind):
@@ -43,8 +44,14 @@ def extract(raw):
         for x in reversed(msgs):
             if isinstance(x,dict) and x.get('role')=='assistant':
                 c=x.get('content',[]); text='\n'.join(b.get('text','') for b in c if isinstance(b,dict) and b.get('type') in ('text','output_text')); break
-    text=re.sub(r'^```(?:json)?\s*|\s*```$','',str(text).strip())
-    val=result.get('structured_output') if result and isinstance(result.get('structured_output'),dict) else json.loads(text)
+    text=str(text).strip()
+    if result and isinstance(result.get('structured_output'),dict):val=result['structured_output']
+    else:
+        try:val=json.loads(text)
+        except json.JSONDecodeError:
+            blocks=re.findall(r'```(?:json)?\s*([\s\S]*?)```',text)
+            if len(blocks)!=1:raise
+            val=json.loads(blocks[0])
     provider=[]
     for x in msgs:
         if isinstance(x,dict):
@@ -99,7 +106,7 @@ def run_one(item,kind,args):
         n=1; base=dest
         while dest.exists(): dest=base.with_name(base.stem+f'-attempt-{n}'+base.suffix); n+=1
     (ROOT/'assessment-prompts').mkdir(exist_ok=True); (ROOT/'assessment-prompts'/(dest.stem+'.txt')).write_text(text,encoding='utf-8')
-    cmd=['node',CLI,'--print','--model',MODEL,'--agent','cli','--tools','','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','--no-session-persistence','--session-id','assess-'+uuid.uuid4().hex,'--effort','low','--max-turns','1','--output-format','json','--json-schema',json.dumps(output_schema(kind),ensure_ascii=False)]
+    cmd=['node',CLI,'--print','--model',MODEL,'--agent','cli','--tools','','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','--no-session-persistence','--session-id','assess-'+uuid.uuid4().hex,'--effort','low','--max-turns','1','--output-format','json']
     env=os.environ.copy(); env.update({'CODEBUDDY_CONFIG_DIR':'/Users/hsin/.workbuddy','CODEBUDDY_DISABLE_AUTO_MEMORY':'1','CODEBUDDY_CODE_DISABLE_AUTO_MEMORY':'1','CODEBUDDY_MEMORY_ENABLED':'0','CODEBUDDY_TEAM_MEMORY_ENABLED':'0','CODEBUDDY_TYPED_MEMORY_ENABLED':'0'})
     start=time.time(); val=None; stdout=''; stderr=''; code=None
     try:
@@ -145,7 +152,10 @@ def export_fit(split):
             status=m.get('status');lo=m.get('lower');hi=m.get('upper');score=m.get('score')
             if status in ('not_applicable','blocked','not_assessed'):
                 bad.append(m['id']+': '+status);continue
-            if status=='scored' and score is not None:lo=hi=score
+            if status=='scored' and score is not None:
+                # A non-degenerate stated interval must not silently become a point.
+                if not (isinstance(lo,(int,float)) and isinstance(hi,(int,float)) and lo<hi): lo=hi=score
+            if m['id']=='M7' and not item['prior']:lo,hi=1,5
             if m['id']=='M8':
                 cost=sum(item['counts'].values());lo=hi=(1 if cost>=9 else 2 if cost>=7 else 3 if cost>=5 else 4 if cost>=3 else 5 if cost>=1 else None)
             if not isinstance(lo,(int,float)) or not isinstance(hi,(int,float)) or not 1<=lo<=hi<=5:
