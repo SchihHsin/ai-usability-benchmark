@@ -96,7 +96,7 @@ add('M11','跨来源联合任务支撑','建议替代旧综合公式；需重点
 '同一需求可由多来源共同满足，必须解释如何拼接；版本冲突留M4，内容矛盾影响相应内容要求。全部材料未取得记不可评价。若不接受收窄综合含义，则保留分项矩阵并暂不输出M11，而不是强算旧公式。',
 ['COMP','RAG','IQ'],'联合需求覆盖及五档是本研究建议，文献只支持谨慎定义聚合含义；不称为成熟综合量表。该项批准前不写入Skill。','官方支持需求A，第三方支持需求B；两者单独均不完整，联合可支持全部核心要求。无需强求各模型最后分数一样。')
 
-from revision_20260920 import amend
+from refine_original_metrics import amend
 D=amend(D)
 
 def citations(keys):return '<br>'.join(f'<a href="#ref-{k}">{H(refs[k][0])}</a>' for k in keys)
@@ -150,5 +150,5 @@ parts,nav,reader_css=render(D,refs,ROOT,log)
 css+=reader_css
 page='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>11项指标严谨性修订 · 待确认方案</title><style>'+css+'</style></head><body><aside><strong>指标严谨性修订</strong>'+nav+'<button onclick="print()">打印 / 保存PDF</button></aside><main>'+''.join(parts)+'</main><script>'+js+'</script></body></html>'
 (ROOT/'scoring-rules-and-literature-2026-09-15.html').write_text(page)
-(ROOT/'scoring-proposal-2026-09-15.json').write_text(json.dumps({'status':'historical_proposal_pending_original_definition_review','baseline':'original-metric-baseline.json','metrics':D,'references':refs},ensure_ascii=False,indent=2))
+(ROOT/'scoring-proposal-2026-09-15.json').write_text(json.dumps({'status':'review_only_original_constructs_refined_rules','baseline':'original-metric-baseline.json','metrics':D,'references':refs},ensure_ascii=False,indent=2))
 print('Built review-only HTML and proposal data; Skill unchanged.')
