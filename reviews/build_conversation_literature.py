@@ -12,6 +12,14 @@ extra=[
  ('PEARL','Pearl (1988). Probabilistic Reasoning in Intelligent Systems: Networks of Plausible Inference.','https://www.sciencedirect.com/book/9780080514895/probabilistic-reasoning-in-intelligent-systems','对话中作为noisy-OR结构的理论出处引用；未在本轮核对全文。','不支持把有序分数直接当概率，不验证本公式或系数；无未经核验的页码及原文摘录。'),
  ('ESL','Hastie, Tibshirani & Friedman (2009). The Elements of Statistical Learning, 2nd ed., Chapter 7: Model Assessment and Selection.','https://hastie.su.domains/ElemStatLearn/','本轮取得作者公开PDF，核对第7章纸面页219、222—223、241、243、245—247、249：平方误差、模型选择与评价的区别、交叉验证泄漏及bootstrap。未声称阅读全文。','不规定本研究损失函数、任务分组、样本量、网格步长或权重值。')]
 for k,t,u,s,l in extra:rows.append({'id':k,'reference':t,'url':u,'use_and_reading_scope':s,'limits':l,'status':'对话补录'})
+audit_reading=ROOT/'construct-validity-reading-2026-09-21.json'
+if audit_reading.exists():
+ for item in json.loads(audit_reading.read_text())['sources']:
+  existing=next((r for r in rows if r['id']==item['id']),None)
+  update={'id':item['id'],'reference':item['reference'],'url':item['url'],'use_and_reading_scope':'2026-09-21: '+item['read'],'limits':item['limit'],'status':'Methodology review; actual reading scope recorded'}
+  if existing:
+   existing['use_and_reading_scope'] += ' | '+update['use_and_reading_scope']
+  else:rows.append(update)
 (ROOT/'conversation-literature.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2)+'\n')
 h=html.escape
 fragment='<section id="conversation-literature"><h2>本对话文献总账</h2><p>包含已采用、仅作背景和已撤回用途的引用。查阅范围沿用可追溯记录；未读全文不冒称读过。实验网页是技术证据，另存于运行记录，不混作文献依据。</p><table><tr><th>文献/著作</th><th>用途及实际查阅范围</th><th>不能支持的结论</th></tr>'
