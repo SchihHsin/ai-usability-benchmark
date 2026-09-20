@@ -1,0 +1,123 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "dist.init_process_group(\n    \"hccl\",\n    rank=(args.node_rank)*(args.nproc_per_node) + local_rank,\n    world_size=world_size,\n)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+      "evidence_quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=(args.node_rank)*(args.nproc_per_node) + local_rank)",
+      "verification": "source",
+      "reason": "最终答案给出 backend=\"hccl\"、rank 计算式和 world_size 的 init_process_group 设置，与官方 TorchNPU 6.0.0 正文一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR \\\n  --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_3l3VLrFtF38WCVdXwnPp0179.result",
+      "evidence_quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py",
+      "verification": "source",
+      "reason": "答案给出 torchrun 与 torch_npu_run 两种多机启动命令及完整 launcher 参数，与 TorchNPU 7.0.0 官方双机16卡示例原文一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "MASTER_ADDR=xxxx              # 主节点IP\nMASTER_PORT=6004              # 未占用端口\nNODE_RANK=0                   # 主节点为0，其他节点按序",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+      "evidence_quote": "MASTER_ADDR=xxxx                               # 主节点IP地址\n   MASTER_PORT=6004                               # 端口号选一个未被占用的端口即可\n   NODE_RANK=0                                    # 本机序号，主节点为0",
+      "verification": "source",
+      "reason": "答案说明各节点统一 MASTER_ADDR/MASTER_PORT 并按序配置 NODE_RANK，另引 6.0.RC1 '只支持 env://' 的说明，均有官方正文支撑。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "export HCCL_WHITELIST_DISABLE=1",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_9CCDbIyof0xLyUf2a30x2526.result",
+      "evidence_quote": "export HCCL_WHITELIST_DISABLE=1",
+      "verification": "source",
+      "reason": "答案给出 HCCL_WHITELIST_DISABLE、HCCL_IF_BASE_PORT、NPU_ASD_ENABLE、ASCEND_RT_VISIBLE_DEVICES 等环境变量；HCCL_WHITELIST_DISABLE 与 HCCL_IF_BASE_PORT 均见于官方正文，ASCEND_RT_VISIBLE_DEVICES 见第三方来源。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "torch_npu.npu.set_device(local_rank)          # 用 local_rank 自动获取 device 号\ndevice = torch.device(f'npu:{local_rank}')",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+      "evidence_quote": "torch_npu.npu.set_device(local_rank)\n      #获取device号\n      device = torch.device(f'npu:{local_rank}')",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明用 LOCAL_RANK 通过 set_device 与 torch.device('npu:{local_rank}') 绑定进程与 NPU，与官方示例代码一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank)\ntrain_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+      "evidence_quote": "train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank)\n       train_loader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler)",
+      "verification": "source",
+      "reason": "答案给出 DistributedSampler(num_replicas=world_size, rank=local_rank) 保障多卡数据一致性，与官方多机多卡示例一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为操作方法类问题（DDP+HCCL 初始化与启动方式），不要求锁定库/工具链/soc 具体版本，按规则记 N/A。答案虽标注了文档版本（TorchNPU 6.0.RC1/6.0.0/7.0.0）并提示按本机版本对照文档，但无需据此定版。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "官方页面按 TorchNPU 版本分开（URL 段不同）：`60RC1`（6.0.RC1）、`600`（6.0.0）、`700`（7.0.0）、`2600`（26.0.0）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案给出可直接照抄的完整命令（torchrun、torch_npu_run、sysctl 端口预留、hccn_tool 组网检测）及模型脚本代码，仅需替换明确标注的 IP、端口、脚本名等环境值；扣分点：torchrun 路径中 source ./test/env_npu.sh 的内容未提供（答案已自述未取得原文），该文件需用户自行补充。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR \\\n  --master_port=$MASTER_PORT --nnodes=2 --node_rank 0 --nproc_per_node=8 ddp_test.py"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "`source ./test/env_npu.sh` 中 env_npu.sh 的**具体内容**官方页面未展开（多为 ModelZoo 提供，需按所跑模型仓库获取）；本文未能取得其原文。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_kZnu01NwgTIZVqZBDY0L9568.result",
+          "quote": "torch_npu.npu.set_device(local_rank)\n      #获取device号\n      device = torch.device(f'npu:{local_rank}')"
+        }
+      ]
+    }
+  ],
+  "case": "case-9726a2c06b3f",
+  "task_id": "F",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/development/case-9726a2c06b3f-outcome.json",
+    "original_assessment_sha256": "891ea42db227f70c7a987f9ad58df194808dcd34842ab8443987f438d4d16061",
+    "reviewed_assessment": "reviewed/development/case-9726a2c06b3f-outcome.json"
+  }
+}

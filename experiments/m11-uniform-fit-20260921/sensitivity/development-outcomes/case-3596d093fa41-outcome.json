@@ -1,0 +1,151 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "BATCH_SIZE = 32\ndummy_input = torch.randn(BATCH_SIZE, 3, 224, 224)",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_FZywUOX7f8Ue0kn4mJJv3099.result",
+      "evidence_quote": "BATCH_SIZE = 32\n   dummy_input=torch.randn(BATCH_SIZE, 3, 224, 224)",
+      "verification": "source",
+      "reason": "最终答案给出 dummy input 的具体 shape（32x3x224x224）和导出接口 torch.onnx.export 的完整调用，与官方 quick-start 页面示例一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_FZywUOX7f8Ue0kn4mJJv3099.result",
+      "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+      "verification": "source",
+      "reason": "答案给出 trtexec 完整构建命令及 Python API（Builder/OnnxParser/build_serialized_network）两条路径，均有官方来源支撑。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "--memPoolSize=<pool_spec> | workspace/tactic 内存池（如 workspace:1G）",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_zMDkoJ219VsuERE82WI10253.result",
+      "evidence_quote": "--minShapes=<shapes>, --optShapes=<shapes>, and --maxShapes=<shapes> Specify the range of input shapes with which to build the engine.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案覆盖 workspace（--memPoolSize / set_memory_pool_limit）、精度（--fp16/--int8 等）与 optimization profile（--minShapes/--optShapes/--maxShapes），均与官方文档一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "runtime = trt.Runtime(logger)\n    engine = runtime.deserialize_cuda_engine(engine_bytes)",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_JI5pY5IUAwmiQprKEyEI0489.result",
+      "evidence_quote": "engine = runtime.deserialize_cuda_engine(engine_bytes)",
+      "verification": "source",
+      "reason": "答案给出从文件/字节反序列化 engine 的方式（deserialize_cuda_engine）以及加载 engine 文件的封装（ONNXClassifierWrapper 传 engine 路径）。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "context.set_tensor_address(input_name, int(d_input))\n    context.execute_async_v3(stream)",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_JI5pY5IUAwmiQprKEyEI0489.result",
+      "evidence_quote": "context.set_tensor_address(input_name, int(d_input))",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出具体推理接口：set_tensor_address + execute_async_v3，以及 ONNXClassifierWrapper.predict，还有 trtexec --shapes 推理命令，均有官方来源。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "序列化 engine **不跨平台/跨 GPU 型号可移植**；跨版本需 `--versionCompatible` 并用 lean/dispatch runtime。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_ixoWKkusMdlCMRSAqshO9327.result",
+      "evidence_quote": "TensorRT supports NVIDIA hardware with compute capability SM 7.5 or higher.",
+      "verification": "source",
+      "reason": "答案给出可核验检查点：GPU 架构下限（SM 7.5+）、驱动版本（r535+/r580+）、TensorRT/CUDA 版本配套表、engine 不可跨 GPU 移植及 --versionCompatible/lean runtime 机制，均与官方 Prerequisites/Support Matrix/trtexec 文档一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "主要组件均给出有依据的具体版本：TensorRT 11.3.0、CUDA 13.4、ONNX 1.20.0、opset ≤25、驱动 r535/r580、ORT 1.27+；但 PyTorch 仅给出 '>=2.0' 范围、Python 给出 3.10–3.14 范围，未定到具体版本，且答案自述 Support Matrix 逐项核对未完成。属于所有组件有依据范围但至少一项未定到具体版本。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "| PyTorch | ≥2.0（官方测试） | Prerequisites |"
+        },
+        {
+          "event_id": "final",
+          "quote": "**TensorRT 当前主线：11.3.0**（11.3.1 为 DriveOS 包）"
+        },
+        {
+          "event_id": "final",
+          "quote": "CUDA**：TensorRT 11.3.0 的 Debian/RPM/tar/zip 包基于 **CUDA Toolkit 13.4**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "命令与代码完整可照抄：安装验证命令、trtexec 完整命令行（含动态 shape、FP16/INT8 校准示例）、可直接运行的 trt_end_to_end.py 端到端脚本、ONNXClassifierWrapper 用法及 cuda-python 补丁脚本均给出，前置条件（GPU SM7.5+、驱动、CUDA、pip 不含 trtexec 需另装）明确；仅需替换路径等环境值，无需修正内容错误。答案如实声明未实际运行，不构成降分依据。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+        },
+        {
+          "event_id": "final",
+          "quote": "运行：`python3 trt_end_to_end.py resnet50-v1-12.onnx`"
+        },
+        {
+          "event_id": "final",
+          "quote": "本轮仅做内容层面的整理，**未在本机实际运行任何上述命令**（未运行）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "--memPoolSize=<pool_spec> | workspace/tactic 内存池（如 workspace:1G）"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_zMDkoJ219VsuERE82WI10253.result",
+          "quote": "--minShapes=<shapes>, --optShapes=<shapes>, and --maxShapes=<shapes> Specify the range of input shapes with which to build the engine."
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "context.set_tensor_address(input_name, int(d_input))\n    context.execute_async_v3(stream)"
+        }
+      ]
+    }
+  ],
+  "case": "case-3596d093fa41",
+  "task_id": "A",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/development/case-3596d093fa41-outcome-recovered.json",
+    "original_assessment_sha256": "f8e8b8abf173676c7e5749d18d679a838fb31554bf0338581225b9529fda51a5",
+    "reviewed_assessment": "reviewed/development/case-3596d093fa41-outcome.json"
+  }
+}

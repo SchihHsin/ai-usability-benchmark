@@ -1,0 +1,142 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "torch.distributed.init_process_group(backend=\"hccl\", rank=local_rank)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+      "verification": "source",
+      "reason": "backend（hccl）与 rank 在代码中明确给出；world_size 虽未出现在主样例的 init 调用中，但答案在两卡改写节明确说明“确保训练脚本中dist.init_process_group()中world_size参数为2”，并在启动约束中要求配置 rank 与 world_size，与官方文档一致，三要素齐备。",
+      "raw_answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result"
+    },
+    {
+      "id": 2,
+      "status": "absent",
+      "answer_quote": "官方 5 种拉起方式的逐字命令在附录页 PT_LMTMOG_0086.html，本轮只允许 1 次 fetch，未抓取该附录页，故 torchrun / torch_npu_run / shell 的具体命令行参数（--nnodes --nproc_per_node --node_rank --master_addr --master_port、torch_npu_run 的 ranktable 参数等）未从官方正文核实。",
+      "answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_quote": "在单机和多机场景下，有5种方式可拉起分布式训练：",
+      "verification": "source",
+      "reason": "答案仅枚举 5 种拉起方式名称（shell 脚本、mp.spawn、Python、torchrun、torch_npu_run），未给出任何具体启动命令或 launcher 参数；已抓取的官方页面确实也只列出方式名而无逐字命令，答案如实披露该缺口，未编造。该准则内容缺失。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "所有脚本统一主节点的 `MASTER_PORT` 和 `MASTER_ADDR`。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。配置相应的rank与world_size。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；master 地址与端口通过统一 MASTER_ADDR/MASTER_PORT 说明，另有 HCCL 端口预留 60000-60015 及 HCCL_IF_BASE_PORT；rank/world_size 配置要求亦明确。节点 rank 的 launcher 级参数（--node_rank）被如实列为未核实，但 master 地址、端口与 rank 配置方式本身有官方依据，准则主体满足。",
+      "raw_answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "若用环境变量 `HCCL_IF_BASE_PORT` 指定网卡起始端口，则预留以该端口起始的 16 个端口。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_quote": "若通过环境变量HCCL_IF_BASE_PORT指定了Host网卡起始端口，则需要预留以该端口起始的16个端口。",
+      "verification": "source",
+      "reason": "给出了通信相关环境变量 HCCL_IF_BASE_PORT 及其用法（指定起始端口、预留 16 个端口），与官方来源一致；HCCL_IF_IP、HCCL_SOCKET_IFNAME、RANK_TABLE_FILE 等被诚实标注未核实，未编造。",
+      "raw_answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "device = torch.device('npu', local_rank)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_quote": "local_rank = int(os.environ[\"LOCAL_RANK\"])",
+      "verification": "source",
+      "reason": "完整给出每进程绑定 NPU 的链路：从 LOCAL_RANK 环境变量取值 → torch.device('npu', local_rank) → DDP 的 device_ids=[local_rank], output_device=local_rank，均与官方文档逐字一致。",
+      "raw_answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+      "evidence_quote": "train_sampler = torch.utils.data.distributed.DistributedSampler(train_data)",
+      "verification": "source",
+      "reason": "给出了与多卡一致性直接相关的 sampler 设置：DistributedSampler(train_data) 并在 DataLoader 中通过 sampler=train_sampler 结合，另有 set_epoch 等同步点虽未提及，但准则只要求一项设置，已满足且与官方来源一致。",
+      "raw_answer_event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "na",
+      "reason": "原题为操作型 how-to（初始化与启动方式），未要求锁定库版本/工具链版本/soc_version 等组件，按规则记 N/A。答案附带给出了文档版本（TorchNPU 6.0.RC1）与 launcher 的 PyTorch 版本约束（torchrun 需 1.11.0+，torch_npu_run 仅 1.11.0），soc_version/CANN 配套被如实标注未核实，但均非本题定版需求。",
+      "evidence": [
+        {
+          "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+          "quote": "torchrun 方式：仅 PyTorch 1.11.0 及以上版本支持"
+        },
+        {
+          "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+          "quote": "soc_version（如 Ascend910B 等）与 CANN 版本配套：本页未给出，未核实；只知道文档版本为 TorchNPU 6.0.RC1"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "初始化代码（LOCAL_RANK→device→init_process_group→DDP→DataLoader）与环境准备命令（sysctl 端口预留、hccn_tool 配 IP/连通性校验、关防火墙、lldp 检查、somaxconn 调整）完整可照抄；但多机启动这一关键步骤的逐字命令缺失（附录页未抓取），需补充 torchrun/torch_npu_run/shell 的具体命令行才能端到端执行。答案自身明确指出该缺口，符合 3 分档（有具体方案但需补充缺失内容）。仅内容核查，未实际运行。",
+      "evidence": [
+        {
+          "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+          "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015"
+        },
+        {
+          "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+          "quote": "完整启动命令行未取得正文：官方 5 种拉起方式的逐字命令在附录页 PT_LMTMOG_0086.html，本轮只允许 1 次 fetch，未抓取该附录页"
+        }
+      ],
+      "raw_status": "partial"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+          "quote": "在所有脚本统一主节点的MASTER_PORT和MASTER_ADDR。配置相应的rank与world_size。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "call_00_NoJSAjpKlmM4k6UIQ6KY2352.result",
+          "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015"
+        }
+      ]
+    }
+  ],
+  "case": "case-3e89964f75db",
+  "task_id": "F",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "restricted",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/development/case-3e89964f75db-outcome.json",
+    "original_assessment_sha256": "154d3c5ff87a91b7ec76d9c87b92c5c6cb87eaf780266139f74d96f4af793260",
+    "reviewed_assessment": "reviewed/development/case-3e89964f75db-outcome.json"
+  }
+}

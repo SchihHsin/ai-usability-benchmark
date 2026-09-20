@@ -1,0 +1,130 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "### A. 驱动 ↔ CUDA toolkit（NVIDIA Minor Version Compatibility）",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_kjzgAVWx9pKMx3Rrwon55094.result",
+      "evidence_quote": "Table 1 CUDA Toolkit 11.x, 12.x, and 13.x Driver Version Ranges",
+      "verification": "source",
+      "reason": "答案给出三张对照表：表A驱动↔CUDA（NVIDIA minor version compat）、表B cuDNN↔CUDA↔驱动（cuDNN support matrix）、表C PyTorch↔CUDA wheel（pytorch.org previous-versions），均有对应官方来源正文支持，覆盖四个组件的查询入口。"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "**PyTorch wheel 编译时绑定的 CUDA/cuDNN**：由你 pip/conda 装的那个 `torch` 包决定，和系统里 `nvcc` 显示的 CUDA 无关。",
+      "answer_event_id": "final",
+      "evidence_id": "call_01_sOJPSdqRLYvZKOIZvzvW9976.result",
+      "evidence_quote": "torch.backends.cudnn.version()[[source]](...)  Return the version of cuDNN.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案明确区分 wheel 自带运行库（torch.version.cuda / cudnn.version()）与本机 toolkit（nvcc、/usr/local/cuda），并说明'两者不一致不等于坏掉'，不要求一律一致；PyTorch 官方文档证实 cudnn.version() 返回 wheel 打包的 cuDNN 版本。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "`nvidia-smi` 里的 \"CUDA Version\" **不是**已安装的 toolkit 版本，而是驱动的上限。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_kjzgAVWx9pKMx3Rrwon55094.result",
+      "evidence_quote": "applications compiled with a CUDA Toolkit release from within a CUDA major release family can run, with limited feature-set, on systems having at least the minimum required driver version as indicated below.",
+      "verification": "source",
+      "reason": "答案依据 NVIDIA Minor Version Compatibility 官方页核对驱动与 CUDA 运行库关系（表A最低驱动），并明确区分 nvidia-smi 显示的驱动支持上限与已装 toolkit；来源正文含 Table 1 与 nvidia-smi 示例支持该区分。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "要求 `C_driver >= C_torch`（按表 A 的最低驱动），否则报错/不可用。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_0X09ECDBw1aoht2U2d5q5372.result",
+      "evidence_quote": "The cuDNN **dynamic** build for CUDA 12.x is compatible with CUDA 12.x for all x",
+      "verification": "source",
+      "reason": "答案给出明确判定规则：驱动须满足最低版本（范围兼容）、cuDNN 与 CUDA 大版本匹配、本机 toolkit 与 wheel 无须完全对应；来源中 minor version compat 表和 cuDNN 动态库同大版本兼容脚注均印证'哪些允许兼容范围'。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "该页面只给 CUDA/ROCm 组合，不列 cuDNN 版本号；cuDNN 需用 `torch.backends.cudnn.version()` 实测或查 cuDNN 支持矩阵。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_EQ9sA7SBfpijXFuFD5ex5654.result",
+      "evidence_quote": "No actual cuDNN version numbers are listed anywhere on this page",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；无实机版本时，答案指导按目标组合查官方表（表A/表B/表C、cuXXX wheel 选择、cuDNN 8.x 归档页），并如实标注未获取的页面而非臆测；previous-versions 抓取结果证实该页确实不含 cuDNN 版本号，与答案陈述一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "若系统另装了 `nvcc` 的 CUDA toolkit，它只影响从源码编译，不影响已装 wheel 运行；两者不一致不等于坏掉。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_kjzgAVWx9pKMx3Rrwon55094.result",
+      "evidence_quote": "libraries that support minor version compatibility can be deployed on systems with a different version of the toolkit and libraries without recompiling the application",
+      "verification": "source",
+      "reason": "答案明确指出不匹配时回到表C（重装对应 cuXXX wheel）与表A/B核对，且声明 toolkit 与 wheel 不一致不等于故障、不强制升降级；NVIDIA 部署说明支持'不同 toolkit 版本可共存无须重编'的判断。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题是'如何查配套关系'的诊断方法类问题，不要求锁定某个具体版本组合；答案已按官方来源给出 major 级驱动下限、cuDNN 9.26.0 行及 PyTorch-CUDA 组合表，且如实标注未取得的小版本精确表，无臆造版本。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "表 A 为 **CUDA major 级别**的最低价（11.x/12.x/13.x）；每个具体 toolkit 小版本（如 12.1）的精确最低驱动需查 CUDA Toolkit Release Notes 完整表"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "status": "supported",
+      "reason": "查询命令完整可照抄：python 代码块、nvcc --version、nvidia-smi、cat /usr/local/cuda/version.json、grep cudnn_version.h 均给出完整命令行与输出含义说明，前置条件（未装 toolkit 则 nvcc 无输出）已说明，且判定流程按步骤可执行，无需修正即可运行；仅 /usr/local/cuda 等路径属用户环境值。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "nvcc --version                 # toolkit 编译器版本（若未装 toolkit 则无输出/报错）\ncat /usr/local/cuda/version.json 2>/dev/null   # 或 version.txt（旧版）"
+        },
+        {
+          "event_id": "final",
+          "quote": "所有命令与表格均为**内容核查**，本轮未在任何机器上实际运行，运行状态记为\"未验证\"。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 2,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_01_sOJPSdqRLYvZKOIZvzvW9976.result",
+          "quote": "torch.backends.cudnn.version()[[source]](...)  Return the version of cuDNN."
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "该页面只给 CUDA/ROCm 组合，不列 cuDNN 版本号；cuDNN 需用 `torch.backends.cudnn.version()` 实测或查 cuDNN 支持矩阵。"
+        }
+      ]
+    }
+  ],
+  "case": "case-e83c2d3aa486",
+  "task_id": "I",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/development/case-e83c2d3aa486-outcome.json",
+    "original_assessment_sha256": "0c26c51951fe2d4d1df030354bcff3a1c1a007eb6b79791824e5de9acd89bade",
+    "reviewed_assessment": "reviewed/development/case-e83c2d3aa486-outcome.json"
+  }
+}

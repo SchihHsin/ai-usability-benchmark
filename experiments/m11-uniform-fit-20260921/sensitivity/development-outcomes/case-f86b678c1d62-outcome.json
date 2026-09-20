@@ -1,0 +1,119 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "from torch_npu.npu import amp",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_2L4S8HUEv2aFSvzE4UA91244.result",
+      "evidence_quote": "from torch_npu.npu import amp",
+      "verification": "source",
+      "reason": "最终答案给出内置 AMP 完整启用配置（导入、autocast、GradScaler 调用链）及 APEX 备选（amp.initialize opt_level='O1'），与官方 PT_LMTMOG_0027 样例及 gitee ascend/apex README 原文一致。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "with amp.autocast():                       # 设置 amp\n            outputs = model(inputs)\n            loss = criterion(outputs, labels).to(device)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_2L4S8HUEv2aFSvzE4UA91244.result",
+      "evidence_quote": "with amp.autocast():   # 设置amp\n            outputs = model(inputs)    # 前向计算\n            loss = criterion(outputs, labels).to(device)  # 损失函数计算",
+      "verification": "source",
+      "reason": "答案代码中 autocast 上下文同时包围前向计算与损失函数计算，与官方适配样例逐行一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)   # 2**10 = 1024",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_W3YZwRWbzcRMi8W2selg5977.result",
+      "evidence_quote": "scaler=amp.GradScaler(init_scale=2.**10, dynamic=False)",
+      "verification": "source",
+      "reason": "答案说明动态（默认 dynamic=True）与静态（dynamic=False + init_scale）两种方式，并给出 APEX loss_scale 及动态参数（dynamic_init_scale 等），均有官方正文与 APEX README 支撑。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "scaler.scale(loss).backward()              # loss 缩放并反向传播",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_2L4S8HUEv2aFSvzE4UA91244.result",
+      "evidence_quote": "scaler.scale(loss).backward()    # loss缩放并反向转播",
+      "verification": "source",
+      "reason": "缩放 loss 后的 backward 调用（AMP 为 scaler.scale(loss).backward()，APEX 为 scaled_loss.backward()）均明确给出且与来源一致。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "scaler.step(optimizer)                     # 更新参数（自动 unscaling）\n        scaler.update()                            # 基于动态 Loss Scale 更新系数",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_2L4S8HUEv2aFSvzE4UA91244.result",
+      "evidence_quote": "scaler.step(optimizer)    # 更新参数（自动unscaling）\n        scaler.update()    # 基于动态Loss Scale更新loss_scaling系数",
+      "verification": "source",
+      "reason": "答案明确 step 在前、update 在后的顺序，与官方样例代码一致。"
+    },
+    {
+      "id": 6,
+      "status": "absent",
+      "answer_quote": "本次未实际运行任何代码（**未运行**），以上为官方文档内容整理，非实测通过。",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案未给出检查溢出（如 inf/nan 梯度检测）或验证 loss scale 变化、混合精度已生效的具体方法；仅提及精度掉点调测思路（PT_LMTMOG_0073），未覆盖本 criteria 要求的检查手段。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "问题未明确要求定版，但答案给出了 TorchNPU 6.0.0 文档口径及 CANN/PyTorch/apex 配套表（如 CANN 8.0.RC3 + PyTorch 2.1.0 + v2.1.0-6.0.rc3），部分组件版本明确，但未指定用户环境应选的具体配套组合。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "| 8.0.RC3 | 2.1.0 | v2.1.0-6.0.rc3 | 3.8–3.11 | master |"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "文档本体为 **TorchNPU 6.0.0**。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "mostly-executable",
+      "reason": "AMP 与 APEX 的命令、代码、参数及前置条件（导入路径、GradScaler 定义时机、安装步骤 git clone/build.sh/pip3 install）完整可直接照抄，仅需替换用户环境参数（learning_rate、batch_size 等 args）；示例引用 ToyModel、data_process 等需用户替换的占位，答案已声明未实际运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "scaler = amp.GradScaler()          # 在模型、优化器定义之后定义 GradScaler"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "APEX 安装：`git clone -b master https://gitee.com/ascend/apex.git` → `bash scripts/build.sh --python=3.7`（要求 setuptools ≤ 65.7.0）→ `pip3 install --upgrade apex-0.1+ascend-{version}.whl`"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "本次未实际运行任何代码（**未运行**），以上为官方文档内容整理，非实测通过。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "case": "case-f86b678c1d62",
+  "task_id": "P",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/development/case-f86b678c1d62-outcome.json",
+    "original_assessment_sha256": "0cb281e67ad6dad247f01fddcfbf4e229ea0fbecd7631e5ce885e87669e6b449",
+    "reviewed_assessment": "reviewed/development/case-f86b678c1d62-outcome.json"
+  }
+}

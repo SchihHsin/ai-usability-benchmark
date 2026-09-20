@@ -1,0 +1,127 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "wget https://developer.download.nvidia.com/compute/cuda/repos/<distro>/<arch>/cuda-keyring_1.1-1_all.deb\nsudo dpkg -i cuda-keyring_1.1-1_all.deb\nsudo add-apt-repository contrib\nsudo apt-get update\nsudo apt-get -y install cuda-toolkit",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_TCYyA5YxETGen5n5EWOL5393.result",
+      "evidence_quote": "wget https://developer.download.nvidia.com/compute/cuda/repos/<distro>/<arch>/cuda-keyring_1.1-1_all.deb\nsudo dpkg -i cuda-keyring_1.1-1_all.deb\nsudo add-apt-repository contrib\nsudo apt-get update\nsudo apt-get -y install cuda-toolkit",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 Debian 安装器（cuda-keyring 仓库 + apt 安装 cuda-toolkit）的完整 Ubuntu 命令序列，与官方 Quick Start Guide（13.4）来源逐字一致；另有 Runfile 流程与前提说明。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "export PATH=/usr/local/cuda-13.4/bin${PATH:+:${PATH}}",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_TCYyA5YxETGen5n5EWOL5393.result",
+      "evidence_quote": "export PATH=/usr/local/cuda-13.4/bin${PATH:+:${PATH}}",
+      "verification": "source",
+      "reason": "答案给出 PATH 的具体追加路径 /usr/local/cuda-13.4/bin，并附软链接等价写法 /usr/local/cuda/bin，均与官方来源逐字对应。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "export LD_LIBRARY_PATH=/usr/local/cuda-13.4/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_TCYyA5YxETGen5n5EWOL5393.result",
+      "evidence_quote": "**Library directory:** `/usr/local/cuda-13.4/lib64` (note: **`lib64`**, not `lib`)",
+      "verification": "source",
+      "reason": "答案给出 LD_LIBRARY_PATH 的具体追加路径 /usr/local/cuda-13.4/lib64，并强调是 lib64 而非 lib；官方来源逐字证实该导出命令与 lib64 目录。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "追加到 `~/.bashrc`（仅当前用户）；或",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_7S6dUqlhIpxpFjBv3Tx95738.result",
+      "evidence_quote": "Linux-Ubuntu22.04在配置cuda时，还需要在~/.bashrc末尾增加以下内容：",
+      "verification": "source",
+      "reason": "答案说明持久化写法（~/.bashrc 或 /etc/profile.d/cuda.sh）并给出可直接追加的 export 代码块；第三方来源逐字提供 ~/.bashrc 追加写法（含 CUDA_HOME、lib64）。答案同时如实说明官方 Quick Start Guide 未给持久化脚本，属合理边界标注而非缺口。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "导出变量后 `nvcc --version`",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_TCYyA5YxETGen5n5EWOL5393.result",
+      "evidence_quote": "Build/run the `nbody` sample",
+      "verification": "source",
+      "reason": "答案给出导出变量后运行 nvcc --version 的检查操作，并补充官方等价验证方式（编译运行 nbody 示例）；来源证实官方流程在设置 PATH 后以编译运行 nbody 作为验证步骤，PATH 含 bin 目录（nvcc 所在）。nvcc --version 命令本身仅出现在答案中，但与来源的 PATH/bin 机制和 nbody 验证一致。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "用 `nvidia-smi` / `cat /proc/driver/nvidia/version` 查驱动",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案将驱动检查（nvidia-smi、/proc/driver/nvidia/version）与 toolkit 检查（nvcc --version）并列，客观上提供了区分手段，但未明确展开\"驱动已装而 toolkit 路径未生效\"的场景判断逻辑（如 nvidia-smi 正常而 nvcc 未找到时应查 PATH）；且提供的 sources 中没有任何正文包含 nvidia-smi 或 /proc/driver/nvidia/version 作为驱动验证命令（唯一提及处明确标注为背景知识、非引文）。内容存在但无法由输入证据证实，未知不等于错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "原题本身不强制定版（可用 /usr/local/cuda 软链接路径回避版本号），但答案主动定版：依据官方 Quick Start Guide 13.4 将路径定为 cuda-13.4，并给出替换指引；用户实际安装版本仍属环境参数，未定到唯一具体版本，且 13.4 与 13.4.1 的表述并存（答案已如实说明），故为4档而非5档。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "本次取到的官方文档为 **CUDA 13.4**（Quick Start Guide 13.4）；安装指南另引用 13.4 Update 1 / 校验和目录含 `13.4.1`。故示例路径中版本号应替换为你实际安装的版本（如 `cuda-13.4`）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "安装命令、export 语句、持久化写法、验证命令均完整且与来源一致，前置条件（13.4 起驱动需单独安装、Runfile 需禁 Nouveau、WSL 注意事项）已说明；执行前仅需替换明确标识的环境参数（<distro>/<arch>、版本号），版本号替换有明确说明，<distro>/<arch> 取值未逐一列举但不需修正内容错误，故4档。答案已声明未实际运行，仅为内容核查，不构成复现。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "sudo apt-get update\nsudo apt-get -y install cuda-toolkit\nsudo reboot"
+        },
+        {
+          "event_id": "final",
+          "quote": "export PATH=/usr/local/cuda-13.4/bin${PATH:+:${PATH}}\nexport LD_LIBRARY_PATH=/usr/local/cuda-13.4/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+        },
+        {
+          "event_id": "final",
+          "quote": "未运行任何命令；仅为内容核查，**不构成实际安装复现**。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_TCYyA5YxETGen5n5EWOL5393.result",
+          "quote": "wget https://developer.download.nvidia.com/compute/cuda/repos/<distro>/<arch>/cuda-keyring_1.1-1_all.deb\nsudo dpkg -i cuda-keyring_1.1-1_all.deb\nsudo add-apt-repository contrib\nsudo apt-get update\nsudo apt-get -y install cuda-toolkit"
+        }
+      ]
+    }
+  ],
+  "case": "case-90224adebad4",
+  "task_id": "J",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/development/case-90224adebad4-outcome-attempt-1.json",
+    "original_assessment_sha256": "2b8217bfda8c3f35696610c2313909b73db69d2bce3aff738899843a182f1a16",
+    "reviewed_assessment": "reviewed/development/case-90224adebad4-outcome.json"
+  }
+}
