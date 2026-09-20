@@ -14,5 +14,8 @@ def run():
     bad={'requirements':[{'id':1,'status':'supported','answer_quote':'made up','evidence_id':'s1','evidence_quote':'real source quote'}]}
     assert assess.audit(bad,item,'outcome')['requirements'][0]['status']=='unverified'
     assert assess.clean_json([{'type':'reasoning','text':'private'},{'type':'output_text','text':'visible'}])==[{'type':'output_text','text':'visible'}]
+    item['prior']=[{'event_id':'prior1','text':'only prior text'}]
+    prior_ref={'requirements':[{'id':1,'status':'supported','answer_quote':'real final code','evidence_id':'prior1','evidence_quote':'only prior text','verification':'source'}]}
+    assert assess.audit(prior_ref,item,'outcome')['requirements'][0]['status']=='unverified'
     print('evidence rejection, controller M8, immutable raw values, and reasoning filtering PASS')
 if __name__=='__main__':run()
