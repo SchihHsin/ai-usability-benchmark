@@ -37,8 +37,11 @@ def parse_run(p, tasks, protocol):
     for r in rows:
         if r.get('type')=='client_note' and r.get('seq',0)<first_tool:
             txt=unpack(r.get('content',{}));
-            try: obj=json.loads(txt); pieces=visible_text(obj)
-            except Exception: pieces=[txt]
+            try:
+                obj=json.loads(txt)
+                if obj.get('type')!='assistant' and obj.get('role')!='assistant': continue
+                pieces=visible_text(obj.get('message',obj).get('content',[]))
+            except Exception: continue
             joined='\n'.join(pieces)
             # 只保存执行模型明确闭合的 prior_answer，且不能把 assistant 后续答案混入。
             m=re.search(r'<prior_answer>\s*(.*?)\s*</prior_answer>',joined,re.S)
@@ -47,7 +50,7 @@ def parse_run(p, tasks, protocol):
             txt=unpack(r.get('response',{})); reqrow=requests.get(r.get('request_id'),{})
             sources.append({'event_id':r['id'],'request_id':r.get('request_id'),'role':reqrow.get('role'),'tool':reqrow.get('tool'),'url':(reqrow.get('arguments') or {}).get('url'),'arguments':reqrow.get('arguments',{}),'query':(reqrow.get('arguments') or {}).get('query'),'text':txt,'status':r.get('status',r.get('tool_status'))})
     end=next((r for r in rows if r.get('type')=='run_end'),None)
-    if end is None:
+    if end is None or rows[-1].get('type')!='run_end':
         raise ValueError('incomplete run: missing run_end')
     final=unpack(end.get('answer',{}))
     # 计数只基于实际 dispatch，拒绝请求不计入；保留失败来源片段供 M6 审核。

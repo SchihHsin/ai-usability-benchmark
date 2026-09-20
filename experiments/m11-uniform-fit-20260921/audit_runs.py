@@ -165,6 +165,21 @@ def main():
     for d in sorted((root / 'runs').glob('*')) if (root / 'runs').exists() else []:
         if d.is_dir():
             a, idx = run_audit(d, args.protocol.resolve(), args.tasks.resolve(), args.skill.resolve(), True); rows.append(a); index.extend(idx)
+    # Include predeclared cells that have no directory yet; these are pending collection,
+    # not failures. This keeps the audit denominator at the protocol's expected 48 cells.
+    protocol = read_json(args.protocol.resolve())
+    expected = []
+    arms = protocol.get('budget_arms', protocol.get('budgets', {}))
+    for task_id in list(protocol.get('development', [])) + list(protocol.get('heldout', [])):
+        for ecosystem in protocol.get('ecosystems', []):
+            for budget_arm in arms:
+                expected.append((task_id, ecosystem.lower(), budget_arm))
+    seen = {(x.get('task_id'), str(x.get('ecosystem', '')).lower(), x.get('budget_arm')) for x in rows}
+    for task_id, ecosystem, budget_arm in expected:
+        if (task_id, ecosystem, budget_arm) not in seen:
+            rows.append({'run_dir': None, 'status': 'pending', 'task_id': task_id,
+                         'ecosystem': ecosystem.upper(), 'budget_arm': budget_arm,
+                         'issues': [], 'warnings': [], 'pending_checks': ['run_not_started']})
     dump(root / 'collection-audit.json', {'schema_version': 'collection-audit-1', 'runs': rows,
          'summary': {'total_seen': len(rows), 'complete': sum(x['status'] == 'complete' for x in rows),
                      'pending': sum(x['status'] == 'pending' for x in rows),
