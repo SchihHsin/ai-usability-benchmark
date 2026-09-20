@@ -6,6 +6,8 @@ sys.path.insert(0,str(ROOT/'frozen-skill'))
 from scripts import run_log,overall_score
 
 def choose(case,kind,split):
+    reviewed=ROOT/'reviewed'/split/f'{case}-{kind}.json'
+    if reviewed.exists():return reviewed,json.loads(reviewed.read_text())
     for p in sorted((ROOT/'assessments'/split).glob(f'{case}-{kind}*.json'),key=lambda p:(p.stat().st_mtime_ns,p.name)):
         d=json.loads(p.read_text())
         ids=[x.get('id') for x in d.get('metrics' if kind=='predictors' else 'requirements',[])]

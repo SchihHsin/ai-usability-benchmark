@@ -81,7 +81,7 @@ def audit(value,item,kind):
         for req in value.get('requirements',[]):
             raw_status=req.get('status'); bad=[]
             aq=req.get('answer_quote',''); aid=req.get('answer_event_id') or final_id
-            if aq and (aid!=final_id or aq not in final): bad.append({'field':'answer_quote','event_id':aid,'quote':aq})
+            if aq and (aid not in (final_id,'final') or aq not in final): bad.append({'field':'answer_quote','event_id':aid,'quote':aq})
             if req.get('evidence_quote') or req.get('evidence_id'):
                 if not ok(req.get('evidence_id'),req.get('evidence_quote')): bad.append({'field':'evidence_quote','event_id':req.get('evidence_id'),'quote':req.get('evidence_quote')})
             if raw_status=='supported' and (bad or not req.get('answer_quote') or (not req.get('evidence_id') and req.get('verification')!='code_inspection')):
@@ -89,8 +89,8 @@ def audit(value,item,kind):
                 req['raw_status']=raw_status; req['status']='unverified'; req['reason']='引文缺失或未匹配，原判断保留在 raw_status；'+str(req.get('reason','')); audit.append({'requirement':req.get('id'),'bad_refs':bad})
         for m in value.get('m9_m10',[]):
             for ev in m.get('evidence',[]) or []:
-                if ev.get('event_id')!=final_id or ev.get('quote','') not in final:
-                    if m.get('status')=='scored': m['raw_status']=m['status'];m['status']='insufficient_evidence';audit.append({'metric':m.get('id'),'bad_refs':[ev]})
+                if ev.get('event_id') not in (final_id,'final') or not ev.get('quote') or ev.get('quote','') not in final:
+                    if m.get('score') is not None: m['raw_status']=m.get('status');m['score']=None;m['status']='insufficient_evidence';audit.append({'metric':m.get('id'),'bad_refs':[ev]})
     if kind=='predictors':
         cost=sum(item['counts'].values())
         score=1 if cost>=9 else 2 if cost>=7 else 3 if cost>=5 else 4 if cost>=3 else 5 if cost>=1 else None
@@ -138,7 +138,8 @@ def export_fit(split):
     for case,item in packets.items():
         selected={}
         for kind in ('predictors','outcome'):
-            candidates=sorted(adir.glob(f'{case}-{kind}*.json'),key=lambda p:(p.stat().st_mtime_ns,p.name))
+            reviewed=ROOT/'reviewed'/split/f'{case}-{kind}.json'
+            candidates=[reviewed] if reviewed.exists() else sorted(adir.glob(f'{case}-{kind}*.json'),key=lambda p:(p.stat().st_mtime_ns,p.name))
             for path in candidates:
                 v=json.loads(path.read_text())
                 if v.get('error'): continue
@@ -156,6 +157,7 @@ def export_fit(split):
                 # A non-degenerate stated interval must not silently become a point.
                 if not (isinstance(lo,(int,float)) and isinstance(hi,(int,float)) and lo<hi): lo=hi=score
             if m['id']=='M7' and not item['prior']:lo,hi=1,5
+            if status=='insufficient_evidence' and (lo is None or hi is None):lo,hi=1,5
             if m['id']=='M8':
                 cost=sum(item['counts'].values());lo=hi=(1 if cost>=9 else 2 if cost>=7 else 3 if cost>=5 else 4 if cost>=3 else 5 if cost>=1 else None)
             if not isinstance(lo,(int,float)) or not isinstance(hi,(int,float)) or not 1<=lo<=hi<=5:

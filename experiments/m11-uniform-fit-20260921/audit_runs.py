@@ -126,7 +126,8 @@ def run_audit(run_dir, protocol_path, tasks_path, skill_path, expected_manifest)
                         'dispatch_matches_ledger': {r: allowed[r] == dispatched_count[r] for r in ('search', 'fetch')}}
     if any(not x for x in result['budget']['allowed_within_limit'].values()): result['issues'].append('budget_allowed_exceeds_limit')
     if ledger_rows and any(not x for x in result['budget']['dispatch_matches_ledger'].values()): result['warnings'].append('dispatch_count_differs_from_ledger_allowed')
-    if not ledger_rows: result['issues'].append('budget_ledger_missing')
+    if not ledger_rows and requests: result['issues'].append('budget_ledger_missing')
+    if not requests: result['warnings'].append('no_tool_calls; ledger not created; M8 not automatically five')
     end = next((r for r in reversed(rows) if r.get('type') == 'run_end'), None)
     result['status'] = 'complete' if end else 'pending'
     if not end: result['issues'].append('missing_run_end')

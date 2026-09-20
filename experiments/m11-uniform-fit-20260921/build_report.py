@@ -20,12 +20,13 @@ has_frozen=frozen is not None
 # Held-out content is intentionally not read until a frozen selection exists.
 held=load('heldout-data.json',[]) if has_frozen else []
 literature=load('literature.json',{}) or {}
-status='已冻结并可验证' if has_frozen else '采集中/尚未拟合'
+complete=audit.get('summary',{}).get('complete',0)
+status='留出验证完成' if validation else '系数已冻结，正在验证' if has_frozen else '采集完成，后评与拟合进行中' if complete==48 else '采集中/尚未拟合'
 fit_text='尚无冻结系数；不得从旧实验推断新结果。' if not has_frozen else f"冻结族={frozen.get('selected_family')}，a={frozen.get('fit',{}).get('a')}，b={frozen.get('fit',{}).get('b')}。"
 model='M = 100 × K × (1 − a × (1 − M4/5)) × (1 − b × (1 − M8/5))；K = 1 − (1 − (M1/5)(M2/5)(M3/5))(1 − (M5/5)(M6/5))(1 − M7/5)。所有 Mi 先按原始 1–5 分除以 5。'
 sections=[]
 sections.append(f'<h1>M11 uniform fit · 2026-09-21</h1><p class="status">状态：<strong>{status}</strong></p><p>{esc(fit_text)}</p>')
-sections.append('<h2>预注册公式与候选</h2><p>'+esc(model)+'</p><p>历史 baseline 为 a=0.30、b=0.10，仅作对照。本轮候选五族：no_factors、version_only、cost_only、both、original；a、b 按 0.01 网格搜索，组等权，按任务组 leave-one-task-out 选择。上一轮拟合系数不作为初始化或选择依据。</p>')
+sections.append('<h2>采集前冻结的公式与候选</h2><p>'+esc(model)+'</p><p>历史 baseline 为 a=0.30、b=0.10，仅作对照。本轮候选五族：no_factors、version_only、cost_only、both、original；a、b 按 0.01 网格搜索，组等权，按任务组 leave-one-task-out 选择。上一轮拟合系数不作为初始化或选择依据。</p>')
 if has_frozen:
     sections.append(table(['字段','值'],[['selected_family',frozen.get('selected_family')],['a',frozen.get('fit',{}).get('a')],['b',frozen.get('fit',{}).get('b')],['development input SHA256',frozen.get('input_sha256')],['protocol SHA256',frozen.get('protocol_sha256')]]))
 else: sections.append('<p class="notice">冻结文件不存在，开发集与留出集均不输出拟合系数或留出结论。</p>')
@@ -44,8 +45,14 @@ if results:
     for k,v in results.get('models',{}).items(): rows.append([k,v.get('a'),v.get('b'),v.get('training_worst_case_mse'),v.get('cv_worst_case_mse')])
     sections.append(table(['族','a','b','开发 worst MSE','LOTO MSE'],rows))
 else: sections.append('<p class="notice">fit-results.json 尚不存在：候选系数、fold 稳定性与 bootstrap 结果尚未产生。</p>')
-sections.append('<h2>来源与限制</h2><ul><li>来源文献：'+''.join(f'<li><a href="{html.escape(x.get("url",""))}">{esc(x.get("source"))}</a></li>' for x in literature.get('method_references',[]))+'</ul><p>文献支持交叉验证、平方误差、bootstrap 与综合指标敏感性披露，不支持本轮具体预算、样本量、系数或概率解释。模型使用真实请求别名与客户端返回标识，但别名不保证不可变后端身份。未知引文与排除比例应从 collection-audit.json（若存在）报告；本批不把未知静默记为零。无硬件验证，自动评委不是人工金标准，也不提供概率校准。</p><p>旧实验仅作为<a href="../m11-fit-20260921/build_report.py">历史链接</a>，旧系数不作为本轮结果。</p>')
-if audit: sections.append('<p>collection-audit 摘要：'+esc(json.dumps(audit,ensure_ascii=False))+'</p>')
+sections.append('<h2>来源与限制</h2><p>来源文献：</p><ul>'+''.join(f'<li><a href="{html.escape(x.get("url",""))}">{esc(x.get("source"))}</a></li>' for x in literature.get('method_references',[]))+'</ul><p>文献支持交叉验证、平方误差、bootstrap 与综合指标敏感性披露，不支持本轮具体预算、样本量、系数或概率解释。模型使用真实请求别名与客户端返回标识，但别名不保证不可变后端身份。未知引文与排除比例应从 collection-audit.json（若存在）报告；本批不把未知静默记为零。无硬件验证，自动评委不是人工金标准，也不提供概率校准。</p><p>旧实验仅作为<a href="../m11-fit-20260921/report.html">历史链接</a>，旧系数不作为本轮结果。</p>')
+if audit:
+    summary=audit.get('summary',{})
+    sections.append('<h2>采集核查</h2>'+table(['项目','结果'],[[k,v] for k,v in summary.items()]))
+    rows=[[r.get('task_id'),r.get('ecosystem'),r.get('budget_arm'),r.get('status'),r.get('budget',{}).get('dispatched',{}).get('search',0),r.get('budget',{}).get('dispatched',{}).get('fetch',0),', '.join(r.get('issues',[])) or '通过'] for r in audit.get('runs',[])]
+    sections.append('<details><summary>逐运行核查表</summary>'+table(['任务','生态','预算','状态','搜索','获取','核查'],rows)+'</details><p><a href="collection-audit.json">完整审计记录</a> · <a href="search-index.json">搜索 URL 索引与原文位置</a> · <a href="process-hashes.json">48 份原始记录哈希</a></p>')
+
+sections.append('<p><a href="execution-notes.json">实现修正与解释边界</a> · <a href="literature.json">本轮文献与阅读范围</a> · <a href="../../reviews/conversation-literature.json">本对话文献总账</a> · <a href="paper-methods-results.md">论文方法与结果材料</a></p>')
 css='body{font:16px/1.7 system-ui;max-width:1100px;margin:32px auto;padding:0 22px;color:#243047}h1{font-size:30px}.status{padding:12px;background:#eef4ff;border-left:4px solid #3574d3}.notice{background:#fff3d8;padding:12px}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #d6dce6;padding:7px;text-align:left}th{background:#f2f5f9}a{color:#1769aa}'
 html_out='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>M11 uniform fit</title><style>'+css+'</style>'+''.join(sections)+'</html>'
 (ROOT/'report.html').write_text(html_out)
