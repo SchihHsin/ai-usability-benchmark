@@ -24,6 +24,33 @@ model_id使用实际配置中的模型标识，不通过模型自我介绍猜测
 
 搜索工具原本没有暴露的字段标为not_exposed，不能从最终回答反推出搜索过程。
 
+### 搜索结果留存字段
+
+每个搜索`tool_result.observation`使用`search_results`数组，逐query、逐原始顺序保留工具暴露的所有结果。原始返回仍无损保存在同一事件中；结构化提取不能替代原文。字段约定如下：
+
+| 字段 | 记录内容 |
+|---|---|
+| `query_index` | 本次调用中的查询序号，从1开始，与请求中原查询对应 |
+| `list_position` | 该query返回列表中的位置，从1开始；不冒充引擎排名 |
+| `title`, `url_raw`, `snippet` | 工具实际提供的标题、网址和摘要；保留网址路径与参数 |
+| `citation_id`, `date_visible` | 工具引用ID、可见日期；未暴露填null并注明 |
+| `engine_rank` | 仅工具明确提供时填写，否则null |
+| `result_kind` | 广告/自然结果等仅在明确提供时填写，否则null |
+
+例如单条结果的结构（以下占位内容不是实测）：
+
+```json
+{"query_index":1,"list_position":1,"title":"示例标题","url_raw":"https://example.org/docs/page","snippet":"示例摘要","citation_id":null,"date_visible":null,"engine_rank":null,"result_kind":null}
+```
+
+同一observation还记录`query_result_status`：每个query的`query_index`、`returned_count`、`list_complete`（true/false/null）、`missing_fields`与缺口原因。这里完整仅指客户端收到的列表是否完整留存，不代表互联网全部结果。空数组须区分确实零结果、工具报错和导出缺失。解析失败时保留原始返回并标缺口，不能写成零结果。
+
+后续获取请求以`parent_event_id`关联搜索返回事件，在其observation中用`origin_query_index`和`origin_list_position`精确指向结果。分别记录`requested_url`与工具暴露的`final_url`，避免重定向覆盖搜索原URL。来自页面链接、索引或用户输入的地址注明对应入口，不伪造搜索排名。
+
+官方/第三方归类、相关性、选择理由属于解释性信息，放在`evaluation.json`的来源观测中，通过搜索事件ID、query序号和列表位置关联。是否打开由后续实际派发事件确定；是否引用由最终回答证据关联确定。未打开不等于无关。过程列表不去重；计分需要去重时另保存合并依据，不删除原始结果。
+
+执行后核对：每个成功搜索是否有原始返回；每个query是否有列表或明确缺口；结构化条数和位置是否与原文一致；每个获取链接是否能追溯入口。当前`run_log.py`只保存observation并校验已有日志结构，不自动执行上述语义与字段完整性核对，需客户端导出或后处理落实。不能把日志校验通过当作已完整保存搜索网址。
+
 ## 获取事件
 
 | 维度 | 记录内容 |
