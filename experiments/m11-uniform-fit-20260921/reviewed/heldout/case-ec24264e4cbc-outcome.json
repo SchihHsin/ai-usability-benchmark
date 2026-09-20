@@ -1,0 +1,111 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "nsys profile \\\n  -t cuda,nvtx,osrt,cudnn,cublas \\\n  -o torch_prof \\\n  --force-overwrite=true \\\n  --stats=true \\\n  python train.py",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4ZXLZiUKcvU91c4P35uI5085.result",
+      "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+      "verification": "source",
+      "reason": "答案给出完整可执行的 nsys profile 命令，目标进程范围为被启动的 python train.py（application 参数）。官方 User Guide 返回正文含该用法行及 -t 取值列表（cuda,nvtx,osrt,cudnn,cublas 均在其中，原文加粗）。-o 选项虽未出现在返回的 profile 表中，但答案明确披露此不确定性，命令本身具体且进程范围清晰。"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "nsys-ui torch_prof.nsys-rep      # GUI 看 timeline（先验，本轮官方正文未返回该用法）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4ZXLZiUKcvU91c4P35uI5085.result",
+      "evidence_quote": "no instruction or command about launching `nsys-ui`",
+      "verification": "none",
+      "reason": "答案给出了 .nsys-rep 输出文件及 nsys-ui/nsys stats 两种打开方式，但答案自己将其标注为'先验/待核'；来源确认 nsys-ui 用法与 stats 报告名均未在官方返回正文中出现，无法从证据核实，属未验证而非错误。"
+    },
+    {
+      "id": 3,
+      "status": "absent",
+      "answer_quote": "看 kernel 时长分布——是否大量**短小 kernel**、kernel 之间是否有空隙、memcpy 与 kernel 是否串行而非 overlap",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案提及 GPU 行、CPU 线程、memcpy 与 kernel 的串行/重叠关系，以及 NVTX 区间向 GPU timeline 的投影，但全文未明确指出 GPU kernel、CPU launch（CUDA API）、memcpy 各自对应的 timeline 轨道名称/位置，该方面未被直接满足。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "看 GPU 行有没有大段空白（idle）",
+      "answer_event_id": "run-end",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案给出了具体方法：观察 GPU 行空白段判断 idle（GPU 空闲=等 CPU 或等数据），并列举 cudaDeviceSynchronize、.item()、.cpu() 等隐式同步点。内容技术合理，但本轮两个来源均不包含识别 GPU 空闲/同步等待的对应说明，无法从证据核实。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "nsys stats --report cuda_gpu_kern_sum,cuda_api_sum,nvtx_sum torch_prof.nsys-rep   # 报告名待核",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4ZXLZiUKcvU91c4P35uI5085.result",
+      "evidence_quote": "These strings do NOT appear anywhere in the returned content.",
+      "verification": "none",
+      "reason": "按 kernel 筛选的操作依赖 nsys stats 报告名（cuda_gpu_kern_sum 等），答案自己标注'报告名待核'，且来源明确确认这些字符串未出现在官方返回正文中；NVTX 区间归因部分有官方 prose 支持，但 kernel 级筛选命令无法核实。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "nsys profile \\\n  -t cuda,nvtx,osrt \\\n  --capture-range=cudaProfilerApi \\\n  --capture-range-end=stop \\\n  -o torch_steady \\\n  python train.py",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_4ZXLZiUKcvU91c4P35uI5085.result",
+      "evidence_quote": "`cudaProfilerStart()` is used to start profiling and `cudaProfilerStop()` is used to stop profiling.",
+      "verification": "source",
+      "reason": "答案说明用 cudaProfilerStart/Stop 与 NVTX 做区间标记、配合 --capture-range=cudaProfilerApi 只采集训练稳态以获得干净可复现的区间（并引用 --capture-range-end 的 repeat 取值支持重复采集），可用于验证定位结论；capture-range 取值与 cudaProfilerStart/Stop prose 均为官方原文。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为 profiling 操作类任务（采集命令与分析步骤），无需锁定库/工具链/soc 版本；答案中出现的 CUDA driver ≥ 11.7/12.3 仅为可选 --cuda-graph-trace 选项的前置条件说明，不构成需定版的组件，故记 N/A。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "granularity 为 `graph`（默认，需 CUDA driver ≥ 11.7）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "两条 nsys profile 采集命令完整、参数与目标进程（python train.py）齐全，仅需替换 train.py、step>=5 等明确标识的环境值即可执行；Python 区间标记代码含 ... 省略需用户填入训练逻辑，且 nsys stats 报告名被答案自标'待核'并提示以本机 --help-reports 为准，存在需本机确认的步骤，故未达 5。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "nsys profile \\\n  -t cuda,nvtx,osrt,cudnn,cublas \\\n  -o torch_prof \\\n  --force-overwrite=true \\\n  --stats=true \\\n  python train.py"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "请以本机 `nsys stats --help-reports` 为准"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "case": "case-ec24264e4cbc",
+  "kind": "outcome",
+  "task_id": "B",
+  "ecosystem": "cuda",
+  "split": "heldout",
+  "budget": "restricted",
+  "_provenance": {
+    "original_assessment": "assessments/heldout/case-ec24264e4cbc-outcome.json",
+    "sha256": "7f7670c647fae16ae549f717570ca4c30aee251a23cca40d1b49ab8b939baf7c",
+    "process_sha256": "5a0ade1c9bfe8777d85dbca314af0120c2025632f1e4d4c2a2c17fb18c5444d6",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

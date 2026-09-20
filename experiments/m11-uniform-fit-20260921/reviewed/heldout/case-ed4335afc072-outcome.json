@@ -1,0 +1,152 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU\n    ],",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_hi188OmhC779kLJ0p3Ou5004.result",
+      "evidence_quote": "activities | 可选 | CPU、NPU 事件采集列表，Enum 类型。取值：`ProfilerActivity.CPU`（框架侧数据采集开关）、`ProfilerActivity.NPU`（CANN 软件栈及 NPU 数据采集开关）。默认两者同时开启",
+      "verification": "source",
+      "reason": "答案给出 torch_npu.profiler.profile 完整采集配置（activities、schedule、experimental_config）及 msprof 传入待采集进程（命令末尾追加 AI 任务），与官方文档一致。输入未提供 run-end event_id，answer_event_id 以 final 标识。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "msprof --output=/home/projects/output --ascendcl=on --runtime-api=on --task-time=on --aicpu=on --ai-core=on /home/projects/MyApp/out/main",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_4m3mPJAzRxRA3mSE5AaC2845.result",
+      "evidence_quote": "msprof --output=/home/projects/output --ascendcl=on --runtime-api=on --task-time=on --aicpu=on --ai-core=on /home/projects/MyApp/out/main",
+      "verification": "source",
+      "reason": "答案给出接口采集代码（profile/dynamic_profile/analyse）与 msprof 命令行启动命令，msprof 命令与 CANN 8.1.RC1 官方文档逐字一致。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "trace_view.json              # 整个 AI 任务时间线（MindStudio Insight / chrome tracing / Perfetto 打开）",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_hi188OmhC779kLJ0p3Ou5004.result",
+      "evidence_quote": "trace_view.json | 记录整个 AI 任务时间信息。区域：①上层应用数据（算子耗时）②CANN 层数据（AscendCL/GE/Runtime）③底层 NPU 数据（Task Scheduler 等）④算子/接口详情。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案列出 trace_view.json（时间线）、kernel_details.csv/operator_details.csv/op_statistic.csv（算子耗时及字段），与用户指南输出文件说明一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "step_trace_time.csv          # 迭代计算/通信时间：Computing, Communication(Not Overlapped), Overlapped, Communication, Free, Stage, Bubble, Preparing",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_hi188OmhC779kLJ0p3Ou5004.result",
+      "evidence_quote": "step_trace_time.csv | 迭代中计算和通信的时间统计。字段：Device_id、Step、Computing、Communication(Not Overlapped)、Overlapped、Communication、Free、Stage、Bubble",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案通过 step_trace_time.csv 的 Computing/Communication/Free/Bubble 字段区分计算、通信与 host 等待，operator_details.csv 的 Host/Device Self/Total Duration 区分主机与设备耗时，并给出判断口径（Free/Bubble 大或 Host 下发耗时长 → host-bound），均有官方字段说明支撑。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "op_statistic.csv 找 Top 耗时算子，kernel_details.csv 看单算子耗时/Wait Time/Block Num 与 AI Core 指标（PipeUtilization 等）",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_hi188OmhC779kLJ0p3Ou5004.result",
+      "evidence_quote": "op_statistic.csv    // AI Core 和 AI CPU 算子调用次数及耗时",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出从 op_statistic.csv 排序找 Top 耗时算子、再到 kernel_details.csv 下钻单算子 Duration/Wait Time 的具体操作，且说明结合 trace_view.json 时间线找 bubble，均有对应官方文件说明。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "compare 的 DIFF 列 >0 可筛出劣化算子",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_bf1OrPCigXZvqlhQSQon5045.result",
+      "evidence_quote": "可通过DIFF列大于0筛选出劣化算子",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出用第二次采集数据做 compare（DIFF 列筛劣化算子）及单项指标交叉验证（Duration 高且 PipeUtilization/ArithmeticUtilization 低 → 算子或搬运瓶颈），compare 命令与判断口径与 MindStudio 官方文档一致。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题为操作方法类问题（如何用 msprof / Ascend PyTorch Profiler 采集分析），不要求锁定具体库/工具链版本，属无版本需求场景；答案虽给出 PyTorch≥2.1.0 等前置版本约束且自述版本配套矩阵未取得，但不影响任务达成。输入未提供 run-end event_id，evidence 以 final 标识。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "仅知 PyTorch≥2.1.0、单进程多 Device 需 2.1.0post14/2.5.1post2/2.6.0+"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "status": "supported",
+      "reason": "答案给出完整可执行的 Python 采集代码（含全部参数）、msprof 完整命令行及参数表、离线解析与 msprof-analyze 命令，前置条件（CANN Toolkit、source set_env.sh、PyTorch 版本、磁盘/内存预留、采集时长限制）明确；仅需替换路径、输出目录、训练函数等用户环境值（train_one_step/steps 为明确标识的用户代码占位），无需修正内容错误即可执行。答案自述未实际运行，不影响内容核查评分。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "msprof --output=/home/projects/output --ascendcl=on --runtime-api=on --task-time=on --aicpu=on --ai-core=on /home/projects/MyApp/out/main"
+        },
+        {
+          "event_id": "final",
+          "quote": "使用前 `source set_env.sh`；不建议采集功能与 Dump 功能同时使用"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_hi188OmhC779kLJ0p3Ou5004.result",
+          "quote": "trace_view.json | 记录整个 AI 任务时间信息。区域：①上层应用数据（算子耗时）②CANN 层数据（AscendCL/GE/Runtime）③底层 NPU 数据（Task Scheduler 等）④算子/接口详情。"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_hi188OmhC779kLJ0p3Ou5004.result",
+          "quote": "step_trace_time.csv | 迭代中计算和通信的时间统计。字段：Device_id、Step、Computing、Communication(Not Overlapped)、Overlapped、Communication、Free、Stage、Bubble"
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "op_statistic.csv 找 Top 耗时算子，kernel_details.csv 看单算子耗时/Wait Time/Block Num 与 AI Core 指标（PipeUtilization 等）"
+        }
+      ]
+    },
+    {
+      "requirement": 6,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "compare 的 DIFF 列 >0 可筛出劣化算子"
+        }
+      ]
+    }
+  ],
+  "case": "case-ed4335afc072",
+  "kind": "outcome",
+  "task_id": "B",
+  "ecosystem": "cann",
+  "split": "heldout",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/heldout/case-ed4335afc072-outcome.json",
+    "sha256": "0b672695791fcd79100301f81cb24585eb8869b500f9d46abdc57d6fdbd84b5c",
+    "process_sha256": "6b19deebc4cad77914e0aa0bed9aaaef9096ff966d07419e5b87a4f26b8b64d8",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

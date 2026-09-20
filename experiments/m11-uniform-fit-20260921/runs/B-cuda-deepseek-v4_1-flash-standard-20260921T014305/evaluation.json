@@ -146,6 +146,909 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T19:01:08.349963+00:00",
+      "process_sha256": "20293d95774ca295a90b0e60b468e7d8578886bf5e63dfb5c980a576ef90af86",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "nsys profile -o report_name python train.py",
+            "answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "evidence_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出具体采集命令（基础版与带 -t 域的完整版），目标进程范围即被启动的 python train.py；命令用法与 --trace 可选域（cuda,nvtx,cudnn,cublas,nccl,osrt,python-gil）均与官方 User Guide 一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "GUI：`nsys-ui report_name.nsys-rep`",
+            "answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "evidence_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "evidence_quote": "Post process existing Nsight Systems result, either in `.nsys-rep` or SQLite format, to generate statistical information.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明输出为 .nsys-rep 报告文件，并给出 GUI（nsys-ui）与 CLI（nsys stats）两种打开方式；.nsys-rep 格式与 stats 后处理命令得到官方 User Guide 佐证（nsys-ui 字面命令未在已抓取来源出现，但不影响该方面成立）。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "在 timeline 的 CUDA HW/GPU 行找空洞",
+            "answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "evidence_quote": "The launch/execution is split into three phases — \"API time\" (CPU execution time of the launch call), \"Queue time\" (between launch call and kernel execution), and \"Kernel time\" (GPU execution).",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案明确指出 GPU kernel 所在的 CUDA HW/GPU 行，并用 cuda_kern_exec_sum 的 API/Queue/Kernel 三分（CPU launch 对应 API time）及 cuda_gpu_mem_time_sum/size_sum（memcpy/H2D/D2H）建立对应关系；该三分结构与官方 Analysis Guide 一致，属可接受的技术路线。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "官方 Expert System 有 `gpu_gaps`（GPU Starvation，默认空闲 **>500ms**，阈值可调）和 `gpu_time_util`（低利用率区）",
+            "answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "evidence_quote": "identifies time ranges where a GPU is idle for longer than 500ms. The threshold is adjustable.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明用 timeline 空洞与 gpu_gaps/gpu_time_util 规则识别 GPU 空闲，用 cuda_api_sync 等规则和 .item()/torch.cuda.synchronize() 识别同步等待；空洞阈值与统计口径（仅首末 GPU 操作之间、时间为时间利用率）均与官方 Analysis Guide 一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "用 `nvtx_sum`/`nvtx_kern_sum`/`nvtx_gpu_proj_sum` 看每个 NVTX 段（dataloader/forward/backward/step）的 GPU 时间，定位是哪个阶段掉利用率",
+            "answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "evidence_quote": "`nvtx_kern_sum[:base|mangled]` | NVTX Range Kernel Summary — CUDA kernels grouped by NVTX ranges.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出按 NVTX 区间/阶段筛选 kernel 并归因瓶颈的具体报告（nvtx_kern_sum、nvtx_gpu_proj_sum、cuda_gpu_kern_sum 等），配合 range_push/range_pop 标注代码；报告名称与用途与官方 Post-Collection Analysis Guide 相符。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-27"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "**迭代验证**：改代码（多 worker、pin_memory、增大 batch、CUDA Graph、去掉 .item() 同步）后重新采集对比 timeline。",
+            "answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "evidence_quote": "Add NVTX annotations to CPU code to understand the reason behind the gaps.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案明确给出验证方法：NVTX 区间标记（range_push/pop、emit_nvtx）定位阶段 + 修改后重复采集对比 timeline；NVTX 标注用于理解空洞成因的做法有官方 Analysis Guide 佐证，重复采集对比为方法论建议且无任何来源矛盾。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-28",
+              "ev-29"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为 NVIDIA 官方文档（docs.nvidia.com Nsight Systems User Guide），后续查询也持续命中 docs.nvidia.com 官方页面。",
+            "evidence": [
+              {
+                "event_id": "call_00_Lk4NtsCRRuNiT9zTsqa53390.result",
+                "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)"
+              },
+              {
+                "event_id": "call_00_eqSXCOM36XKWIxrKuvHw6739.result",
+                "quote": "## 5. [Post-Collection Analysis Guide — Nsight Systems](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.25,
+            "upper": 3.75,
+            "status": "bounded",
+            "reason": "四个独立官方文档：NVIDIA UserGuide 取得直接正文但两处抓取均显示 [...] 截断（记4）；NVIDIA AnalysisGuide 取得详尽直接正文但完整性无起止依据（保留4—5）；PyTorch emit_nvtx 页两个 URL 均 404（记1，重试不重复计）；PyTorch autograd.html 取得 emit_nvtx 完整章节直接正文（4—5）。均值区间 3.25—3.75。",
+            "evidence": [
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "NVIDIA Nsight Systems user guide\n\n[...]"
+              },
+              {
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "This appears to be a partial/truncated version of the Nsight Systems User Guide (the content cuts off mid-table in the CLI Start Command Switch Options section)"
+              },
+              {
+                "event_id": "call_00_OmR3x5yLFuBKd8WAFiPO7090.result",
+                "quote": "**标题**: Page not found · GitHub Pages\n\n# 404"
+              },
+              {
+                "event_id": "call_00_HHUsND4kG6XfzSVg8zwW9585.result",
+                "quote": "*class*torch.autograd.profiler.emit_nvtx(*enabled=True*, *record_shapes=False*)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文中 profile 用法行、--trace 域列表（含默认值 cuda/opengl/nvtx/osrt）、--cuda-memory-usage、--force-overwrite、--stats 等参数，以及 AnalysisGuide 中 GPU Starvation/Synchronization 规则、cuda_kern_exec 三段分解、:nvtx-name 筛选等，主流程与参数齐全；但 --capture-range/--stats 等选项描述为空 Note 占位（截断）、无 GUI 打开与 timeline 轨道的官方正文说明，分支细节仍缺。",
+            "evidence": [
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "nsys [global-options] profile [options] [application] [application-arguments]"
+              },
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "**cuda**, **opengl**, **nvtx**, **osrt**, cuda-sw, cudnn, cublas"
+              },
+              {
+                "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+                "quote": "**GPU Starvation** — *\"identifies time ranges where a GPU is idle for longer than 500ms. The threshold is adjustable.\"*"
+              },
+              {
+                "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+                "quote": "\"API time\" (CPU execution time of the launch call), \"Queue time\" (between launch call and kernel execution), and \"Kernel time\" (GPU execution)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "单一主线官方文档（docs.nvidia.com 当前版），无多版本选择混乱；页内对涉及 CUDA 驱动版本的功能给出明确条件（如 graph host-and-device 需 12.3+），版本条件页内即可判定。",
+            "evidence": [
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "For `graph`, `host-and-device` requires CUDA driver version 12.3 or higher and is the default when available."
+              },
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "This reduces overhead, requires CUDA driver version 11.7 or higher"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；统一预算内去重后相关独立第三方来源远超6条：CSDN 多篇、知乎两篇以上、51CTO、jishuzhan、deepwiki、caijizhuo.github.io、volcengine、runebook 等，且正文取得不是计数前提。",
+            "evidence": [
+              {
+                "event_id": "call_00_Lk4NtsCRRuNiT9zTsqa53390.result",
+                "quote": "## 2. [Nsight System 2023.2.1实战：用Timeline View和Events ..."
+              },
+              {
+                "event_id": "call_00_RzltXe9s21GmA6G1jVju1920.result",
+                "quote": "## 3. [nsys工具使用 - 知乎](https://zhuanlan.zhihu.com/p/716133647)"
+              },
+              {
+                "event_id": "call_00_eqSXCOM36XKWIxrKuvHw6739.result",
+                "quote": "## 5. [cuda性能分析工具nsys使用 | caijizhuo](https://caijizhuo.github.io/20240519171831_2854729219/)"
+              },
+              {
+                "event_id": "call_00_Zqjth40KHSPwodOrtYr59173.result",
+                "quote": "## 4. [使用NVTX + Nsight System 进行训练性能分析_nsys nvtx ..."
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；第三方对关键可操作说法（生成 .nsys-rep、GUI File->Open 打开、nvprof 弃用改用 nsys、NVTX 配合 nsys 分析 PyTorch）多源一致且与官方文档（stats/analyze 后处理、--trace=nvtx 域）可对上；但第三方正文未实际抓取，逐条可追溯依据的核验深度有限，缺完整交叉印证记录。",
+            "evidence": [
+              {
+                "event_id": "call_00_RzltXe9s21GmA6G1jVju1920.result",
+                "quote": "选择File->Open找到timeline.nsys-rep（注意这个nsys-rep文件是通用的，比如可以在linux上生成，在mac上用nsight ..."
+              },
+              {
+                "event_id": "call_00_eqSXCOM36XKWIxrKuvHw6739.result",
+                "quote": "查资料得知nvprof已被弃用，改用Nsight Systems CLI。 执行 nsys nvprof ./myapp 后生成了 report1.nsys-rep 和 …"
+              },
+              {
+                "event_id": "call_00_Zqjth40KHSPwodOrtYr59173.result",
+                "quote": "NVTX（NVIDIA Tools Extension）是一个用于标记代码段的库，帮助在Nsight Systems等工具中可视"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出完整流程：nsys profile 命令（--trace 域、--stats、--force-overwrite、--cuda-memory-usage 拼写均与官方核对一致）、emit_nvtx/range_push NVTX 标注、六条分析步骤覆盖 GPU 空闲、launch overhead、memcpy 同步、.item() 触发同步等；仅个别参数（--gpu-metrics-device 实为 --gpu-metrics-devices）及权限/兼容性细节自认不确定需补充，事后核对未见关键主张被否定。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "nsys profile --trace=cuda,nvtx,osrt,cublas,cudnn -o report_name python train.py",
+                "note": "quote from prior"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "若空白处 CPU 在跑 DataLoader/预处理 → 输入瓶颈；若 CPU 在等 GPU → 同步点。",
+                "note": "quote from prior"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "--gpu-metrics-device 的准确语法与是否需要 root 权限不确定。",
+                "note": "quote from prior"
+              },
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "`--gpu-metrics-devices`"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=10",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_Lk4NtsCRRuNiT9zTsqa53390.dispatch",
+              "call_00_xygyGLGqXgSK65qExX1t6702.dispatch",
+              "call_00_RzltXe9s21GmA6G1jVju1920.dispatch",
+              "call_00_eqSXCOM36XKWIxrKuvHw6739.dispatch",
+              "call_00_ZGxA1vdjTUIGFYtNiwHy8408.dispatch",
+              "call_00_Zqjth40KHSPwodOrtYr59173.dispatch",
+              "call_00_OmR3x5yLFuBKd8WAFiPO7090.dispatch",
+              "call_00_B0gmBM01IsVp2G4tVfOd3789.dispatch",
+              "call_00_HHUsND4kG6XfzSVg8zwW9585.dispatch",
+              "call_00_Y9tzWolTetjiKd6dGIYl3279.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "N/A",
+            "reason": "原题为操作型 how-to（采集命令与分析步骤），不要求锁定库/工具链/soc 等具体版本，记 N/A。答案提到的 CUDA driver 11.7+/12.3+/13.0+ 仅针对可选的 CUDA Graph trace 粒度，非原题定版需求；答案自述未核实到 NVIDIA 对 PyTorch 具体版本要求，未编造版本。",
+            "evidence": [
+              {
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "未核实到 NVIDIA 官方对 PyTorch 具体版本的要求。"
+              }
+            ],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "采集命令（nsys profile -t ... -o ... python train.py）、--capture-range、NVTX 代码、报告打开（nsys-ui/nsys stats）与 Expert System 规则名均已给全，仅需替换 report_name、train.py、设备号等明确环境参数即可执行。但答案自述 `nsys stats --report <name>` 字面语法未经官方来源核实、`--gpu-metrics-devices` 权限未知，且声明仅为文档核查未实际运行，故为 4 而非 5。",
+            "evidence": [
+              {
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "nsys profile -t cuda,nvtx,cudnn,cublas,nccl,osrt,python-gil \\\n  --force-overwrite=true -o report_name python train.py"
+              },
+              {
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "`nsys stats --report <name> file.nsys-rep` 的**字面用法**未在已取得的官方页出现"
+              }
+            ],
+            "raw_status": "操作指导基本完整，仅需替换环境参数；存在答案自述的未核实点故不给5分",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "四个独立官方文档：NVIDIA UserGuide 取得直接正文但两处抓取均显示 [...] 截断（记4）；NVIDIA AnalysisGuide 取得详尽直接正文但完整性无起止依据（保留4—5）；PyTorch emit_nvtx 页两个 URL 均 404（记1，重试不重复计）；PyTorch autograd.html 取得 emit_nvtx 完整章节直接正文（4—5）。均值区间 3.25—3.75。"
+              },
+              {
+                "metric": "M5",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；统一预算内去重后相关独立第三方来源远超6条：CSDN 多篇、知乎两篇以上、51CTO、jishuzhan、deepwiki、caijizhuo.github.io、volcengine、runebook 等，且正文取得不是计数前提。"
+              },
+              {
+                "metric": "M6",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；第三方对关键可操作说法（生成 .nsys-rep、GUI File->Open 打开、nvprof 弃用改用 nsys、NVTX 配合 nsys 分析 PyTorch）多源一致且与官方文档（stats/analyze 后处理、--trace=nvtx 域）可对上；但第三方正文未实际抓取，逐条可追溯依据的核验深度有限，缺完整交叉印证记录。"
+              },
+              {
+                "metric": "M7",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出完整流程：nsys profile 命令（--trace 域、--stats、--force-overwrite、--cuda-memory-usage 拼写均与官方核对一致）、emit_nvtx/range_push NVTX 标注、六条分析步骤覆盖 GPU 空闲、launch overhead、memcpy 同步、.item() 触发同步等；仅个别参数（--gpu-metrics-device 实为 --gpu-metrics-devices）及权限/兼容性细节自认不确定需补充，事后核对未见关键主张被否定。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "四个独立官方文档：NVIDIA UserGuide 取得直接正文但两处抓取均显示 [...] 截断（记4）；NVIDIA AnalysisGuide 取得详尽直接正文但完整性无起止依据（保留4—5）；PyTorch emit_nvtx 页两个 URL 均 404（记1，重试不重复计）；PyTorch autograd.html 取得 emit_nvtx 完整章节直接正文（4—5）。均值区间 3.25—3.75。"
+            },
+            {
+              "metric": "M5",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；统一预算内去重后相关独立第三方来源远超6条：CSDN 多篇、知乎两篇以上、51CTO、jishuzhan、deepwiki、caijizhuo.github.io、volcengine、runebook 等，且正文取得不是计数前提。"
+            },
+            {
+              "metric": "M6",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；第三方对关键可操作说法（生成 .nsys-rep、GUI File->Open 打开、nvprof 弃用改用 nsys、NVTX 配合 nsys 分析 PyTorch）多源一致且与官方文档（stats/analyze 后处理、--trace=nvtx 域）可对上；但第三方正文未实际抓取，逐条可追溯依据的核验深度有限，缺完整交叉印证记录。"
+            },
+            {
+              "metric": "M7",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出完整流程：nsys profile 命令（--trace 域、--stats、--force-overwrite、--cuda-memory-usage 拼写均与官方核对一致）、emit_nvtx/range_push NVTX 标注、六条分析步骤覆盖 GPU 空闲、launch overhead、memcpy 同步、.item() 触发同步等；仅个别参数（--gpu-metrics-device 实为 --gpu-metrics-devices）及权限/兼容性细节自认不确定需补充，事后核对未见关键主张被否定。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_Lk4NtsCRRuNiT9zTsqa53390.result",
+            "field": "response",
+            "sha256": "195507b8f509852328f40a8fc78cae1500ea270d4b121350cca6b1af2b815a7b",
+            "start": 107,
+            "end": 230,
+            "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_eqSXCOM36XKWIxrKuvHw6739.result",
+            "field": "response",
+            "sha256": "dd21445835b9dd56daadbd0a279b2711550473bb5920772b3e037745bcce4458",
+            "start": 1096,
+            "end": 1216,
+            "quote": "## 5. [Post-Collection Analysis Guide — Nsight Systems](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 52,
+            "end": 91,
+            "quote": "NVIDIA Nsight Systems user guide\n\n[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+            "field": "response",
+            "sha256": "d5ca7190441859c80ff247c51aadec2f4df260575241c68e898a7a3bd2ecc4c1",
+            "start": 257,
+            "end": 417,
+            "quote": "This appears to be a partial/truncated version of the Nsight Systems User Guide (the content cuts off mid-table in the CLI Start Command Switch Options section)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_OmR3x5yLFuBKd8WAFiPO7090.result",
+            "field": "response",
+            "sha256": "5607ad690d2124048982f0623e6fdada95c9a6e79e997d51dcb3dfed337cec47",
+            "start": 0,
+            "end": 44,
+            "quote": "**标题**: Page not found · GitHub Pages\n\n# 404",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_HHUsND4kG6XfzSVg8zwW9585.result",
+            "field": "response",
+            "sha256": "ce424f02feace57efb3068ef772354dcc0930c926f6bc802efcb5646eeeff5ac",
+            "start": 615,
+            "end": 694,
+            "quote": "*class*torch.autograd.profiler.emit_nvtx(*enabled=True*, *record_shapes=False*)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 2349,
+            "end": 2426,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 8231,
+            "end": 8295,
+            "quote": "**cuda**, **opengl**, **nvtx**, **osrt**, cuda-sw, cudnn, cublas",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "field": "response",
+            "sha256": "c3d8adc21e2c27acee76f122bf44359844cf642a9718e91bd1eb1405092d7677",
+            "start": 8146,
+            "end": 8265,
+            "quote": "**GPU Starvation** — *\"identifies time ranges where a GPU is idle for longer than 500ms. The threshold is adjustable.\"*",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "field": "response",
+            "sha256": "c3d8adc21e2c27acee76f122bf44359844cf642a9718e91bd1eb1405092d7677",
+            "start": 3413,
+            "end": 3555,
+            "quote": "\"API time\" (CPU execution time of the launch call), \"Queue time\" (between launch call and kernel execution), and \"Kernel time\" (GPU execution)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 4883,
+            "end": 4992,
+            "quote": "For `graph`, `host-and-device` requires CUDA driver version 12.3 or higher and is the default when available.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 4524,
+            "end": 4590,
+            "quote": "This reduces overhead, requires CUDA driver version 11.7 or higher",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_Lk4NtsCRRuNiT9zTsqa53390.result",
+            "field": "response",
+            "sha256": "195507b8f509852328f40a8fc78cae1500ea270d4b121350cca6b1af2b815a7b",
+            "start": 432,
+            "end": 489,
+            "quote": "## 2. [Nsight System 2023.2.1实战：用Timeline View和Events ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_RzltXe9s21GmA6G1jVju1920.result",
+            "field": "response",
+            "sha256": "34a5b85f36406d4a2a65cd5ca822a237a7eda02e17244a6ca837a445cca0c522",
+            "start": 719,
+            "end": 780,
+            "quote": "## 3. [nsys工具使用 - 知乎](https://zhuanlan.zhihu.com/p/716133647)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_Zqjth40KHSPwodOrtYr59173.result",
+            "field": "response",
+            "sha256": "147297adae9ff55a670f7dbe95f061d02033dc9fb34be90db3938f0b1976ff87",
+            "start": 1058,
+            "end": 1110,
+            "quote": "## 4. [使用NVTX + Nsight System 进行训练性能分析_nsys nvtx ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_eqSXCOM36XKWIxrKuvHw6739.result",
+            "field": "response",
+            "sha256": "dd21445835b9dd56daadbd0a279b2711550473bb5920772b3e037745bcce4458",
+            "start": 469,
+            "end": 555,
+            "quote": "查资料得知nvprof已被弃用，改用Nsight Systems CLI。 执行 nsys nvprof ./myapp 后生成了 report1.nsys-rep 和 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_Zqjth40KHSPwodOrtYr59173.result",
+            "field": "response",
+            "sha256": "147297adae9ff55a670f7dbe95f061d02033dc9fb34be90db3938f0b1976ff87",
+            "start": 1466,
+            "end": 1530,
+            "quote": "NVTX（NVIDIA Tools Extension）是一个用于标记代码段的库，帮助在Nsight Systems等工具中可视",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 7428,
+            "end": 7451,
+            "quote": "`--gpu-metrics-devices`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e9d10acc625c0b0143afd1edb25939810059c58201651c6ed319a2adc1578cc6",
+            "start": 223,
+            "end": 266,
+            "quote": "nsys profile -o report_name python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 2349,
+            "end": 2426,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e9d10acc625c0b0143afd1edb25939810059c58201651c6ed319a2adc1578cc6",
+            "start": 1907,
+            "end": 1941,
+            "quote": "GUI：`nsys-ui report_name.nsys-rep`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+            "field": "response",
+            "sha256": "3d2d528de055ade88efe853a1c2b5ea8e093f553b0946df4d06d3da41f2cc130",
+            "start": 1702,
+            "end": 1823,
+            "quote": "Post process existing Nsight Systems result, either in `.nsys-rep` or SQLite format, to generate statistical information.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e9d10acc625c0b0143afd1edb25939810059c58201651c6ed319a2adc1578cc6",
+            "start": 3013,
+            "end": 3042,
+            "quote": "在 timeline 的 CUDA HW/GPU 行找空洞",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "field": "response",
+            "sha256": "c3d8adc21e2c27acee76f122bf44359844cf642a9718e91bd1eb1405092d7677",
+            "start": 3363,
+            "end": 3556,
+            "quote": "The launch/execution is split into three phases — \"API time\" (CPU execution time of the launch call), \"Queue time\" (between launch call and kernel execution), and \"Kernel time\" (GPU execution).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e9d10acc625c0b0143afd1edb25939810059c58201651c6ed319a2adc1578cc6",
+            "start": 3043,
+            "end": 3133,
+            "quote": "官方 Expert System 有 `gpu_gaps`（GPU Starvation，默认空闲 **>500ms**，阈值可调）和 `gpu_time_util`（低利用率区）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "field": "response",
+            "sha256": "c3d8adc21e2c27acee76f122bf44359844cf642a9718e91bd1eb1405092d7677",
+            "start": 8169,
+            "end": 8263,
+            "quote": "identifies time ranges where a GPU is idle for longer than 500ms. The threshold is adjustable.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e9d10acc625c0b0143afd1edb25939810059c58201651c6ed319a2adc1578cc6",
+            "start": 4019,
+            "end": 4132,
+            "quote": "用 `nvtx_sum`/`nvtx_kern_sum`/`nvtx_gpu_proj_sum` 看每个 NVTX 段（dataloader/forward/backward/step）的 GPU 时间，定位是哪个阶段掉利用率",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e9d10acc625c0b0143afd1edb25939810059c58201651c6ed319a2adc1578cc6",
+            "start": 4208,
+            "end": 4292,
+            "quote": "**迭代验证**：改代码（多 worker、pin_memory、增大 batch、CUDA Graph、去掉 .item() 同步）后重新采集对比 timeline。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+            "field": "response",
+            "sha256": "c3d8adc21e2c27acee76f122bf44359844cf642a9718e91bd1eb1405092d7677",
+            "start": 8572,
+            "end": 8646,
+            "quote": "Add NVTX annotations to CPU code to understand the reason behind the gaps.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/heldout/case-35a72490a498-predictors.json": "f185c7d7551268473177c748997c6b0c5f1f3e17d516ce2f00fe2ea33598d1a9",
+          "reviewed/heldout/case-35a72490a498-outcome.json": "8df2e25d2779aed502fec05df275b6163b9db4e15f67860a5fb4f39e7dff0244"
+        },
+        "m2_documents": [
+          {
+            "url": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html",
+            "document": "NVIDIA Nsight Systems User Guide",
+            "m2_score": 4,
+            "status": "scored",
+            "note": "两次抓取均取得直接正文（CLI 命令与选项表），但存在 [...] 截断且第二次确认 cuts off mid-table，记4。",
+            "evidence": [
+              {
+                "event_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+                "quote": "NVIDIA Nsight Systems user guide\n\n[...]"
+              }
+            ]
+          },
+          {
+            "url": "https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html",
+            "document": "NVIDIA Nsight Systems Post-Collection Analysis Guide",
+            "m2_score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "note": "取得详尽直接正文（报告名目录、专家系统规则、命令引文），无截断标记，但完整性无全文起止依据，保留4—5。",
+            "evidence": [
+              {
+                "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+                "quote": "## 1. All Statistical Report Names and What Each Shows"
+              }
+            ]
+          },
+          {
+            "url": "https://pytorch.org/docs/stable/generated/torch.autograd.profiler.emit_nvtx.html 与 https://docs.pytorch.org/docs/stable/generated/torch.autograd.profiler.emit_nvtx.html",
+            "document": "PyTorch emit_nvtx API 页（两个 URL 均失败，按同一文档重试计）",
+            "m2_score": 1,
+            "status": "scored",
+            "note": "两次请求均返回 404 错误页，无可识别正文。",
+            "evidence": [
+              {
+                "event_id": "call_00_OmR3x5yLFuBKd8WAFiPO7090.result",
+                "quote": "**标题**: Page not found · GitHub Pages\n\n# 404"
+              },
+              {
+                "event_id": "call_00_B0gmBM01IsVp2G4tVfOd3789.result",
+                "quote": "# 404\n\n**File not found**"
+              }
+            ]
+          },
+          {
+            "url": "https://docs.pytorch.org/docs/stable/autograd.html",
+            "document": "PyTorch autograd 参考页（含 emit_nvtx 章节）",
+            "m2_score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "note": "取得 emit_nvtx 签名、参数、示例等直接正文，章节内容可核对但整页完整性未知，保留4—5。",
+            "evidence": [
+              {
+                "event_id": "call_00_HHUsND4kG6XfzSVg8zwW9585.result",
+                "quote": "\"Context manager that makes every autograd operation emit an NVTX range.\""
+              }
+            ]
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M5",
+            "bad_refs": [
+              {
+                "event_id": "call_00_eqSXCOM36XKWIxrKuvHw6739.result",
+                "quote": "## 5. [cuda性能分析工具nsys使用 | caijizhuo](https://caijizhuo.github.io/20240519171831_2854729219/)"
+              }
+            ]
+          },
+          {
+            "metric": "M6",
+            "bad_refs": [
+              {
+                "event_id": "call_00_RzltXe9s21GmA6G1jVju1920.result",
+                "quote": "选择File->Open找到timeline.nsys-rep（注意这个nsys-rep文件是通用的，比如可以在linux上生成，在mac上用nsight ..."
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "text": "nsys profile --trace=cuda,nvtx,osrt,cublas,cudnn -o report_name python train.py",
+                "note": "quote from prior"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "若空白处 CPU 在跑 DataLoader/预处理 → 输入瓶颈；若 CPU 在等 GPU → 同步点。",
+                "note": "quote from prior"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "--gpu-metrics-device 的准确语法与是否需要 root 权限不确定。",
+                "note": "quote from prior"
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "nsys profile -o report_name python train.py"
+              }
+            ]
+          },
+          {
+            "requirement": 2,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "GUI：`nsys-ui report_name.nsys-rep`"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "在 timeline 的 CUDA HW/GPU 行找空洞"
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "官方 Expert System 有 `gpu_gaps`（GPU Starvation，默认空闲 **>500ms**，阈值可调）和 `gpu_time_util`（低利用率区）"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "用 `nvtx_sum`/`nvtx_kern_sum`/`nvtx_gpu_proj_sum` 看每个 NVTX 段（dataloader/forward/backward/step）的 GPU 时间，定位是哪个阶段掉利用率"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+                "quote": "`nvtx_kern_sum[:base|mangled]` | NVTX Range Kernel Summary — CUDA kernels grouped by NVTX ranges."
+              }
+            ]
+          },
+          {
+            "requirement": 6,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "**迭代验证**：改代码（多 worker、pin_memory、增大 batch、CUDA Graph、去掉 .item() 同步）后重新采集对比 timeline。"
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+                "quote": "nsys profile -t cuda,nvtx,cudnn,cublas,nccl,osrt,python-gil \\\n  --force-overwrite=true -o report_name python train.py"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

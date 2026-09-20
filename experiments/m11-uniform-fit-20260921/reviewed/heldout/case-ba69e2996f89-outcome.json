@@ -1,0 +1,172 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "ref_cpu32 = model_cpu(x_cpu)\nref_gpu32 = model_gpu(x_gpu)          # 同一份 x，搬到 GPU\nref_gpu64 = model_gpu(x_gpu.double()).float()",
+      "answer_event_id": "final",
+      "evidence_id": "final",
+      "evidence_quote": "kernel_fwd(x_gpu)                # 你的 kernel 内部把同名中间量写到 debug buffer",
+      "verification": "code_inspection",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出三种参考（CPU float32、GPU float32、GPU float64）的生成代码，并说明用同一份输入 x 调用 kernel_fwd 产生自定义算子输出；代码语法与数据流可直接检查，逻辑自洽。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "for name in dumps:\n    if name in kernel_dumps:\n        if diff_report(kernel_dumps[name], dumps[name], name=name):\n            print(\"first divergence:\", name); break",
+      "answer_event_id": "final",
+      "evidence_id": "final",
+      "evidence_quote": "def hook(m, i, o, name=name): dumps[name] = o.detach()\n    hooks.append(mod.register_forward_hook(hook))",
+      "verification": "code_inspection",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；给出基于 forward hook dump 中间张量并逐层调用 diff_report 找首个发散层的完整可检查代码，满足逐层比对的具体代码要求。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "bad = ~torch.isclose(got, ref, rtol=rtol, atol=atol)",
+      "answer_event_id": "final",
+      "evidence_id": "final",
+      "evidence_quote": "flat = torch.argmax(ad).item()\n        idx = list(torch.unravel_index(torch.tensor(flat), got.shape))",
+      "verification": "code_inspection",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；diff_report 函数实现逐元素容差比较，输出最大偏差位置、最坏元素值和前若干 mismatch 索引，代码具体且语法可检查。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "print(f\"[{name}] max_abs={ad.max().item():.3e}  max_rel={rd.max().item():.3e}  \"\n          f\"mismatch={n_bad}/{n} ({100*n_bad/max(n,1):.2f}%)\")",
+      "answer_event_id": "final",
+      "evidence_id": "final",
+      "evidence_quote": "def diff_report(got, ref, rtol=1.3e-6, atol=1e-5, name=\"out\"):",
+      "verification": "code_inspection",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；明确给出 rtol=1.3e-6、atol=1e-5 阈值及 max_abs/max_rel/mismatch 百分比等差异统计，并给出 max_rel 随 √N×eps 增长的判读规则；阈值与统计逻辑在代码中可直接检查。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "把 mismatch 索引映射到 (blockIdx, threadIdx)：`printf` 出每个线程负责的输出坐标，或在 kernel 里对 `fabs(got-ref)` 超过阈值的元素写 debug 数组，直接看是哪几个 block 错。",
+      "answer_event_id": "final",
+      "evidence_id": "final",
+      "evidence_quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问",
+      "verification": "code_inspection",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出从首个发散层继续下钻的具体步骤：映射到 block/thread、写 debug buffer、float64 裁判区分算法错/精度错、compute-sanitizer 各子工具检查内存/竞态/未初始化，以及 dtype 混用（fp16 累加、TF32）等根因清单，覆盖 kernel、输入与数据类型三个方向。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "absent",
+      "answer_quote": "dumps[name] = o.detach()",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案仅在内存中 dump 中间张量并打印比对报告，全文未指出需要保留（保存）哪些比对结果、输入张量或日志作为证据，该方面缺失。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "本题为数值精度定位方法学问题，不要求锁定库/工具链/soc 版本，记 N/A；答案中出现的版本号仅为来源页面元数据，非定版结论。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "标注 2.8.0+cu128，2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "给出了具体可检查的代码与命令（diff_report、hook、compute-sanitizer、gradcheck 一行命令），但逐层比对示例中 `x_gpu.zero_()` 在参考前向后、kernel 调用前将输入清零，会使 kernel 与参考的输入不一致，需修正；且 kernel_dumps（kernel 内写 debug buffer）机制由用户自行实现，模型/kernel/your_ext 等名称需替换，故需修正与补写才能直接执行，记 3 分。仅内容核查，未实际运行。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "ref_model(x_gpu); x_gpu.zero_()  # 注意别被 in-place 影响"
+        },
+        {
+          "event_id": "final",
+          "quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "final",
+          "quote": "kernel_fwd(x_gpu)                # 你的 kernel 内部把同名中间量写到 debug buffer"
+        }
+      ]
+    },
+    {
+      "requirement": 2,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "final",
+          "quote": "def hook(m, i, o, name=name): dumps[name] = o.detach()\n    hooks.append(mod.register_forward_hook(hook))"
+        }
+      ]
+    },
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "final",
+          "quote": "flat = torch.argmax(ad).item()\n        idx = list(torch.unravel_index(torch.tensor(flat), got.shape))"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "final",
+          "quote": "def diff_report(got, ref, rtol=1.3e-6, atol=1e-5, name=\"out\"):"
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "把 mismatch 索引映射到 (blockIdx, threadIdx)：`printf` 出每个线程负责的输出坐标，或在 kernel 里对 `fabs(got-ref)` 超过阈值的元素写 debug 数组，直接看是哪几个 block 错。"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "final",
+          "quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问"
+        }
+      ]
+    }
+  ],
+  "case": "case-ba69e2996f89",
+  "kind": "outcome",
+  "task_id": "L",
+  "ecosystem": "cuda",
+  "split": "heldout",
+  "budget": "restricted",
+  "_provenance": {
+    "original_assessment": "assessments/heldout/case-ba69e2996f89-outcome-attempt-1.json",
+    "sha256": "e5726179a48c1619b70a42317c49d4d44e258cf66afe932a8c89bc3ef5d0a1e0",
+    "process_sha256": "1a7ad8e05c71e9ac3d6ba34fdde9c8644567485ee28224774f6416a19759b5c0",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "nsys profile -o report_name python train.py",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+      "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+      "verification": "source",
+      "reason": "答案给出具体采集命令（基础版与带 -t 域的完整版），目标进程范围即被启动的 python train.py；命令用法与 --trace 可选域（cuda,nvtx,cudnn,cublas,nccl,osrt,python-gil）均与官方 User Guide 一致。",
+      "raw_answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "GUI：`nsys-ui report_name.nsys-rep`",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_xygyGLGqXgSK65qExX1t6702.result",
+      "evidence_quote": "Post process existing Nsight Systems result, either in `.nsys-rep` or SQLite format, to generate statistical information.",
+      "verification": "source",
+      "reason": "答案说明输出为 .nsys-rep 报告文件，并给出 GUI（nsys-ui）与 CLI（nsys stats）两种打开方式；.nsys-rep 格式与 stats 后处理命令得到官方 User Guide 佐证（nsys-ui 字面命令未在已抓取来源出现，但不影响该方面成立）。",
+      "raw_answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "在 timeline 的 CUDA HW/GPU 行找空洞",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+      "evidence_quote": "The launch/execution is split into three phases — \"API time\" (CPU execution time of the launch call), \"Queue time\" (between launch call and kernel execution), and \"Kernel time\" (GPU execution).",
+      "verification": "source",
+      "reason": "答案明确指出 GPU kernel 所在的 CUDA HW/GPU 行，并用 cuda_kern_exec_sum 的 API/Queue/Kernel 三分（CPU launch 对应 API time）及 cuda_gpu_mem_time_sum/size_sum（memcpy/H2D/D2H）建立对应关系；该三分结构与官方 Analysis Guide 一致，属可接受的技术路线。",
+      "raw_answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "官方 Expert System 有 `gpu_gaps`（GPU Starvation，默认空闲 **>500ms**，阈值可调）和 `gpu_time_util`（低利用率区）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+      "evidence_quote": "identifies time ranges where a GPU is idle for longer than 500ms. The threshold is adjustable.",
+      "verification": "source",
+      "reason": "答案说明用 timeline 空洞与 gpu_gaps/gpu_time_util 规则识别 GPU 空闲，用 cuda_api_sync 等规则和 .item()/torch.cuda.synchronize() 识别同步等待；空洞阈值与统计口径（仅首末 GPU 操作之间、时间为时间利用率）均与官方 Analysis Guide 一致。",
+      "raw_answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "用 `nvtx_sum`/`nvtx_kern_sum`/`nvtx_gpu_proj_sum` 看每个 NVTX 段（dataloader/forward/backward/step）的 GPU 时间，定位是哪个阶段掉利用率",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+      "evidence_quote": "`nvtx_kern_sum[:base|mangled]` | NVTX Range Kernel Summary — CUDA kernels grouped by NVTX ranges.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出按 NVTX 区间/阶段筛选 kernel 并归因瓶颈的具体报告（nvtx_kern_sum、nvtx_gpu_proj_sum、cuda_gpu_kern_sum 等），配合 range_push/range_pop 标注代码；报告名称与用途与官方 Post-Collection Analysis Guide 相符。",
+      "raw_answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "**迭代验证**：改代码（多 worker、pin_memory、增大 batch、CUDA Graph、去掉 .item() 同步）后重新采集对比 timeline。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+      "evidence_quote": "Add NVTX annotations to CPU code to understand the reason behind the gaps.",
+      "verification": "source",
+      "reason": "答案明确给出验证方法：NVTX 区间标记（range_push/pop、emit_nvtx）定位阶段 + 修改后重复采集对比 timeline；NVTX 标注用于理解空洞成因的做法有官方 Analysis Guide 佐证，重复采集对比为方法论建议且无任何来源矛盾。",
+      "raw_answer_event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为操作型 how-to（采集命令与分析步骤），不要求锁定库/工具链/soc 等具体版本，记 N/A。答案提到的 CUDA driver 11.7+/12.3+/13.0+ 仅针对可选的 CUDA Graph trace 粒度，非原题定版需求；答案自述未核实到 NVIDIA 对 PyTorch 具体版本要求，未编造版本。",
+      "evidence": [
+        {
+          "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+          "quote": "未核实到 NVIDIA 官方对 PyTorch 具体版本的要求。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "采集命令（nsys profile -t ... -o ... python train.py）、--capture-range、NVTX 代码、报告打开（nsys-ui/nsys stats）与 Expert System 规则名均已给全，仅需替换 report_name、train.py、设备号等明确环境参数即可执行。但答案自述 `nsys stats --report <name>` 字面语法未经官方来源核实、`--gpu-metrics-devices` 权限未知，且声明仅为文档核查未实际运行，故为 4 而非 5。",
+      "evidence": [
+        {
+          "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+          "quote": "nsys profile -t cuda,nvtx,cudnn,cublas,nccl,osrt,python-gil \\\n  --force-overwrite=true -o report_name python train.py"
+        },
+        {
+          "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+          "quote": "`nsys stats --report <name> file.nsys-rep` 的**字面用法**未在已取得的官方页出现"
+        }
+      ],
+      "raw_status": "操作指导基本完整，仅需替换环境参数；存在答案自述的未核实点故不给5分"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_ZGxA1vdjTUIGFYtNiwHy8408.result",
+          "quote": "`nvtx_kern_sum[:base|mangled]` | NVTX Range Kernel Summary — CUDA kernels grouped by NVTX ranges."
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "call_00_Y9tzWolTetjiKd6dGIYl3279.result",
+          "quote": "nsys profile -t cuda,nvtx,cudnn,cublas,nccl,osrt,python-gil \\\n  --force-overwrite=true -o report_name python train.py"
+        }
+      ]
+    }
+  ],
+  "case": "case-35a72490a498",
+  "task_id": "B",
+  "ecosystem": "cuda",
+  "split": "heldout",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/heldout/case-35a72490a498-outcome.json",
+    "original_assessment_sha256": "832d98e5ab16e494ddebf4075df83ecacf31f3c94cfcd190c58772314e9c35b0",
+    "reviewed_assessment": "reviewed/heldout/case-35a72490a498-outcome.json"
+  }
+}

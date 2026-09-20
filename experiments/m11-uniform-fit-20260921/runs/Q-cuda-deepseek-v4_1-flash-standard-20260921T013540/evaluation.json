@@ -146,6 +146,773 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T19:01:08.463053+00:00",
+      "process_sha256": "13d30a7d164f52618085a8b500776353e33d22458eee8196ebcbedc41602afb2",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "torch.cuda.memory_allocated() / torch.cuda.max_memory_allocated()：张量实际占用。",
+            "answer_event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "evidence_quote": "You can use memory_allocated() and max_memory_allocated() to monitor memory occupied by tensors",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出具体查看显存占用的 API 命令（memory_allocated/max_memory_allocated/memory_reserved/memory_stats/memory_summary），并给出用内存快照定位 OOM 分配失败位置的代码（_record_memory_history + _dump_snapshot），与官方来源一致。",
+            "raw_status": "supported",
+            "evidence_refs": []
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py",
+            "answer_event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "evidence_quote": "prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案明确说明 max_split_size_mb 通过 PYTORCH_CUDA_ALLOC_CONF 环境变量设置（须在 import torch 前）、作用是阻止切分大于该值的块以减少碎片、默认 unlimited、仅 backend:native 有效、官方定位为 last resort，均与来源一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "out = checkpoint(custom_forward, x, use_reentrant=False)",
+            "answer_event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_id": "call_00_9vI8AQMhSmFweEFzrQ3g4342.result",
+            "evidence_quote": "It is recommended that you use use_reentrant=False.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 torch.utils.checkpoint.checkpoint 的启用代码、完整签名及 checkpoint_sequential 用法，推荐 use_reentrant=False，与官方文档一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-18"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "empty_cache() 只把未被使用的缓存块还给驱动（给别的进程用），不会释放仍被张量引用的显存",
+            "answer_event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "evidence_quote": "Calling empty_cache() releases all unused cached memory from PyTorch so that those can be used by other GPU applications.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明 empty_cache 的调用场景（跨进程交接/碎片临时缓解）及其限制（不释放张量占用、不增加 PyTorch 可用显存、有重分配开销），与来源原文一致。",
+            "raw_status": "supported",
+            "evidence_refs": []
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "先压缩显存：混合精度 + 梯度检查点 + 减小 batch（用梯度累积补回等效 batch）",
+            "answer_event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "evidence_quote": "a job changing allocation sizes frequently, such as having a changing batch size",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明减小 batch、梯度累积、混合精度（AMP）等多项显存优化操作并给出可执行代码；batch size 变化导致碎片的问题在来源 expandable_segments 描述中有对应依据。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "把 my_snapshot.pickle 拖到官方可视化器 https://pytorch.org/memory_viz",
+            "answer_event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "evidence_quote": "Out of memory errors are reported as OOM events. Looking at the state of memory during an OOM may provide insight into why an allocation failed even though reserved memory still exists.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出比较/定位方法：max_memory_allocated 与 max_memory_reserved 前后对比、内存快照中 OOM 事件与 segment/block 切分状态可视化，与来源对 Allocator State History 的描述一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "首次查询前5条均为第三方来源（CSDN/dev-solve/知乎），无官方；第二次查询第5条才出现官方 docs.pytorch.org 页面。",
+            "evidence": [
+              {
+                "event_id": "call_00_MrpXPt69pDPbx31KvKtH5716.result",
+                "quote": "Found 5 results"
+              },
+              {
+                "event_id": "call_00_7AbNcOkLZvZ1w5SvYi398715.result",
+                "quote": "## 5. [CUDA Environment Variables — PyTorch main documentation](http://docs.pytorch.org/docs/main/cuda_environment_variables.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "四个独立官方文档均取得直接正文：cuda_environment_variables.html 出现明确的 '[...]' 截断标记记4分；其余三个（cuda.html、checkpoint.md、torch_cuda_memory.html）取得直接正文且自称完整，但按规则工具自称完整不能独自证明完整，完整性无独立核对依据，保留4—5候选，均值区间[4,5]。",
+            "evidence": [
+              {
+                "event_id": "call_00_WyRtm5Xy5n9jvZHCKGU51041.result",
+                "quote": "TORCH_CUBLAS_WORKSPACE_CACHE\n\n[...]"
+              },
+              {
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "**Return type:** Full body text of the requested section (quoted verbatim below)."
+              },
+              {
+                "event_id": "call_00_9vI8AQMhSmFweEFzrQ3g4342.result",
+                "quote": "This appears to be the **full document text** for the `torch.utils.checkpoint` API page"
+              },
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "# Understanding CUDA Memory Usage#\n\nCreated On: Aug 23, 2023 | Last Updated On: Jul 07, 2026"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取得正文覆盖原题全部所需：显存查看命令（memory_allocated/max_memory_allocated、memory_snapshot、_record_memory_history）、max_split_size_mb 的设置位置（PYTORCH_ALLOC_CONF 环境变量格式）、作用与默认值、梯度检查点完整签名与 use_reentrant 建议、empty_cache 调用位置及'不释放张量占用显存'的限制、expandable_segments 针对变化 batch 的优化、以及 OOM 事件/快照的前后比较方法，无需另查即可补齐。",
+            "evidence": [
+              {
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "prevents the native allocator from splitting blocks greater than this size (in MB). This can reduce fragmentation"
+              },
+              {
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "Calling `empty_cache()` releases all **unused** cached memory from PyTorch"
+              },
+              {
+                "event_id": "call_00_9vI8AQMhSmFweEFzrQ3g4342.result",
+                "quote": "It is recommended that you use `use_reentrant=False`."
+              },
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "Out of memory errors are reported as OOM events. Looking at the state of memory during an OOM may provide insight into why an allocation failed"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "版本信息清晰（页内版本切换器标明 v2.14.0 (stable)，各页内容自洽指向 2.14），但 cuda_environment_variables 页为 main 文档、其余为 stable/2.14，需跨已取得页面对照确认适用版本，记4分；若仅以 stable 系页面页内条件论可到5，取保守档。",
+            "evidence": [
+              {
+                "event_id": "call_00_WyRtm5Xy5n9jvZHCKGU51041.result",
+                "quote": "v2.15.0 (unstable)v2.14.0 (stable)"
+              },
+              {
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "The page is for **PyTorch 2.14** documentation (`docs.pytorch.org/docs/2.14`)."
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内去重后独立第三方来源≥7条：CSDN 132908374（devpress 为其镜像只计一次）、CSDN 144110166、dev-solve、知乎 581606031、CSDN 155775829、CSDN 134620288、51cto，至少6条记5分；首次发现位置为第1次查询第1条。",
+            "evidence": [
+              {
+                "event_id": "call_00_MrpXPt69pDPbx31KvKtH5716.result",
+                "quote": "## 1. [通过设置PYTORCH_CUDA_ALLOC_CONF中的max_split ...](https://blog.csdn.net/weixin_48867081/article/details/132908374)"
+              },
+              {
+                "event_id": "call_00_7AbNcOkLZvZ1w5SvYi398715.result",
+                "quote": "## 4. [PYTORCH_CUDA_ALLOC_CONF环境变量如何设置](https://blog.51cto.com/u_16175495/12967293)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "第三方关键说法（设置 max_split_size_mb 缓解碎片 OOM）与官方正文一致且有可追溯依据（错误提示原文、官方文档），多来源（CSDN/知乎/51cto）结论一致，未见未解决矛盾；但 devpress 为转载不构成独立互证，且多数第三方片段短、作者身份未核验，缺少充分的独立来源交叉印证，记4分。",
+            "evidence": [
+              {
+                "event_id": "call_00_MrpXPt69pDPbx31KvKtH5716.result",
+                "quote": "If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation. See …"
+              },
+              {
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory."
+              },
+              {
+                "event_id": "call_00_7AbNcOkLZvZ1w5SvYi398715.result",
+                "quote": "https://devpress.csdn.net/v1/article/detail/155775829"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "prior 为空，无检索前冻结回答，属缺测，不能推断模型自带知识水平。",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=7",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_MrpXPt69pDPbx31KvKtH5716.dispatch",
+              "call_00_7AbNcOkLZvZ1w5SvYi398715.dispatch",
+              "call_00_WyRtm5Xy5n9jvZHCKGU51041.dispatch",
+              "call_00_RCq5szb41IHnZwslbBJ50400.dispatch",
+              "call_00_iLCPeEOEsXuYy58DTLAe7791.dispatch",
+              "call_00_9vI8AQMhSmFweEFzrQ3g4342.dispatch",
+              "call_00_ZLopAA3QvZtWdJQAOxxU2752.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "答案明确锁定 PyTorch 2.14 官方文档为依据（S1/S2/S3 均标注 2.14，S4 标注 main/2.15-unstable），并在版本注意事项中说明新旧环境变量名（PYTORCH_ALLOC_CONF 与别名 PYTORCH_CUDA_ALLOC_CONF）及选项的 backend 适用条件，版本依据具体且配套无冲突。",
+            "evidence": [
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "[S1] PyTorch 2.14 文档，CUDA Semantics"
+              },
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "新名称是 PYTORCH_ALLOC_CONF，PYTORCH_CUDA_ALLOC_CONF 仅为向后兼容别名"
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "命令与代码基本可直接执行：环境变量设置方式（含 import torch 前置条件）、快照录制、checkpoint 用法均完整且参数齐全；但训练循环代码使用 model_block、loader、criterion、target 等需按用户模型替换的占位符（run_your_code() 亦为示意），且 torch.cuda.amp.GradScaler/autocast 在 PyTorch 2.14 中已有向 torch.amp 迁移的弃用路径，需少量修正或替换；答案自己也声明未实际运行验证。",
+            "evidence": [
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py"
+              },
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "scaler = torch.cuda.amp.GradScaler()"
+              },
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "未实际运行任何训练代码，命令/参数均为文档内容核对，运行通过与否\"未验证\"。"
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "四个独立官方文档均取得直接正文：cuda_environment_variables.html 出现明确的 '[...]' 截断标记记4分；其余三个（cuda.html、checkpoint.md、torch_cuda_memory.html）取得直接正文且自称完整，但按规则工具自称完整不能独自证明完整，完整性无独立核对依据，保留4—5候选，均值区间[4,5]。"
+              },
+              {
+                "metric": "M3",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取得正文覆盖原题全部所需：显存查看命令（memory_allocated/max_memory_allocated、memory_snapshot、_record_memory_history）、max_split_size_mb 的设置位置（PYTORCH_ALLOC_CONF 环境变量格式）、作用与默认值、梯度检查点完整签名与 use_reentrant 建议、empty_cache 调用位置及'不释放张量占用显存'的限制、expandable_segments 针对变化 batch 的优化、以及 OOM 事件/快照的前后比较方法，无需另查即可补齐。"
+              },
+              {
+                "metric": "M4",
+                "status": "bounded",
+                "reason": "版本信息清晰（页内版本切换器标明 v2.14.0 (stable)，各页内容自洽指向 2.14），但 cuda_environment_variables 页为 main 文档、其余为 stable/2.14，需跨已取得页面对照确认适用版本，记4分；若仅以 stable 系页面页内条件论可到5，取保守档。"
+              },
+              {
+                "metric": "M6",
+                "status": "bounded",
+                "reason": "第三方关键说法（设置 max_split_size_mb 缓解碎片 OOM）与官方正文一致且有可追溯依据（错误提示原文、官方文档），多来源（CSDN/知乎/51cto）结论一致，未见未解决矛盾；但 devpress 为转载不构成独立互证，且多数第三方片段短、作者身份未核验，缺少充分的独立来源交叉印证，记4分。"
+              },
+              {
+                "metric": "M7",
+                "status": "insufficient_evidence",
+                "reason": "prior 为空，无检索前冻结回答，属缺测，不能推断模型自带知识水平。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "四个独立官方文档均取得直接正文：cuda_environment_variables.html 出现明确的 '[...]' 截断标记记4分；其余三个（cuda.html、checkpoint.md、torch_cuda_memory.html）取得直接正文且自称完整，但按规则工具自称完整不能独自证明完整，完整性无独立核对依据，保留4—5候选，均值区间[4,5]。"
+            },
+            {
+              "metric": "M3",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取得正文覆盖原题全部所需：显存查看命令（memory_allocated/max_memory_allocated、memory_snapshot、_record_memory_history）、max_split_size_mb 的设置位置（PYTORCH_ALLOC_CONF 环境变量格式）、作用与默认值、梯度检查点完整签名与 use_reentrant 建议、empty_cache 调用位置及'不释放张量占用显存'的限制、expandable_segments 针对变化 batch 的优化、以及 OOM 事件/快照的前后比较方法，无需另查即可补齐。"
+            },
+            {
+              "metric": "M4",
+              "status": "bounded",
+              "reason": "版本信息清晰（页内版本切换器标明 v2.14.0 (stable)，各页内容自洽指向 2.14），但 cuda_environment_variables 页为 main 文档、其余为 stable/2.14，需跨已取得页面对照确认适用版本，记4分；若仅以 stable 系页面页内条件论可到5，取保守档。"
+            },
+            {
+              "metric": "M6",
+              "status": "bounded",
+              "reason": "第三方关键说法（设置 max_split_size_mb 缓解碎片 OOM）与官方正文一致且有可追溯依据（错误提示原文、官方文档），多来源（CSDN/知乎/51cto）结论一致，未见未解决矛盾；但 devpress 为转载不构成独立互证，且多数第三方片段短、作者身份未核验，缺少充分的独立来源交叉印证，记4分。"
+            },
+            {
+              "metric": "M7",
+              "status": "insufficient_evidence",
+              "reason": "prior 为空，无检索前冻结回答，属缺测，不能推断模型自带知识水平。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_MrpXPt69pDPbx31KvKtH5716.result",
+            "field": "response",
+            "sha256": "2168040d46e9e3b6d0985aba396232ad6197c40ab33e86ce963a08242cce6297",
+            "start": 1591,
+            "end": 1606,
+            "quote": "Found 5 results",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_7AbNcOkLZvZ1w5SvYi398715.result",
+            "field": "response",
+            "sha256": "989a4a98a728f056b554e2cc3c07d77f93fcaeec0078f08afcda7cac8ec7b603",
+            "start": 1239,
+            "end": 1369,
+            "quote": "## 5. [CUDA Environment Variables — PyTorch main documentation](http://docs.pytorch.org/docs/main/cuda_environment_variables.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "field": "response",
+            "sha256": "a0c65cc9dc6ee691d1878651f4bbd0ef03fe373418719c8993db3e8b2a374151",
+            "start": 459,
+            "end": 540,
+            "quote": "**Return type:** Full body text of the requested section (quoted verbatim below).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_9vI8AQMhSmFweEFzrQ3g4342.result",
+            "field": "response",
+            "sha256": "09ff35c51dc8e568530caf77cf2fe90951575c995d45b0a8a50261ece91f2bfe",
+            "start": 94,
+            "end": 181,
+            "quote": "This appears to be the **full document text** for the `torch.utils.checkpoint` API page",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "field": "response",
+            "sha256": "c44385e665bfe6b87e1709505b9445536fb0fd34dce8bfd39d8a5b83137db9df",
+            "start": 70,
+            "end": 162,
+            "quote": "# Understanding CUDA Memory Usage#\n\nCreated On: Aug 23, 2023 | Last Updated On: Jul 07, 2026",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "field": "response",
+            "sha256": "a0c65cc9dc6ee691d1878651f4bbd0ef03fe373418719c8993db3e8b2a374151",
+            "start": 1279,
+            "end": 1353,
+            "quote": "Calling `empty_cache()` releases all **unused** cached memory from PyTorch",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_9vI8AQMhSmFweEFzrQ3g4342.result",
+            "field": "response",
+            "sha256": "09ff35c51dc8e568530caf77cf2fe90951575c995d45b0a8a50261ece91f2bfe",
+            "start": 1376,
+            "end": 1429,
+            "quote": "It is recommended that you use `use_reentrant=False`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "field": "response",
+            "sha256": "c44385e665bfe6b87e1709505b9445536fb0fd34dce8bfd39d8a5b83137db9df",
+            "start": 3947,
+            "end": 4090,
+            "quote": "Out of memory errors are reported as OOM events. Looking at the state of memory during an OOM may provide insight into why an allocation failed",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_WyRtm5Xy5n9jvZHCKGU51041.result",
+            "field": "response",
+            "sha256": "5e9e82526ef5076af960900733291f5fbfe64564091897a4ed8229ebc45a9212",
+            "start": 65,
+            "end": 99,
+            "quote": "v2.15.0 (unstable)v2.14.0 (stable)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "field": "response",
+            "sha256": "a0c65cc9dc6ee691d1878651f4bbd0ef03fe373418719c8993db3e8b2a374151",
+            "start": 685,
+            "end": 763,
+            "quote": "The page is for **PyTorch 2.14** documentation (`docs.pytorch.org/docs/2.14`).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_MrpXPt69pDPbx31KvKtH5716.result",
+            "field": "response",
+            "sha256": "2168040d46e9e3b6d0985aba396232ad6197c40ab33e86ce963a08242cce6297",
+            "start": 123,
+            "end": 238,
+            "quote": "## 1. [通过设置PYTORCH_CUDA_ALLOC_CONF中的max_split ...](https://blog.csdn.net/weixin_48867081/article/details/132908374)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_7AbNcOkLZvZ1w5SvYi398715.result",
+            "field": "response",
+            "sha256": "989a4a98a728f056b554e2cc3c07d77f93fcaeec0078f08afcda7cac8ec7b603",
+            "start": 1014,
+            "end": 1097,
+            "quote": "## 4. [PYTORCH_CUDA_ALLOC_CONF环境变量如何设置](https://blog.51cto.com/u_16175495/12967293)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_MrpXPt69pDPbx31KvKtH5716.result",
+            "field": "response",
+            "sha256": "2168040d46e9e3b6d0985aba396232ad6197c40ab33e86ce963a08242cce6297",
+            "start": 1433,
+            "end": 1534,
+            "quote": "If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation. See …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "field": "response",
+            "sha256": "a0c65cc9dc6ee691d1878651f4bbd0ef03fe373418719c8993db3e8b2a374151",
+            "start": 4093,
+            "end": 4205,
+            "quote": "This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_7AbNcOkLZvZ1w5SvYi398715.result",
+            "field": "response",
+            "sha256": "989a4a98a728f056b554e2cc3c07d77f93fcaeec0078f08afcda7cac8ec7b603",
+            "start": 427,
+            "end": 480,
+            "quote": "https://devpress.csdn.net/v1/article/detail/155775829",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "8cab5d9392bbf91969cf61e7292a9b3b82ef93628a115cd794312a65f6eab273",
+            "start": 2689,
+            "end": 2750,
+            "quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "field": "response",
+            "sha256": "a0c65cc9dc6ee691d1878651f4bbd0ef03fe373418719c8993db3e8b2a374151",
+            "start": 4010,
+            "end": 4122,
+            "quote": "prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "8cab5d9392bbf91969cf61e7292a9b3b82ef93628a115cd794312a65f6eab273",
+            "start": 4288,
+            "end": 4344,
+            "quote": "out = checkpoint(custom_forward, x, use_reentrant=False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "8cab5d9392bbf91969cf61e7292a9b3b82ef93628a115cd794312a65f6eab273",
+            "start": 5490,
+            "end": 5536,
+            "quote": "先压缩显存：混合精度 + 梯度检查点 + 减小 batch（用梯度累积补回等效 batch）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+            "field": "response",
+            "sha256": "a0c65cc9dc6ee691d1878651f4bbd0ef03fe373418719c8993db3e8b2a374151",
+            "start": 6896,
+            "end": 6976,
+            "quote": "a job changing allocation sizes frequently, such as having a changing batch size",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+            "field": "response",
+            "sha256": "c44385e665bfe6b87e1709505b9445536fb0fd34dce8bfd39d8a5b83137db9df",
+            "start": 3947,
+            "end": 4132,
+            "quote": "Out of memory errors are reported as OOM events. Looking at the state of memory during an OOM may provide insight into why an allocation failed even though reserved memory still exists.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/heldout/case-9e638101e26b-predictors.json": "7bbdc3d0411f7b7f8ed0cc09097e68199fe50433a663c8036fb02fd619658c71",
+          "reviewed/heldout/case-9e638101e26b-outcome.json": "91c162507cf09a8a64cac47774a7b3fde66ec52b994d874b98bb5e633f425608"
+        },
+        "m2_documents": [
+          {
+            "url": "https://docs.pytorch.org/docs/main/cuda_environment_variables.html",
+            "status": "direct_body_truncated",
+            "score": 4,
+            "note": "正文含明确的 '[...]' 截断标记"
+          },
+          {
+            "url": "https://docs.pytorch.org/docs/stable/notes/cuda.html",
+            "status": "direct_body_completeness_unverified",
+            "score_range": [
+              4,
+              5
+            ],
+            "note": "取得直接正文且自称完整节选，但无独立完整性核对依据"
+          },
+          {
+            "url": "https://docs.pytorch.org/docs/stable/checkpoint.md",
+            "status": "direct_body_completeness_unverified",
+            "score_range": [
+              4,
+              5
+            ],
+            "note": "取得直接正文且自称全文，无截断标记，但无独立完整性核对依据"
+          },
+          {
+            "url": "https://docs.pytorch.org/docs/stable/torch_cuda_memory.html",
+            "status": "direct_body_completeness_unverified",
+            "score_range": [
+              4,
+              5
+            ],
+            "note": "取得标题至页脚的直接正文，无截断标记，但无独立完整性核对依据"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "prevents the native allocator from splitting blocks greater than this size (in MB). This can reduce fragmentation"
+              }
+            ]
+          },
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "\"counts\": {\"search\": 3, \"fetch\": 4}"
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "torch.cuda.memory_allocated() / torch.cuda.max_memory_allocated()：张量实际占用。"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "You can use memory_allocated() and max_memory_allocated() to monitor memory occupied by tensors"
+              }
+            ]
+          },
+          {
+            "requirement": 2,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "out = checkpoint(custom_forward, x, use_reentrant=False)"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_9vI8AQMhSmFweEFzrQ3g4342.result",
+                "quote": "It is recommended that you use use_reentrant=False."
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "empty_cache() 只把未被使用的缓存块还给驱动（给别的进程用），不会释放仍被张量引用的显存"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_RCq5szb41IHnZwslbBJ50400.result",
+                "quote": "Calling empty_cache() releases all unused cached memory from PyTorch so that those can be used by other GPU applications."
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "先压缩显存：混合精度 + 梯度检查点 + 减小 batch（用梯度累积补回等效 batch）"
+              }
+            ]
+          },
+          {
+            "requirement": 6,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "把 my_snapshot.pickle 拖到官方可视化器 https://pytorch.org/memory_viz"
+              }
+            ]
+          },
+          {
+            "metric": "M9",
+            "bad_refs": [
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "[S1] PyTorch 2.14 文档，CUDA Semantics"
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "call_00_ZLopAA3QvZtWdJQAOxxU2752.result",
+                "quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

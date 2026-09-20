@@ -146,6 +146,668 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T19:01:08.372035+00:00",
+      "process_sha256": "d769ec097bc3f91faa57ea2fc681cd0b63ad5505f92314170358623678cb7f0e",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 python your_script.py",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "evidence_quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`. This can be handy when an error occurs on the GPU.",
+            "verification": "source",
+            "reason": "答案给出 CUDA_LAUNCH_BLOCKING=1 强制同步与 TORCH_USE_CUDA_DSA=1 开启设备端断言；前者有官方页面原文直接支持，后者答案自身标注未核实但作为 DSA 开启方式给出。",
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "supported",
+            "answer_quote": "CUDA_LAUNCH_BLOCKING=1 PYTHONFAULTHANDLER=1 python your_script.py",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "evidence_quote": "(With asynchronous execution, such an error isn’t reported until after the operation is actually executed, so the stack trace does not show where it was requested.)",
+            "verification": "source",
+            "reason": "给出具体命令行（环境变量+python）配合 PYTHONFAULTHANDLER 保住栈，官方原文证实同步后栈可指向真正请求位置。",
+            "evidence_refs": [
+              "ev-13",
+              "ev-14"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "supported",
+            "answer_quote": "compute-sanitizer --tool memcheck python your_script.py",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "evidence_quote": "the page mentions `cuda-memcheck` only in the context of `PYTORCH_NO_CUDA_MEMORY_CACHING=1` for disabling caching",
+            "verification": "source",
+            "reason": "答案说明 memcheck 报出越界读写的 kernel 名、block/thread 索引与访问地址，并用同步二分夹住嫌疑 submodule，满足用 kernel 名称/栈缩小范围；来源仅间接提及 cuda-memcheck，参数细节答案已诚实标注未核实，但方法本身与来源一致性无矛盾。",
+            "evidence_refs": [
+              "ev-15",
+              "ev-16"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "supported",
+            "answer_quote": "assert target.min() >= 0 and target.max() < num_classes",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "evidence_quote": "A consequence of the asynchronous computation is that time measurements without synchronizations are not accurate.",
+            "verification": "source",
+            "reason": "给出可直接粘贴的索引/边界断言代码与根因清单（target≥num_classes、embedding 索引越界、gather/scatter 等），并配合 print 触发同步检查 shape/min/max；属具体可执行操作。verification 取 source 因根因与异步机制一致，但清单本身无官方出处，答案已声明。",
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "supported",
+            "answer_quote": "torch.cuda.synchronize()          # 若在此处抛错，则 model(x) 内部是嫌疑",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "evidence_quote": "PyTorch automatically performs necessary synchronization when copying data between CPU and GPU or between two GPUs",
+            "verification": "source",
+            "reason": "第 4 步给出在可疑段间插同步点二分缩小、配合 print 直接观察越界值的最小复现/确认手法，满足以同步复现确认根因。",
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "supported",
+            "answer_quote": "排查标签/索引越界的惯用断言（放在 loss 前）：",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "evidence_quote": "the stack trace does not show where it was requested.",
+            "verification": "source",
+            "reason": "答案保留了可直接复用的诊断启动命令组合、断言模板（复现样例）以及 compute-sanitizer 报告的 kernel 名/地址信息说明，构成排查后应保留的产出；来源证实错误栈位置信息是关键线索。",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": null,
+            "lower": 1,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "仅执行1次查询（预算最多4次），前5条结果全部为第三方来源（CSDN、知乎、腾讯云），未出现任何官方来源；官方 cuda.html 页面是凭先验URL直接抓取获得，并非检索发现。预算未完成且未命中，记待定；首次查询前5条无官方命中，故后续即使命中最好也只能是第2次查询（3分），下限为1。",
+            "evidence": [
+              {
+                "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+                "quote": "1. [【已解决】RuntimeError: CUDA error: device-side assert ...](https://blog.csdn.net/festaw/article/details/138765801)"
+              },
+              {
+                "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+                "quote": "3. [关于cuda error:device-side assert triggered的3种解决办法](https://zhuanlan.zhihu.com/p/341943936)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "唯一官方文档 pytorch.org/docs/stable/notes/cuda.html 取得直接正文，含逐字引文、完整章节标题列表与明确的起始（标题/导语）和结尾（'Data Dependent Control Flow' 以完整代码例结束）依据；但抓取文本自述为 cleaned/rendered extraction，存在未渲染的 Sphinx 宏等抽取痕迹，完整性缺少独立佐证，只能保留4—5区间，不打确定5。",
+            "evidence": [
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "The page appears to be substantially complete, not truncated."
+              },
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "the captured content is a partial markdown/HTML extraction."
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文含完整的 Asynchronous execution 解释段落及 CUDA_LAUNCH_BLOCKING=1 的具体操作，直接覆盖'开启同步模式'这一方面；但原题所需的 device-side assert 关联 kernel、TORCH_USE_CUDA_DSA、定位具体行/kernel 的工具、索引/shape 检查、最小复现等关键步骤在官方正文中均缺失（页面明示无相关内容）。有完整解释段落但关键步骤缺失，记3。",
+            "evidence": [
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`. This can be handy when an error occurs on the GPU."
+              },
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "There is no occurrence of `TORCH_USE_CUDA_DSA` (CUDA Device-Side Assertions) anywhere in the provided content."
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题不涉及版本选择；访问的是单一主线 /stable/ 官方文档，无多版本并存、无冲突的版本说明，版本面无歧义。",
+            "evidence": [
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "https://pytorch.org/docs/stable/notes/cuda.html"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；首次查询前5条即为5条相关且独立的第三方来源（CSDN博客×2、CSDN专栏、知乎、腾讯云开发者社区），去重后共5条，对应第4档（正好5条），且首次查询即全部发现。",
+            "evidence": [
+              {
+                "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+                "quote": "2. [PyTorch训练报错'CUDA error: device-side assert triggered ...](https://blog.csdn.net/weixin_42652674/article/details/160732746)"
+              },
+              {
+                "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+                "quote": "5. [解决PyTorch中的RuntimeError: CUDA error: device-side ...](https://cloud.tencent.com/developer/article/2469157)"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料，非N/A。第三方摘要中的关键说法（设置 CUDA_LAUNCH_BLOCKING=1 使 CUDA 操作同步执行）与官方文档逐字内容相互印证，有可追溯依据；但仅取得摘要级片段，其余关键说法（各文的具体解决步骤、成因分析）未取得正文无法核验，也缺少独立来源之间的交叉印证，记3。",
+            "evidence": [
+              {
+                "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+                "quote": "通过设置环境变量CUDA_LAUNCH_BLOCKING=1，可以使CUDA操作同步执行"
+              },
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`."
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；先验回答给出完整定位流程：异步报错机制解释、CUDA_LAUNCH_BLOCKING=1、TORCH_USE_CUDA_DSA、compute-sanitizer、插入 synchronize 缩小范围及常见越界成因，覆盖原题大部分方面。事后核对：CUDA_LAUNCH_BLOCKING 的作用与官方正文一致，未被否定；但 TORCH_USE_CUDA_DSA 的官方可用性、sanitizer 参数等具体约束自标不确定且官方页面未能证实，且先验未覆盖最小复现确认与保留复现样例两个方面，记4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "CUDA_LAUNCH_BLOCKING=1 python your_script.py"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定某些版本或预编译包是否默认启用，需要核对。"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=2",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_ypTswx6qJXZsML7IlKIc5885.dispatch",
+              "call_00_b1K3bZ6nKcLVSFLXSfCR6972.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "N/A",
+            "reason": "本题为调试方法类问题，原题不需要锁定任何库/工具链/soc 版本；答案与来源均无需版本信息，属纯概念/操作任务。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "未核实项（本轮未取得官方出处）：`TORCH_USE_CUDA_DSA` 这一变量名、它从哪个 PyTorch 版本起可用"
+              }
+            ],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "可执行",
+            "reason": "命令行完整（CUDA_LAUNCH_BLOCKING=1 PYTHONFAULTHANDLER=1 python your_script.py、compute-sanitizer --tool memcheck），断言代码可直接粘贴，仅需替换 your_script.py、num_classes 等明确环境值；扣 1 分因 TORCH_USE_CUDA_DSA 与 compute-sanitizer 参数细节未经核实，答案自身标注待定，存在需修正/补证内容。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 PYTHONFAULTHANDLER=1 python your_script.py"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M1",
+                "status": "bounded",
+                "reason": "仅执行1次查询（预算最多4次），前5条结果全部为第三方来源（CSDN、知乎、腾讯云），未出现任何官方来源；官方 cuda.html 页面是凭先验URL直接抓取获得，并非检索发现。预算未完成且未命中，记待定；首次查询前5条无官方命中，故后续即使命中最好也只能是第2次查询（3分），下限为1。"
+              },
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "唯一官方文档 pytorch.org/docs/stable/notes/cuda.html 取得直接正文，含逐字引文、完整章节标题列表与明确的起始（标题/导语）和结尾（'Data Dependent Control Flow' 以完整代码例结束）依据；但抓取文本自述为 cleaned/rendered extraction，存在未渲染的 Sphinx 宏等抽取痕迹，完整性缺少独立佐证，只能保留4—5区间，不打确定5。"
+              },
+              {
+                "metric": "M3",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文含完整的 Asynchronous execution 解释段落及 CUDA_LAUNCH_BLOCKING=1 的具体操作，直接覆盖'开启同步模式'这一方面；但原题所需的 device-side assert 关联 kernel、TORCH_USE_CUDA_DSA、定位具体行/kernel 的工具、索引/shape 检查、最小复现等关键步骤在官方正文中均缺失（页面明示无相关内容）。有完整解释段落但关键步骤缺失，记3。"
+              },
+              {
+                "metric": "M4",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题不涉及版本选择；访问的是单一主线 /stable/ 官方文档，无多版本并存、无冲突的版本说明，版本面无歧义。"
+              },
+              {
+                "metric": "M5",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；首次查询前5条即为5条相关且独立的第三方来源（CSDN博客×2、CSDN专栏、知乎、腾讯云开发者社区），去重后共5条，对应第4档（正好5条），且首次查询即全部发现。"
+              },
+              {
+                "metric": "M7",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；先验回答给出完整定位流程：异步报错机制解释、CUDA_LAUNCH_BLOCKING=1、TORCH_USE_CUDA_DSA、compute-sanitizer、插入 synchronize 缩小范围及常见越界成因，覆盖原题大部分方面。事后核对：CUDA_LAUNCH_BLOCKING 的作用与官方正文一致，未被否定；但 TORCH_USE_CUDA_DSA 的官方可用性、sanitizer 参数等具体约束自标不确定且官方页面未能证实，且先验未覆盖最小复现确认与保留复现样例两个方面，记4。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M1",
+              "status": "bounded",
+              "reason": "仅执行1次查询（预算最多4次），前5条结果全部为第三方来源（CSDN、知乎、腾讯云），未出现任何官方来源；官方 cuda.html 页面是凭先验URL直接抓取获得，并非检索发现。预算未完成且未命中，记待定；首次查询前5条无官方命中，故后续即使命中最好也只能是第2次查询（3分），下限为1。"
+            },
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "唯一官方文档 pytorch.org/docs/stable/notes/cuda.html 取得直接正文，含逐字引文、完整章节标题列表与明确的起始（标题/导语）和结尾（'Data Dependent Control Flow' 以完整代码例结束）依据；但抓取文本自述为 cleaned/rendered extraction，存在未渲染的 Sphinx 宏等抽取痕迹，完整性缺少独立佐证，只能保留4—5区间，不打确定5。"
+            },
+            {
+              "metric": "M3",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文含完整的 Asynchronous execution 解释段落及 CUDA_LAUNCH_BLOCKING=1 的具体操作，直接覆盖'开启同步模式'这一方面；但原题所需的 device-side assert 关联 kernel、TORCH_USE_CUDA_DSA、定位具体行/kernel 的工具、索引/shape 检查、最小复现等关键步骤在官方正文中均缺失（页面明示无相关内容）。有完整解释段落但关键步骤缺失，记3。"
+            },
+            {
+              "metric": "M4",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题不涉及版本选择；访问的是单一主线 /stable/ 官方文档，无多版本并存、无冲突的版本说明，版本面无歧义。"
+            },
+            {
+              "metric": "M5",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；首次查询前5条即为5条相关且独立的第三方来源（CSDN博客×2、CSDN专栏、知乎、腾讯云开发者社区），去重后共5条，对应第4档（正好5条），且首次查询即全部发现。"
+            },
+            {
+              "metric": "M7",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；先验回答给出完整定位流程：异步报错机制解释、CUDA_LAUNCH_BLOCKING=1、TORCH_USE_CUDA_DSA、compute-sanitizer、插入 synchronize 缩小范围及常见越界成因，覆盖原题大部分方面。事后核对：CUDA_LAUNCH_BLOCKING 的作用与官方正文一致，未被否定；但 TORCH_USE_CUDA_DSA 的官方可用性、sanitizer 参数等具体约束自标不确定且官方页面未能证实，且先验未覆盖最小复现确认与保留复现样例两个方面，记4。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+            "field": "response",
+            "sha256": "fac74b1e011572d7415584ac6a5c3e73cb8b2bc9b6c82ed1474e63d099003bec",
+            "start": 125,
+            "end": 239,
+            "quote": "1. [【已解决】RuntimeError: CUDA error: device-side assert ...](https://blog.csdn.net/festaw/article/details/138765801)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+            "field": "response",
+            "sha256": "fac74b1e011572d7415584ac6a5c3e73cb8b2bc9b6c82ed1474e63d099003bec",
+            "start": 687,
+            "end": 780,
+            "quote": "3. [关于cuda error:device-side assert triggered的3种解决办法](https://zhuanlan.zhihu.com/p/341943936)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 3746,
+            "end": 3807,
+            "quote": "The page appears to be substantially complete, not truncated.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 4846,
+            "end": 4905,
+            "quote": "the captured content is a partial markdown/HTML extraction.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1539,
+            "end": 1685,
+            "quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`. This can be handy when an error occurs on the GPU.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+            "field": "response",
+            "sha256": "fac74b1e011572d7415584ac6a5c3e73cb8b2bc9b6c82ed1474e63d099003bec",
+            "start": 1141,
+            "end": 1251,
+            "quote": "5. [解决PyTorch中的RuntimeError: CUDA error: device-side ...](https://cloud.tencent.com/developer/article/2469157)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+            "field": "response",
+            "sha256": "fac74b1e011572d7415584ac6a5c3e73cb8b2bc9b6c82ed1474e63d099003bec",
+            "start": 264,
+            "end": 308,
+            "quote": "通过设置环境变量CUDA_LAUNCH_BLOCKING=1，可以使CUDA操作同步执行",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1539,
+            "end": 1634,
+            "quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "fa825dc14cff48683e2a9936c525cf0386c1df43709820d1eb9ea79a599a6d5d",
+            "start": 698,
+            "end": 742,
+            "quote": "CUDA_LAUNCH_BLOCKING=1 python your_script.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 3391,
+            "end": 3477,
+            "quote": "CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 PYTHONFAULTHANDLER=1 python your_script.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 1411,
+            "end": 1476,
+            "quote": "CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 python your_script.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1539,
+            "end": 1685,
+            "quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`. This can be handy when an error occurs on the GPU.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 1174,
+            "end": 1239,
+            "quote": "CUDA_LAUNCH_BLOCKING=1 PYTHONFAULTHANDLER=1 python your_script.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1686,
+            "end": 1850,
+            "quote": "(With asynchronous execution, such an error isn’t reported until after the operation is actually executed, so the stack trace does not show where it was requested.)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 1914,
+            "end": 1969,
+            "quote": "compute-sanitizer --tool memcheck python your_script.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 3582,
+            "end": 3695,
+            "quote": "the page mentions `cuda-memcheck` only in the context of `PYTORCH_NO_CUDA_MEMORY_CACHING=1` for disabling caching",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 3628,
+            "end": 3683,
+            "quote": "assert target.min() >= 0 and target.max() < num_classes",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1854,
+            "end": 1968,
+            "quote": "A consequence of the asynchronous computation is that time measurements without synchronizations are not accurate.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 2471,
+            "end": 2530,
+            "quote": "torch.cuda.synchronize()          # 若在此处抛错，则 model(x) 内部是嫌疑",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1233,
+            "end": 1347,
+            "quote": "PyTorch automatically performs necessary synchronization when copying data between CPU and GPU or between two GPUs",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "549fa92aad75d98422e5dba544240a7d4cb82429aa963cbe3b944af7fdff5459",
+            "start": 3590,
+            "end": 3616,
+            "quote": "排查标签/索引越界的惯用断言（放在 loss 前）：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "field": "response",
+            "sha256": "06367686854d9382342433782fe3ea72b8383a215a8162281c5eb3663c631d55",
+            "start": 1796,
+            "end": 1849,
+            "quote": "the stack trace does not show where it was requested.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/heldout/case-1470e353c845-predictors.json": "71e139def4d46889248f0f1aa447163f33676c25db0336692aacff3e7df31799",
+          "reviewed/heldout/case-1470e353c845-outcome.json": "9e6fedbb135e6a1ac2ae9276e81e38e52b557aa24e936fde8daef9ff36f171c6"
+        },
+        "m2_documents": [
+          {
+            "url": "https://pytorch.org/docs/stable/notes/cuda.html",
+            "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+            "fetch_status": "direct_body_returned",
+            "completeness": "likely_complete_with_artifacts",
+            "note": "取得直接正文，含 Asynchronous execution 完整小节与逐字引文；有起止与全部标题的完整性依据，但存在未渲染 Sphinx 宏等抽取痕迹，完整性无独立佐证，保留4—5候选。"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "There is no occurrence of `TORCH_USE_CUDA_DSA` (CUDA Device-Side Assertions) anywhere in the provided content."
+              }
+            ]
+          },
+          {
+            "metric": "M4",
+            "bad_refs": [
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "https://pytorch.org/docs/stable/notes/cuda.html"
+              }
+            ]
+          },
+          {
+            "metric": "M5",
+            "bad_refs": [
+              {
+                "event_id": "call_00_ypTswx6qJXZsML7IlKIc5885.result",
+                "quote": "2. [PyTorch训练报错'CUDA error: device-side assert triggered ...](https://blog.csdn.net/weixin_42652674/article/details/160732746)"
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定某些版本或预编译包是否默认启用，需要核对。"
+              }
+            ]
+          },
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+                "quote": "https://pytorch.org/docs/stable/notes/cuda.html"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

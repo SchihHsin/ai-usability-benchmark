@@ -146,6 +146,636 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T19:01:08.423192+00:00",
+      "process_sha256": "1610744654f4e972b146fd166770bd13975a740dcc3edb1a8e1ccecf5082f934",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "npu-smi info -t memory -i <card_id>",
+            "answer_event_id": "final",
+            "evidence_id": null,
+            "evidence_quote": "",
+            "verification": "none",
+            "reason": "答案给出了设备层命令（npu-smi info、npu-smi info -t memory -i <card_id>）与进程内 API（torch.npu.memory_allocated/max_memory_allocated/memory_reserved/memory_summary/empty_cache），并称 OOM 反复时用 memory_summary/memory_snapshot 定位是哪一步分配，完整覆盖该方面；但两条来源中均无 npu-smi 或 torch.npu 内存接口的任何文字，答案自身亦标注这些接口来自已有知识、本轮未由官方正文核实，故记 unverified（非因缺少实机执行而否定）。",
+            "evidence_refs": [
+              "ev-18"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "evidence_quote": "取值范围为 [0.0,1.0]，表示可用的设备显存比例，默认值为1.0，即不限制进程显存使用。",
+            "verification": "none",
+            "reason": "答案说明了 max_split_size_mb/garbage_collection_threshold/expandable_segments 等键含义及设置位置（export 环境变量、import torch 之前），但明确声明'以下键名与含义属于模型已有知识，本轮未被官方正文确认'。所引证据仅确认该变量存在'设备显存比例'类选项（[0.0,1.0]，默认1.0），检索结果5仅确认通过环境变量配置的机制；碎片相关键名未出现在任何来源中，该方面核心内容无法核实。",
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "model.gradient_checkpointing_enable()",
+            "answer_event_id": "final",
+            "evidence_id": null,
+            "evidence_quote": "",
+            "verification": "none",
+            "reason": "答案给出 HuggingFace 的 model.gradient_checkpointing_enable()（含 enable_input_require_grads 配合）与手工 torch.utils.checkpoint.checkpoint(block, x) 两种启用方式，内容在位；但两条来源均未提及梯度检查点，答案自身亦注明'昇腾上算子重计算兼容性与开销未由官方正文核实'，记 unverified。",
+            "evidence_refs": [
+              "ev-21"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "降 micro-batch + 梯度累积；优化器换 fused/Adafactor；ZeRO/FSDP 或 offload",
+            "answer_event_id": "final",
+            "evidence_id": null,
+            "evidence_quote": "",
+            "verification": "none",
+            "reason": "答案给出多项覆盖 batch 与缓存方向的操作：降 micro-batch+梯度累积、NPU AMP 混合精度、避免 .cpu()/.npu() 往返、及时 del 中间张量并 torch.npu.empty_cache()，满足该方面；来源中无任何相关文字，无法核实，记 unverified。",
+            "evidence_refs": [
+              "ev-22"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "print(torch.npu.max_memory_allocated())",
+            "answer_event_id": "final",
+            "evidence_id": null,
+            "evidence_quote": "",
+            "verification": "none",
+            "reason": "答案提供了峰值指标 torch.npu.max_memory_allocated()/max_memory_reserved() 及 npu-smi info 占用查看，优化前后记录这些指标即可构成比较方法；但答案未显式展开'优化前后对比'的分步方案（仅推荐处置顺序隐含迭代测量），且来源中无相关证据，记 unverified。",
+            "evidence_refs": [
+              "ev-23"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "`memory_reserved` ≫ `memory_allocated` → 先设 `max_split_size_mb`（+回收阈值），必要时评估 `expandable_segments`",
+            "answer_event_id": "final",
+            "evidence_id": null,
+            "evidence_quote": "",
+            "verification": "none",
+            "reason": "答案'推荐处置顺序'给出明确决策树：reserved≫allocated 走碎片治理（max_split_size_mb+回收阈值），max_memory_allocated 顶格则开梯度检查点+AMP+降 micro-batch/梯度累积，并可用 memory_summary 定位单次分配来源，直接满足该方面；该决策规则属答案自身推理，来源中无佐证文字，记 unverified。",
+            "evidence_refs": []
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为昇腾官方仓库 Ascend/pytorch 的 PYTORCH_NPU_ALLOC_CONF 官方文档，首次查询首位命中相关官方来源。",
+            "evidence": [
+              {
+                "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+                "quote": "## 1. [PYTORCH_NPU_ALLOC_CONF](https://gitcode.com/Ascend/pytorch/blob/v2.7.1/docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "唯一抓取目标仅返回页面标题与仓库元数据（创建日期、提交链接），正文处显示该文件在 v2.7.1 下为空或不存在，无可识别正文，属\"取得标题/元数据但无正文\"档。",
+            "evidence": [
+              {
+                "event_id": "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.result",
+                "quote": "**标题**: pytorch/docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md · Ascend/pytorch - AtomGit"
+              },
+              {
+                "event_id": "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.result",
+                "quote": "该 v2.7.1 下,docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md 为空或不存在"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "blocked",
+            "reason": "唯一一次官方抓取未取得任何正文（文件为空或不存在），无官方正文可供详尽度评价；按规则取不到正文记受阻，不给1分。",
+            "evidence": [
+              {
+                "event_id": "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.result",
+                "quote": "该 v2.7.1 下,docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md 为空或不存在"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": 2,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "未取得官方正文，无法判定版本选择能否在页内依明确条件完成。搜索摘要显示官方源确有版本信息且多版本并存（v2.7.1 分支、TorchNPU 26.1.X、TorchNPU 26.2.0+PyTorch 2.10.0 条件说明），可排除1分（无版本信息），但选择条件是否明确须依正文判定，保留区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+                "quote": "从TorchNPU 26.2.0版本且PyTorch 2.10.0及以上版本开始，torch_npu也支持通过 PYTORCH_ALLOC_CONF 环境变量配置缓存分配"
+              },
+              {
+                "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+                "quote": "## 2. [框架特性-TorchNPU26.1.X-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/2610/devguide/fwfeatures/docs/zh/framework_feature_guide_pytorch/overview.md)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "唯一一次检索的5条结果全部为官方渠道（gitcode Ascend/pytorch×2、hiascend.com 昇腾社区、github.com/Ascend/pytorch、ascend.github.io），独立第三方相关来源0条。注意：仅执行1次查询，预算未用满。",
+            "evidence": [
+              {
+                "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+                "quote": "## 3. [PYTORCH_NPU_ALLOC_CONF.md](https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md)"
+              },
+              {
+                "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+                "quote": "## 4. [API 文档 — 昇腾开源 文档 - GitHub Pages](https://ascend.github.io/docs/sources/pytorch/api_doc.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "not_applicable",
+            "reason": "全部检索结果与抓取均为昇腾官方渠道（官方仓库与官方社区文档），确实无任何第三方材料可供可信度/一致性评价。",
+            "evidence": [
+              {
+                "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+                "quote": "## 2. [框架特性-TorchNPU26.1.X-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/2610/devguide/fwfeatures/docs/zh/framework_feature_guide_pytorch/overview.md)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出完整排查与优化流程：npu-smi、torch.npu 显存统计函数、ALLOC_CONF 键与设置位置、梯度检查点写法、AMP/减 micro-batch/梯度累积、按 reserved/allocated 与峰值判据选择优化方向，覆盖原题各要点；但明确标注具体参数（键名准确值、默认值、expandable_segments 的 NPU 支持与版本对应）需外部确认，故为4而非5。事后核对：sources 仅确认 PYTORCH_NPU_ALLOC_CONF 为官方环境变量，未见与先验矛盾之处。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "关键判据：`reserved` 远大于 `allocated` 且 `max_reserved` 逼近 HBM 上限 → 碎片/缓存问题；`allocated` 本身就接近上限 → 真实需求过大。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "`model.gradient_checkpointing_enable()`（HuggingFace），或 `torch.utils.checkpoint.checkpoint`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处：各键的准确名称、默认值、以及和 CANN/torch_npu 版本的对应关系。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=2",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_0EyW0HsBil60Peo1038t1942.dispatch",
+              "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "N/A",
+            "reason": "原题为排查与优化方法型问题，六条 criteria 均不涉及版本判定，按'先固定原题实际需要定版的组件'与'无版本需要记N/A'处理。答案附带给出检索可见的唯一版本事实（torch_npu 26.2.0 + PyTorch ≥2.10.0 起支持 PYTORCH_ALLOC_CONF），并诚实声明 expandable_segments 等键的版本边界未确认，不构成本题的定版义务，故记 N/A。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "torch_npu 26.2.0 + PyTorch ≥2.10.0 起也支持使用 `PYTORCH_ALLOC_CONF`"
+              },
+              {
+                "event_id": "final",
+                "quote": "是否在 torch_npu 支持、从哪版起支持，未确认"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "主要诊断与优化路径可照抄执行：npu-smi info 与 npu-smi info -t memory -i <card_id>（环境参数 <card_id> 标识明确），export PYTORCH_NPU_ALLOC_CONF=...（前置条件明确：进程启动前、import torch 之前经环境变量生效），完整的 torch.npu 内存 API Python 代码块，以及 model.gradient_checkpointing_enable()；仅需替换卡号、模型对象等明确标识的环境值，无需修正内容错误，评 4 分。未达 5 分：补充优化部分为示意性（autocast 代码块用 '...'、降 micro-batch+梯度累积与 ZeRO/FSDP 未给具体命令），且答案自身声明'以上命令与参数仅为待验证方案'（本轮仅内容核查、未实际运行，按规则不影响 4/5 分界）。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9"
+              },
+              {
+                "event_id": "final",
+                "quote": "设置形式（须在进程启动前、`import torch` 之前通过环境变量生效）："
+              },
+              {
+                "event_id": "final",
+                "quote": "model.gradient_checkpointing_enable()"
+              },
+              {
+                "event_id": "final",
+                "quote": "以上命令与参数仅为待验证方案"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "blocked",
+                "reason": "唯一一次官方抓取未取得任何正文（文件为空或不存在），无官方正文可供详尽度评价；按规则取不到正文记受阻，不给1分。"
+              },
+              {
+                "metric": "M4",
+                "status": "bounded",
+                "reason": "未取得官方正文，无法判定版本选择能否在页内依明确条件完成。搜索摘要显示官方源确有版本信息且多版本并存（v2.7.1 分支、TorchNPU 26.1.X、TorchNPU 26.2.0+PyTorch 2.10.0 条件说明），可排除1分（无版本信息），但选择条件是否明确须依正文判定，保留区间。"
+              },
+              {
+                "metric": "M6",
+                "status": "not_applicable",
+                "reason": "全部检索结果与抓取均为昇腾官方渠道（官方仓库与官方社区文档），确实无任何第三方材料可供可信度/一致性评价。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "blocked",
+              "reason": "唯一一次官方抓取未取得任何正文（文件为空或不存在），无官方正文可供详尽度评价；按规则取不到正文记受阻，不给1分。"
+            },
+            {
+              "metric": "M4",
+              "status": "bounded",
+              "reason": "未取得官方正文，无法判定版本选择能否在页内依明确条件完成。搜索摘要显示官方源确有版本信息且多版本并存（v2.7.1 分支、TorchNPU 26.1.X、TorchNPU 26.2.0+PyTorch 2.10.0 条件说明），可排除1分（无版本信息），但选择条件是否明确须依正文判定，保留区间。"
+            },
+            {
+              "metric": "M6",
+              "status": "not_applicable",
+              "reason": "全部检索结果与抓取均为昇腾官方渠道（官方仓库与官方社区文档），确实无任何第三方材料可供可信度/一致性评价。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 75,
+            "end": 218,
+            "quote": "## 1. [PYTORCH_NPU_ALLOC_CONF](https://gitcode.com/Ascend/pytorch/blob/v2.7.1/docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.result",
+            "field": "response",
+            "sha256": "2c4c70bbcb0080f621d475699161e8ed5b0b0cd668d8defa92b9975e7385bc4f",
+            "start": 0,
+            "end": 107,
+            "quote": "**标题**: pytorch/docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md · Ascend/pytorch - AtomGit",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.result",
+            "field": "response",
+            "sha256": "2c4c70bbcb0080f621d475699161e8ed5b0b0cd668d8defa92b9975e7385bc4f",
+            "start": 484,
+            "end": 566,
+            "quote": "该 v2.7.1 下,docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md 为空或不存在",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_9Jvsn5fWeBHPo0MEO6Zk1944.result",
+            "field": "response",
+            "sha256": "2c4c70bbcb0080f621d475699161e8ed5b0b0cd668d8defa92b9975e7385bc4f",
+            "start": 484,
+            "end": 566,
+            "quote": "该 v2.7.1 下,docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md 为空或不存在",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 953,
+            "end": 1038,
+            "quote": "从TorchNPU 26.2.0版本且PyTorch 2.10.0及以上版本开始，torch_npu也支持通过 PYTORCH_ALLOC_CONF 环境变量配置缓存分配",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 418,
+            "end": 580,
+            "quote": "## 2. [框架特性-TorchNPU26.1.X-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/2610/devguide/fwfeatures/docs/zh/framework_feature_guide_pytorch/overview.md)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 794,
+            "end": 951,
+            "quote": "## 3. [PYTORCH_NPU_ALLOC_CONF.md](https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 1180,
+            "end": 1279,
+            "quote": "## 4. [API 文档 — 昇腾开源 文档 - GitHub Pages](https://ascend.github.io/docs/sources/pytorch/api_doc.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 418,
+            "end": 580,
+            "quote": "## 2. [框架特性-TorchNPU26.1.X-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/2610/devguide/fwfeatures/docs/zh/framework_feature_guide_pytorch/overview.md)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "daa6dd1418501feda8badd3742e32fc99b5a1919422864bdd191a836d536efaf",
+            "start": 931,
+            "end": 1029,
+            "quote": "关键判据：`reserved` 远大于 `allocated` 且 `max_reserved` 逼近 HBM 上限 → 碎片/缓存问题；`allocated` 本身就接近上限 → 真实需求过大。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "daa6dd1418501feda8badd3742e32fc99b5a1919422864bdd191a836d536efaf",
+            "start": 1508,
+            "end": 1599,
+            "quote": "`model.gradient_checkpointing_enable()`（HuggingFace），或 `torch.utils.checkpoint.checkpoint`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "daa6dd1418501feda8badd3742e32fc99b5a1919422864bdd191a836d536efaf",
+            "start": 1438,
+            "end": 1482,
+            "quote": "不确定处：各键的准确名称、默认值、以及和 CANN/torch_npu 版本的对应关系。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 2425,
+            "end": 2452,
+            "quote": "是否在 torch_npu 支持、从哪版起支持，未确认",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 2151,
+            "end": 2235,
+            "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 2041,
+            "end": 2081,
+            "quote": "设置形式（须在进程启动前、`import torch` 之前通过环境变量生效）：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 3030,
+            "end": 3067,
+            "quote": "model.gradient_checkpointing_enable()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 4168,
+            "end": 4182,
+            "quote": "以上命令与参数仅为待验证方案",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 1224,
+            "end": 1259,
+            "quote": "npu-smi info -t memory -i <card_id>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 2151,
+            "end": 2235,
+            "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+            "field": "response",
+            "sha256": "8bf790132c4b6d0843f8297243023df93fdc4ea0dc1dc4152231113a13110c5a",
+            "start": 220,
+            "end": 267,
+            "quote": "取值范围为 [0.0,1.0]，表示可用的设备显存比例，默认值为1.0，即不限制进程显存使用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 3030,
+            "end": 3067,
+            "quote": "model.gradient_checkpointing_enable()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 3427,
+            "end": 3488,
+            "quote": "降 micro-batch + 梯度累积；优化器换 fused/Adafactor；ZeRO/FSDP 或 offload",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155aad2d902c8b920a15eae7861ade312170bddf02b51e3be5d9774b7c108c28",
+            "start": 1507,
+            "end": 1546,
+            "quote": "print(torch.npu.max_memory_allocated())",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/heldout/case-6130ff9a4936-predictors.json": "4c280fbad4d8cbce84da6893e9b94462c1c3ab71b27bc23f8f89c2438ed12d8a",
+          "reviewed/heldout/case-6130ff9a4936-outcome.json": "8cfdc672c80c0f3e3951e249f49fb12548b17f0c0ff0d44224de92959e8c939c"
+        },
+        "m2_documents": [
+          {
+            "url": "https://gitcode.com/Ascend/pytorch/blob/v2.7.1/docs/zh/environment_variable_reference/PYTORCH_NPU_ALLOC_CONF.md",
+            "title": "PYTORCH_NPU_ALLOC_CONF.md（Ascend/pytorch v2.7.1，gitcode）",
+            "fetch_status": "title_metadata_only_no_body",
+            "counted_in_m2": true,
+            "detail": "抓取仅返回页面标题与仓库元数据；正文处显示该文件在 v2.7.1 下为空或不存在，无可识别正文，判为第2档。",
+            "m2_level": 2
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/2610/devguide/fwfeatures/docs/zh/framework_feature_guide_pytorch/overview.md",
+            "title": "框架特性-TorchNPU26.1.X-昇腾社区",
+            "fetch_status": "not_fetched",
+            "counted_in_m2": false
+          },
+          {
+            "url": "https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md",
+            "title": "PYTORCH_NPU_ALLOC_CONF.md（Ascend/pytorch master，GitHub）",
+            "fetch_status": "not_fetched",
+            "counted_in_m2": false
+          },
+          {
+            "url": "https://ascend.github.io/docs/sources/pytorch/api_doc.html",
+            "title": "API 文档 — 昇腾开源 文档",
+            "fetch_status": "not_fetched",
+            "counted_in_m2": false
+          },
+          {
+            "url": "https://gitcode.com/Ascend/pytorch/blob/v2.7.1/docs/zh/framework_feature_guide_pytorch/virtual_memory.md",
+            "title": "virtual_memory.md（Ascend/pytorch v2.7.1，gitcode）",
+            "fetch_status": "not_fetched",
+            "counted_in_m2": false
+          }
+        ],
+        "quote_audit": []
+      }
     }
   ]
 }

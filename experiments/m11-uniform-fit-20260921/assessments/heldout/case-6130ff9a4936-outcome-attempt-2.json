@@ -1,0 +1,317 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "npu-smi info -t memory -i <card_id>",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案给出了设备层命令（npu-smi info、npu-smi info -t memory -i <card_id>）与进程内 API（torch.npu.memory_allocated/max_memory_allocated/memory_reserved/memory_summary/empty_cache），并称 OOM 反复时用 memory_summary/memory_snapshot 定位是哪一步分配，完整覆盖该方面；但两条来源中均无 npu-smi 或 torch.npu 内存接口的任何文字，答案自身亦标注这些接口来自已有知识、本轮未由官方正文核实，故记 unverified（非因缺少实机执行而否定）。"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+      "evidence_quote": "取值范围为 [0.0,1.0]，表示可用的设备显存比例，默认值为1.0，即不限制进程显存使用。",
+      "verification": "none",
+      "reason": "答案说明了 max_split_size_mb/garbage_collection_threshold/expandable_segments 等键含义及设置位置（export 环境变量、import torch 之前），但明确声明'以下键名与含义属于模型已有知识，本轮未被官方正文确认'。所引证据仅确认该变量存在'设备显存比例'类选项（[0.0,1.0]，默认1.0），检索结果5仅确认通过环境变量配置的机制；碎片相关键名未出现在任何来源中，该方面核心内容无法核实。"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "model.gradient_checkpointing_enable()",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案给出 HuggingFace 的 model.gradient_checkpointing_enable()（含 enable_input_require_grads 配合）与手工 torch.utils.checkpoint.checkpoint(block, x) 两种启用方式，内容在位；但两条来源均未提及梯度检查点，答案自身亦注明'昇腾上算子重计算兼容性与开销未由官方正文核实'，记 unverified。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "降 micro-batch + 梯度累积；优化器换 fused/Adafactor；ZeRO/FSDP 或 offload",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案给出多项覆盖 batch 与缓存方向的操作：降 micro-batch+梯度累积、NPU AMP 混合精度、避免 .cpu()/.npu() 往返、及时 del 中间张量并 torch.npu.empty_cache()，满足该方面；来源中无任何相关文字，无法核实，记 unverified。"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "print(torch.npu.max_memory_allocated())",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案提供了峰值指标 torch.npu.max_memory_allocated()/max_memory_reserved() 及 npu-smi info 占用查看，优化前后记录这些指标即可构成比较方法；但答案未显式展开'优化前后对比'的分步方案（仅推荐处置顺序隐含迭代测量），且来源中无相关证据，记 unverified。"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "`memory_reserved` ≫ `memory_allocated` → 先设 `max_split_size_mb`（+回收阈值），必要时评估 `expandable_segments`",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案'推荐处置顺序'给出明确决策树：reserved≫allocated 走碎片治理（max_split_size_mb+回收阈值），max_memory_allocated 顶格则开梯度检查点+AMP+降 micro-batch/梯度累积，并可用 memory_summary 定位单次分配来源，直接满足该方面；该决策规则属答案自身推理，来源中无佐证文字，记 unverified。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题为排查与优化方法型问题，六条 criteria 均不涉及版本判定，按'先固定原题实际需要定版的组件'与'无版本需要记N/A'处理。答案附带给出检索可见的唯一版本事实（torch_npu 26.2.0 + PyTorch ≥2.10.0 起支持 PYTORCH_ALLOC_CONF），并诚实声明 expandable_segments 等键的版本边界未确认，不构成本题的定版义务，故记 N/A。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "torch_npu 26.2.0 + PyTorch ≥2.10.0 起也支持使用 `PYTORCH_ALLOC_CONF`"
+        },
+        {
+          "event_id": "final",
+          "quote": "是否在 torch_npu 支持、从哪版起支持，未确认"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "supported",
+      "reason": "主要诊断与优化路径可照抄执行：npu-smi info 与 npu-smi info -t memory -i <card_id>（环境参数 <card_id> 标识明确），export PYTORCH_NPU_ALLOC_CONF=...（前置条件明确：进程启动前、import torch 之前经环境变量生效），完整的 torch.npu 内存 API Python 代码块，以及 model.gradient_checkpointing_enable()；仅需替换卡号、模型对象等明确标识的环境值，无需修正内容错误，评 4 分。未达 5 分：补充优化部分为示意性（autocast 代码块用 '...'、降 micro-batch+梯度累积与 ZeRO/FSDP 未给具体命令），且答案自身声明'以上命令与参数仅为待验证方案'（本轮仅内容核查、未实际运行，按规则不影响 4/5 分界）。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9"
+        },
+        {
+          "event_id": "final",
+          "quote": "设置形式（须在进程启动前、`import torch` 之前通过环境变量生效）："
+        },
+        {
+          "event_id": "final",
+          "quote": "model.gradient_checkpointing_enable()"
+        },
+        {
+          "event_id": "final",
+          "quote": "以上命令与参数仅为待验证方案"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "case": "case-6130ff9a4936",
+  "task_id": "Q",
+  "ecosystem": "cann",
+  "split": "heldout",
+  "budget": "restricted",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "unverified",
+        "answer_quote": "npu-smi info -t memory -i <card_id>",
+        "answer_event_id": "final",
+        "evidence_id": null,
+        "evidence_quote": "",
+        "verification": "none",
+        "reason": "答案给出了设备层命令（npu-smi info、npu-smi info -t memory -i <card_id>）与进程内 API（torch.npu.memory_allocated/max_memory_allocated/memory_reserved/memory_summary/empty_cache），并称 OOM 反复时用 memory_summary/memory_snapshot 定位是哪一步分配，完整覆盖该方面；但两条来源中均无 npu-smi 或 torch.npu 内存接口的任何文字，答案自身亦标注这些接口来自已有知识、本轮未由官方正文核实，故记 unverified（非因缺少实机执行而否定）。"
+      },
+      {
+        "id": 2,
+        "status": "unverified",
+        "answer_quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9",
+        "answer_event_id": "final",
+        "evidence_id": "call_00_0EyW0HsBil60Peo1038t1942.result",
+        "evidence_quote": "取值范围为 [0.0,1.0]，表示可用的设备显存比例，默认值为1.0，即不限制进程显存使用。",
+        "verification": "none",
+        "reason": "答案说明了 max_split_size_mb/garbage_collection_threshold/expandable_segments 等键含义及设置位置（export 环境变量、import torch 之前），但明确声明'以下键名与含义属于模型已有知识，本轮未被官方正文确认'。所引证据仅确认该变量存在'设备显存比例'类选项（[0.0,1.0]，默认1.0），检索结果5仅确认通过环境变量配置的机制；碎片相关键名未出现在任何来源中，该方面核心内容无法核实。"
+      },
+      {
+        "id": 3,
+        "status": "unverified",
+        "answer_quote": "model.gradient_checkpointing_enable()",
+        "answer_event_id": "final",
+        "evidence_id": null,
+        "evidence_quote": "",
+        "verification": "none",
+        "reason": "答案给出 HuggingFace 的 model.gradient_checkpointing_enable()（含 enable_input_require_grads 配合）与手工 torch.utils.checkpoint.checkpoint(block, x) 两种启用方式，内容在位；但两条来源均未提及梯度检查点，答案自身亦注明'昇腾上算子重计算兼容性与开销未由官方正文核实'，记 unverified。"
+      },
+      {
+        "id": 4,
+        "status": "unverified",
+        "answer_quote": "降 micro-batch + 梯度累积；优化器换 fused/Adafactor；ZeRO/FSDP 或 offload",
+        "answer_event_id": "final",
+        "evidence_id": null,
+        "evidence_quote": "",
+        "verification": "none",
+        "reason": "答案给出多项覆盖 batch 与缓存方向的操作：降 micro-batch+梯度累积、NPU AMP 混合精度、避免 .cpu()/.npu() 往返、及时 del 中间张量并 torch.npu.empty_cache()，满足该方面；来源中无任何相关文字，无法核实，记 unverified。"
+      },
+      {
+        "id": 5,
+        "status": "unverified",
+        "answer_quote": "print(torch.npu.max_memory_allocated())",
+        "answer_event_id": "final",
+        "evidence_id": null,
+        "evidence_quote": "",
+        "verification": "none",
+        "reason": "答案提供了峰值指标 torch.npu.max_memory_allocated()/max_memory_reserved() 及 npu-smi info 占用查看，优化前后记录这些指标即可构成比较方法；但答案未显式展开'优化前后对比'的分步方案（仅推荐处置顺序隐含迭代测量），且来源中无相关证据，记 unverified。"
+      },
+      {
+        "id": 6,
+        "status": "unverified",
+        "answer_quote": "`memory_reserved` ≫ `memory_allocated` → 先设 `max_split_size_mb`（+回收阈值），必要时评估 `expandable_segments`",
+        "answer_event_id": "final",
+        "evidence_id": null,
+        "evidence_quote": "",
+        "verification": "none",
+        "reason": "答案'推荐处置顺序'给出明确决策树：reserved≫allocated 走碎片治理（max_split_size_mb+回收阈值），max_memory_allocated 顶格则开梯度检查点+AMP+降 micro-batch/梯度累积，并可用 memory_summary 定位单次分配来源，直接满足该方面；该决策规则属答案自身推理，来源中无佐证文字，记 unverified。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": null,
+        "status": "N/A",
+        "reason": "原题为排查与优化方法型问题，六条 criteria 均不涉及版本判定，按'先固定原题实际需要定版的组件'与'无版本需要记N/A'处理。答案附带给出检索可见的唯一版本事实（torch_npu 26.2.0 + PyTorch ≥2.10.0 起支持 PYTORCH_ALLOC_CONF），并诚实声明 expandable_segments 等键的版本边界未确认，不构成本题的定版义务，故记 N/A。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "torch_npu 26.2.0 + PyTorch ≥2.10.0 起也支持使用 `PYTORCH_ALLOC_CONF`"
+          },
+          {
+            "event_id": "final",
+            "quote": "是否在 torch_npu 支持、从哪版起支持，未确认"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "status": "supported",
+        "reason": "主要诊断与优化路径可照抄执行：npu-smi info 与 npu-smi info -t memory -i <card_id>（环境参数 <card_id> 标识明确），export PYTORCH_NPU_ALLOC_CONF=...（前置条件明确：进程启动前、import torch 之前经环境变量生效），完整的 torch.npu 内存 API Python 代码块，以及 model.gradient_checkpointing_enable()；仅需替换卡号、模型对象等明确标识的环境值，无需修正内容错误，评 4 分。未达 5 分：补充优化部分为示意性（autocast 代码块用 '...'、降 micro-batch+梯度累积与 ZeRO/FSDP 未给具体命令），且答案自身声明'以上命令与参数仅为待验证方案'（本轮仅内容核查、未实际运行，按规则不影响 4/5 分界）。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256,garbage_collection_threshold:0.9"
+          },
+          {
+            "event_id": "final",
+            "quote": "设置形式（须在进程启动前、`import torch` 之前通过环境变量生效）："
+          },
+          {
+            "event_id": "final",
+            "quote": "model.gradient_checkpointing_enable()"
+          },
+          {
+            "event_id": "final",
+            "quote": "以上命令与参数仅为待验证方案"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "ed1eeb7f885e4dfdad4523ad1046ae3d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "51296fbc4fbfd524987b130d15070b85",
+        "conversationRequestId": "51296fbc4fbfd524987b130d15070b85",
+        "agent": "cli"
+      },
+      {
+        "messageId": "ed1eeb7f885e4dfdad4523ad1046ae3d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "51296fbc4fbfd524987b130d15070b85",
+        "conversationRequestId": "51296fbc4fbfd524987b130d15070b85",
+        "rawUsage": {
+          "prompt_tokens": 8142,
+          "completion_tokens": 32111,
+          "total_tokens": 40253,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 30679,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 8142,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 30679,
+          "credit": 19.28,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 8142,
+          "outputTokens": 32111,
+          "totalTokens": 40253,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 30679
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "180dfec56322966246461f6f443c50031dcc551015657e51920643c9e3c534c9",
+    "process_sha256": "1610744654f4e972b146fd166770bd13975a740dcc3edb1a8e1ccecf5082f934",
+    "elapsed_seconds": 381.93,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-342fbc6e27cc4eae80f99f48c24b5df1",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

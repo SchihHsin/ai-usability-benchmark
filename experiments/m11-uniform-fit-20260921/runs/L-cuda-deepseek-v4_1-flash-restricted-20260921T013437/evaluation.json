@@ -146,6 +146,748 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T19:01:08.406567+00:00",
+      "process_sha256": "1a7ad8e05c71e9ac3d6ba34fdde9c8644567485ee28224774f6416a19759b5c0",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "ref_cpu32 = model_cpu(x_cpu)\nref_gpu32 = model_gpu(x_gpu)          # 同一份 x，搬到 GPU\nref_gpu64 = model_gpu(x_gpu.double()).float()",
+            "answer_event_id": "final",
+            "evidence_id": "final",
+            "evidence_quote": "kernel_fwd(x_gpu)                # 你的 kernel 内部把同名中间量写到 debug buffer",
+            "verification": "code_inspection",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出三种参考（CPU float32、GPU float32、GPU float64）的生成代码，并说明用同一份输入 x 调用 kernel_fwd 产生自定义算子输出；代码语法与数据流可直接检查，逻辑自洽。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "for name in dumps:\n    if name in kernel_dumps:\n        if diff_report(kernel_dumps[name], dumps[name], name=name):\n            print(\"first divergence:\", name); break",
+            "answer_event_id": "final",
+            "evidence_id": "final",
+            "evidence_quote": "def hook(m, i, o, name=name): dumps[name] = o.detach()\n    hooks.append(mod.register_forward_hook(hook))",
+            "verification": "code_inspection",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；给出基于 forward hook dump 中间张量并逐层调用 diff_report 找首个发散层的完整可检查代码，满足逐层比对的具体代码要求。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "bad = ~torch.isclose(got, ref, rtol=rtol, atol=atol)",
+            "answer_event_id": "final",
+            "evidence_id": "final",
+            "evidence_quote": "flat = torch.argmax(ad).item()\n        idx = list(torch.unravel_index(torch.tensor(flat), got.shape))",
+            "verification": "code_inspection",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；diff_report 函数实现逐元素容差比较，输出最大偏差位置、最坏元素值和前若干 mismatch 索引，代码具体且语法可检查。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "print(f\"[{name}] max_abs={ad.max().item():.3e}  max_rel={rd.max().item():.3e}  \"\n          f\"mismatch={n_bad}/{n} ({100*n_bad/max(n,1):.2f}%)\")",
+            "answer_event_id": "final",
+            "evidence_id": "final",
+            "evidence_quote": "def diff_report(got, ref, rtol=1.3e-6, atol=1e-5, name=\"out\"):",
+            "verification": "code_inspection",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；明确给出 rtol=1.3e-6、atol=1e-5 阈值及 max_abs/max_rel/mismatch 百分比等差异统计，并给出 max_rel 随 √N×eps 增长的判读规则；阈值与统计逻辑在代码中可直接检查。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "把 mismatch 索引映射到 (blockIdx, threadIdx)：`printf` 出每个线程负责的输出坐标，或在 kernel 里对 `fabs(got-ref)` 超过阈值的元素写 debug 数组，直接看是哪几个 block 错。",
+            "answer_event_id": "final",
+            "evidence_id": "final",
+            "evidence_quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问",
+            "verification": "code_inspection",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出从首个发散层继续下钻的具体步骤：映射到 block/thread、写 debug buffer、float64 裁判区分算法错/精度错、compute-sanitizer 各子工具检查内存/竞态/未初始化，以及 dtype 混用（fp16 累加、TF32）等根因清单，覆盖 kernel、输入与数据类型三个方向。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-27"
+            ]
+          },
+          {
+            "id": 6,
+            "status": "absent",
+            "answer_quote": "dumps[name] = o.detach()",
+            "answer_event_id": "final",
+            "evidence_id": null,
+            "evidence_quote": "",
+            "verification": "none",
+            "reason": "答案仅在内存中 dump 中间张量并打印比对报告，全文未指出需要保留（保存）哪些比对结果、输入张量或日志作为证据，该方面缺失。",
+            "evidence_refs": [
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询的第4、5条即出现相关官方来源（PyTorch官方教程cpp_extension.html与cpp_custom_ops.html），符合第4档'首次查询第2—5条出现相关官方来源'。",
+            "evidence": [
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "## 4. [自定义 C++ 和 CUDA 扩展 — PyTorch 教程 2.8.0+cu128 ...]"
+              },
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "## 5. [自定义 C++ 和 CUDA 算子 — PyTorch 教程 2.14.0+cu130 ...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；唯一独立官方文档（cpp_extension.html教程）取得直接正文：完整章节标题序列（从主标题到'结论'）、逐字代码与计时数据，且有可核对的起止依据，无截断或缺页证据，判5；因完整性判断部分依赖工具自述，保守下界保留4。仅此一份文档，均值5。",
+            "evidence": [
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "The page content appears complete as an end-to-end tutorial — it has a full introduction, complete code examples (forward/backward for both C++ and CUDA), build instructions, benchmarking, and a conclusion with resource links."
+              },
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "5. **结论** (Conclusion)"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "取得的官方正文中，原题六项所需内容（生成参考输出、逐层比对、逐元素比对、误差阈值、从首差异层定位到kernel/输入/dtype的步骤、证据留存）均不存在：无正确性校验章节、无float64上采样比较、无gradcheck、无rtol/atol/assert_close，页面只讲编写与性能基准，只有概述性内容而无相关操作细节，判1。",
+            "evidence": [
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "**Not found.** There is no section comparing the custom kernel's output against a PyTorch reference for correctness."
+              },
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "**Not found.** None of the terms `tolerance`, `rtol`, `atol`, or `assert_close` appear anywhere in the content."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "同一官方页面内即可依据明确条件选定适用版本：页面标注所属教程版本（2.8.0+cu128），并给出明确弃用条件与替代路径（自PyTorch 2.4起推荐custom_ops），属页内清楚的版本说明/迁移指引，判5。",
+            "evidence": [
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "**自定义 C++ 和 CUDA 扩展** (main title) — with a deprecation warning (deprecated since PyTorch 2.4; see \"PyTorch 自定义操作符\")"
+              },
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "## 4. [自定义 C++ 和 CUDA 扩展 — PyTorch 教程 2.8.0+cu128 ...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索结果中相关独立第三方来源3条（知乎×2、CSDN博客×1），均为自定义CUDA/PyTorch扩展主题，符合第3档'3—4条'。",
+            "evidence": [
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "## 1. [CUDA编程学习：自定义Pytorch+cpp/cuda extension - 知乎]"
+              },
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "## 2. [pytorch custom C++/CUDA extension - 知乎]"
+              },
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "## 3. [PyTorch tutorials高级教程：自定义C++扩展与CUDA算子 ...](https://blog.csdn.net/gitblog_00372/article/details/153863631)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "存在第三方来源，但来源片段仅为主题导语，未对数值精度定位的任何关键说法给出可追溯核对依据（无比对方法、无阈值、无定位步骤），判2'关键说法没有可追溯的核对依据'。",
+            "evidence": [
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "虽然说PyTorch提供了丰富的与神经网络、张量代数、数据处理等相关的操作，但是有时候你可能需要更定制化的操作"
+              },
+              {
+                "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+                "quote": "当 Python 实现的算子无法满足实时性要求时，自定义C++扩展和CUDA算子成为突破性能极限的关键技术。 本文将 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已准确覆盖原题所需全部方面：生成参考输出（固定种子、关TF32/deterministic、GPU参考）、逐层比对（dump中间张量+二分）、逐元素比对代码（isclose+assert_close+首差异索引反推输入坐标）、阈值与差异统计（rtol=1e-4/atol=1e-6、max_abs/max_rel/mismatch计数、√N×eps判据）、定位到kernel/输入/dtype的步骤与根因清单、证据留存（保存输入与日志）；与检索后官方材料核对未见关键主张被否定，判5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.testing.assert_close(got, ref, rtol=1e-4, atol=1e-6)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "在中间张量处插入 dump（`torch.cuda.synchronize()` + `.cpu().numpy()`），二分找出第一个发散的张量"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "print(f\"[{name}] max_abs={diff.max().item():.3e} \"\n          f\"max_rel={rel.max().item():.3e} mismatch={n_bad}/{a.numel()}\")"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=2",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_cSa5940fPB0Ll14Zz0Sc7157.dispatch",
+              "call_00_CwmoAm3uAr9K29vAt9pt3931.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "N/A",
+            "reason": "本题为数值精度定位方法学问题，不要求锁定库/工具链/soc 版本，记 N/A；答案中出现的版本号仅为来源页面元数据，非定版结论。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "标注 2.8.0+cu128，2026-09-04"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "给出了具体可检查的代码与命令（diff_report、hook、compute-sanitizer、gradcheck 一行命令），但逐层比对示例中 `x_gpu.zero_()` 在参考前向后、kernel 调用前将输入清零，会使 kernel 与参考的输入不一致，需修正；且 kernel_dumps（kernel 内写 debug buffer）机制由用户自行实现，模型/kernel/your_ext 等名称需替换，故需修正与补写才能直接执行，记 3 分。仅内容核查，未实际运行。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "ref_model(x_gpu); x_gpu.zero_()  # 注意别被 in-place 影响"
+              },
+              {
+                "event_id": "final",
+                "quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；唯一独立官方文档（cpp_extension.html教程）取得直接正文：完整章节标题序列（从主标题到'结论'）、逐字代码与计时数据，且有可核对的起止依据，无截断或缺页证据，判5；因完整性判断部分依赖工具自述，保守下界保留4。仅此一份文档，均值5。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；唯一独立官方文档（cpp_extension.html教程）取得直接正文：完整章节标题序列（从主标题到'结论'）、逐字代码与计时数据，且有可核对的起止依据，无截断或缺页证据，判5；因完整性判断部分依赖工具自述，保守下界保留4。仅此一份文档，均值5。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 919,
+            "end": 973,
+            "quote": "## 4. [自定义 C++ 和 CUDA 扩展 — PyTorch 教程 2.8.0+cu128 ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 1187,
+            "end": 1242,
+            "quote": "## 5. [自定义 C++ 和 CUDA 算子 — PyTorch 教程 2.14.0+cu130 ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+            "field": "response",
+            "sha256": "d3656b02929764451e70a5e8602366d886a142d56600057484dcd557c57e8d05",
+            "start": 4065,
+            "end": 4087,
+            "quote": "5. **结论** (Conclusion)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+            "field": "response",
+            "sha256": "d3656b02929764451e70a5e8602366d886a142d56600057484dcd557c57e8d05",
+            "start": 647,
+            "end": 763,
+            "quote": "**Not found.** There is no section comparing the custom kernel's output against a PyTorch reference for correctness.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+            "field": "response",
+            "sha256": "d3656b02929764451e70a5e8602366d886a142d56600057484dcd557c57e8d05",
+            "start": 3108,
+            "end": 3219,
+            "quote": "**Not found.** None of the terms `tolerance`, `rtol`, `atol`, or `assert_close` appear anywhere in the content.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+            "field": "response",
+            "sha256": "d3656b02929764451e70a5e8602366d886a142d56600057484dcd557c57e8d05",
+            "start": 3266,
+            "end": 3382,
+            "quote": "**自定义 C++ 和 CUDA 扩展** (main title) — with a deprecation warning (deprecated since PyTorch 2.4; see \"PyTorch 自定义操作符\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 919,
+            "end": 973,
+            "quote": "## 4. [自定义 C++ 和 CUDA 扩展 — PyTorch 教程 2.8.0+cu128 ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 150,
+            "end": 201,
+            "quote": "## 1. [CUDA编程学习：自定义Pytorch+cpp/cuda extension - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 422,
+            "end": 468,
+            "quote": "## 2. [pytorch custom C++/CUDA extension - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 652,
+            "end": 764,
+            "quote": "## 3. [PyTorch tutorials高级教程：自定义C++扩展与CUDA算子 ...](https://blog.csdn.net/gitblog_00372/article/details/153863631)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 243,
+            "end": 298,
+            "quote": "虽然说PyTorch提供了丰富的与神经网络、张量代数、数据处理等相关的操作，但是有时候你可能需要更定制化的操作",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_cSa5940fPB0Ll14Zz0Sc7157.result",
+            "field": "response",
+            "sha256": "1dbabcfbc00fddf6a8d7d877561924a560f258836d4f4a10d9f5db5ffb974c17",
+            "start": 780,
+            "end": 840,
+            "quote": "当 Python 实现的算子无法满足实时性要求时，自定义C++扩展和CUDA算子成为突破性能极限的关键技术。 本文将 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c181cd32a17dee80232ebde40804b51b0858396fe9081c2364bd37e63e0b5c58",
+            "start": 2278,
+            "end": 2336,
+            "quote": "torch.testing.assert_close(got, ref, rtol=1e-4, atol=1e-6)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c181cd32a17dee80232ebde40804b51b0858396fe9081c2364bd37e63e0b5c58",
+            "start": 1322,
+            "end": 1395,
+            "quote": "在中间张量处插入 dump（`torch.cuda.synchronize()` + `.cpu().numpy()`），二分找出第一个发散的张量",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c181cd32a17dee80232ebde40804b51b0858396fe9081c2364bd37e63e0b5c58",
+            "start": 1889,
+            "end": 2018,
+            "quote": "print(f\\\"[{name}] max_abs={diff.max().item():.3e} \\\"\\n          f\\\"max_rel={rel.max().item():.3e} mismatch={n_bad}/{a.numel()}\\\")",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 5307,
+            "end": 5332,
+            "quote": "标注 2.8.0+cu128，2026-09-04",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 2791,
+            "end": 2842,
+            "quote": "ref_model(x_gpu); x_gpu.zero_()  # 注意别被 in-place 影响",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 4241,
+            "end": 4302,
+            "quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 753,
+            "end": 880,
+            "quote": "ref_cpu32 = model_cpu(x_cpu)\nref_gpu32 = model_gpu(x_gpu)          # 同一份 x，搬到 GPU\nref_gpu64 = model_gpu(x_gpu.double()).float()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 2843,
+            "end": 2911,
+            "quote": "kernel_fwd(x_gpu)                # 你的 kernel 内部把同名中间量写到 debug buffer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 2913,
+            "end": 3080,
+            "quote": "for name in dumps:\n    if name in kernel_dumps:\n        if diff_report(kernel_dumps[name], dumps[name], name=name):\n            print(\"first divergence:\", name); break",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 2686,
+            "end": 2790,
+            "quote": "def hook(m, i, o, name=name): dumps[name] = o.detach()\n    hooks.append(mod.register_forward_hook(hook))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 1425,
+            "end": 1477,
+            "quote": "bad = ~torch.isclose(got, ref, rtol=rtol, atol=atol)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 1707,
+            "end": 1808,
+            "quote": "flat = torch.argmax(ad).item()\n        idx = list(torch.unravel_index(torch.tensor(flat), got.shape))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 1526,
+            "end": 1669,
+            "quote": "print(f\"[{name}] max_abs={ad.max().item():.3e}  max_rel={rd.max().item():.3e}  \"\n          f\"mismatch={n_bad}/{n} ({100*n_bad/max(n,1):.2f}%)\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 1223,
+            "end": 1285,
+            "quote": "def diff_report(got, ref, rtol=1.3e-6, atol=1e-5, name=\"out\"):",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 4241,
+            "end": 4302,
+            "quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "048b1f83500cce851253117f8b8844fa53038f5a65e266196ba696bcf57413b3",
+            "start": 2716,
+            "end": 2740,
+            "quote": "dumps[name] = o.detach()",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/heldout/case-ba69e2996f89-predictors.json": "657257905160cd9bb5b6eddcde9712233f9e9259bff3889bf101ffd3bd284736",
+          "reviewed/heldout/case-ba69e2996f89-outcome.json": "26baefd0c173903f6ed268dfe8d5e65ec68813dd305a186ae2a4c99f62e0b62a"
+        },
+        "m2_documents": [
+          {
+            "url": "https://pytorch.ac.cn/tutorials/advanced/cpp_extension.html",
+            "title": "自定义 C++ 和 CUDA 扩展 — PyTorch 教程 2.8.0+cu128",
+            "score": 5,
+            "lower": 4,
+            "upper": 5,
+            "status": "scored",
+            "reason": "取得直接正文并含可核对的章节起止（标题至'结论'）与逐字代码/计时数据，无截断或缺页证据，判5；完整性部分依赖工具自述，下界保留4。",
+            "evidence": [
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "5. **结论** (Conclusion)"
+              },
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "Pure Python LLTM: `Forward: 506.480 us | Backward 444.694 us`"
+              }
+            ]
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M2",
+            "bad_refs": [
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "The page content appears complete as an end-to-end tutorial — it has a full introduction, complete code examples (forward/backward for both C++ and CUDA), build instructions, benchmarking, and a conclusion with resource links."
+              }
+            ]
+          },
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_CwmoAm3uAr9K29vAt9pt3931.result",
+                "quote": "\"url\": \"https://pytorch.ac.cn/tutorials/advanced/cpp_extension.html\""
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "final",
+                "quote": "kernel_fwd(x_gpu)                # 你的 kernel 内部把同名中间量写到 debug buffer"
+              }
+            ]
+          },
+          {
+            "requirement": 2,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "final",
+                "quote": "def hook(m, i, o, name=name): dumps[name] = o.detach()\n    hooks.append(mod.register_forward_hook(hook))"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "final",
+                "quote": "flat = torch.argmax(ad).item()\n        idx = list(torch.unravel_index(torch.tensor(flat), got.shape))"
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "final",
+                "quote": "def diff_report(got, ref, rtol=1.3e-6, atol=1e-5, name=\"out\"):"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "把 mismatch 索引映射到 (blockIdx, threadIdx)：`printf` 出每个线程负责的输出坐标，或在 kernel 里对 `fabs(got-ref)` 超过阈值的元素写 debug 数组，直接看是哪几个 block 错。"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "final",
+                "quote": "compute-sanitizer --tool memcheck   python run.py   # 越界、非法访问"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

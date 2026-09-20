@@ -146,6 +146,770 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-20T19:01:08.365052+00:00",
+      "process_sha256": "32d99024068237110499d8769a8654dcf0d90de7661e0f512779f510b55e90a9",
+      "evaluation": {
+        "rubric_version": "exp-20260920-new-v2",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "官方错误码参考里它的名字是 **\"EZ9999 AclNN Inner Error\"**，现象描述为\"The error information is not fixed. Check the error information according to the specific prompt.\"",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+            "evidence_quote": "# EZ9999 AclNN Inner Error\n#### Symptom\nThe error information is not fixed. Check the error information according to the specific prompt.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案准确引用了官方错误码参考页对 EZ9999 的错误描述（AclNN Inner Error，报错信息不固定），并说明定位不靠解码 9999 而靠日志特征（如 module_name=EZ9999），与来源正文一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-19"
+            ]
+          },
+          {
+            "id": 2,
+            "status": "unverified",
+            "answer_quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：`${HOME}/ascend/log`；trace 日志：`$HOME/ascend/atrace/`",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+            "evidence_quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：默认存放在Host服务器的${HOME}/ascend/log目录。trace日志：默认存放在Host服务器的$HOME/ascend/atrace/目录。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出具体收集命令（mkdir、msnpureport -f、asys collect/launch）、环境变量（ASCEND_WORK_PATH、ASCEND_PROCESS_LOG_PATH、NPU_COLLECT_PATH）与默认路径，均可在来源正文逐字对应。",
+            "raw_status": "supported",
+            "evidence_refs": []
+          },
+          {
+            "id": 3,
+            "status": "unverified",
+            "answer_quote": "收集时要取**本次问题附近时间**的日志 ... plog 形如 `.../plog/plog-{pid}_{时间戳}.log` ... 读 `chipId/dieId`、`core id`、`errcode/errorStr`、`fault kernel_name`",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+            "evidence_quote": "在收集日志时，需收集本次AI Core Error问题附近时间的日志，旧日志中的不相关信息或其它报错信息可能导致后续msaicerr工具分析AI Core Error问题时报错。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明了按时间（本次问题附近时间）、进程（plog-{pid} 文件名、trace_*{进程组pid}）与设备号（chipId/dieId、device_id、data-dump/{device_id}）关联日志，均有来源依据（时间关联见证据，chipId/device_id 解读见 call_00_ma0mkt6CvoRzlE5mnfgJ7118.result）。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-20"
+            ]
+          },
+          {
+            "id": 4,
+            "status": "unverified",
+            "answer_quote": "看日志特征分流：含 `there is an aicore error exception` → AI Core Error（软件/算子）... 含 `module_name=EZ9999` + ECC 类 errorStr → 用 `ascend-dmi --dg -i aicore` 压测",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+            "evidence_quote": "用户应用程序报错退出，终端屏幕日志错误码为EZ9999，且日志中包含\"there is an aivec error exception\"或\"there is an aicore error exception\"；或者plog日志中存在报错日志\"Aicore kernel execute failed\"。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出了从 EZ9999 出发的可核验分支树（日志特征→软件/算子线 vs 硬件 ECC 线，再由 msaicerr info.txt 结论表细分），每条分支的判据均可在来源正文（troubleshooting_0004、0011、0007）中核验。",
+            "raw_status": "supported",
+            "evidence_refs": []
+          },
+          {
+            "id": 5,
+            "status": "unverified",
+            "answer_quote": "必要时跑 msaicerr 生成的 `test_single_op.py` 复现单算子，或用 msSanitizer、`op_debug_config=oom` 做内存越界检测 ... 用 `ascend-dmi --dg -i aicore` 压测，提示 EMERGENCY_WARN 即 AI Core 硬件故障",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+            "evidence_quote": "表示工具自动生成了单算子用例脚本，您可以执行该脚本复现单算子问题 ... 您可以执行该脚本复现单算子问题 ... check the operator again by using the msSanitizer tool ... enable memory error detection with op_debug_config=oom",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出复现手段（test_single_op.py 单算子复现、复跑业务）、最小输入（单算子用例）与环境检查（内置样例算子执行失败→环境异常、ascend-dmi 压测排除硬件），均有官方来源正文支撑。",
+            "raw_status": "supported",
+            "evidence_refs": []
+          },
+          {
+            "id": 6,
+            "status": "unverified",
+            "answer_quote": "mv ${HOME}/aic_err_info  ${HOME}/aic_err_info_timestamp ... 解析后看终端提示的 `info.txt` 路径，按关键信息对照",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+            "evidence_quote": "将${HOME}/aic_err_info目录下的信息移动到另一个目录下，目录名上可带上时间戳，便于按时间管理每一次收集的故障信息。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案要求保留收集目录（aic_err_info_timestamp 归档）、msaicerr 的 info.txt/debug_info.txt 解析输出及关键日志片段（plog 报错节选），并明确联系技术支持时应携带日志，均有来源依据。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第3条即出现相关官方来源（hiascend.com 故障处理流程），属首次查询第2—5条档。",
+            "evidence": [
+              {
+                "event_id": "call_00_3s5zFNfopoPg8CrruYhO4721.result",
+                "quote": "## 3. [故障处理流程-CANN8.2.RC1.alpha001-昇腾社区](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1alpha001/maintenref/troubleshooting/troubleshooting_0001.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.75,
+            "upper": 4.63,
+            "status": "bounded",
+            "reason": "8个独立官方文档中，7个取得直接正文（troubleshooting_0001/0004/0006/0007/0011、EZ9999错误码页、ASCEND_GLOBAL_LOG_LEVEL页），但均无独立的全文完整性起止证据，按规则保留4—5候选；logreference_0001仅返回标题与评分项、无可识别正文，记2分。均值区间=(7×[4,5]+2)/8=[3.75,4.63]，不给5。",
+            "evidence": [
+              {
+                "event_id": "call_00_CVYxhwImKwYxB1XBTaTj1170.result",
+                "quote": "**标题**: 日志简介-日志参考-参考-CANN商用版8.5.0开发文档-昇腾社区\n\n文档评分"
+              },
+              {
+                "event_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+                "quote": "用户应用程序报错退出，终端屏幕日志错误码为EZ9999，且日志中包含“**there is an aivec error exception**”"
+              },
+              {
+                "event_id": "call_00_PuvWfbhCuGFQEAigA35m9021.result",
+                "quote": "设置应用类日志的日志级别及各模块日志级别，仅支持调试日志。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文覆盖主流程及参数：msaicerr完整命令与解读表、msnpureport -f收集Device日志、ASCEND_WORK_PATH/NPU_COLLECT_PATH等环境变量与默认路径、按日志时间解析首次AI Core Error、单算子复现脚本、ascend-dmi压测排除硬件。但EZ9999错误码参考页仅三行通用建议（'The error information is not fixed'），错误码→描述/模块的查询路径仍薄弱；日志参考页抓取失败，日志关联细节部分缺失。",
+            "evidence": [
+              {
+                "event_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+                "quote": "python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result"
+              },
+              {
+                "event_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+                "quote": "msnpureport -f"
+              },
+              {
+                "event_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+                "quote": "The error information is not fixed. Check the error information according to the specific prompt."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "正文横跨CANN8.0.0.alpha001、8.2.RC1.alpha001、商用版8.5.0、9.0.X、9.2.0-beta.1多版本并存，各页仅标题标注自身版本、无选择条件或支持矩阵；可排除部分（如商用版8.5.0成体系）并确定范围，但无法在单一页面内依据明确条件选定适用版本，尚不能消除社区版/商用版/版本号的选择。",
+            "evidence": [
+              {
+                "event_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+                "quote": "EZ9999 AclNN Inner Error-AclNN Errors-错误码参考-故障处理-维护参考-CANN8.0.0.alpha001开发文档"
+              },
+              {
+                "event_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+                "quote": "AI Core Error问题现象描述-AI Core Error问题定位专题-典型故障专题-故障处理-参考-CANN商用版8.5.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_00_zveTfBpa8X0yFlrqt9HM4289.result",
+                "quote": "AI Core硬件故障-典型问题案例-AI Core Error问题定位专题-典型故障专题-故障处理-参考-CANN9.2.0-beta.1开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内相关独立第三方来源去重后≥6条：CSDN故障排查方法论（devpress为同内容镜像计一次）、CSDN调试与错误处理、CSDN gitblog_00923、GitHub ascend-log-triage、知乎应用日志解读、lmnt.cn错误码解读、两篇gitcode博客；华为开发者论坛按官方论坛排除。",
+            "evidence": [
+              {
+                "event_id": "call_00_3s5zFNfopoPg8CrruYhO4721.result",
+                "quote": "## 1. [故障排查方法论：CANN日志分析与常见错误代码解读 ...](https://blog.csdn.net/qq_46207024/article/details/157128456)"
+              },
+              {
+                "event_id": "call_00_FNDArKG2RM2J78fyqsoU3763.result",
+                "quote": "## 4. [troubleshooting_0531_分析AI Core Error问题.md](https://github.com/pillumina/ascend-log-triage/blob/main/knowledge/03_procedure/"
+              },
+              {
+                "event_id": "call_00_pUiqfd9ChSFhwCfngage2696.result",
+                "quote": "## 4. [带你掌握如何查看并读懂昇腾平台的应用日志 - 知乎](https://zhuanlan.zhihu.com/p/614503563)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方材料（CSDN、知乎、GitHub镜像文档）与官方正文在EZ9999属AI Core Error表现、日志分析方法上未见矛盾，且有可追溯原文（GitHub仓库镜像官方troubleshooting_0531）；但关键操作命令与判断分支主要由官方文档支撑，第三方仅片段出现于搜索结果，未被独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_FNDArKG2RM2J78fyqsoU3763.result",
+                "quote": "## 4. [troubleshooting_0531_分析AI Core Error问题.md](https://github.com/pillumina/ascend-log-triage/blob/main/knowledge/03_procedure/"
+              },
+              {
+                "event_id": "call_00_sEieQEqfBrSnE9qGu1iW7039.result",
+                "quote": "ATC编译模型报错，EZ9999_CANN_华为云论坛"
+              },
+              {
+                "event_id": "call_00_3s5zFNfopoPg8CrruYhO4721.result",
+                "quote": "当终端屏幕上滚动出现一连串红色的 EZ9999 或 ACL Stream Synchronize Failed 报错时"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确的方法片段：msnpureport、plog目录、ASCEND_GLOBAL_LOG_LEVEL、msaicerr、npu-smi、ascend-dmi及常见根因方向，且自行标注不确定处；核对官方后这些工具均真实存在、方向正确。但关键细节（msaicerr.py具体命令与参数、NPU_COLLECT_PATH、收集目录结构、EZ9999与AI Core Error专题的关联）需外部资料补充；日志级别记忆有偏差（官方3=ERROR、4=NULL，prior写'0=DEBUG…4=ERROR 之类'，已含糊化处理）。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "设备侧日志：`msnpureport`，把 device 侧 log 拉到 host"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "我印象里还有 `msaicerr`（AI Core 错误分析）、`asys`"
+              },
+              {
+                "event_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+                "quote": "进入“${Toolkit包安装路径}/tools/msaicerr”目录"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_3s5zFNfopoPg8CrruYhO4721.dispatch",
+              "call_00_pppVBTa9odENhNoASmfg6990.dispatch",
+              "call_00_ma0mkt6CvoRzlE5mnfgJ7118.dispatch",
+              "call_00_FNDArKG2RM2J78fyqsoU3763.dispatch",
+              "call_00_ytDIznhHOjeoh99vjd577885.dispatch",
+              "call_00_cf9yjcYIGu4uNSODmWMo6256.dispatch",
+              "call_00_sEieQEqfBrSnE9qGu1iW7039.dispatch",
+              "call_00_HKF23Y9EG1zvL35GkcLf8987.dispatch",
+              "call_00_CVYxhwImKwYxB1XBTaTj1170.dispatch",
+              "call_00_pUiqfd9ChSFhwCfngage2696.dispatch",
+              "call_00_PuvWfbhCuGFQEAigA35m9021.dispatch",
+              "call_00_zveTfBpa8X0yFlrqt9HM4289.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "N/A",
+            "reason": "本题为故障排查类任务，原题不需要锁定库版本/工具链版本/soc_version 等组件；答案引用的文档版本（CANN 8.0.0.alpha001/8.5.0/9.0.X/9.2.0-beta.1）仅用于标注出处，且答案如实声明未逐版核对 EZ9999 定义。无版本需求，记 N/A。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "EZ9999 的定义跨版本未逐版核对：错误码参考页取自 CANN 8.0.0.alpha001（英文正文）...我没有核对 EZ9999 在不同版本的定义是否完全一致"
+              }
+            ],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "操作指导整体完整：收集、环境变量设置、msnpureport、asys、msaicerr 命令均给出完整命令行、参数与前置条件（source set_env.sh、python3.7.5+、不能在 -p 目录内执行、pip3 依赖安装），仅需替换 ${HOME}、${INSTALL_DIR} 等明确标识的环境值。扣一分因素：ascend-dmi 需单独安装（MindCluster ToolBox）但配套关系与安装步骤只给跳转链接未展开，该支线需补充信息才能完整执行。答案未实际运行验证，仅内容核查。",
+            "evidence": [
+              {
+                "event_id": "final",
+                "quote": "source ${INSTALL_DIR}/set_env.sh ... python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result ... 不能进入 `-p` 目录或其子目录执行"
+              },
+              {
+                "event_id": "final",
+                "quote": "注意：**ascend-dmi 需单独安装**，在 MindCluster ToolBox 软件包中，与 CANN 的配套关系需另查"
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "score": null,
+            "status": "incomplete_inputs",
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "bounded",
+                "reason": "8个独立官方文档中，7个取得直接正文（troubleshooting_0001/0004/0006/0007/0011、EZ9999错误码页、ASCEND_GLOBAL_LOG_LEVEL页），但均无独立的全文完整性起止证据，按规则保留4—5候选；logreference_0001仅返回标题与评分项、无可识别正文，记2分。均值区间=(7×[4,5]+2)/8=[3.75,4.63]，不给5。"
+              },
+              {
+                "metric": "M7",
+                "status": "bounded",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确的方法片段：msnpureport、plog目录、ASCEND_GLOBAL_LOG_LEVEL、msaicerr、npu-smi、ascend-dmi及常见根因方向，且自行标注不确定处；核对官方后这些工具均真实存在、方向正确。但关键细节（msaicerr.py具体命令与参数、NPU_COLLECT_PATH、收集目录结构、EZ9999与AI Core Error专题的关联）需外部资料补充；日志级别记忆有偏差（官方3=ERROR、4=NULL，prior写'0=DEBUG…4=ERROR 之类'，已含糊化处理）。"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "score": null,
+          "status": "incomplete_inputs",
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "bounded",
+              "reason": "8个独立官方文档中，7个取得直接正文（troubleshooting_0001/0004/0006/0007/0011、EZ9999错误码页、ASCEND_GLOBAL_LOG_LEVEL页），但均无独立的全文完整性起止证据，按规则保留4—5候选；logreference_0001仅返回标题与评分项、无可识别正文，记2分。均值区间=(7×[4,5]+2)/8=[3.75,4.63]，不给5。"
+            },
+            {
+              "metric": "M7",
+              "status": "bounded",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确的方法片段：msnpureport、plog目录、ASCEND_GLOBAL_LOG_LEVEL、msaicerr、npu-smi、ascend-dmi及常见根因方向，且自行标注不确定处；核对官方后这些工具均真实存在、方向正确。但关键细节（msaicerr.py具体命令与参数、NPU_COLLECT_PATH、收集目录结构、EZ9999与AI Core Error专题的关联）需外部资料补充；日志级别记忆有偏差（官方3=ERROR、4=NULL，prior写'0=DEBUG…4=ERROR 之类'，已含糊化处理）。"
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_3s5zFNfopoPg8CrruYhO4721.result",
+            "field": "response",
+            "sha256": "3066475d8df8990f2bb8c9590aeb0e03f0a8337a551c503cdcf361f0649aa025",
+            "start": 562,
+            "end": 735,
+            "quote": "## 3. [故障处理流程-CANN8.2.RC1.alpha001-昇腾社区](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1alpha001/maintenref/troubleshooting/troubleshooting_0001.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_CVYxhwImKwYxB1XBTaTj1170.result",
+            "field": "response",
+            "sha256": "aa64163a2eaf3634b0f79594aeaa5781e8638707fc5519ad66ee6d95542d79df",
+            "start": 0,
+            "end": 48,
+            "quote": "**标题**: 日志简介-日志参考-参考-CANN商用版8.5.0开发文档-昇腾社区\n\n文档评分",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+            "field": "response",
+            "sha256": "17722dd54ddbc07c9935ff1d11d5229089200e0178217f18beacaa877f4797c4",
+            "start": 349,
+            "end": 422,
+            "quote": "用户应用程序报错退出，终端屏幕日志错误码为EZ9999，且日志中包含“**there is an aivec error exception**”",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_PuvWfbhCuGFQEAigA35m9021.result",
+            "field": "response",
+            "sha256": "59dbba78ad02f6a62c1b00150a8ff533cce506fce0e6f9e8bf545037f141f1d9",
+            "start": 325,
+            "end": 354,
+            "quote": "设置应用类日志的日志级别及各模块日志级别，仅支持调试日志。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+            "field": "response",
+            "sha256": "8dafbeae11d2cd51a7ed66578ba456260b091a69151a78c346b1334053d0751e",
+            "start": 1608,
+            "end": 1679,
+            "quote": "python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+            "field": "response",
+            "sha256": "33fa819b7522733f46500cac10ce2df336454bfb26fb85059f340040846ce9d6",
+            "start": 6749,
+            "end": 6763,
+            "quote": "msnpureport -f",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+            "field": "response",
+            "sha256": "60bccb14b28ed4e8cf81abae23370ab77b050bf797ceb3ca0720d62010f3f00d",
+            "start": 423,
+            "end": 520,
+            "quote": "The error information is not fixed. Check the error information according to the specific prompt.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+            "field": "response",
+            "sha256": "60bccb14b28ed4e8cf81abae23370ab77b050bf797ceb3ca0720d62010f3f00d",
+            "start": 8,
+            "end": 84,
+            "quote": "EZ9999 AclNN Inner Error-AclNN Errors-错误码参考-故障处理-维护参考-CANN8.0.0.alpha001开发文档",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+            "field": "response",
+            "sha256": "17722dd54ddbc07c9935ff1d11d5229089200e0178217f18beacaa877f4797c4",
+            "start": 8,
+            "end": 84,
+            "quote": "AI Core Error问题现象描述-AI Core Error问题定位专题-典型故障专题-故障处理-参考-CANN商用版8.5.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_zveTfBpa8X0yFlrqt9HM4289.result",
+            "field": "response",
+            "sha256": "cdc34b7635eba4a1864ad4d446186c181ecf1fa5a78a8950755c30eeca44a9a5",
+            "start": 8,
+            "end": 87,
+            "quote": "AI Core硬件故障-典型问题案例-AI Core Error问题定位专题-典型故障专题-故障处理-参考-CANN9.2.0-beta.1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_3s5zFNfopoPg8CrruYhO4721.result",
+            "field": "response",
+            "sha256": "3066475d8df8990f2bb8c9590aeb0e03f0a8337a551c503cdcf361f0649aa025",
+            "start": 52,
+            "end": 150,
+            "quote": "## 1. [故障排查方法论：CANN日志分析与常见错误代码解读 ...](https://blog.csdn.net/qq_46207024/article/details/157128456)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_FNDArKG2RM2J78fyqsoU3763.result",
+            "field": "response",
+            "sha256": "987cd9cfd31e4e2769312d93ed7fecf27cd9a8d9f991a9c77b4756aabb893202",
+            "start": 1167,
+            "end": 1297,
+            "quote": "## 4. [troubleshooting_0531_分析AI Core Error问题.md](https://github.com/pillumina/ascend-log-triage/blob/main/knowledge/03_procedure/",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_pUiqfd9ChSFhwCfngage2696.result",
+            "field": "response",
+            "sha256": "a3abd23ff3df3265cd9f65299f8e4b292c58fa87e99535bd4f321be741d0e534",
+            "start": 1086,
+            "end": 1159,
+            "quote": "## 4. [带你掌握如何查看并读懂昇腾平台的应用日志 - 知乎](https://zhuanlan.zhihu.com/p/614503563)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_FNDArKG2RM2J78fyqsoU3763.result",
+            "field": "response",
+            "sha256": "987cd9cfd31e4e2769312d93ed7fecf27cd9a8d9f991a9c77b4756aabb893202",
+            "start": 1167,
+            "end": 1297,
+            "quote": "## 4. [troubleshooting_0531_分析AI Core Error问题.md](https://github.com/pillumina/ascend-log-triage/blob/main/knowledge/03_procedure/",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_sEieQEqfBrSnE9qGu1iW7039.result",
+            "field": "response",
+            "sha256": "33ab24729a026450f040e5ed0b97a357e5fac7d6b839a71ae4c00c9ae2ca2515",
+            "start": 1201,
+            "end": 1228,
+            "quote": "ATC编译模型报错，EZ9999_CANN_华为云论坛",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_3s5zFNfopoPg8CrruYhO4721.result",
+            "field": "response",
+            "sha256": "3066475d8df8990f2bb8c9590aeb0e03f0a8337a551c503cdcf361f0649aa025",
+            "start": 165,
+            "end": 224,
+            "quote": "当终端屏幕上滚动出现一连串红色的 EZ9999 或 ACL Stream Synchronize Failed 报错时",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+            "field": "response",
+            "sha256": "8dafbeae11d2cd51a7ed66578ba456260b091a69151a78c346b1334053d0751e",
+            "start": 1313,
+            "end": 1349,
+            "quote": "进入“${Toolkit包安装路径}/tools/msaicerr”目录",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5b180efab8f90f041c6b812479b32c7dec88db08755c9d7149b6c42b9df872eb",
+            "start": 4850,
+            "end": 4916,
+            "quote": "注意：**ascend-dmi 需单独安装**，在 MindCluster ToolBox 软件包中，与 CANN 的配套关系需另查",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5b180efab8f90f041c6b812479b32c7dec88db08755c9d7149b6c42b9df872eb",
+            "start": 63,
+            "end": 212,
+            "quote": "官方错误码参考里它的名字是 **\"EZ9999 AclNN Inner Error\"**，现象描述为\"The error information is not fixed. Check the error information according to the specific prompt.\"",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+            "field": "response",
+            "sha256": "33fa819b7522733f46500cac10ce2df336454bfb26fb85059f340040846ce9d6",
+            "start": 371,
+            "end": 460,
+            "quote": "在收集日志时，需收集本次AI Core Error问题附近时间的日志，旧日志中的不相关信息或其它报错信息可能导致后续msaicerr工具分析AI Core Error问题时报错。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+            "field": "response",
+            "sha256": "33fa819b7522733f46500cac10ce2df336454bfb26fb85059f340040846ce9d6",
+            "start": 6858,
+            "end": 6924,
+            "quote": "将${HOME}/aic_err_info目录下的信息移动到另一个目录下，目录名上可带上时间戳，便于按时间管理每一次收集的故障信息。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/heldout/case-1958f606d697-predictors.json": "0c3ce3393a2fc6586e5b2534e821aa48f60f7da08a450958adfb539bd12f1242",
+          "reviewed/heldout/case-1958f606d697-outcome.json": "495850027fc12cf6723002fc6be81a6e21e95dce11f17192d265fc36b071b75d"
+        },
+        "m2_documents": [
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1alpha001/maintenref/troubleshooting/troubleshooting_0001.html",
+            "title": "故障处理流程-CANN8.2.RC1.alpha001",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/850/maintenref/troubleshooting/troubleshooting_0004.html",
+            "title": "AI Core Error问题现象描述-CANN商用版8.5.0",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/850/maintenref/troubleshooting/troubleshooting_0007.html",
+            "title": "使用msaicerr工具分析AI Core Error问题-CANN商用版8.5.0",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/850/maintenref/troubleshooting/troubleshooting_0006.html",
+            "title": "收集AI Core Error问题信息-CANN商用版8.5.0",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/800alpha001/devguide/maintenref/troubleshooting/atlaserrorcode_15_0313.html",
+            "title": "EZ9999 AclNN Inner Error-CANN8.0.0.alpha001",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/850/maintenref/logreference/logreference_0001.html",
+            "title": "日志简介-CANN商用版8.5.0",
+            "status": "metadata_only_no_body",
+            "score": 2
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/maintenref/envvar/envref_07_0122.html",
+            "title": "ASCEND_GLOBAL_LOG_LEVEL-CANN9.0.X",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          },
+          {
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/920beta1/maintenref/troubleshooting/troubleshooting_0011.html",
+            "title": "AI Core硬件故障-CANN9.2.0-beta.1",
+            "status": "direct_body_completeness_unknown",
+            "score_range": [
+              4,
+              5
+            ]
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "text": "设备侧日志：`msnpureport`，把 device 侧 log 拉到 host"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "我印象里还有 `msaicerr`（AI Core 错误分析）、`asys`"
+              }
+            ]
+          },
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+                "quote": "# EZ9999 AclNN Inner Error\n#### Symptom\nThe error information is not fixed. Check the error information according to the specific prompt."
+              }
+            ]
+          },
+          {
+            "requirement": 2,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：`${HOME}/ascend/log`；trace 日志：`$HOME/ascend/atrace/`"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+                "quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：默认存放在Host服务器的${HOME}/ascend/log目录。trace日志：默认存放在Host服务器的$HOME/ascend/atrace/目录。"
+              }
+            ]
+          },
+          {
+            "requirement": 3,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "收集时要取**本次问题附近时间**的日志 ... plog 形如 `.../plog/plog-{pid}_{时间戳}.log` ... 读 `chipId/dieId`、`core id`、`errcode/errorStr`、`fault kernel_name`"
+              }
+            ]
+          },
+          {
+            "requirement": 4,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "看日志特征分流：含 `there is an aicore error exception` → AI Core Error（软件/算子）... 含 `module_name=EZ9999` + ECC 类 errorStr → 用 `ascend-dmi --dg -i aicore` 压测"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+                "quote": "用户应用程序报错退出，终端屏幕日志错误码为EZ9999，且日志中包含\"there is an aivec error exception\"或\"there is an aicore error exception\"；或者plog日志中存在报错日志\"Aicore kernel execute failed\"。"
+              }
+            ]
+          },
+          {
+            "requirement": 5,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "必要时跑 msaicerr 生成的 `test_single_op.py` 复现单算子，或用 msSanitizer、`op_debug_config=oom` 做内存越界检测 ... 用 `ascend-dmi --dg -i aicore` 压测，提示 EMERGENCY_WARN 即 AI Core 硬件故障"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+                "quote": "表示工具自动生成了单算子用例脚本，您可以执行该脚本复现单算子问题 ... 您可以执行该脚本复现单算子问题 ... check the operator again by using the msSanitizer tool ... enable memory error detection with op_debug_config=oom"
+              }
+            ]
+          },
+          {
+            "requirement": 6,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "mv ${HOME}/aic_err_info  ${HOME}/aic_err_info_timestamp ... 解析后看终端提示的 `info.txt` 路径，按关键信息对照"
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "final",
+                "quote": "source ${INSTALL_DIR}/set_env.sh ... python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result ... 不能进入 `-p` 目录或其子目录执行"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

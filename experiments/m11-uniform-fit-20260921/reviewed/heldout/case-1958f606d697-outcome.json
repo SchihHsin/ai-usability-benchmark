@@ -1,0 +1,199 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "官方错误码参考里它的名字是 **\"EZ9999 AclNN Inner Error\"**，现象描述为\"The error information is not fixed. Check the error information according to the specific prompt.\"",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+      "evidence_quote": "# EZ9999 AclNN Inner Error\n#### Symptom\nThe error information is not fixed. Check the error information according to the specific prompt.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案准确引用了官方错误码参考页对 EZ9999 的错误描述（AclNN Inner Error，报错信息不固定），并说明定位不靠解码 9999 而靠日志特征（如 module_name=EZ9999），与来源正文一致。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：`${HOME}/ascend/log`；trace 日志：`$HOME/ascend/atrace/`",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+      "evidence_quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：默认存放在Host服务器的${HOME}/ascend/log目录。trace日志：默认存放在Host服务器的$HOME/ascend/atrace/目录。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出具体收集命令（mkdir、msnpureport -f、asys collect/launch）、环境变量（ASCEND_WORK_PATH、ASCEND_PROCESS_LOG_PATH、NPU_COLLECT_PATH）与默认路径，均可在来源正文逐字对应。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "收集时要取**本次问题附近时间**的日志 ... plog 形如 `.../plog/plog-{pid}_{时间戳}.log` ... 读 `chipId/dieId`、`core id`、`errcode/errorStr`、`fault kernel_name`",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+      "evidence_quote": "在收集日志时，需收集本次AI Core Error问题附近时间的日志，旧日志中的不相关信息或其它报错信息可能导致后续msaicerr工具分析AI Core Error问题时报错。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案说明了按时间（本次问题附近时间）、进程（plog-{pid} 文件名、trace_*{进程组pid}）与设备号（chipId/dieId、device_id、data-dump/{device_id}）关联日志，均有来源依据（时间关联见证据，chipId/device_id 解读见 call_00_ma0mkt6CvoRzlE5mnfgJ7118.result）。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "看日志特征分流：含 `there is an aicore error exception` → AI Core Error（软件/算子）... 含 `module_name=EZ9999` + ECC 类 errorStr → 用 `ascend-dmi --dg -i aicore` 压测",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+      "evidence_quote": "用户应用程序报错退出，终端屏幕日志错误码为EZ9999，且日志中包含\"there is an aivec error exception\"或\"there is an aicore error exception\"；或者plog日志中存在报错日志\"Aicore kernel execute failed\"。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出了从 EZ9999 出发的可核验分支树（日志特征→软件/算子线 vs 硬件 ECC 线，再由 msaicerr info.txt 结论表细分），每条分支的判据均可在来源正文（troubleshooting_0004、0011、0007）中核验。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "必要时跑 msaicerr 生成的 `test_single_op.py` 复现单算子，或用 msSanitizer、`op_debug_config=oom` 做内存越界检测 ... 用 `ascend-dmi --dg -i aicore` 压测，提示 EMERGENCY_WARN 即 AI Core 硬件故障",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+      "evidence_quote": "表示工具自动生成了单算子用例脚本，您可以执行该脚本复现单算子问题 ... 您可以执行该脚本复现单算子问题 ... check the operator again by using the msSanitizer tool ... enable memory error detection with op_debug_config=oom",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出复现手段（test_single_op.py 单算子复现、复跑业务）、最小输入（单算子用例）与环境检查（内置样例算子执行失败→环境异常、ascend-dmi 压测排除硬件），均有官方来源正文支撑。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "mv ${HOME}/aic_err_info  ${HOME}/aic_err_info_timestamp ... 解析后看终端提示的 `info.txt` 路径，按关键信息对照",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+      "evidence_quote": "将${HOME}/aic_err_info目录下的信息移动到另一个目录下，目录名上可带上时间戳，便于按时间管理每一次收集的故障信息。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案要求保留收集目录（aic_err_info_timestamp 归档）、msaicerr 的 info.txt/debug_info.txt 解析输出及关键日志片段（plog 报错节选），并明确联系技术支持时应携带日志，均有来源依据。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "本题为故障排查类任务，原题不需要锁定库版本/工具链版本/soc_version 等组件；答案引用的文档版本（CANN 8.0.0.alpha001/8.5.0/9.0.X/9.2.0-beta.1）仅用于标注出处，且答案如实声明未逐版核对 EZ9999 定义。无版本需求，记 N/A。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "EZ9999 的定义跨版本未逐版核对：错误码参考页取自 CANN 8.0.0.alpha001（英文正文）...我没有核对 EZ9999 在不同版本的定义是否完全一致"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "status": "insufficient_evidence",
+      "reason": "操作指导整体完整：收集、环境变量设置、msnpureport、asys、msaicerr 命令均给出完整命令行、参数与前置条件（source set_env.sh、python3.7.5+、不能在 -p 目录内执行、pip3 依赖安装），仅需替换 ${HOME}、${INSTALL_DIR} 等明确标识的环境值。扣一分因素：ascend-dmi 需单独安装（MindCluster ToolBox）但配套关系与安装步骤只给跳转链接未展开，该支线需补充信息才能完整执行。答案未实际运行验证，仅内容核查。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "source ${INSTALL_DIR}/set_env.sh ... python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result ... 不能进入 `-p` 目录或其子目录执行"
+        },
+        {
+          "event_id": "final",
+          "quote": "注意：**ascend-dmi 需单独安装**，在 MindCluster ToolBox 软件包中，与 CANN 的配套关系需另查"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_HKF23Y9EG1zvL35GkcLf8987.result",
+          "quote": "# EZ9999 AclNN Inner Error\n#### Symptom\nThe error information is not fixed. Check the error information according to the specific prompt."
+        }
+      ]
+    },
+    {
+      "requirement": 2,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：`${HOME}/ascend/log`；trace 日志：`$HOME/ascend/atrace/`"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_cf9yjcYIGu4uNSODmWMo6256.result",
+          "quote": "mkdir ${HOME}/aic_err_info ... msnpureport -f ... asys collect --output=path ... 应用类日志：默认存放在Host服务器的${HOME}/ascend/log目录。trace日志：默认存放在Host服务器的$HOME/ascend/atrace/目录。"
+        }
+      ]
+    },
+    {
+      "requirement": 3,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "收集时要取**本次问题附近时间**的日志 ... plog 形如 `.../plog/plog-{pid}_{时间戳}.log` ... 读 `chipId/dieId`、`core id`、`errcode/errorStr`、`fault kernel_name`"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "看日志特征分流：含 `there is an aicore error exception` → AI Core Error（软件/算子）... 含 `module_name=EZ9999` + ECC 类 errorStr → 用 `ascend-dmi --dg -i aicore` 压测"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_ma0mkt6CvoRzlE5mnfgJ7118.result",
+          "quote": "用户应用程序报错退出，终端屏幕日志错误码为EZ9999，且日志中包含\"there is an aivec error exception\"或\"there is an aicore error exception\"；或者plog日志中存在报错日志\"Aicore kernel execute failed\"。"
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "必要时跑 msaicerr 生成的 `test_single_op.py` 复现单算子，或用 msSanitizer、`op_debug_config=oom` 做内存越界检测 ... 用 `ascend-dmi --dg -i aicore` 压测，提示 EMERGENCY_WARN 即 AI Core 硬件故障"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_ytDIznhHOjeoh99vjd577885.result",
+          "quote": "表示工具自动生成了单算子用例脚本，您可以执行该脚本复现单算子问题 ... 您可以执行该脚本复现单算子问题 ... check the operator again by using the msSanitizer tool ... enable memory error detection with op_debug_config=oom"
+        }
+      ]
+    },
+    {
+      "requirement": 6,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "mv ${HOME}/aic_err_info  ${HOME}/aic_err_info_timestamp ... 解析后看终端提示的 `info.txt` 路径，按关键信息对照"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "source ${INSTALL_DIR}/set_env.sh ... python3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result ... 不能进入 `-p` 目录或其子目录执行"
+        }
+      ]
+    }
+  ],
+  "case": "case-1958f606d697",
+  "kind": "outcome",
+  "task_id": "E",
+  "ecosystem": "cann",
+  "split": "heldout",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/heldout/case-1958f606d697-outcome.json",
+    "sha256": "9c6db00e22f5f7811c0910ddfc0cb386708bd356bbb0e95d2750b7f855b18c84",
+    "process_sha256": "32d99024068237110499d8769a8654dcf0d90de7661e0f512779f510b55e90a9",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

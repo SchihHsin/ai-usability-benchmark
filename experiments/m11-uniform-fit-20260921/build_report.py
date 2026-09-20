@@ -47,14 +47,17 @@ status='留出验证完成' if validation else '系数已冻结，等待留出�
 fit=(frozen or {}).get('fit',{})
 model='M = 100 × K × (1 − a × (1 − M4/5)) × (1 − b × (1 − M8/5)); K = 1 − (1 − (M1/5)(M2/5)(M3/5))(1 − (M5/5)(M6/5))(1 − M7/5).'
 parts=[f"<h1>M11 uniform fit · 2026-09-21</h1><p class='status'>状态：<strong>{e(status)}</strong></p>"]
+parts.append("<p class='notice'><strong>实验已完成，但没有确定出稳定优于原系数的新系数。</strong>当前保留 a=0.30、b=0.10 作为工作基线；正式 Skill 未改。<a href='conclusion.md'>最终结论、公式与依据</a></p>" if validation and sensitivity_validation else '')
 parts.append(f"<p>{e('冻结选择：'+str(fit) if frozen is not None else '尚无冻结系数；不得从旧实验推断新结果。')}</p>")
 parts.append(section('公式、协议与候选族',f'<p>{e(model)} 所有 Mi 先按原始 1–5 分除以 5。</p><p>历史 baseline 为 <code>a=0.30,b=0.10</code>，仅作预先指定对照；本轮结果暂不支持用新拟合系数替换 baseline，也不表示 baseline 已被证明最优。候选五族为 no_factors、version_only、cost_only、both、original；a、b 使用 0.01 网格，按开发任务组等权的 worst-case squared endpoint error，并以 leave-one-development-task-group-out CV 选择。留出数据不参与选择；结果不宣称通用最优。</p>'))
 if frozen is not None:
     parts.append(table(['字段','值'],[['selected_family',frozen.get('selected_family')],['a',fit.get('a')],['b',fit.get('b')],['development input SHA256',frozen.get('input_sha256')],['protocol SHA256',frozen.get('protocol_sha256')],['development cases',', '.join(frozen.get('development_cases',[]))]]))
 else: parts.append("<p class='notice'>冻结文件不存在，当前不报告新系数。</p>")
-parts.append(section('样本、留出边界与排除',f"<p>开发纳入 {included_total}/{candidate_total} 个候选样本；自动统计预算分布：纳入 {e(in_budget)}，排除 {e(ex_budget)}。协议预期 {e(protocol.get('expected_runs','—'))} 次运行；开发任务：{e(protocol.get('development',[]))}；留出任务：{e(protocol.get('heldout',[]))}。任务组内保留生态与预算条件，未知引文不静默记为零。</p><p>开发集区间结构：outcome_interval 为点值 {outcome_point}/{included_total}，M2 为点值 {m2_point}/{included_total}，M7 为 [1,5] {m7_full}/{included_total}。复核后的 {reviewed_total} 个样本共 {requirement_total} 条需求：supported={req_counts.get('supported',0)}、unverified={req_counts.get('unverified',0)}、absent={req_counts.get('absent',0)}；其中原始 supported={raw_supported}，部分因引文审计转为 unverified。</p>"))
+parts.append(section('样本、留出边界与排除',f"<p>开发纳入 {included_total}/{candidate_total} 个候选样本；自动统计预算分布：纳入 {e(in_budget)}，排除 {e(ex_budget)}。协议预期 {e(protocol.get('expected_runs','—'))} 次运行；开发任务：{e(protocol.get('development',[]))}；留出任务：{e(protocol.get('heldout',[]))}。任务组内保留生态与预算条件，未知引文不静默记为零。</p><p>开发集区间结构：outcome_interval 为点值 {outcome_point}/{included_total}，M2 为点值 {m2_point}/{included_total}，M7 为 [1,5] {m7_full}/{included_total}。复核后的 {reviewed_total} 个样本共 {requirement_total} 条需求：supported={req_counts.get('supported',0)}、unverified={req_counts.get('unverified',0)}、absent={req_counts.get('absent',0)}；其中 {raw_supported} 条由 supported 因引文审计转为 unverified。</p>"))
 parts.append(table(['开发 case','group','split','budget'],[[r.get('case'),r.get('group'),r.get('split','development'),r.get('budget')] for r in dev]) if dev else '<p>development-data.json 尚不存在。</p>')
 if excluded: parts.append('<details><summary>明确排除的开发样本（不会进入拟合）</summary>'+table(['case','reason'],[[x.get('case'),x.get('reason')] for x in excluded])+'</details>')
+held_excluded=load('heldout-data-exclusions.json',[]) if frozen is not None else []
+if held_excluded: parts.append(section('留出排除记录',table(['case','reason'],[[x.get('case'),x.get('reason')] for x in held_excluded])))
 if frozen is not None: parts.append('<details><summary>留出样本（冻结后读取）</summary>'+(table(['case','group','split','budget'],[[r.get('case'),r.get('group'),r.get('split','heldout'),r.get('budget')] for r in held]) if held else '<p>heldout-data.json 尚不存在或为空。</p>')+'</details>')
 else: parts.append("<p class='notice'>冻结选择前不读取或评价 heldout-data.json。</p>")
 if results:
@@ -84,14 +87,14 @@ if validation:
 elif frozen is not None: parts.append(section('留出比较','<p>已冻结选择，但尚未生成 validation-results.json；不提前评价留出结果。</p>'))
 parts.append(section('采集核查',table(['项目','结果'],[[k,v] for k,v in summary.items()]) if summary else '<p>collection-audit.json 尚不存在。</p>'))
 refs=''.join(f"<li><a href='{e(x.get('url',''))}'>{e(x.get('source'))}</a>：{e(x.get('supports',''))}</li>" for x in literature.get('method_references',[]))
-parts.append(section('限制与来源',f'<ul>{refs}</ul><ul><li>自动评委是证据支持的答案质量代理，不是人工金标准；无硬件执行，也不提供概率校准。</li><li>区间和 bootstrap 范围用于描述性稳定性，不是置信区间；系数是本批条件下的冻结结果，不宣称通用最优。</li><li>预算是预先指定的条件性设计，不是文献证明的最优预算；单一生成模型、每格单次运行，任务难度未必相等。</li><li>worst-case 区间损失取保守的端点最大误差，不建模区间相关性；宽区间可能显著影响系数。</li><li>m2_documents 没有逐文档语义校验，code_inspection 标签来自自动模型判断；精确引文只校验存在性。</li><li>真实 alias 不保证不可变后端身份；旧实验仅作历史链接，旧系数不参与本轮选择。</li></ul>'))
+parts.append(section('限制与来源',f'<ul>{refs}</ul><ul><li>自动评委是证据支持的答案质量代理，不是人工金标准；无硬件执行，也不提供概率校准。</li><li>区间和 bootstrap 范围用于描述性稳定性，不是置信区间；系数是本批条件下的冻结结果，不宣称通用最优。</li><li>预算是预先指定的条件性设计，不是文献证明的最优预算；单一生成模型、每格单次运行，任务难度未必相等。</li><li>worst-case 区间损失取保守的端点最大误差，不建模区间相关性；宽区间可能显著影响系数。</li><li>m2_documents 没有逐文档语义校验，code_inspection 标签来自自动模型判断；精确引文只校验存在性。</li><li>真实 alias 不保证不可变后端身份；旧实验仅作历史链接，上一轮拟合系数不参与本轮选择。</li></ul>'))
 parts.append("<p><a href='collection-audit.json'>完整审计</a> · <a href='search-index.json'>搜索索引</a> · <a href='process-hashes.json'>原始记录哈希</a> · <a href='paper-methods-results.md'>论文方法与结果材料</a></p>")
 css="body{font:16px/1.65 system-ui;max-width:1150px;margin:32px auto;padding:0 22px;color:#243047}h1{font-size:30px}.status{padding:12px;background:#eef4ff;border-left:4px solid #3574d3}.notice{background:#fff3d8;padding:12px}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #d6dce6;padding:7px;text-align:left;vertical-align:top}th{background:#f2f5f9}a{color:#1769aa}code{background:#f1f3f6;padding:2px 4px}details{margin:10px 0}"
 (ROOT/'report.html').write_text("<!doctype html><html lang='zh-CN'><meta charset='utf-8'><title>M11 uniform fit</title><style>"+css+'</style>'+''.join(parts)+'</html>')
 md=['# M11 uniform fit 结果（2026-09-21）',f'状态：**{status}**','','## 公式与选择',model,'','历史 baseline：`a=0.30,b=0.10`，仅作预先指定对照；本轮暂不支持用新拟合系数替换 baseline，也不表示 baseline 已被证明最优。候选五族和 leave-one-development-task-group-out 选择按 `protocol.json` 执行。留出前冻结族与系数，结果不宣称通用最优。']
 if frozen is None: md += ['', '当前没有 `frozen-selection.json`，因此不报告新系数，也不读取留出数据。']
 else: md += ['',f"冻结选择：`{frozen.get('selected_family')}`，a={val(fit.get('a'))}，b={val(fit.get('b'))}。",f"开发输入 hash：`{frozen.get('input_sha256')}`。"]
-md += ['','## 样本与排除',f"开发纳入 {included_total}/{candidate_total} 个候选样本；自动统计预算分布：纳入 {in_budget}，排除 {ex_budget}。协议预期运行数：{val(protocol.get('expected_runs'))}；开发任务：{val(protocol.get('development'))}；留出任务：{val(protocol.get('heldout'))}。",f"区间结构：outcome 点值 {outcome_point}/{included_total}，M2 点值 {m2_point}/{included_total}，M7 为 [1,5] {m7_full}/{included_total}。复核后的 {reviewed_total} 个样本共 {requirement_total} 条需求：supported={req_counts.get('supported',0)}、unverified={req_counts.get('unverified',0)}、absent={req_counts.get('absent',0)}；原始 supported={raw_supported}，引文审计可能将其转为 unverified。"]
+md += ['','## 样本与排除',f"开发纳入 {included_total}/{candidate_total} 个候选样本；自动统计预算分布：纳入 {in_budget}，排除 {ex_budget}。协议预期运行数：{val(protocol.get('expected_runs'))}；开发任务：{val(protocol.get('development'))}；留出任务：{val(protocol.get('heldout'))}。",f"区间结构：outcome 点值 {outcome_point}/{included_total}，M2 点值 {m2_point}/{included_total}，M7 为 [1,5] {m7_full}/{included_total}。复核后的 {reviewed_total} 个样本共 {requirement_total} 条需求：supported={req_counts.get('supported',0)}、unverified={req_counts.get('unverified',0)}、absent={req_counts.get('absent',0)}；其中 {raw_supported} 条由 supported 因引文审计转为 unverified。"]
 if dev: md += ['' ,md_table(['case','group','split','budget'],[[r.get('case'),r.get('group'),r.get('split','development'),r.get('budget')] for r in dev])]
 if excluded: md += ['','明确排除（不进入拟合）：',md_table(['case','reason'],[[x.get('case'),x.get('reason')] for x in excluded])]
 if frozen is not None and held: md += ['','冻结后读取的留出样本：',md_table(['case','group','split','budget'],[[r.get('case'),r.get('group'),r.get('split','heldout'),r.get('budget')] for r in held])]
@@ -104,8 +107,8 @@ if validation:
 if sensitivity:
     sm=sensitivity.get('models',{}).get('cost_only',{}); po=sensitivity.get('models',{}).get('original',{})
     md += ['', '## 独立后设敏感性', f"answer_event_id 的 exact-final / event-ID 审计修正后，独立重跑选择 {sensitivity.get('selected_family')}（a={val(sensitivity.get('fit',{}).get('a'))}, b={val(sensitivity.get('fit',{}).get('b'))}），其 CV worst MSE={val(sm.get('cv_worst_case_mse'))}；同一敏感性输入下 original baseline 的 CV worst MSE={val(po.get('cv_worst_case_mse'))}。该分析不是原预设 primary，不用于宣称 M4 不重要，也不提前作最终采纳判断。"]
-md += ['','## 方法与结果叙述',f'本研究对每个自动生成答案执行后评：六项预先定义的任务需求分别记录为有界区间，保留可辩护的上下界（开发集仅 2/{included_total} 个 outcome 为点值，M2 仅 {m2_point}/{included_total} 个点值，M7 有 {m7_full}/{included_total} 个 [1,5] 区间）；以任务组为留出单位，生态与预算条件留在组内。开发集纳入 {included_total}/{candidate_total} 个候选样本，排除原因逐条保留；选择只在开发集进行，冻结后才可评估留出集。候选族通过 leave-one-development-task-group-out CV 比较，损失为区间端点的保守 worst-case 平方误差；task-group bootstrap 只作描述性稳定性。自动后评是证据支持的答案质量代理，不是人工金标准。']
-md += ['','## 限制','- 自动评委不是人工金标准；指标是答案质量代理，不是硬件成功率或校准概率。','- bootstrap 与区间用于描述性稳定性，不能证明通用最优。','- 预算是条件性设计；单一生成模型、每格单次运行，任务难度未必相等。','- worst-case 区间损失取保守的端点最大误差，不建模区间相关性；宽区间可能显著影响系数。','- m2_documents 没有逐文档语义校验，code_inspection 标签来自自动模型判断；精确引文只校验存在性。','- 无硬件执行；未知引文不静默记零；旧实验系数不参与本轮。','','## 文献 ledger']
+md += ['','## 方法与结果叙述',f'本研究对每个自动生成答案执行后评：六项预先定义的任务需求分别记录支持、缺失、矛盾或未核验状态，再按 supported/6 至 (supported+unverified)/6 合成答案质量区间，保留可辩护的上下界（开发集仅 {outcome_point}/{included_total} 个 outcome 为点值，M2 仅 {m2_point}/{included_total} 个点值，M7 有 {m7_full}/{included_total} 个 [1,5] 区间）；以任务组为留出单位，生态与预算条件留在组内。开发集纳入 {included_total}/{candidate_total} 个候选样本，排除原因逐条保留；选择只在开发集进行，冻结后才可评估留出集。候选族通过 leave-one-development-task-group-out CV 比较，损失为区间端点的保守 worst-case 平方误差；task-group bootstrap 只作描述性稳定性。自动后评是证据支持的答案质量代理，不是人工金标准。']
+md += ['','## 限制','- 自动评委不是人工金标准；指标是答案质量代理，不是硬件成功率或校准概率。','- bootstrap 与区间用于描述性稳定性，不能证明通用最优。','- 预算是条件性设计；单一生成模型、每格单次运行，任务难度未必相等。','- worst-case 区间损失取保守的端点最大误差，不建模区间相关性；宽区间可能显著影响系数。','- m2_documents 没有逐文档语义校验，code_inspection 标签来自自动模型判断；精确引文只校验存在性。','- 无硬件执行；未知引文不静默记零；上一轮拟合系数不参与本轮。','','## 文献 ledger']
 for x in literature.get('method_references',[]): md.append(f"- [{x.get('source')}]({x.get('url','')})：{x.get('supports','')}")
 (ROOT/'paper-methods-results.md').write_text('\n'.join(md)+'\n')
 print(f'generated {ROOT/"report.html"} and {ROOT/"paper-methods-results.md"}')
@@ -114,3 +117,8 @@ if sensitivity_validation:
     sv=sensitivity_validation; sb=sv['bootstrap_selected_minus_original']
     with (ROOT/'paper-methods-results.md').open('a') as f:
         f.write('\n## Answer-ID sensitivity: held-out validation\n'+md_table(['Item','Value'],[['n',sv['n']],['selected MSE',sv['heldout_group_mse']],['original MSE',sv['baseline_original_group_mse']],['selected-original P05',sb['p05']],['selected-original P95',sb['p95']]])+'\n')
+
+if (ROOT/'conclusion.md').exists():
+    with (ROOT/'paper-methods-results.md').open('a') as f: f.write('\n'+(ROOT/'conclusion.md').read_text()+'\n')
+md_path=ROOT/'paper-methods-results.md'
+md_path.write_text(md_path.read_text().rstrip()+'\n')

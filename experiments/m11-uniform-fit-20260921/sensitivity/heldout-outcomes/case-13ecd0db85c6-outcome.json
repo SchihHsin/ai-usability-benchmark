@@ -1,0 +1,123 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "看设备与进程占用\n   ```bash\n   npu-smi info\n   npu-smi info -i 0\n   ```",
+      "answer_event_id": "final",
+      "evidence_id": "call_02_SiN4wPasdrizgP0L0bHK5550.result",
+      "evidence_quote": "# 查看NPU状态\nnpu-smi info -i 0",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案给出 npu-smi 查看设备/进程占用的命令及 torch_npu.npu.memory_stats() 查看分配统计；npu-smi 命令在来源 call_02 中真实出现，memory_stats 在 call_01 官方 master 文档中出现。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_m9wU2khEYsigQyoDXEUY6537.result",
+      "evidence_quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6",
+      "verification": "source",
+      "reason": "答案详细说明 max_split_size_mb、garbage_collection_threshold、expandable_segments 等碎片/分配相关参数及 export 设置方式，与官方 7.0.0 文档（call_00_m9wU2）及 master 文档（call_01_3Ee9）一致，且官方配置示例原文相同。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "用 `torch.utils.checkpoint.checkpoint` 包装层，或在 HuggingFace Transformers 上调用 `model.gradient_checkpointing_enable()`；以计算换显存。",
+      "answer_event_id": "final",
+      "evidence_id": "call_01_nbBC4QhZArbm6fsy1Or47846.result",
+      "evidence_quote": "用 `torch.utils.checkpoint.checkpoint` 包装需要检查点的层，并推荐 `use_reentrant=False`（非重入式，更省显存）。",
+      "verification": "source",
+      "reason": "答案给出梯度检查点启用接口 torch.utils.checkpoint.checkpoint 与 model.gradient_checkpointing_enable()，来源 call_01（第三方整理）含相同接口陈述；答案已如实标注该部分未取得官方正文。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "减小 batch size / 梯度累积；\n- 混合精度（fp16/bf16 前向 + fp32 反向）；",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案给出减小 batch size、梯度累积、混合精度等显存优化操作，但未提供任何来源证据，且答案自述'通用工程做法，官方未在本轮取得'；未知不等于错误，记 unverified。"
+    },
+    {
+      "id": 5,
+      "status": "absent",
+      "answer_quote": "2. 看设备与进程占用\n   ```bash\n   npu-smi info",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案仅给出查看当前显存占用的命令与 memory_stats 接口，未描述优化前后显存占用或峰值的比较方法（如记录基线、对比 peak 值等），该方面缺失。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "若 `reserved - allocated` 差值大、且出现「大量非活动的切分内存块」，即属官方文档描述的分片/碎片场景，应对应 `max_split_size_mb`。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_m9wU2khEYsigQyoDXEUY6537.result",
+      "evidence_quote": "此选项主要应用于当模型由于oom（Out of Memory，内存不足）而中断并显示存在大量非活动的切分内存块场景的优化。",
+      "verification": "source",
+      "reason": "答案给出根据碎片特征（大量非活动切分块）选择 max_split_size_mb、根据内存频繁变更选择 expandable_segments 的决策规则，与官方 7.0.0 文档中该参数的适用场景描述一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为故障排查与优化指导类问题，不需要锁定到具体库/工具链/soc_version；答案虽附带了各参数的版本门槛（如 HDK 23.0.0、CANN 8.1.RC1、TorchNPU 26.x），但定版非原题需求，记 N/A。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "expandable_segments 需 Ascend HDK 23.0.0 及以上。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "有具体操作方案，但需补充缺失内容才能执行",
+      "reason": "环境变量配置部分命令完整且前提明确（官方示例原文、版本约束、互斥约束），可直接执行；但梯度检查点部分仅有 API 名称无示例代码，答案自述'仅作方向性参考，不作为可执行依据'，npu-smi 等命令也标注未经官方核对，需补充后才能完整执行，故记 3 分。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6"
+        },
+        {
+          "event_id": "final",
+          "quote": "这部分仅作方向性参考，不作为可执行依据。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_02_SiN4wPasdrizgP0L0bHK5550.result",
+          "quote": "# 查看NPU状态\nnpu-smi info -i 0"
+        }
+      ]
+    }
+  ],
+  "case": "case-13ecd0db85c6",
+  "task_id": "Q",
+  "ecosystem": "cann",
+  "split": "heldout",
+  "budget": "standard",
+  "_sensitivity": {
+    "kind": "answer_event_id_canonicalization",
+    "primary_status": "post-development audit sensitivity; not the predeclared primary analysis",
+    "original_assessment": "assessments/heldout/case-13ecd0db85c6-outcome.json",
+    "original_assessment_sha256": "7832f47e451b5cbd8dab00169f32ac9e8eae926445299c7b0ab8a227ba38aeb5",
+    "reviewed_assessment": "reviewed/heldout/case-13ecd0db85c6-outcome.json"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 python your_script.py",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+      "evidence_quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`. This can be handy when an error occurs on the GPU.",
+      "verification": "source",
+      "reason": "答案给出 CUDA_LAUNCH_BLOCKING=1 强制同步与 TORCH_USE_CUDA_DSA=1 开启设备端断言；前者有官方页面原文直接支持，后者答案自身标注未核实但作为 DSA 开启方式给出。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "CUDA_LAUNCH_BLOCKING=1 PYTHONFAULTHANDLER=1 python your_script.py",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+      "evidence_quote": "(With asynchronous execution, such an error isn’t reported until after the operation is actually executed, so the stack trace does not show where it was requested.)",
+      "verification": "source",
+      "reason": "给出具体命令行（环境变量+python）配合 PYTHONFAULTHANDLER 保住栈，官方原文证实同步后栈可指向真正请求位置。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "compute-sanitizer --tool memcheck python your_script.py",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+      "evidence_quote": "the page mentions `cuda-memcheck` only in the context of `PYTORCH_NO_CUDA_MEMORY_CACHING=1` for disabling caching",
+      "verification": "source",
+      "reason": "答案说明 memcheck 报出越界读写的 kernel 名、block/thread 索引与访问地址，并用同步二分夹住嫌疑 submodule，满足用 kernel 名称/栈缩小范围；来源仅间接提及 cuda-memcheck，参数细节答案已诚实标注未核实，但方法本身与来源一致性无矛盾。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "assert target.min() >= 0 and target.max() < num_classes",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+      "evidence_quote": "A consequence of the asynchronous computation is that time measurements without synchronizations are not accurate.",
+      "verification": "source",
+      "reason": "给出可直接粘贴的索引/边界断言代码与根因清单（target≥num_classes、embedding 索引越界、gather/scatter 等），并配合 print 触发同步检查 shape/min/max；属具体可执行操作。verification 取 source 因根因与异步机制一致，但清单本身无官方出处，答案已声明。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "torch.cuda.synchronize()          # 若在此处抛错，则 model(x) 内部是嫌疑",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+      "evidence_quote": "PyTorch automatically performs necessary synchronization when copying data between CPU and GPU or between two GPUs",
+      "verification": "source",
+      "reason": "第 4 步给出在可疑段间插同步点二分缩小、配合 print 直接观察越界值的最小复现/确认手法，满足以同步复现确认根因。"
+    },
+    {
+      "id": 6,
+      "status": "supported",
+      "answer_quote": "排查标签/索引越界的惯用断言（放在 loss 前）：",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_b1K3bZ6nKcLVSFLXSfCR6972.result",
+      "evidence_quote": "the stack trace does not show where it was requested.",
+      "verification": "source",
+      "reason": "答案保留了可直接复用的诊断启动命令组合、断言模板（复现样例）以及 compute-sanitizer 报告的 kernel 名/地址信息说明，构成排查后应保留的产出；来源证实错误栈位置信息是关键线索。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "本题为调试方法类问题，原题不需要锁定任何库/工具链/soc 版本；答案与来源均无需版本信息，属纯概念/操作任务。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "未核实项（本轮未取得官方出处）：`TORCH_USE_CUDA_DSA` 这一变量名、它从哪个 PyTorch 版本起可用"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "可执行",
+      "reason": "命令行完整（CUDA_LAUNCH_BLOCKING=1 PYTHONFAULTHANDLER=1 python your_script.py、compute-sanitizer --tool memcheck），断言代码可直接粘贴，仅需替换 your_script.py、num_classes 等明确环境值；扣 1 分因 TORCH_USE_CUDA_DSA 与 compute-sanitizer 参数细节未经核实，答案自身标注待定，存在需修正/补证内容。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 PYTHONFAULTHANDLER=1 python your_script.py"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "case": "case-1470e353c845",
+  "kind": "outcome",
+  "task_id": "E",
+  "ecosystem": "cuda",
+  "split": "heldout",
+  "budget": "restricted",
+  "_provenance": {
+    "original_assessment": "assessments/heldout/case-1470e353c845-outcome-attempt-1.json",
+    "sha256": "a38767c53db96af30bf2e4ceec3cd63baad7db292b33521e9de8be13a29f3858",
+    "process_sha256": "d769ec097bc3f91faa57ea2fc681cd0b63ad5505f92314170358623678cb7f0e",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}

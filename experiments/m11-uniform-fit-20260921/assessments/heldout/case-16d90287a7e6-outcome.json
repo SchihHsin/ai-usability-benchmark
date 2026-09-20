@@ -1,0 +1,359 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "print(torch.cuda.memory_summary(abbreviated=False))\nprint(\"allocated\", torch.cuda.memory_allocated()/2**30)",
+      "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_quote": "You can use `memory_allocated()` and `max_memory_allocated()` to monitor memory occupied by tensors, and use `memory_reserved()` and `max_memory_reserved()`",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出完整排查脚本（memory_summary/memory_allocated/reserved/max 系列），API 名称与官方 CUDA semantics 原文一致；碎片判据（reserved 远大于 allocated、inactive split blocks）也有官方 max_split_size_mb 条文支持。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 2,
+      "status": "unverified",
+      "answer_quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py",
+      "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_quote": "`max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；设置位置（环境变量 PYTORCH_ALLOC_CONF/PYTORCH_CUDA_ALLOC_CONF）与作用（防止大块切分、减碎片、last resort、仅 native 有效）均有官方文档逐字引文支持。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 3,
+      "status": "unverified",
+      "answer_quote": "out = checkpoint(block, x, use_reentrant=False)",
+      "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案给出了梯度检查点代码（torch.utils.checkpoint.checkpoint，use_reentrant=False），但本轮唯一 fetch 的 CUDA semantics 页不含该内容，答案自身标注【仅先验，本轮未核实】，sources 中无任何证据可验证该 API 或参数。"
+    },
+    {
+      "id": 4,
+      "status": "unverified",
+      "answer_quote": "`empty_cache()` 只归还\"缓存但未使用\"的块，不释放仍被张量占用的显存，也不会让 PyTorch 可用显存变多。",
+      "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_quote": "Calling `empty_cache()` releases all **unused** cached memory from PyTorch so that those can be used by other GPU applications.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；限制（只释放未使用缓存、不释放张量占用、不增加 PyTorch 可用显存）与官方原文一致；调用位置未以代码示例单独给出，但在缓存/碎片型 OOM 排查上下文中说明了其定位与边界，该方面实质已覆盖。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 5,
+      "status": "unverified",
+      "answer_quote": "真的用满物理显存 | `memory_allocated` 接近卡容量 | 降显存需求（batch/精度/分片/重算）",
+      "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_quote": "create CUDA allocations that can later be expanded to better handle cases where a job changing allocation sizes frequently, such as having a changing batch size",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案给出 batch/精度/分片/重算等降显存手段，且 expandable_segments 针对变 batch 场景的碎片优化有官方逐字引文支持。",
+      "raw_status": "supported"
+    },
+    {
+      "id": 6,
+      "status": "unverified",
+      "answer_quote": "print(\"max_alloc\", torch.cuda.max_memory_allocated()/2**30)\nprint(\"max_resv \", torch.cuda.max_memory_reserved()/2**30)",
+      "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+      "evidence_quote": "The `memory_stats()` and `memory_summary()` methods are useful for tuning.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案以 max_memory_allocated/max_memory_reserved 峰值指标和 memory_stats()/memory_summary() 作为优化前后比较方法，与官方文档监控与调参建议一致。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题为通用排查/优化方法问题，未要求锁定任何库、工具链或 soc 版本；答案虽注明参考文档为 PyTorch 2.14 并说明跨版本差异（别名、experimental 状态），但无原题所需的定版组件，按规则记 N/A。",
+      "evidence": [
+        {
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "Version/label: PyTorch **2.14**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "status": "insufficient_evidence",
+      "reason": "排查脚本（可直接运行的完整 Python 代码）与 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py、expandable_segments:True 等命令行完整、格式经官方核对，仅需替换 train.py 等用户环境值；梯度检查点代码为示意且答案自标未核实，empty_cache 未给出调用点代码，故不到 5 分。",
+      "evidence": [
+        {
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`"
+        },
+        {
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "PYTORCH_CUDA_ALLOC_CONF=per_process_memory_fraction:0.95,throw_on_cudamalloc_oom:True"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "print(torch.cuda.memory_summary(abbreviated=False))\nprint(\"allocated\", torch.cuda.memory_allocated()/2**30)"
+        }
+      ]
+    },
+    {
+      "requirement": 2,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py"
+        }
+      ]
+    },
+    {
+      "requirement": 4,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "`empty_cache()` 只归还\"缓存但未使用\"的块，不释放仍被张量占用的显存，也不会让 PyTorch 可用显存变多。"
+        }
+      ]
+    },
+    {
+      "requirement": 5,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "真的用满物理显存 | `memory_allocated` 接近卡容量 | 降显存需求（batch/精度/分片/重算）"
+        }
+      ]
+    },
+    {
+      "requirement": 6,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "print(\"max_alloc\", torch.cuda.max_memory_allocated()/2**30)\nprint(\"max_resv \", torch.cuda.max_memory_reserved()/2**30)"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+          "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`"
+        }
+      ]
+    }
+  ],
+  "case": "case-16d90287a7e6",
+  "task_id": "Q",
+  "ecosystem": "cuda",
+  "split": "heldout",
+  "budget": "restricted",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "print(torch.cuda.memory_summary(abbreviated=False))\nprint(\"allocated\", torch.cuda.memory_allocated()/2**30)",
+        "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_quote": "You can use `memory_allocated()` and `max_memory_allocated()` to monitor memory occupied by tensors, and use `memory_reserved()` and `max_memory_reserved()`",
+        "verification": "source",
+        "reason": "答案给出完整排查脚本（memory_summary/memory_allocated/reserved/max 系列），API 名称与官方 CUDA semantics 原文一致；碎片判据（reserved 远大于 allocated、inactive split blocks）也有官方 max_split_size_mb 条文支持。"
+      },
+      {
+        "id": 2,
+        "status": "supported",
+        "answer_quote": "PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py",
+        "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_quote": "`max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation",
+        "verification": "source",
+        "reason": "设置位置（环境变量 PYTORCH_ALLOC_CONF/PYTORCH_CUDA_ALLOC_CONF）与作用（防止大块切分、减碎片、last resort、仅 native 有效）均有官方文档逐字引文支持。"
+      },
+      {
+        "id": 3,
+        "status": "unverified",
+        "answer_quote": "out = checkpoint(block, x, use_reentrant=False)",
+        "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_id": null,
+        "evidence_quote": "",
+        "verification": "none",
+        "reason": "答案给出了梯度检查点代码（torch.utils.checkpoint.checkpoint，use_reentrant=False），但本轮唯一 fetch 的 CUDA semantics 页不含该内容，答案自身标注【仅先验，本轮未核实】，sources 中无任何证据可验证该 API 或参数。"
+      },
+      {
+        "id": 4,
+        "status": "supported",
+        "answer_quote": "`empty_cache()` 只归还\"缓存但未使用\"的块，不释放仍被张量占用的显存，也不会让 PyTorch 可用显存变多。",
+        "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_quote": "Calling `empty_cache()` releases all **unused** cached memory from PyTorch so that those can be used by other GPU applications.",
+        "verification": "source",
+        "reason": "限制（只释放未使用缓存、不释放张量占用、不增加 PyTorch 可用显存）与官方原文一致；调用位置未以代码示例单独给出，但在缓存/碎片型 OOM 排查上下文中说明了其定位与边界，该方面实质已覆盖。"
+      },
+      {
+        "id": 5,
+        "status": "supported",
+        "answer_quote": "真的用满物理显存 | `memory_allocated` 接近卡容量 | 降显存需求（batch/精度/分片/重算）",
+        "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_quote": "create CUDA allocations that can later be expanded to better handle cases where a job changing allocation sizes frequently, such as having a changing batch size",
+        "verification": "source",
+        "reason": "答案给出 batch/精度/分片/重算等降显存手段，且 expandable_segments 针对变 batch 场景的碎片优化有官方逐字引文支持。"
+      },
+      {
+        "id": 6,
+        "status": "supported",
+        "answer_quote": "print(\"max_alloc\", torch.cuda.max_memory_allocated()/2**30)\nprint(\"max_resv \", torch.cuda.max_memory_reserved()/2**30)",
+        "answer_event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+        "evidence_quote": "The `memory_stats()` and `memory_summary()` methods are useful for tuning.",
+        "verification": "source",
+        "reason": "答案以 max_memory_allocated/max_memory_reserved 峰值指标和 memory_stats()/memory_summary() 作为优化前后比较方法，与官方文档监控与调参建议一致。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": null,
+        "status": "N/A",
+        "reason": "原题为通用排查/优化方法问题，未要求锁定任何库、工具链或 soc 版本；答案虽注明参考文档为 PyTorch 2.14 并说明跨版本差异（别名、experimental 状态），但无原题所需的定版组件，按规则记 N/A。",
+        "evidence": [
+          {
+            "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+            "quote": "Version/label: PyTorch **2.14**"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "status": "supported",
+        "reason": "排查脚本（可直接运行的完整 Python 代码）与 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 python train.py、expandable_segments:True 等命令行完整、格式经官方核对，仅需替换 train.py 等用户环境值；梯度检查点代码为示意且答案自标未核实，empty_cache 未给出调用点代码，故不到 5 分。",
+        "evidence": [
+          {
+            "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+            "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`"
+          },
+          {
+            "event_id": "call_00_RZbRzY5TRR2gch6u9Lic8837.result",
+            "quote": "PYTORCH_CUDA_ALLOC_CONF=per_process_memory_fraction:0.95,throw_on_cudamalloc_oom:True"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "e0ccf6627b0749e99cc1719e08913e16",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "23245278c3b61e4272b8b524c3edf2e5",
+        "conversationRequestId": "23245278c3b61e4272b8b524c3edf2e5",
+        "agent": "cli"
+      },
+      {
+        "messageId": "e0ccf6627b0749e99cc1719e08913e16",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "23245278c3b61e4272b8b524c3edf2e5",
+        "conversationRequestId": "23245278c3b61e4272b8b524c3edf2e5",
+        "rawUsage": {
+          "prompt_tokens": 12132,
+          "completion_tokens": 3773,
+          "total_tokens": 15905,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2274,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 9124,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2274,
+          "credit": 3.69,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 12132,
+          "outputTokens": 3773,
+          "totalTokens": 15905,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2274
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "7d48cecd831b97d932bcfda9b77fbe9085e1b93f190ff965129cd950363e112a",
+    "process_sha256": "f04cf09595671fe49780b42163b88a3806c32a0e77a70373e22e2025f0c1be61",
+    "elapsed_seconds": 60.77,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-f10d1c40d29a4fc9b35357bd0bd1c781",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`.",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_cz1mR5Mmk2PFoij6nMAU3630.result",
+      "evidence_quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`. This can be handy when an error occurs on the GPU.",
+      "verification": "source",
+      "reason": "答案给出 CUDA_LAUNCH_BLOCKING=1 开启同步执行，与 PyTorch 官方 CUDA semantics 页原文一致，且补充了 PYTORCH_USE_CUDA_DSA=1 运行期开关（源码核实）。"
+    },
+    {
+      "id": 2,
+      "status": "supported",
+      "answer_quote": "compute-sanitizer --tool memcheck python train.py",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_KOtyuDICd0eLo0s9zION2455.result",
+      "evidence_quote": "compute-sanitizer --tool memcheck [sanitizer_options] app_name [app_options]",
+      "verification": "source",
+      "reason": "答案给出 CUDA_LAUNCH_BLOCKING=1 与 compute-sanitizer 完整命令行用于定位调用位置，与 NVIDIA 官方文档一致。"
+    },
+    {
+      "id": 3,
+      "status": "supported",
+      "answer_quote": "Name of kernel launched that led to failure = …",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_9mcK4CBdQQvQrtXNRw5R8788.result",
+      "evidence_quote": "oss << \"  Name of kernel launched that led to failure = \"\n            << launch_info.kernel_name << std::endl;",
+      "verification": "source",
+      "reason": "答案列出 DSA 输出的 kernel 名、断言文件:行、block/thread ID 等缩小范围的信息，并有 --kernel-name 过滤选项，与官方源码及 compute-sanitizer 文档一致。"
+    },
+    {
+      "id": 4,
+      "status": "supported",
+      "answer_quote": "assert labels.min() >= 0 and labels.max() < num_classes",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_2UTTgZVbZQqpBV6HKLiP8762.result",
+      "evidence_quote": "assert labels.min() >= 0, f\"Negative label: {labels.min()}\"",
+      "verification": "source",
+      "reason": "答案给出在 loss 前检查 label 范围/dtype 的具体断言代码，并列出 CrossEntropyLoss、Embedding、gather 等索引越界根因，与社区来源一致。"
+    },
+    {
+      "id": 5,
+      "status": "supported",
+      "answer_quote": "把 `torch.cuda.synchronize()` 插到可疑区间两侧做二分，或分段 forward/backward，直到错误落在最小代码块。",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_cDNkcJpSlJNTwg63sucv5720.result",
+      "evidence_quote": "Use a combination of binary search and progressive simplification to identify the problematic code",
+      "verification": "source",
+      "reason": "答案给出 CPU 复现和 torch.cuda.synchronize() 二分法两种最小化/同步复现方式；二分法与 NVIDIA 官方 Debugging Strategies 页一致，CPU 复现来自社区来源。"
+    },
+    {
+      "id": 6,
+      "status": "absent",
+      "answer_quote": "### 未能核实 / 不确定处（保留）",
+      "answer_event_id": "final",
+      "evidence_id": null,
+      "evidence_quote": "",
+      "verification": "none",
+      "reason": "答案详细说明如何获取错误栈和 kernel 名，但未明确指出排查后应保留哪些错误栈、kernel 名称或复现样例作为记录；“（保留）”一节仅列出不确定项，非要求保留排查产物。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "not_applicable",
+      "reason": "原题是通用调试方法问题，不要求锁定具体库/工具链版本。答案虽给出版本相关信息（CUDA 12.9+ 驱动日志、CC≥6、PyTorch v2.15.0 unstable 文档页），且已注明未核实 wheel 是否含 TORCH_USE_CUDA_DSA 宏，但无需定版组件，记 N/A。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "`CUDA_LOG_FILE`/驱动错误日志需 CUDA 12.9+（NVIDIA 页与源码注明 `CUDA_VERSION >= 12090`）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "status": "insufficient_evidence",
+      "reason": "主要命令完整可直接执行（CUDA_LAUNCH_BLOCKING=1、compute-sanitizer --tool memcheck、nvcc -lineinfo、CUDA_LOG_FILE=stderr），仅需替换 train.py 等环境参数；但 DSA 步骤的适用性取决于 PyTorch 构建是否含 TORCH_USE_CUDA_DSA 宏，答案自己承认未核实 wheel 默认是否包含，属于需确认的前置条件而非明确说明即可替换的环境值，故不给满分。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py"
+        },
+        {
+          "event_id": "final",
+          "quote": "compute-sanitizer --tool memcheck python train.py"
+        },
+        {
+          "event_id": "final",
+          "quote": "官方发布的 PyTorch wheel 是否默认带 `TORCH_USE_CUDA_DSA` 编译宏：未核实。"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "官方发布的 PyTorch wheel 是否默认带 `TORCH_USE_CUDA_DSA` 编译宏：未核实。"
+        }
+      ]
+    }
+  ],
+  "case": "case-53234cebdcc4",
+  "kind": "outcome",
+  "task_id": "E",
+  "ecosystem": "cuda",
+  "split": "heldout",
+  "budget": "standard",
+  "_provenance": {
+    "original_assessment": "assessments/heldout/case-53234cebdcc4-outcome.json",
+    "sha256": "92188d098f460ce853fd638d38c9e52c039b1621ad387333917f2b10706a5052",
+    "process_sha256": "5caf072becd943621a868e262ed373ff2a84b42fce40eb0e71dbeb6b2a2cfcb3",
+    "policy": "literal-nonempty-quotes; final/run-end identify same input answer; controller M8; preserve declared intervals; applicable unknown uses full scale bounds; blocked/NA not imputed"
+  }
+}
