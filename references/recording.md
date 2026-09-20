@@ -172,3 +172,7 @@ check分别返回日志完整性issues与协议偏离protocol_deviations，并�
 当前M2每项目标保存return_kind、state_basis与初次/最终状态。1/2对应not_obtained，3/4对应partial，5对应obtained；摘要与截断由return_kind区别。状态变化及其事件仍保留，不能因重试后已补齐而删除早期障碍。
 
 新版本v2-coverage-2026-09-15按实际独立文档保存M2清单与fetch_inventory，接口见confirmed-metrics.md；同文档多次获取不重复加权，失败项保留。预算hook账本只是准许/拒绝证据，结束前导入process.jsonl的client_note，不把准许次数当实际派发次数。运行仍只交付两个文件。
+
+## 最终回答与产出评价的关联
+
+将Agent实际最终回答完整保存为process.jsonl的answer事件，保持代码、命令和参数原文，不用摘要替代。若客户端无法导出全文，明确缺口，不能凭来源文档重建答案。evaluation.json中M9/M10的判定应引用answer事件ID及具体原文片段/位置，指出缺少的版本、参数、前提或需修正之处。另记验证状态：仅内容核查、实际运行通过、实际运行失败、未验证，并附相应证据。来源中存在但最终答案没有表达的内容，不能视为答案已提供。此处只补充证据留存要求，不启用审阅稿中的新评分规则。

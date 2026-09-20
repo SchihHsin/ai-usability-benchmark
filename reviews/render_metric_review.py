@@ -10,7 +10,7 @@ def render(metrics,refs,root,reading_log):
     nav=''.join(f'<a href="#{d["id"].lower()}">{d["id"]} · {H(d["name"])}</a>' for d in metrics)
     for d in metrics:
         key=d['id'];o=originals[key]
-        parts.append(f'<section id="{key.lower()}" class="metric-review"><h2>{key} · {H(d["name"])}</h2><p><b>原定义：</b>{H(o["definition"])}</p><p><b>原评价目的：</b>{H(o["purpose"])}</p><h3>拟采用评分规则</h3><table class="score-table"><thead><tr><th>分值</th><th>怎么判定</th></tr></thead><tbody>')
+        parts.append(f'<section id="{key.lower()}" class="metric-review"><h2>{key} · {H(d["name"])}</h2><p><b>原名称：</b>{H(o["name"])}</p><p><b>原定义：</b>{H(o["definition"])}</p><p><b>原评价目的：</b>{H(o["purpose"])}</p><h3>拟采用评分规则</h3><table class="score-table"><thead><tr><th>分值</th><th>怎么判定</th></tr></thead><tbody>')
         for n,t in enumerate(d['bands'],1):
             t=H(t)
             if key not in {'M2','M8'}:t='<mark>'+t+'</mark>'
