@@ -20,6 +20,7 @@ def render(metrics,refs,root,reading_log):
         for r in d['refs']:
             title,url,scope,limit=refs[r]
             parts.append(f'<p><a href="{H(url)}">{H(title)}</a><br>{H(scope)}<br><b>不能据此推断：</b>{H(limit)}</p>')
+        if key=='M11':parts.append((root/'m11-coefficients-fragment.html').read_text())
         if key=='M1':parts.append((root/'m1-session-literature.html').read_text()+(root/'m1-replay.html').read_text())
         parts.append('<p><b>自定部分：</b>'+H(d['own'])+'</p><details><summary>对照：最初分档与公式</summary><p>'+H(o['rubric'])+'</p><p>'+H(o['formula'])+'</p></details></section>')
     parts.append('<details><summary>Experimental Skill v2: fixes and evaluation responsibilities</summary><pre style="white-space:pre-wrap">'+H((root.parent/'experiments/skill-ab-20260920/new-skill-v2/references/post-evaluation.md').read_text())+'</pre></details>')

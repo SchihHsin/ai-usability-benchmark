@@ -16,3 +16,8 @@ OECD/European Union/Joint Research Centre (2008). Handbook on Constructing Compo
 采集开始时的frozen-review-rubric.json仅供控制端留档，未交模型评分；此后M11从分档改为百分制、M2改为返回形态、M11改为等权渠道聚合，均未追改旧快照。
 
 因此：六次采集完成，最新规则评分尚未完成，M11仍为空。原始返回和最终答案可以用于后评，但若缺少新规则要求的证据则保留待定。不得把材料可复用等同于新版规则已验证。当前不自动追加六次运行。
+
+
+## 2026-09-21 系数检查补充
+本轮JRC官方书目 https://publications.jrc.ec.europa.eu/repository/handle/JRC47008 返回200，核对书名、作者、年份、摘要；OECD PDF返回403，另一候选PDF路径404，未宣称本轮阅读全文或取得新页码引文。
+已恢复原噪声OR公式与Mi/5归一化，固定版本权重0.30、成本权重0.10；旧均值方案仅作为历史。对26个旧任务、两生态共52组历史评分进行1,071组权重检查，非新版实测、非最优拟合。总体方向一致但5个任务可反转；完整可复算材料见experiments/m11-coefficients-20260921。
