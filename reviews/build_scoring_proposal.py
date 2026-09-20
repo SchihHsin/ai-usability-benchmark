@@ -14,6 +14,8 @@ refs={
 'API':('Uddin & Robillard (2015). How API Documentation Fails. IEEE Software.','https://doi.org/10.1109/MS.2014.80','补充API文档问题研究的主题参考。已核对题名、作者、年份；本轮未取得全文。','不能据此声称论文给出了本方案的版本配套检查项或五档；实施前可进一步核对全文。'),
 'IIR':('Kelly (2009). Methods for Evaluating Interactive Information Retrieval Systems with Users. Foundations and Trends in Information Retrieval.','https://doi.org/10.1561/1500000012','系统梳理交互式检索评价、数据收集及效度/信度问题。已核对题录与摘要。','人类检索研究迁移到Agent需说明条件，不支持搜索与获取等时或每两次一档。'),
 'SCALE':('Boateng et al. (2018). Best Practices for Developing and Validating Scales for Health, Social, and Behavioral Research: A Primer. Frontiers in Public Health.','https://www.frontiersin.org/journals/public-health/articles/10.3389/fpubh.2018.00149/full','明确测量领域、检查内容覆盖，再检查可靠性和效度。已核对全文相关部分。','只借鉴定义和内容检查流程；本框架不是单一心理潜变量量表，不机械套因子分析或内部一致性要求。')}
+refs['RUBRIC']=('Reddy & Andrade (2010). A review of rubric use in higher education. Assessment & Evaluation in Higher Education.','https://doi.org/10.1080/02602930902862859','2026-09-20：核对Crossref题录和出版社摘要；参考评分描述的清楚性、适切性与评价者共同解释。','教育评价综述，不提供本研究M3的五档，也不支持用辅助要求定义4分。')
+refs['QUESTIONS']=('Sillito, Murphy & De Volder (2006). Questions programmers ask during software evolution tasks. SIGSOFT FSE.','https://doi.org/10.1145/1181775.1181779','2026-09-20：检索并核对Crossref题录；出版社页面遇验证，未取得摘要或全文。','仅留作开发者信息需求候选阅读；未用来制定诊断任务要求或五档。')
 D=[]
 def add(i,name,change,definition,bands,obs,boundary,rigor,action,ref,own,example):
  D.append(dict(id=i,name=name,change=change,definition=definition,bands=bands,obs=obs,boundary=boundary,rigor=rigor,action=action,refs=ref,own=own,example=example))
@@ -94,14 +96,17 @@ add('M11','跨来源联合任务支撑','建议替代旧综合公式；需重点
 '同一需求可由多来源共同满足，必须解释如何拼接；版本冲突留M4，内容矛盾影响相应内容要求。全部材料未取得记不可评价。若不接受收窄综合含义，则保留分项矩阵并暂不输出M11，而不是强算旧公式。',
 ['COMP','RAG','IQ'],'联合需求覆盖及五档是本研究建议，文献只支持谨慎定义聚合含义；不称为成熟综合量表。该项批准前不写入Skill。','官方支持需求A，第三方支持需求B；两者单独均不完整，联合可支持全部核心要求。无需强求各模型最后分数一样。')
 
+from revision_20260920 import amend
+D=amend(D)
+
 def citations(keys):return '<br>'.join(f'<a href="#ref-{k}">{H(refs[k][0])}</a>' for k in keys)
 def bands(d):return '<ol>'+''.join(f'<li><b>{n}分：</b>{H(v)}</li>' for n,v in enumerate(d['bands'],1))+'</ol>'
 css='''*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:25px}body{margin:0;background:#f4f6f9;color:#243248;font:15px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}aside{position:fixed;width:245px;top:0;bottom:0;overflow:auto;background:#fff;border-right:1px solid #e3e7ef;padding:26px 15px}aside strong{display:block;padding:0 12px 16px;font-size:18px}a{color:#235aa1;text-decoration:none;overflow-wrap:anywhere}a:hover{text-decoration:underline}aside a{display:block;border-radius:8px;padding:8px 12px;font-size:12px;color:#48596d}aside a.active,aside a:hover{background:#eaf0fa;color:#21589d;text-decoration:none}main{margin-left:245px;padding:40px 30px 80px;max-width:1800px}h1{font-size:31px;line-height:1.4}h2{font-size:23px;margin-top:30px;color:#173e69}h3{font-size:17px}.notice{background:#fff3d9;border:1px solid #ecd5a4;border-radius:12px;padding:18px 22px}.tag{display:inline-block;border-radius:6px;background:#eaf0fa;padding:3px 9px;font-size:12px;color:#254e84}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;font-size:13px;margin:18px 0}th,td{border:1px solid #dfe6ef;text-align:left;vertical-align:top;padding:14px}th{background:#eaf0f8}th:nth-child(1){width:17%}th:nth-child(2){width:31%}th:nth-child(3){width:29%}th:nth-child(4){width:23%}ol{list-style:none;padding:0;margin:0}li{margin-bottom:7px}section{background:#fff;border:1px solid #e0e6ef;border-radius:14px;padding:20px 26px;margin:25px 0}section h2{margin-top:4px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:25px}.refs p{font-size:13px}button{padding:8px 12px;background:white;border:1px solid #d8e1ee;border-radius:6px;cursor:pointer}.formula{padding:16px;background:#f3f6fc;font-size:18px}summary{cursor:pointer;color:#235aa1}p{margin:12px 0}@media(max-width:1000px){main{padding:25px 16px}table{min-width:970px}.cols{grid-template-columns:1fr}}@media(max-width:750px){aside{position:static;width:auto;max-height:240px}main{margin:0}h1{font-size:25px}}@media print{aside,button{display:none}main{margin:0;padding:0}body{font-size:11px;background:white}table{font-size:9px;min-width:0}h2,h3{break-after:avoid}.tablewrap{overflow:visible}}'''
 nav='<a href="#overview">总览与五档</a><a href="#method">共同评分协议</a>'+''.join(f'<a href="#{d["id"].lower()}"><b>{d["id"]}</b> {H(d["name"])}</a>' for d in D)+'<a href="#validation">怎样加强严谨性</a><a href="#references">文献与核对范围</a>'
-parts=['<h1>11项指标：评分规则与严谨性修订方案</h1>','<p>审阅草案 · 2026-09-15 · proposal-1</p>', '<div class="notice"><b>本轮仅供确认，尚未写入Skill。</b><br>当前安装版仍是此前的v2-coverage-2026-09-15。本页提出整套修订：补齐M1/M4/M5/M6/M9五档，明确M7仅为自报信心，并建议将M11改为跨来源联合任务支撑。没有重跑实验、改旧分数或更新论文。</div>', '<p>严谨性按“定义与边界、分档依据、证据可追溯、判断可重复、结论适用范围”逐项说明，不再用笼统的高中低评级。下列全部规则均作为本次整体待确认方案；标注“保留”的项目沿用已有方案。</p>', '<h2 id="overview">总览：每个分数怎么定、依据是什么</h2><p>五档用于统一展示，不意味着指标之间可直接相加，或相邻档位差距相等。文献支持范围和研究自行设定的阈值分别列出。</p><div class="tablewrap"><table><thead><tr><th>指标与定义</th><th>拟定评分标准</th><th>严谨性：已有依据、问题与改进</th><th>参考文献与支持边界</th></tr></thead><tbody>']
+parts=['<h1>11项指标：评分规则与严谨性修订方案</h1>','<p>整套审阅版 · 2026-09-20 · proposal-2</p>', '<div class="notice"><b>本轮仅供确认，尚未写入Skill。</b><br>当前安装版仍是此前的v2-coverage-2026-09-15。本页提出整套修订：补齐M1/M4/M5/M6/M9五档，明确M7仅为自报信心，并建议将M11改为跨来源联合任务支撑。没有重跑实验、改旧分数或更新论文。</div>', '<p>严谨性按“定义与边界、分档依据、证据可追溯、判断可重复、结论适用范围”逐项说明，不再用笼统的高中低评级。下列全部规则均作为本次整体待确认方案；标注“保留”的项目沿用已有方案。</p>', '<h2 id="overview">总览：每个分数怎么定、依据是什么</h2><p>五档用于统一展示，不意味着指标之间可直接相加，或相邻档位差距相等。文献支持范围和研究自行设定的阈值分别列出。</p><div class="tablewrap"><table><thead><tr><th>指标与定义</th><th>拟定评分标准</th><th>严谨性：已有依据、问题与改进</th><th>参考文献与支持边界</th></tr></thead><tbody>']
 for d in D:
  parts.append(f'<tr><td><a href="#{d["id"].lower()}"><b>{d["id"]} · {H(d["name"])}</b></a><p>{H(d["definition"])}</p><span class="tag">{H(d["change"])}</span></td><td>{bands(d)}</td><td><b>尚存问题：</b>{H(d["rigor"])}<p><b>改进办法：</b>{H(d["action"])}</p></td><td>{citations(d["refs"])}<p><b>边界与研究约定：</b>{H(d["own"])}</p></td></tr>')
-parts+=['</tbody></table></div>', '<section id="method"><h2>共同评分协议</h2><p><b>任务要求先固定。</b> 两生态按共同开发意图、起始条件和产出要求配对，保留两问句及差异。每项要求有ID、核心/辅助、所属指标和“达到什么才算满足”的条件；不因某个模型的答案增删要求。问题相似不自动证明难度完全相同。</p><p><b>观测、证据、评分分开。</b> 观测保存工具实际返回与最终答案；评价引用原文并解释满足/部分/不满足/未知；程序处理计数与聚合。对内容评分依次判断：没有可用信息→1；有可用信息但无核心要求充分满足→2；部分核心满足→3；所有核心满足但辅助未齐→4；全部预定要求满足→5。M4/M9使用版本关系清单，M10使用自身链路标准。</p><p><b>不知道不填低分。</b> 区分未观察、不可评价、不适用和未知。只要未知会改变所属档位，就保留待定；不删除未知项来抬高均值。没有辅助要求时不强行制造4分条件。</p><p><b>保留遇阻与恢复。</b> 同样遇到页面框架，即使某模型后来找到替代材料，也同时报告共同障碍和不同恢复路径。没有访问相关资料的模型标未观察，不写成没有问题。</p><p><b>五档与原始数据同时保存。</b> M1保留实际排名、M2保留文档状态和覆盖、M5保留原始数量、M7保留原始概率、M8保留实际调用。内容指标保留逐需求矩阵。全部仍放在process.jsonl与evaluation.json两个交付文件内。</p><p><b>跨模型比较的对象。</b> 先比较同模型内两生态，再检查多个模型发现的共同问题、反例及恢复路径。既不以分数完全相同为目标，也不以结论一致单独证明评分体系有效。</p></section>']
+parts+=['</tbody></table></div>', '<section id="method"><h2>共同评分协议</h2><p><b>任务要求先固定。</b> 两生态按共同开发意图、起始条件和产出要求配对，保留两问句及差异。每项要求有ID、适用范围、所属指标和“达到什么才算满足”的条件；不因某个模型的答案增删要求。问题相似不自动证明难度完全相同。</p><p><b>观测、证据、评分分开。</b> 观测保存工具实际返回与最终答案；评价引用原文并解释满足/部分/不满足/未知；程序处理计数与聚合。对内容评分依次判断：没有可用信息→1；只有方向或未成形的片段→2；已有可用关键片段但需补建或重选路径→3；所有必需内容路径已形成、仅局部实质缺口→4；全部预定要求充分且无实质缺口→5。M4/M9使用版本关系清单，M10使用自身链路标准。</p><p><b>不知道不填低分。</b> 区分未观察、不可评价、不适用和未知。只要未知会改变所属档位，就保留待定；不删除未知项来抬高均值。4分不依赖辅助要求存在；必须指出局部缺口及为何无需补建关键路径。</p><p><b>保留遇阻与恢复。</b> 同样遇到页面框架，即使某模型后来找到替代材料，也同时报告共同障碍和不同恢复路径。没有访问相关资料的模型标未观察，不写成没有问题。</p><p><b>五档与原始数据同时保存。</b> M1保留实际排名、M2保留文档状态和覆盖、M5保留原始数量、M7保留原始概率、M8保留实际调用。内容指标保留逐需求矩阵。全部仍放在process.jsonl与evaluation.json两个交付文件内。</p><p><b>跨模型比较的对象。</b> 先比较同模型内两生态，再检查多个模型发现的共同问题、反例及恢复路径。既不以分数完全相同为目标，也不以结论一致单独证明评分体系有效。</p></section>']
 for d in D:
  parts += [f'<section id="{d["id"].lower()}"><h2>{d["id"]} · {H(d["name"])}</h2><span class="tag">待整体确认 · {H(d["change"])}</span><p>{H(d["definition"])}</p><div class="cols"><div><h3>1—5分标准</h3>{bands(d)}</div><div><h3>原始材料与判断依据</h3><p>{H(d["obs"])}</p><h3>与其他指标的分工</h3><p>{H(d["boundary"])}</p></div></div><h3>严谨性问题与改进</h3><p>{H(d["rigor"])}</p><p>{H(d["action"])}</p><h3>具体例子</h3><p>{H(d["example"])}</p><h3>文献及适用边界</h3><p>{citations(d["refs"])}</p><p>{H(d["own"])}</p>']
  if d['id']=='M2':parts+=['<div class="formula"><math display="block"><msub><mover><mi>x</mi><mo>¯</mo></mover><mi>M2</mi></msub><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>s</mi><mi>i</mi></msub><mo>，</mo><mi>M2</mi><mo>=</mo><mo>⌊</mo><msub><mover><mi>x</mi><mo>¯</mo></mover><mi>M2</mi></msub><mo>+</mo><mn>0.5</mn><mo>⌋</mo></math></div><p>n为独立官方文档数；重试/分页合并。任一文档分值未知则不计算任务均值，同时报告可评分文档数及全部文档数。结构覆盖分子是已取得正文内容的单元数，不是仅出现标题的单元数。</p>']
@@ -110,7 +115,40 @@ parts+=['<section id="validation"><h2>怎样进一步加强严谨性</h2><p><b>�
 for k,(title,url,support,limit) in refs.items():parts+=[f'<div id="ref-{k}"><h3>[{k}] <a href="{H(url)}" target="_blank" rel="noopener">{H(title)}</a></h3><p><b>已核对及可借鉴：</b>{H(support)}<br><b>不能据此声称：</b>{H(limit)}</p></div>']
 parts+=['</section><section id="decisions"><h2>本轮重点确认的变化</h2><p>① M1只按首次搜索排名评分；② M5固定为已读取的独立第三方内容数量；③ M6聚焦任务支撑，可信度依据另列；④ M7明确为辅助自报信心；⑤ M11建议替代旧公式，改为跨来源联合任务支撑。这些涉及定义或范围变化，确认后需统一更新协议、模板、校验、Skill及后续论文说明，旧实验保留原版本。</p></section>']
 js='''const links=[...document.querySelectorAll('aside a')];const observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id));},{rootMargin:'0px 0px -65% 0px'});document.querySelectorAll('section[id],h2[id]').forEach(e=>observer.observe(e));'''
-page='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>11项指标严谨性修订 · 待确认方案</title><style>'+css+'</style></head><body><aside><strong>指标严谨性修订</strong>'+nav+'<a href="#decisions">重点确认项</a><button onclick="print()">打印 / 保存PDF</button></aside><main>'+''.join(parts)+'</main><script>'+js+'</script></body></html>'
+extra=ROOT/'m3-evidence-2026-09-20.html'
+if extra.exists():
+    parts.append('<details><summary>展开此前M3讨论与原始例子（历史方案，当前以proposal-2为准）</summary>'+extra.read_text()+'</details>')
+    nav='<a href="#m3-evidence">M3：文献与实际证据（新增）</a>'+nav
+log=['<section id="reading-log"><h2>研究过程中的文献留存</h2><p>保留已采用、部分采用和仅检索到的文献。核对范围与用途分别说明；题录、摘要和全文不混称“读过全文”。后续调整规则继续补充此处，不因方案被撤回而删除相关文献。</p><p><b>2026-09-20的方法修订：</b>M3用“核心齐全、辅助缺失”定义4分，导致无辅助要求的任务缺档。此定义已被指出需要修订；不能把缺档合理化为任务问题。原方案保留供追溯，新的统一五档见proposal-2。没有任何下列文献被核实为支持该4分定义。proposal-2已取消这一依赖，改为局部实质缺口，仍是待确认的研究量规。</p><div class="tablewrap"><table><thead><tr><th>文献与查阅时间</th><th>实际核对范围</th><th>用于哪个判断</th><th>采用状态与限制</th></tr></thead><tbody>']
+uses={'IR':'M1排名与固定检索深度；M5检索统计。','IQ':'获取、内容充分性与情境适用性分开。','RAG':'M3/M6来源内容与M10最终回答分开。','FACT':'逐条核验事实支持，不等同操作完整。','SELF':'M7自报信心不等于真实知识。','COMP':'M11聚合含义和补偿关系须明确。','BODY':'M2正文与页面框架区分。','API':'开发者文档问题的候选参考。','IIR':'M1/M8交互检索评价背景。','SCALE':'先定义评价对象，再检查内容覆盖与评分可靠性。','RUBRIC':'M3分档措辞须清楚适切，需检查共同解释。','QUESTIONS':'拟查开发者任务中的信息需求；尚未用于定义评分。'}
+for key,(title,url,scope,limit) in refs.items():
+    date='2026-09-20' if key in {'RUBRIC','QUESTIONS'} else '2026-09-15'
+    status='候选，未作为分档依据' if key in {'API','QUESTIONS'} else '借鉴概念或方法，未直接套用分档'
+    log.append(f'<tr><td><a href="{H(url)}">{H(title)}</a><p>{date}</p></td><td>{H(scope)}</td><td>{H(uses[key])}</td><td><b>{status}</b><p>{H(limit)}</p></td></tr>')
+log.append('</tbody></table></div><h3>留存的摘要原句示例</h3><blockquote>clarity and appropriateness of language is a central concern.</blockquote><p>出自Reddy &amp; Andrade摘要，针对量规效度研究的概括。它支持检查描述语是否清楚、适合评价对象，不能推出某个具体档位应如何命名。此处留存短摘录、原文链接和用途；未保存或未取得的全文不声称已归档。</p></section>')
+parts.append(''.join(log))
+nav='<a href="#reading-log">文献留存与采用过程</a>'+nav
+plan=ROOT/'two-hour-plan-fragment.html'
+if plan.exists():
+    parts.insert(4,plan.read_text())
+    nav='<a href="#two-hour-plan">两小时交付与今日重跑</a>'+nav
+css += '#two-hour-plan table{table-layout:auto}#two-hour-plan th:nth-child(n){width:auto}#two-hour-plan th:first-child{min-width:95px}#two-hour-plan table{display:block;overflow:auto}'
+audit=ROOT/'six-run-review-fragment.html'
+if audit.exists():
+    parts.insert(5,audit.read_text())
+    nav='<a href="#six-run-review">六轮材料核对与耗时</a>'+nav
+from check_proposal_boundaries import cases,band
+checks='<section id="current-diff"><h2>本次集中确认：相比活动Skill改了什么</h2><p>活动Skill目前只有M2/M3/M8/M10分档已确认，其他指标未正式评分。本页为完整待确认方案，历史文献与旧讨论保留在可展开区域。</p><ul><li><b>M1：</b>新增首次搜索前10条的排名五档；首次工具错误记未知，不将后续列表拼接。</li><li><b>M2：</b>保留已确认的覆盖五档和文档等权，补清参照缺失不得猜分。</li><li><b>M3/M6：</b>统一按任务支撑路径与缺口影响区分五档，取消辅助要求作为4分前提；M6来源独立性另存。</li><li><b>M4/M9：</b>同一版本关系需求，分别评价来源和回答；4分为既定配套选择的局部范围缺口。</li><li><b>M5：</b>新增实际取得独立第三方内容的0/1/2/3/4+五档；镜像不重复算独立原创。</li><li><b>M7：</b>改为检索前自报概率及五档，仅辅助说明，不作为真实知识或综合分。</li><li><b>M8：</b>保留S+F与现有区间，实际次数与等级同时呈现。</li><li><b>M10：</b>保留主要分档，要求说明3/4分的结构性或局部修正依据。</li><li><b>M11：</b>建议改为外部材料的联合任务支撑，不再合成M1—M10；这是范围变化，必须确认后才实施。</li></ul><h3>五档判定路径检查</h3><p>以下是说明规则的构造例子，不是真实模型运行得分。代码仅检查从已判定的条件到档位的映射，条件是否成立仍需原文核对。</p><ul>'
+for name,kw,want in cases:
+    assert band(**kw)==want
+    checks+='<li>'+H(name)+' → '+('待定/不可评价' if want is None else str(want)+'分')+'</li>'
+checks+='</ul><p>最后的局部/结构性判断仍是评价者的证据判断；本次未声称已完成独立评价者一致性或效度验证。正式执行前仍需冻结全部任务需求。今日重跑取决于这版确认及执行器更新。</p></section>'
+parts.insert(6,checks)
+nav='<a href="#current-diff">集中修改点与五档检查</a>'+nav
+from render_metric_review import render
+parts,nav,reader_css=render(D,refs,ROOT,log)
+css+=reader_css
+page='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>11项指标严谨性修订 · 待确认方案</title><style>'+css+'</style></head><body><aside><strong>指标严谨性修订</strong>'+nav+'<button onclick="print()">打印 / 保存PDF</button></aside><main>'+''.join(parts)+'</main><script>'+js+'</script></body></html>'
 (ROOT/'scoring-rules-and-literature-2026-09-15.html').write_text(page)
-(ROOT/'scoring-proposal-2026-09-15.json').write_text(json.dumps({'status':'review_only_not_applied','metrics':D,'references':refs},ensure_ascii=False,indent=2))
+(ROOT/'scoring-proposal-2026-09-15.json').write_text(json.dumps({'status':'historical_proposal_pending_original_definition_review','baseline':'original-metric-baseline.json','metrics':D,'references':refs},ensure_ascii=False,indent=2))
 print('Built review-only HTML and proposal data; Skill unchanged.')
