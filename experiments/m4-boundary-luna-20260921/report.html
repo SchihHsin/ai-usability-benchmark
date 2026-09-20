@@ -1,0 +1,595 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>M4 Luna 实验</title><style>body{max-width:1200px;margin:32px auto;padding:0 24px;color:#233047;font:16px/1.65 system-ui}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce1e8;padding:10px;text-align:left;vertical-align:top}th{background:#edf3fb}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f8fb;padding:16px}small{color:#5c687a}details{margin:12px 0}a{color:#1766ae}</style><h1>M4 五档规则小实验</h1><p>实际请求模型：GPT-5.6 Luna；16例 × 3个独立评分上下文。新规则两次评分、旧规则一次。12例为合成边界测试，4例为官方资料阅读包。不是16次端到端任务执行，也不是跨生态效度验证。</p><h2>结论</h2><pre>本轮结论：新版更适合作为下一轮试用规则，但尚不能称为已验证量表。
+
+实验：请求 GPT-5.6 Luna，三个新上下文分别执行旧规则一次、新规则两次；16份相同资料包，共48条判断。12例为合成边界案例，4例为官方资料阅读包，不是重新执行16个开发任务。
+
+结果：
+• 新版13例可打分案例全部同分；另外两例均判为受阻/不适用。一例官方冲突均判uncertain，但区间分别为1—3和1—2，所以完整判断一致为15/16。
+• 四组不变性检查，新版两次均4/4通过；旧版2/4通过。旧版因页面拆分出现5→4，新版同内容保持同分。
+• 旧→新发生点分变化：u63 5→4、u04 4→5、u42 1→2、r26/r58 2→3。不能将这些变化自动称为评分变准确：旧版u42也是评价者将“有版本列表”误判为“无版本信息”的执行错误。
+• 引文核查发现旧版r26一条不是逐字引用；新版引用均逐字匹配。该错误保留在quote-audit.json，未改写原评分。
+
+需要的最小澄清（未覆盖冻结规则，亦未写入正式Skill）：
+1. 2分明确包含“同一适用条件下，官方版本说明互相冲突，且没有可用的优先级或范围说明”。u90明明有版本信息，不能给1分；这属于版本关系不清，不是正文未取得。原始uncertain保留，不冒充模型已给2分。
+2. 4/5分须说明：直接套用官方已给出的联合适用规则（含代入版本号、计算明确允许范围）可为5分；仅有分散的单项约束，需评价者自行建立交集才确定版本，为4分。Kubernetes例虽两次均5分，仍说明原短句容易让人把一切计算都当成4分。此澄清尚未另行测试。
+3. CANN/PyTorch资料包缺少某些功能版本条件只说明本资料包不足；不能断言整个生态无资料，也不能要求所有版本无关的功能一律提供版本号。
+
+建议保留五档短句，仅补以上判定说明。新版试验显示减少了页面布局对M4的影响，但不足以证明跨生态效度或与人类判断一致。评分一致仅是同一模型重复，不是独立专家金标准；合成期望是研究者设计的诊断预期。
+
+留存：冻结输入/规则及哈希、派发配置、三组原始评分和过程日志、真实HTTP响应、历史材料来源、引文核查、分析脚本。正式安装Skill及其他指标、M11系数均未修改。
+
+方法依据：沿用既有文献清单中的AERA/APA/NCME (2014) Standards（效度针对具体分数解释和用途）与Boateng et al. (2018)（构念界定与条目修订、预试）。它们支持开展边界检查，不直接提供本研究五档阈值；此次未新增文献或宣称五档来自权威现成量表。
+</pre><h2>新旧档位</h2><table><tr><th>分值</th><th>旧规则</th><th>新规则</th></tr><tr><td>1</td><td>无版本信息</td><td>无版本信息</td></tr><tr><td>2</td><td>有版本，无法确定选择</td><td>有版本信息，但无明确选择依据</td></tr><tr><td>3</td><td>能缩小范围，仍不能确定</td><td>部分选择条件明确，仍有关键条件缺失</td></tr><tr><td>4</td><td>需要跨页面对照</td><td>需自行合并官方约束，才能确定适用版本</td></tr><tr><td>5</td><td>同一页面内即可确定</td><td>官方已明确说明条件与适用版本的对应关系</td></tr></table><h2>结果</h2><p>新规则可比较点分 13 例，其中完全一致 13 例；逐字引文问题 1 条。相同模型的重复一致不等于独立专家验证。</p><table><thead><tr><th>案例</th><th>评价任务</th><th>旧规则</th><th>新规则A</th><th>新规则B</th><th>两次新评分理由</th></tr></thead><tbody><tr><td>r39<br>real_official_material</td><td>HA集群的kube-apiserver为1.36和1.35，哪些kubelet次版本满足官方版本偏差约束？仅评价版本偏差关系，不评价维护期限或额外部署工具约束。</td><td>5</td><td>5</td><td>5</td><td>HA版本偏差规则和收窄示例明确，可应用到给定两台apiserver。<br><small>HA 两个 apiserver 版本下，文档给出不得新于 apiserver 且最多落后三个 minor，并说明 HA 版本偏差会收窄范围，可确定 kubelet 版本范围。</small></td></tr><tr><td>u29<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>4</td><td>4</td><td>4</td><td>设备和运行时约束需合并取交集。<br><small>设备和运行时分别给出范围，且明确要求同时满足；需合并两个官方约束得到交集。</small></td></tr><tr><td>r26<br>real_official_material</td><td>昇腾训练报 NPU out of memory，怎么排查和优化显存（PYTORCH_NPU_ALLOC_CONF / 梯度检查点 / 显存碎片）？ 本次仅评价所附官方资料对相关功能/参数的版本适用条件是否清楚，不要求实际解决OOM。</td><td>2</td><td>3</td><td>3</td><td>TorchNPU版本及HDK/CANN条件明确，但题目所列梯度检查点缺少版本条件。<br><small>资料对若干内存参数给出明确 HDK/CANN 或 TorchNPU/PyTorch 条件，但题目涉及的梯度检查点等关键功能没有对应版本条件，版本适用性不完整。</small></td></tr><tr><td>u85<br>synthetic</td><td>解释“版本号”这个通用概念；无需选择、比较或锁定任何软件版本。</td><td>not_applicable [None, None]</td><td>not_applicable [None, None]</td><td>not_applicable [None, None]</td><td>任务无需选择或锁定软件版本。<br><small>题目只解释版本号概念，无需选择或比较软件版本。</small></td></tr><tr><td>u90<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>2</td><td>uncertain [1, 3]</td><td>uncertain [1, 2]</td><td>两页对同一条件给出冲突版本且无优先级或适用范围说明。<br><small>两份材料对同一设备和运行时给出互相冲突的单版本结论，未说明优先级或适用范围，无法确定可用版本。</small></td></tr><tr><td>u12<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>blocked [None, None]</td><td>blocked [None, None]</td><td>blocked [None, None]</td><td>官方正文未取得。<br><small>仅取得 HTTP 403，目标正文未取得。</small></td></tr><tr><td>u33<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>5</td><td>5</td><td>5</td><td>兼容表直接映射到唯一版本。<br><small>兼容表直接把设备与运行时条件映射到唯一 SDK 版本，并说明只支持该版本。</small></td></tr><tr><td>r58<br>real_official_material</td><td>PyTorch 训练报 CUDA out of memory，怎么排查和优化显存（max_split_size_mb / 梯度检查点 / empty_cache）？ 本次仅评价所附官方资料对相关功能/参数的版本适用条件是否清楚，不要求实际解决OOM。</td><td>2</td><td>3</td><td>3</td><td>PyTorch 2.14和分配器条件清楚，但梯度检查点不在材料中。<br><small>材料标明文档版本并给出个别参数的 CUDA 版本条件，但梯度检查点未覆盖，且无法为题目涉及的全部功能确定统一适用版本。</small></td></tr><tr><td>u51<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>5</td><td>5</td><td>5</td><td>单条兼容表给出适用范围及范围内均支持。<br><small>兼容表直接给出设备+运行时对应的 SDK 范围，并明确范围内各版本均支持且无其他限制。</small></td></tr><tr><td>u04<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>4</td><td>5</td><td>5</td><td>关联页面和完整兼容表明确。<br><small>材料通过明确关联页面给出兼容表，直接说明设备+运行时对应 SDK 范围及选择规则。</small></td></tr><tr><td>u08<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>3</td><td>3</td><td>3</td><td>设备范围有说明，但运行时对应范围缺失。<br><small>设备侧范围明确，但材料明确表示未说明运行时 R8 对应的 SDK 版本，关键条件缺失。</small></td></tr><tr><td>r71<br>real_official_material</td><td>Django 5.2分支支持哪些Python次版本？Python 3.14从哪个Django补丁版本开始支持？仅判断官方版本支持关系，不选择生产环境最新补丁。</td><td>5</td><td>5</td><td>5</td><td>表格明确Django 5.2支持的Python次版本及3.14起始补丁。<br><small>官方表格明确列出 Django 5.2 支持的 Python 次版本，并直接标注 Python 3.14 从 5.2.8 加入。</small></td></tr><tr><td>u42<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>1</td><td>2</td><td>2</td><td>只列可下载版本，无适用关系。<br><small>只列出可下载版本，没有说明设备或运行时对应关系，无法据此选择适用版本。</small></td></tr><tr><td>u63<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>5</td><td>4</td><td>4</td><td>两项范围需按同时满足合并取交集。<br><small>同一材料给出设备和运行时各自范围，并规定同时满足；需要合并两项约束取交集。</small></td></tr><tr><td>u17<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Alpha SDK版本或范围。</td><td>1</td><td>1</td><td>1</td><td>没有版本号、范围或兼容关系。<br><small>材料没有发布号、版本范围或兼容关系，未提供版本信息。</small></td></tr><tr><td>u76<br>synthetic</td><td>设备H1、运行时R8，按官方材料选择可用的Beta SDK版本或范围。</td><td>5</td><td>5</td><td>5</td><td>兼容表明确Beta SDK范围和支持规则。<br><small>兼容表直接给出设备+运行时对应的 Beta SDK 范围，且明确范围内均支持、无其他限制。</small></td></tr></tbody></table><h2>证据</h2><details><summary>r39：证据与歧义记录</summary><p>fetch-kubernetes <a href="https://kubernetes.io/releases/version-skew-policy/">来源</a></p><pre>Supported versions
+Kubernetes versions are expressed as x.y.z, where x is the major version,
+y is the minor version, and z is the patch version, following
+Semantic Versioning terminology. For more information, see
+Kubernetes Release Versioning.
+The Kubernetes project maintains release branches for the most recent three minor releases
+(1.37, 1.36, 1.35).
+Kubernetes 1.19 and newer receive approximately 1 year of patch support.
+Kubernetes 1.18 and older received approximately 9 months of patch support.
+Applicable fixes, including security fixes, may be backported to those three release branches,
+depending on severity and feasibility. Patch releases are cut from those branches at a
+regular cadence, plus additional urgent releases, when required.
+The Release Managers group owns this decision.
+For more information, see the Kubernetes patch releases page.
+Supported version skew
+kube-apiserver
+In highly-available (HA) clusters,
+the newest and oldest kube-apiserver instances must be within one minor version.
+Example:
+newest kube-apiserver is at 1.37
+other kube-apiserver instances are supported at 1.37 and 1.36
+kubelet
+kubelet must not be newer than kube-apiserver.
+kubelet may be up to three minor versions older than kube-apiserver (kubelet &lt; 1.25 may only be up to two minor versions older than kube-apiserver).
+Example:
+kube-apiserver is at 1.37
+kubelet is supported at 1.37, 1.36,
+1.35, and 1.34
+Note:
+If version skew exists between kube-apiserver instances in an HA cluster, this narrows the allowed kubelet versions.
+Example:
+kube-apiserver instances are at 1.37 and 1.36
+kubelet is supported at 1.36, 1.35,
+and 1.34 (1.37 is not supported because that
+would be newer than the kube-apiserver instance at version 1.36)
+</pre><p>old-a: 需将同页示例规则应用到具体组合。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u29：证据与歧义记录</summary><p>u29-s1 合成测试材料</p><pre>设备H1允许使用Alpha SDK 2.0至2.4（含端点）。</pre><p>u29-s2 合成测试材料</p><pre>运行时R8允许使用Alpha SDK 2.2至2.6（含端点）。</pre><p>u29-s3 合成测试材料</p><pre>同一安装同时满足设备和运行时约束即可使用，无其他版本限制。</pre><p>old-a: 没有单页直接列出交集。</p><p>new-a: 需自行取交集。</p><p>new-b: 交集计算需合并两条官方范围</p></details><details><summary>r26：证据与歧义记录</summary><p>call_00_m9wU2khEYsigQyoDXEUY6537.result <a href="https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html">来源</a></p><pre>**标题**: PYTORCH_NPU_ALLOC_CONF-内存管理-环境变量-参考-TorchNPU7.0.0开发文档-昇腾社区
+
+[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)
+
+# PYTORCH_NPU_ALLOC_CONF
+
+#### 功能描述
+
+通过此环境变量可控制缓存分配器行为。配置此环境变量会改变内存占用量，可能造成性能波动。
+
+可选参数：
+
+- max_split_size_mb:&lt;value&gt;，内存块允许切分上限。
+  
+  [](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)大于设定值的内存块在使用过程中不会进行切分，这有助于减少内存碎片。此选项主要应用于当模型由于oom（Out of Memory，内存不足）而中断并显示存在大量非活动的切分内存块场景的优化。&lt;value&gt;默认值为无限大，单位MB，即所有大小的内存块都可以切分，最小设置值大于20MB。
+- garbage_collection_threshold:&lt;value&gt;，垃圾回收阈值。
+  
+  [](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)主动回收未使用的NPU内存块。在设置value阈值（例如0.8）后，如果NPU内存容量使用超过阈值（即分配给NPU应用程序的总内存的80%），缓存分配器将开始回收NPU内存块，优先释放最先申请和长时间未复用的内存块，避免释放积极复用的内存块。其中&lt;value&gt;取值范围为(0.0,1.0)，默认值为0.0。垃圾回收阈值需与内存因子配合使用，内存因子可参考《[API参考](https://www.hiascend.com/document/detail/zh/Pytorch/700/apiref/apilist/ptaoplist_000002.html)》的“torch_npu.npu.set_per_process_memory_fraction”。
+- expandable_segments:&lt;value&gt;，使能内存池扩展段功能，即虚拟内存特性。
+  
+  [](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)默认为False。如果设置为True，此设置将指示缓存分配器创建特定的内存块分配，这些内存块后续可以扩展，以便能更好地处理内存使用中频繁变更使用内存大小的情况。如果设置为False，关闭内存池扩展段功能，使用原有的内存申请方式。
+- base_addr_aligned_kb:&lt;value&gt;，内存基地址对齐粒度。
+  
+  [](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)取值范围为0~16，设置值需为整数，单位KB，默认值为16。仅在expandable_segments设置为true的时候生效。若此参数配置为16，在申请大块内存（大于等于2M）的时候，会尽量保持申请内存的基地址16KB对齐；若配置为0时，申请内存的基地址512B对齐。
+- page_size:&lt;value&gt;，设置申请大页内存的大小。
+  
+  [](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)取值仅支持1G，参考[配置示例](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html#ZH-CN_TOPIC_0000002275949317__zh-cn_topic_0000001659562614_section363055512307)。内存申请粒度为1G，不足1G的向上对齐到1G，始终为1G的整数倍。
+  
+  未配置该选项时，内存申请粒度为2M，如需申请1G的大页内存，会占用1024/2=512个页表；设置该选项后，内存申请粒度为1G，1G大页内存只占用1个页表，能有效降低页表数量，有效扩大TLB（Translation Lookaside Buffer）缓存的地址范围，从而提升离散访问的性能。
+  
+  TLB是昇腾AI处理器中用于高速缓存的硬件模块，用于存储最近使用的虚拟地址到物理地址的映射。
+
+参数配置格式PYTORCH_NPU_ALLOC_CONF=&lt;option1&gt;:&lt;value1&gt;,&lt;option2&gt;:&lt;value2&gt;。
+
+用户使用Ascend Extension for PyTorch 6.0.rc3及之后版本配套的驱动（Ascend HDK 24.1.RC3及之后），开启虚拟内存特性时，可以使用单进程多卡特性；用户使用Ascend Extension for PyTorch 6.0.rc3之前版本配套的驱动（Ascend HDK 24.1.RC3之前版本），开启虚拟内存特性时，不能使用单进程多卡特性。
+
+[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)[](https://www.hiascend.com/document/detail/zh/Pytorch/700/comref/Envvariables/Envir_012.html)
+
+#### 配置示例
+
+示例一：
+
+```
+export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6
+```
+
+示例二：
+
+```
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True,base_addr_aligned_kb:16
+```
+
+示例三：
+
+```
+export PYTORCH_NPU_ALLOC_CONF=page_size:1g
+```
+
+#### 使用约束
+
+- expandable_segments特性需在Ascend HDK 23.0.0及以上版本上使用。
+- max_split_size_mb和garbage_collection_threshold中任意一个为非默认值时，expandable_segments必须设置为False。
+- page_size特性要求在Ascend HDK 25.0.RC1及以上版本、CANN商发8.1.RC1及以上版本使用，支持如下产品：
+  
+  - Atlas A2 训练系列产品
+  - Atlas A3 训练系列产品
+- page_size特性与其他特性不支持同时配置，且申请内存注意事项如下：
+  
+  - 当申请内存大于1M时：
+    
+    - 若配置page_size，内存申请粒度为1G。
+    - 若未配置page_size，内存申请粒度为2M。
+  - 当申请内存小于等于1M时：配置page_size也不生效，内存申请粒度为2M。
+
+#### 支持的型号
+
+- Atlas 训练系列产品
+- Atlas A2 训练系列产品
+- Atlas A3 训练系列产品</pre><p>call_01_3Ee9r0mIkZ0Nj6iQR0ae9097.result <a href="https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md">来源</a></p><pre>````
+# PYTORCH\_NPU\_ALLOC\_CONF
+
+## 功能描述
+
+通过此环境变量可控制缓存分配器行为。配置此环境变量会改变内存占用量，可能造成性能波动。
+
+&gt; [!CAUTION]  
+&gt;
+&gt; 从TorchNPU 26.2.0版本且PyTorch 2.10.0及以上版本开始，torch\_npu也支持通过[PYTORCH_ALLOC_CONF](PYTORCH_ALLOC_CONF.md)环境变量配置缓存分配器参数，配置方式、支持的参数和PYTORCH\_NPU\_ALLOC\_CONF相同，二者选其一配置即可，同时配置会报错并退出程序。建议优先使用PYTORCH\_ALLOC\_CONF环境变量配置缓存分配器行为。
+
+缓存分配器会根据申请内存的大小使用不同内存池，小于1MB使用小块内存池，反之使用大块内存池；虚拟内存特性下，大块内存池申请的物理内存粒度（segment\_size\_mb）默认为20MB，小块内存池默认为2MB（不可配置）；大模型场景下小块内存池内存使用通常较少，因此部分环境配置项（page\_size、segment\_size\_mb）只作用于大块内存池。
+
+&gt; [!NOTICE]
+&gt;
+&gt; &lt;term&gt;Ascend 950DT&lt;/term&gt;仅支持expandable\_segments、pinned\_use\_background\_threads、pin\_memory\_expandable\_segments和pinned\_mem\_register四个参数，其余参数均不支持。
+
+可选参数：
+
+- max\_split\_size\_mb:&lt;value\&gt;，内存块允许切分上限。
+
+    大于设定值的内存块在使用过程中不会进行切分，这有助于减少内存碎片。此选项主要用于当模型由于OOM（Out of Memory，内存不足）而中断，并出现大量非活动的切分内存块场景时的优化。&lt;value\&gt;默认值为无限大，单位MB，即所有大小的内存块都可以切分，最小设置值大于20MB。
+
+- garbage\_collection\_threshold:&lt;value\&gt;，垃圾回收阈值。
+
+    主动回收未使用的NPU内存块。在设置value阈值（例如0.8）后，如果NPU内存容量使用超过阈值（即分配给NPU应用程序的总内存的80%），缓存分配器将开始回收NPU内存块，优先释放最先申请和长时间未复用的内存块，避免释放积极复用的内存块。其中&lt;value\&gt;取值范围为\(0.0,1.0\)。默认不开启该功能。垃圾回收阈值需与内存因子配合使用，内存因子可参考《[自定义API](https://gitcode.com/Ascend/op-plugin/blob/master/docs/zh/custom_APIs/overview.md)》的“torch\_npu.npu.set\_per\_process\_memory\_fraction”。
+
+- expandable\_segments:&lt;value\&gt;，开启内存池扩展段功能，即虚拟内存特性。
+
+    默认为False。如果设置为True，此设置将指示缓存分配器创建特定的内存块分配，这些内存块后续可以扩展，以便能更好地处理内存使用中频繁变更使用内存大小的情况。如果设置为False，关闭内存池扩展段功能，使用原有的内存申请方式。
+
+- base\_addr\_aligned\_kb:&lt;value\&gt;，内存基地址对齐粒度。
+
+    取值范围为0\~16，设置值需为整数，单位KB，默认值为16。仅在expandable\_segments设置为True的时候生效。若此参数配置为16，在申请大块内存（大于等于2MB）的时候，会尽量保持申请内存的基地址16KB对齐；若配置为0时，申请内存的基地址512B对齐。
+
+- page\_size:&lt;value\&gt;，设置申请大页内存的大小。
+
+    取值仅支持1GB，参考[配置示例](#配置示例)。内存申请粒度为1GB，不足1GB的向上对齐到1GB，始终为1GB的整数倍。在虚拟内存特性下，该配置项只作用于缓存分配器的大块内存池。
+
+    未配置该选项时，内存申请粒度为2MB，如需申请1GB的大页内存，会占用1024/2=512个页表；设置该选项后，内存申请粒度为1GB，1GB大页内存只占用1个页表，能有效降低页表数量，有效扩大TLB（Translation Lookaside Buffer）缓存的地址范围，从而提升离散访问的性能。
+
+    TLB是昇腾AI处理器中用于高速缓存的硬件模块，用于存储最近使用的虚拟地址到物理地址的映射。
+
+- segment\_size\_mb:&lt;value\&gt;，虚拟内存特性下，设置物理内存的申请粒度。
+
+    取值范围20\~512，设置值需为整数，单位MB，不配置时默认为20。仅在expandable\_segments设置为True的时候生效，该配置项只作用于缓存分配器的大块内存池。与page\_size同时配置时，仅page\_size生效。与large\_segment\_size\_mb同时配置时，仅large\_segment\_size\_mb生效。
+    增大segment\_size\_mb可以减少内存申请及内存映射接口的调用次数，从而提升内存申请效率，但也可能带来更多的内存碎片。因此，在内存使用极限的场景下，请谨慎调大此值。
+
+    &gt; [!NOTE]
+    &gt;
+    &gt; segment\_size\_mb已废弃，建议使用large\_segment\_size\_mb。large\_segment\_size\_mb同时支持虚拟内存特性和非虚拟内存特性场景，功能更全面。
+
+- roundup\_power2\_divisions:&lt;value\&gt; 或 roundup\_power2\_divisions:\[&lt;size1\&gt;:&lt;value1\&gt;,&lt;size2\&gt;:&lt;value2\&gt;,...\]，将请求的分配大小向上舍入到最近的2的幂次分段，从而更高效地复用内存块。
+
+    不配置时分配大小会以512字节为单位向上对齐，这对较小的分配尺寸效果良好；对于较大的、尺寸相近的分配请求，这种策略可能效率低下。因为每个请求会被分配到不同大小的内存块中，导致这些内存块难以被复用，继而产生大量未被充分复用的内存块，浪费内存容量。
+
+    支持两种配置方式：
+
+    - **单一值**：为每个内存块设置相同的分段数量，例如配置为“4”。
+    - **键值对数组**：为每个2的幂区间单独设置分段数量。例如配置为“\[256:1,512:2,1024:4,\&gt;:8\]”时，表示为256MB以下的所有分配设置1个分段，256MB到512MB之间的分配设置2个分段，512MB到1GB之间的分配设置4个分段，以及更大的分配设置8个分段。
+
+- multi\_stream\_lazy\_reclaim:&lt;value\&gt;，多流场景下，内存申请时延迟查询Events。
+
+    默认值为False，即每次内存申请时都执行Events查询。当设置为True时，每次内存申请优先使用空闲内存块，当Events数量超过阈值512或者找不到可用内存块时，才触发Events查询。通过减少Events查询次数，降低CPU资源占用，提升Host侧性能。该配置仅影响Events状态查询的频率，不改变内存释放的条件，也不改变内存峰值，内存块仍需等待所有相关Events完成后才会被释放。
+
+- pinned\_use\_background\_threads:&lt;value\&gt;，是否启用后台线程来处理events。
+
+    默认值为False，不启用后台线程。当设置为True时，启用后台线程，在后台线程执行查询和处理events操作，减少主线程的阻塞时间。
+
+- pin\_memory\_expandable\_segments:&lt;value\&gt;，开启pin_memory内存池扩展段功能，即虚拟内存特性。
+
+    默认为False。如果设置为True，此设置将指示pin_memory缓存分配器内存池物理内存申请粒度为20MB（不可配置），创建的内存块后续可以扩展，以便能更好地处理内存使用中频繁变更内存大小的情况，同时pin_memory内存块计数相关统计指标不参与统计（默认值：0）。如果设置为False，关闭pin_memory内存池扩展段功能，使用原有的内存申请方式。
+
+- pinned\_mem\_register:&lt;value\&gt;，设置pin_memory内存是否启用host register功能。
+
+    默认为False。如果设置为True，此设置将指示pin_memory内存启用host register功能，将pin_memory内存映射注册为Device可访问的内存地址。如果设置为False，关闭host register功能。
+
+- large\_segment\_size\_mb:&lt;value\&gt;，设置大块内存池的段分配粒度。
+
+    取值需大于10，设置值需为整数，单位MB，不配置时默认为20。该配置项同时作用于虚拟内存特性和非虚拟内存特性场景。在虚拟内存特性下，控制物理内存的申请粒度；在非虚拟内存特性下，控制1~10MB区间内存申请的段大小。
+
+    增大large\_segment\_size\_mb可以减少内存申请及内存映射接口的调用次数，从而提升内存申请效率，但也可能带来更多的内存碎片。因此，在内存使用极限的场景下，请谨慎调大此值。
+
+    与segment\_size\_mb同时配置时，仅large\_segment\_size\_mb生效。与page\_size同时配置时，仅page\_size生效。与max\_split\_size\_mb同时配置时，要求max\_split\_size\_mb &gt;= large\_segment\_size\_mb。
+
+- per\_process\_memory\_fraction:&lt;value\&gt;，限制当前进程可使用的NPU显存比例。
+
+    取值范围为\[0.0,1.0\]，表示可用的设备显存比例，默认值为1.0，即不限制进程显存使用。配置后，框架在初始化时会根据设备总显存和配置的比例计算当前进程可使用的最大显存，超出限制的内存申请将触发OOM（Out of Memory，内存不足）错误。
+
+    该配置项适用于多进程共享同一NPU设备的场景，通过限制进程的可用显存的比例，避免单个进程占用过多显存导致其他进程OOM。
+
+- throw\_on\_npumalloc\_oom:&lt;value\&gt;，在发生内存OOM之前预防式拒绝内存申请，跳过内存分配重试流程。
+
+    取值为True或False，默认为False。默认或设置为False时，如果调用底层ACL接口分配内存失败则释放部分空闲内存并进行必要的Host-Device同步，然后尝试重新分配内存，该重试流程对性能有一定的影响。设置为True时，缓存分配器在调用底层ACL接口分配内存之前，先校验“当前进程已分配的内存大小+本次的申请大小”是否超出设备内存上限；超出则直接拒绝本次申请并抛出OutOfMemoryError异常，不再进入内存分配重试流程。
+
+    以下二种情况throw\_on\_npumalloc\_oom不生效：
+    - 使用环境变量PYTORCH\_NPU\_ALLOC\_CONF或PYTORCH\_ALLOC\_CONF配置per\_process\_memory\_fraction小于1.0。
+    - 调用torch\_npu.npu.set\_per\_process\_memory\_fraction\(\)接口设置fraction小于1.0。
+
+    throw\_on\_npumalloc\_oom设置为True且拒绝内存申请时，内存申请的拒绝次数会累加到torch\_npu.npu.memory\_stats\(\)\[\&#x27;num\_oom\_rejections\&#x27;\]字段，可通过torch\_npu.npu.reset\_accumulated\_memory\_stats\(\)接口清零。这种情况下环境变量OOM\_SNAPSHOT\_ENABLE不生效。
+
+- pinned\_max\_round\_threshold\_mb:&lt;value\&gt;，pinned memory分配大小是否向上取整到2的幂次的判别阈值。
+
+    取值为正整数，单位为MB。默认不开启，即对所有pinned memory分配都执行power-of-2向上取整。设置后，分配大小若小于等于此阈值，仍执行向上取整；若大于此阈值，则跳过取整并按精确请求大小分配，从而减少大块pinned memory因取整带来的内存浪费。例如阈值设为128MB时，129MB的分配请求将使用129MB而非向上取整到256MB。
+
+    向上取整是为了让内存块便于后续复用，不进入缓存的块无需对齐，所以无论本选项如何设置，超过pinned\_max\_cached\_size\_mb的分配始终不会执行向上取整。
+
+- pinned\_max\_cached\_size\_mb:&lt;value\&gt;，pinned memory释放后是否缓存到free list复用的判别阈值。
+
+    取值为正整数，单位为MB。默认不开启，即所有释放的pinned memory块都进入free list缓存复用。设置后，块大小若大于此阈值，则在释放时立即归还给OS，不再进入free list缓存（也不再执行向上取整），从而降低大块pinned memory使用频率较低场景下的峰值内存占用。
+
+- max\_non\_split\_rounding\_mb:&lt;value\&gt;，显存复用控制项，结合max\_split\_size\_mb控制显存块大小和复用。
+
+    取值为正整数，单位为MB，默认20M。显存块free后物理上不一定释放，假定保留给下次分配使用，该块保留的显存大小为A、max\_non\_split\_rounding\_mb为B、max\_split\_size\_mb为C，需要新分配一个内存D。
+
+    当D大于C，计算A-D：
+    - 如果A-D小于等于B，则不需要重新分配，复用A；
+    - 如果A-D大于B，则需要重新分配新的显存。
+
+    当D小于等于C，当前变量不生效。
+
+- release\_lock\_on\_npumalloc:&lt;value\&gt;，显存分配锁控制项，决策是否在分配显存时释放部分锁，控制的项保持与原生社区一致。
+
+    取值为bool类型，True或False，默认为False。设置后，显存分配会释放部分锁，可缓解host计算开销压力，但是可能造成更多资源占用，自定义开发显存管理可能存在不兼容问题，需谨慎使用。
+
+&gt; [!NOTE]  
+&gt;
+&gt; 用户使用TorchNPU 6.0.RC3及以上版本配套的驱动（Ascend HDK 24.1.RC3及以上），开启虚拟内存特性时，可以使用单进程多卡特性；用户使用TorchNPU 6.0.RC3以下版本配套的驱动（Ascend HDK 24.1.RC3以下版本），开启虚拟内存特性时，不能使用单进程多卡特性。
+
+## 配置示例&lt;a id=&quot;配置示例&quot;&gt;&lt;/a&gt; 
+
+示例一：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6
+```
+
+示例二：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True,base_addr_aligned_kb:16
+```
+
+示例三：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=page_size:1g
+```
+
+示例四：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True,segment_size_mb:40
+```
+
+示例五：
+
+- 单一值示例：
+
+    ```bash
+    export PYTORCH_NPU_ALLOC_CONF=&quot;roundup_power2_divisions:4&quot;
+    ```
+
+- 键值对数组示例：
+
+    ```bash
+    export PYTORCH_NPU_ALLOC_CONF=&quot;roundup_power2_divisions:[256:1,512:2,1024:4,&gt;:8]&quot;
+    ```
+
+示例六：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=multi_stream_lazy_reclaim:True
+```
+
+示例七：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=pinned_use_background_threads:True
+```
+
+示例八：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=pin_memory_expandable_segments:True
+```
+
+示例九：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=pinned_mem_register:True
+```
+
+示例十：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=large_segment_size_mb:50
+```
+
+示例十一：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=per_process_memory_fraction:0.5
+```
+
+示例十二：
+
+```bash
+export PYTORCH_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6
+```
+
+示例十三：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=throw_on_npumalloc_oom:True
+```
+
+示例十四：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=pinned_max_round_threshold_mb:128,pinned_max_cached_size_mb:256
+```
+
+示例十五：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:50,max_non_split_rounding_mb:30
+```
+
+示例十六：
+
+```bash
+export PYTORCH_NPU_ALLOC_CONF=release_lock_on_npumalloc:True
+```
+
+## 使用约束
+
+- expandable\_segments特性需在Ascend HDK 23.0.0及以上版本上使用。
+- max\_split\_size\_mb和garbage\_collection\_threshold中任意一个为非默认值时，expandable\_segments必须设置为False。
+- page\_size特性要求在Ascend HDK 25.0.RC1及以上版本、CANN商用8.1.RC1及以上版本使用，支持如下产品：
+    - &lt;term&gt;Atlas A2 训练系列产品&lt;/term&gt;
+    - &lt;term&gt;Atlas A3 训练系列产品&lt;/term&gt;
+
+- page\_size特性与其他特性同时配置时，仅page\_size配置生效，且申请内存注意事项如下：
+    - 当申请内存大于1MB时：
+        - 若配置page\_size，内存申请粒度为1GB。
+        - 若未配置page\_size，内存申请粒度为2MB。
+
+    - 当申请内存小于等于1MB时：配置page\_size也不生效，内存申请粒度为2MB。
+- pin_memory_expandable_segments特性要求TorchNPU 7.3.0及以上版本、Ascend HDK 25.5.0及以上版本、CANN商用8.5.0及以上版本使用。
+- pinned_use_background_threads特性要求在TorchNPU 26.0.0及以上版本且PyTorch 2.8.0及以上版本使用。
+- pinned_mem_register使用注意事项如下：
+    - 特性要求TorchNPU 26.0.0及以上版本、Ascend HDK 26.0.RC1及以上版本、CANN商用8.5.0及以上版本使用。
+    - 与pin_memory_expandable_segments特性不支持同时配置。
+- multi_stream_lazy_reclaim使用注意事项：
+    - 特性要求在TorchNPU 7.3.0以上版本上使用。
+    - 该特性主要解决多流场景下，Host侧存在下发性能瓶颈时的系统效率问题。单流、少流场景或者非Host性能瓶颈时，该功能收益不大。
+- large\_segment\_size\_mb特性需在TorchNPU 26.1.0及以上版本、PyTorch 2.11.0及以上版本使用。
+- per\_process\_memory\_fraction特性需在TorchNPU 26.1.0及以上版本、PyTorch 2.10.0 及以上版本使用。
+- throw\_on\_npumalloc\_oom特性需在TorchNPU 26.2.0及以上版本、PyTorch 2.13.0及以上版本使用。
+- pinned\_max\_round\_threshold\_mb和pinned\_max\_cached\_size\_mb特性需在TorchNPU 26.2.0及以上版本、PyTorch 2.13.0及以上版本使用。两者仅作用于默认（非expandable）pinned memory分配器路径。与pin\_memory\_expandable\_segments同时配置时，这两个阈值不生效，框架会输出一次告警提示，但进程仍可正常启动；如需启用这两个阈值，请将pin\_memory\_expandable\_segments设置为False。
+- 通过[PYTORCH_ALLOC_CONF](PYTORCH_ALLOC_CONF.md)环境变量配置缓存分配器参数，需在TorchNPU 26.2.0版本且PyTorch 2.10.0及以上版本使用。
+
+## 支持的型号
+
+- &lt;term&gt;Atlas 训练系列产品&lt;/term&gt;
+- &lt;term&gt;Atlas A2 训练系列产品&lt;/term&gt;
+- &lt;term&gt;Atlas A3 训练系列产品&lt;/term&gt;
+- &lt;term&gt;Atlas 推理系列产品&lt;/term&gt;
+````</pre><p>old-a: 梯度检查点未给出版本条件。</p><p>new-a: 梯度检查点未见版本条件。</p><p>new-b: 梯度检查点的版本适用条件未在所附材料中给出</p></details><details><summary>u85：证据与歧义记录</summary><p>u85-s1 合成测试材料</p><pre>版本号是软件发布的标识。</pre><p>old-a: M4不适用于概念解释题。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u90：证据与歧义记录</summary><p>u90-s1 合成测试材料</p><pre>当前有效兼容说明：设备H1、运行时R8只支持Alpha SDK 2.3。</pre><p>u90-s2 合成测试材料</p><pre>当前有效兼容说明：设备H1、运行时R8不支持Alpha SDK 2.3，只支持2.4。两页没有标注替代、优先级或适用范围差异。</pre><p>old-a: 冲突没有时间或范围标识。</p><p>new-a: 冲突导致无法判定档位。</p><p>new-b: 冲突来源无优先级/适用范围</p></details><details><summary>u12：证据与歧义记录</summary><p>u12-s1 合成测试材料</p><pre>HTTP 403 Forbidden；目标正文没有取得。</pre><p>old-a: 无可评价正文证据。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u33：证据与歧义记录</summary><p>u33-s1 合成测试材料</p><pre>兼容表：设备H1 + 运行时R8 → Alpha SDK 2.3。该条件下只支持2.3。</pre><p>old-a: 无实质歧义。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>r58：证据与歧义记录</summary><p>call_00_WyRtm5Xy5n9jvZHCKGU51041.result <a href="https://docs.pytorch.org/docs/main/cuda_environment_variables.html">来源</a></p><pre>**标题**: CUDA Environment Variables — PyTorch main documentation
+
+v2.15.0 (unstable)v2.14.0 (stable)v2.13.0v2.12.0v2.11.0v2.10.0v2.9.1v2.8.0v2.7.0v2.6.0v2.5.0v2.4.0v2.3.0v2.2.0v2.1.0v2.0.0v1.13v1.12v1.11v1.10v1.9.1v1.9.0v1.8.1v1.8.0v1.7.1v1.7.0v1.6.0v1.5.1v1.5.0v1.4.0v1.3.1v1.3.0v1.2.0v1.1.0v1.0.1v1.0.0v0.4.1v0.4.0v0.3.1v0.3.0v0.2.0v0.1.12
+
+[...]
+
+# CUDA Environment Variables#
+
+# CUDA Environment Variables#
+Created On: May 08, 2026 | Last Updated On: Sep 05, 2026
+
+For more information on CUDA runtime environment variables, see CUDA Environment Variables.
+
+**PyTorch Environment Variables**
+
+Variable
+
+Description
+
+`PYTORCH_NO_CUDA_MEMORY_CACHING`
+
+If set to `1`, disables caching of memory allocations in CUDA. This can be useful for debugging.
+
+`PYTORCH_ALLOC_CONF`
+
+For a more in depth explanation of this environment variable, see Memory management. `PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility.
+
+`PYTORCH_NVML_BASED_CUDA_CHECK`
+
+If set to `1`, before importing PyTorch modules that check if CUDA is available, PyTorch will use NVML to check if the CUDA driver is functional instead of using the CUDA runtime. This can be helpful if forked processes fail with a CUDA initialization error.
+
+`TORCH_CUDNN_V8_API_LRU_CACHE_LIMIT`
+
+The cache limit for the cuDNN v8 API. This is used to limit the memory used by the cuDNN v8 API. The default value is 10000, which roughly corresponds to 2GiB assuming 200KiB per ExecutionPlan. Set to `0` for no limit or a negative value for no caching.
+
+`TORCH_CUDNN_V8_API_DISABLED`
+
+If set to `1`, disables the cuDNN v8 API. And will fall back to the cuDNN v7 API.
+
+`TORCH_ALLOW_TF32_CUBLAS_OVERRIDE`
+
+If set to `1`, forces TF32 enablement, overrides `set_float32_matmul_precision` setting.
+
+`TORCH_CUBLAS_WORKSPACE_CACHE`
+
+[...]
+
+## Docs
+
+Access comprehensive developer documentation for PyTorch
+
+View Docs
+
+## Tutorials
+
+Get in-depth tutorials for beginners and advanced developers
+
+View Tutorials
+
+## Resources
+
+Find development resources and get your questions answered
+
+View Resources
+
+© PyTorch. Copyright © The Linux Foundation®. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For more information, including terms of use, privacy policy, and trademark usage, please see our Policies page. Trademark Usage. Privacy Policy.
+
+© Copyright PyTorch Contributors.
+
+Created using Sphinx 7.2.6.
+
+Built with the PyData Sphinx Theme 0.15.4.</pre><p>call_00_RCq5szb41IHnZwslbBJ50400.result <a href="https://docs.pytorch.org/docs/stable/notes/cuda.html">来源</a></p><pre># PyTorch CUDA Semantics — Memory Management Section Extraction
+
+## Summary
+
+I found the complete &quot;Memory management&quot; section in the provided document. The content includes the full `PYTORCH_ALLOC_CONF` / `PYTORCH_CUDA_ALLOC_CONF` configuration options list with names, values, units, and defaults. Note that **gradient checkpointing is NOT covered** in this page — it is unrelated to CUDA memory semantics and does not appear anywhere in the provided text.
+
+**Return type:** Full body text of the requested section (quoted verbatim below). The document excerpt is complete for the &quot;Memory management&quot; and &quot;Optimizing memory usage with `PYTORCH_ALLOC_CONF`&quot; subsections.
+
+**Version:** The page is for **PyTorch 2.14** documentation (`docs.pytorch.org/docs/2.14`).
+
+---
+
+## 1. Memory management (full section)
+
+&gt; PyTorch uses a caching memory allocator to speed up memory allocations. This allows fast memory deallocation without device synchronizations. However, the unused memory managed by the allocator will still show as if used in `nvidia-smi`. You can use `memory_allocated()` and `max_memory_allocated()` to monitor memory occupied by tensors, and use `memory_reserved()` and `max_memory_reserved()` to monitor the total amount of memory managed by the caching allocator. Calling `empty_cache()` releases all **unused** cached memory from PyTorch so that those can be used by other GPU applications. However, the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch.
+&gt;
+&gt; To better understand how CUDA memory is being used over time, [Understanding CUDA Memory Usage](https://docs.pytorch.org/docs/2.14/torch_cuda_memory.html#torch-cuda-memory) describes tools for capturing and visualizing traces of memory use.
+&gt;
+&gt; For more advanced users, we offer more comprehensive memory benchmarking via `memory_stats()`. We also offer the capability to capture a complete snapshot of the memory allocator state via `memory_snapshot()`, which can help you understand the underlying allocation patterns produced by your code.
+
+### Notes on `torch.cuda.empty_cache()`
+
+- `empty_cache()` **releases all unused cached memory** from PyTorch so those can be used by other GPU applications.
+- The **occupied GPU memory by tensors will not be freed** — so it &quot;can not increase the amount of GPU memory available for PyTorch.&quot;
+- Related to private pools: later in the doc it states that on `MemPool` deletion, &quot;`empty_cache()` will be called internally on deletion of the pool, hence returning all the memory to the system.&quot;
+
+---
+
+## 2. Optimizing memory usage with `PYTORCH_ALLOC_CONF` (full section)
+
+&gt; Use of a caching allocator can interfere with memory checking tools such as `cuda-memcheck`. To debug memory errors using `cuda-memcheck`, set `PYTORCH_NO_CUDA_MEMORY_CACHING=1` in your environment to disable caching.
+&gt;
+&gt; The behavior of the caching allocator can be controlled via the environment variable `PYTORCH_ALLOC_CONF`. `PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility. The format is `PYTORCH_ALLOC_CONF=&lt;option&gt;:&lt;value&gt;,&lt;option2&gt;:&lt;value2&gt;...`
+
+### Complete list of allocator configuration options (verbatim)
+
+| Option | Accepted values / Units | Default | Description (quoted) |
+|---|---|---|---|
+| `backend` | `native` or `cudaMallocAsync` | `native` | &quot;allows selecting the underlying allocator implementation. Currently, valid options are `native`, which uses PyTorch&#x27;s native implementation, and `cudaMallocAsync`, which uses [CUDA&#x27;s built-in asynchronous allocator]... `cudaMallocAsync` requires CUDA 11.4 or newer. The default is `native`. `backend` applies to all devices used by the process, and can&#x27;t be specified on a per-device basis.&quot; |
+| `large_segment_size_mb` | MB | 20 MB | &quot;the native allocator uses small and large blocks to manage allocated memory. This setting is used to configure the size of the large block. The default value is 20 MB.&quot; |
+| `max_split_size_mb` | MB | unlimited | &quot;prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory. Performance cost can range from &#x27;zero&#x27; to &#x27;substantial&#x27; depending on allocation patterns. Default value is unlimited, i.e. all blocks can be split... This option should be used as a last resort for a workload that is aborting due to &#x27;out of memory&#x27;... `max_split_size_mb` is only meaningful with `backend:native`. With `backend:cudaMallocAsync`, `max_split_size_mb` is ignored.&quot; |
+| `roundup_power2_divisions` | single value or array of `[size:division,...]` | — | &quot;helps with rounding the requested allocation size to nearest power-2 division... For example, if we need to round-up size of 1200 and if number of divisions is 4, the size 1200 lies between 1024 and 2048 and if we do 4 divisions between them, the values are 1024, 1280, 1536, and 1792. So, allocation size of 1200 will be rounded to 1280... For example to set 1 division for all allocations under 256MB, 2 division for allocations between 256MB and 512MB, 4 divisions for allocations between 512MB and 1GB and 8 divisions for any larger allocations, set the knob value to: [256:1,512:2,1024:4,&gt;:8]. `roundup_power2_divisions` is only meaningful with `backend:native`. With `backend:cudaMallocAsync`, `roundup_power2_divisions` is ignored.&quot; |
+| `max_non_split_rounding_mb` | MB | 20 MB | &quot;will allow non-split blocks for better reuse, eg, a 1024MB cached block can be reused for a 512MB allocation request. In the default case, we only allow up to 20MB of rounding of non-split blocks, so a 512MB block can only be served with between 512-532 MB size block. If we set the value of this option to 1024, it will allow 512-1536 MB size blocks to be used for a 512MB block which increases reuse of larger blocks. This will also help in reducing the stalls in avoiding expensive cudaMalloc calls.&quot; |
+| `garbage_collection_threshold` | float (&gt; 0.0 and &lt; 1.0) | 1.0 | &quot;helps actively reclaiming unused GPU memory to avoid triggering expensive sync-and-reclaim-all operation (release_cached_blocks)... Upon setting this threshold (e.g., 0.8), the allocator will start reclaiming GPU memory blocks if the GPU memory capacity usage exceeds the threshold (i.e., 80% of the total memory allocated to the GPU application). The algorithm prefers to free old &amp; unused blocks first... The threshold value should be between greater than 0.0 and less than 1.0. The default value is set at 1.0. `garbage_collection_threshold` is only meaningful with `backend:native`. With `backend:cudaMallocAsync`, `garbage_collection_threshold` is ignored.&quot; |
+| `expandable_segments` | bool | `False` (experimental) | &quot;If set to `True`, this setting instructs the allocator to create CUDA allocations that can later be expanded to better handle cases where a job changing allocation sizes frequently, such as having a changing batch size... `expandable_segments` allows the allocator to create a segment initially and then expand its size later when more memory is needed. Instead of making one segment per allocation, it tries to make one segment (per stream) that grows as necessary... This process does not create as many slivers of unusable memory, so it is more likely to succeed at finding this memory.&quot; |
+| `pinned_use_cuda_host_register` | bool | — | &quot;determines whether to use the CUDA API&#x27;s cudaHostRegister function for allocating pinned memory instead of the default cudaHostAlloc. When set to True, the memory is allocated using regular malloc and then pages are mapped to the memory before calling cudaHostRegister. This pre-mapping of pages helps reduce the lock time during the execution of cudaHostRegister.&quot; |
+| `pinned_num_register_threads` | int (threads) | 1 (8 recommended) | &quot;is only valid when pinned_use_cuda_host_register is set to True. By default, one thread is used to map the pages. This option allows using more threads to parallelize the page mapping operations to reduce the overall allocation time of pinned memory. A good value for this option is 8 based on benchmarking results.&quot; |
+| `pinned_use_background_threads` | bool | `False` | &quot;is a boolean flag to enable background thread for processing events. This avoids any slow path associated with querying/processing of events in the fast allocation path. This feature is disabled by default.&quot; |
+| `pinned_reserve_segment_size_mb` | MB | — | &quot;is a size in MB to reserve for pinned memory segment. This allocates a large segment of pinned memory upfront and then uses to allocate small size requests. This helps reduce the number of expensive device library calls.&quot; |
+| `pinned_max_round_threshold_mb` | MB | disabled | &quot;sets the maximum allocation size (in MB) that will be rounded up to the nearest power-of-2. Allocations larger than this threshold will use their exact requested size... For example, with a threshold of 128 MB, a 129 MB allocation will use 129 MB instead of being rounded to 256 MB. By default, this option is disabled. Allocations that exceed `pinned_max_cached_size_mb` are never rounded up...&quot; |
+| `pinned_max_cached_size_mb` | MB | disabled (all cached) | &quot;sets the maximum block size (in MB) that will be cached in the free list for reuse. Blocks larger than this threshold will not be rounded up to power-of-2 and will be freed immediately when no longer in use, rather than being cached...&quot; |
+| `graph_capture_record_stream_reuse` | bool | `False` (experimental) | &quot;If set to `True`, the CUDA caching allocator will attempt to reclaim device memory during CUDA Graph capture by using the graph topology (instead of CUDA events) to determine when a freed block is safe to reuse. This can reduce peak memory during long captures...&quot; |
+| `per_process_memory_fraction` | float (0 to 1) | — | &quot;limits the amount of memory that can be allocated on all the CUDA devices to a specified fraction of the available memory... Attempting to allocate more memory will raise an out of memory error.&quot; |
+| `throw_on_cudamalloc_oom` | bool | `False` | &quot;When set to `True`, the allocator will preemptively reject allocations that would exceed the `per_process_memory_fraction` limit by throwing an `OutOfMemoryError` instead of attempting the allocation through the driver, which could trigger a fatal GPU runtime abort... The rejected allocation skips the retry chain and throws immediately, allowing the caller to catch the exception and handle it gracefully.&quot; |
+
+**Example configuration (verbatim):**
+```
+PYTORCH_CUDA_ALLOC_CONF=per_process_memory_fraction:0.95,throw_on_cudamalloc_oom:True
+```
+&gt; &quot;This is particularly useful for inference serving, where a fatal GPU OOM would crash the server process. With this option, the serving framework can catch the `OutOfMemoryError` and reject the individual request while continuing to serve subsequent requests.&quot;
+
+**Note (verbatim):**
+&gt; &quot;Some stats reported by the CUDA memory management API are specific to `backend:native`, and are not meaningful with `backend:cudaMallocAsync`. See each function&#x27;s docstring for details.&quot;
+
+---
+
+## 3. Memory fragmentation, OOM, and gradient checkpointing
+
+**Memory fragmentation:** Discussed explicitly under `max_split_size_mb` (&quot;This can reduce fragmentation...&quot;) and extensively in the `expandable_segments` option (the long description of how changing batch sizes creates &quot;slivers&quot; of unusable memory: &quot;With models 50+ layers deep, this pattern might repeat 50+ times creating many slivers.&quot;).
+
+**OOM (Out of Memory):**
+- `max_split_size_mb`: &quot;This option should be used as a last resort for a workload that is aborting due to &#x27;out of memory&#x27; and showing a large amount of inactive split blocks.&quot;
+- `per_process_memory_fraction`: &quot;Attempting to allocate more memory will raise an out of memory error.&quot;
+- `throw_on_cudamalloc_oom`: throws `OutOfMemoryError` instead of a fatal GPU abort (e.g., `HSA_STATUS_ERROR_OUT_OF_RESOURCES` on ROCm).
+- `MemPool` `use_on_oom` bool (default `False`): &quot;If true, then the CUDACachingAllocator will be able to use memory in this pool as a last resort instead of OOMing.&quot;
+
+**Gradient checkpointing:** ⚠️ **Not present in this document.** There is no text about gradient checkpointing anywhere in the provided content. Gradient checkpointing is a separate training-memory technique documented elsewhere (e.g., `torch.utils.checkpoint`), not in the CUDA semantics memory-management section.
+
+---
+
+## Related memory-management topics also present (for completeness)
+
+The document additionally covers these memory-related areas, which you may want:
+- **Using custom memory allocators for CUDA** (`CUDAPluggableAllocator`, `change_current_allocator`)
+- **Mixing different CUDA system allocators** (`torch.cuda.MemPool`, `torch.cuda.use_mem_pool`, `register_mem_pool`, `use_count()`, `snapshot()`)
+- **Tuning NVLink performance with custom memory allocator on H100/H200 GPUs**
+- **Graph memory management** (graph-private pools, sharing memory across captures)
+
+Let me know if you&#x27;d like any of these extracted fully as well.</pre><p>old-a: 不能为全部功能选定单一版本。</p><p>new-a: 梯度检查点缺少版本条件。</p><p>new-b: 不同功能的版本条件不完整，梯度检查点缺资料</p></details><details><summary>u51：证据与歧义记录</summary><p>u51-s1 合成测试材料</p><pre>兼容表：设备H1 + 运行时R8 → Alpha SDK 2.2至2.4（含端点），范围内各版本均支持。按该对应关系选择即可，无其他版本限制。</pre><p>old-a: 无实质歧义。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u04：证据与歧义记录</summary><p>u04-s1 合成测试材料</p><pre>设备H1的运行时R8兼容关系，请参阅明确关联的官方页面p2。</pre><p>u04-s2 合成测试材料</p><pre>兼容表：设备H1 + 运行时R8 → Alpha SDK 2.2至2.4（含端点），范围内各版本均支持。按该对应关系选择即可，无其他版本限制。</pre><p>old-a: 依赖跨页但关联明确。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u08：证据与歧义记录</summary><p>u08-s1 合成测试材料</p><pre>设备H1支持Alpha SDK 2.0至2.4。Alpha SDK还需要与运行时版本匹配，但本文未说明运行时R8对应哪些SDK版本。</pre><p>old-a: 不能排除具体版本。</p><p>new-a: 运行时条件缺失。</p><p>new-b: 运行时约束缺失</p></details><details><summary>r71：证据与歧义记录</summary><p>fetch-django <a href="https://docs.djangoproject.com/en/5.2/faq/install/">来源</a></p><pre>What Python version can I use with Django?¶
+Django version
+|
+Python versions
+|
+4.2
+|
+3.8, 3.9, 3.10, 3.11, 3.12 (added in 4.2.8)
+|
+5.0
+|
+3.10, 3.11, 3.12
+|
+5.1
+|
+3.10, 3.11, 3.12, 3.13 (added in 5.1.3)
+|
+5.2
+|
+3.10, 3.11, 3.12, 3.13, 3.14 (added in 5.2.8)
+|
+For each version of Python, only the latest micro release (A.B.C) is officially
+supported. Python versions that have reached end-of-life are no longer
+maintained by the Python project and therefore should not be used with Django.
+You can find the latest supported micro version for each series on the Python
+download page.
+We will support a Python version up to and including the first Django LTS
+release whose security support ends after security support for that version of
+Python ends. For example, Python 3.9 security support ends in October 2025 and
+Django 4.2 LTS security support ends in April 2026. Therefore Django 4.2 is the
+last version to support Python 3.9.
+</pre><p>old-a: 题目不要求Python微版本。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u42：证据与歧义记录</summary><p>u42-s1 合成测试材料</p><pre>Alpha SDK可下载2.0、2.1、2.2。本文没有说明这些版本各自适用的设备或运行时。</pre><p>old-a: 无适用条件。</p><p>new-a: </p><p>new-b: 适用条件完全缺失</p></details><details><summary>u63：证据与歧义记录</summary><p>u63-s1 合成测试材料</p><pre>设备H1允许使用Alpha SDK 2.0至2.4（含端点）。
+运行时R8允许使用Alpha SDK 2.2至2.6（含端点）。
+同一安装同时满足设备和运行时约束即可使用，无其他版本限制。</pre><p>old-a: 交集需简单集合运算。</p><p>new-a: 需自行取交集。</p><p>new-b: 需合并两段范围求交集</p></details><details><summary>u17：证据与歧义记录</summary><p>u17-s1 合成测试材料</p><pre>Alpha SDK提供开发工具和示例。本文没有发布号、版本范围或兼容关系说明。</pre><p>old-a: 无版本信息。</p><p>new-a: </p><p>new-b: 无</p></details><details><summary>u76：证据与歧义记录</summary><p>u76-s1 合成测试材料</p><pre>兼容表：设备H1 + 运行时R8 → Beta SDK 2.2至2.4（含端点），范围内各版本均支持。按该对应关系选择即可，无其他版本限制。</pre><p>old-a: 无实质歧义。</p><p>new-a: </p><p>new-b: 无</p></details><h2>边界</h2><ul><li>same-model repeated judgments, not independent expert gold</li><li>synthetic expected scores are investigator-designed checks</li><li>four real cases do not establish ecosystem generalizability</li><li>historical source replay differs from fresh HTTP acquisition</li><li>only selected source bundle is evaluated, not whole ecosystem</li></ul><p><a href="protocol.json">冻结协议</a> · <a href="results.json">完整结果</a> · <a href="quote-audit.json">引文核查</a> · <a href="source-selection.json">历史材料选择依据</a> · <a href="../m11-uniform-fit-20260921/literature.json">已有方法文献及边界</a></p></html>
