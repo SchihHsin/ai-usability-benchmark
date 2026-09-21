@@ -117,7 +117,7 @@ for run in (R/'runs').iterdir():
     parent=value
     for key in fix['path'][:-1]:parent=parent[key]
     key=fix['path'][-1]
-    if (parent[key] if isinstance(parent,list) else parent.get(key))!=fix['original']:raise ValueError('review field original mismatch')
+    if (parent[key] if isinstance(parent,list) else parent.get(key))!=fix['original']:raise ValueError('review field original mismatch: '+item['case']+' '+str(fix['path'])+' actual='+repr(parent[key] if isinstance(parent,list) else parent.get(key))+' expected='+repr(fix['original']))
     parent[key]=copy.deepcopy(fix['replacement']);repairs.append(fix)
   for doc in value.get('m2_documents',[]):
    change=completeness(doc,item)

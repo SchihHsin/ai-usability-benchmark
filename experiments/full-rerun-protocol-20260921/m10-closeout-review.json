@@ -1,0 +1,2338 @@
+{
+  "schema": "m10-closeout-review-20260921-v1",
+  "created_at": "2026-09-21T14:28:36.510707+00:00",
+  "rules_read": [
+    "frozen-skill/references/rules.md",
+    "frozen-skill/references/execution-checks.md"
+  ],
+  "scope": {
+    "selected_rows": 146,
+    "scores_reviewed": {
+      "4": 108,
+      "3": 26,
+      "5": 12
+    },
+    "checks": [
+      "M10=4 only when answer content is complete and remaining substitutions are explicit environment values",
+      "M10=3 when a requested operation needs correction or missing content",
+      "M10=5 not lowered merely because final says not run",
+      "M9/M11/other metrics unchanged",
+      "no model reruns; no source/rule/approved-correction edits"
+    ]
+  },
+  "cases": [
+    {
+      "run_id": "A-cann-glm-5_3-standard-20260921T094947",
+      "task": "A",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "source /usr/local/Ascend/ascend-toolkit/set_env.sh"
+      ],
+      "original_reason": "操作指导完整：前置条件（安装CANN、source set_env.sh）、soc_version确定方法（npu-smi info）、两条可直接执行的atc完整命令、成功标志（ATC run success）、om输出位置及部署注意事项均已给出。仅需替换明确标识的用户环境参数（模型路径、soc_version、输入名），无内容错误需修正；set_env.sh路径已标注基于既有知识并提示以实际安装为准，属可接受的环境参数说明。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "A-cuda-glm-5_3-standard-20260921T095357",
+      "task": "A",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "onnxruntime_input = {i.name: dummy_input.numpy() for i in zip(ort_session.get_inputs(), [dummy_input.numpy()])}"
+      ],
+      "original_reason": "具体操作方案已给出，但ONNX验证代码把zip产生的tuple当作有name属性的对象，执行必然报AttributeError；必须改为元组解包或直接遍历输入元数据，属于需修正内容才能执行的3分。仅验证这一Python语义错误，未进行GPU端到端运行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "B-cann-glm-5_3-standard-20260921T100328",
+      "task": "B",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msprof --output=/home/projects/output --ascendcl=on --runtime-api=on --task-time=on --aicpu=on --ai-core=on python3 train.py",
+        "安装配套版本的 CANN Toolkit 并 `source` 其 `set_env.sh`（昇腾 NPU 驱动 + CANN 软件）"
+      ],
+      "original_reason": "msprof 路线给出完整可照抄的命令行（含全部关键开关与输出路径），Ascend PyTorch Profiler 路线给出完整 profile/_ExperimentalConfig/dynamic_profile/analyse 代码块，前置条件明确（安装配套 CANN 并 source set_env.sh、umask≥0027、预留 20 倍磁盘、采集 5min 以内、不与 Dump 同用）。所需替换项均为明确标识的用户环境值：输出路径 ./result、训练脚本 train.py、用户自身训练循环 train_one_step()/steps。未到 5 分的原因：答案自述 torch_npu.profiler.profile 与枚举取值说明页未单独抓取、profiler_config.json 字段表未取得，且 CANN 配套版本未定版，用户需自行确认环境配套后方可直接执行；答案亦自述未实测运行，仅为内容核查。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "B-cuda-glm-5_3-standard-20260921T095746",
+      "task": "B",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "nsys stats report.nsys-rep\n# 或指定报告，如：\nnsys stats -r cuda_gpu_kern_sum,cuda_api_sum report.nsys-rep"
+      ],
+      "original_reason": "核心采集命令完整可执行（nsys profile 各变体、nsys stats、Python 侧 NVTX 标注代码），参数含义与默认值均有官方依据；仅需用户替换 train.py、report 等环境参数即可运行。次要可选项（--cpuctxsw 取值、stats -r 报告名）答案已明确标注未核实，不阻塞主流程执行。分析步骤为 GUI 操作指导，无命令行依赖。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "C-cann-glm-5_3-standard-20260921T100754",
+      "task": "C",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "git clone https://gitcode.com/cann/ascend-transformer-boost.git\ncd ascend-transformer-boost\nbash scripts/build.sh\nsource output/atb/set_env.sh",
+        "前置：CANN toolkit 安装（README 示例为 `Ascend-cann-toolkit_8.2.RC1`，`./Ascend-cann-toolkit_8.2.RC1_linux-$(arch).run --install` 后 `source ${HOME}/Ascend/ascend-toolkit/set_env.sh`），Python 3.7.x–3.11.4。",
+        "进入 `example/op_demo/faupdate` 执行 `bash build.sh` 即可编译运行。"
+      ],
+      "original_reason": "操作指导完整：给出 ATB 源码编译完整命令链（git clone → bash scripts/build.sh → source set_env.sh）、CANN toolkit 安装命令（chmod +x、--install、source set_env.sh）、Python 依赖 torch_atb 的完整可运行示例、C++ Demo 的编译执行入口（example/op_demo/faupdate 下 bash build.sh），前置条件（CANN toolkit 8.2.RC1、Python 3.7.x–3.11.4、PyTorch+torch_npu）均已说明，仅需替换 DEVICE_ID、路径等环境值即可执行。未达 5 的原因：torch_npu 版本配套未核实（答案自述），ATB 二进制包安装路径未取得正文，用户需自行确认该前置；AOL 调用流程为步骤级描述而非完整可编译代码（答案自述『具体到每个算子的参数与约束，查 AOL API 文档对应算子页』）。",
+      "review_reason": "The task asks how to choose and call AOL/ATB; the final gives ATB commands but only a step-level AOL description and no complete AOL call path. One requested library route remains incomplete."
+    },
+    {
+      "run_id": "C-cuda-glm-5_3-standard-20260921T101015",
+      "task": "C",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "nvcc myCublasApp.c -lcublas -o myCublasApp",
+        "卷积同理：在 graph 上建 `convolution` 节点（frontend 有专门卷积样例）。",
+        "cuSPARSE SpMM 完整调用代码（仅取得产品页功能描述，文档正文未抓取——fetch 预算已用尽）",
+        "cuDNN 具体安装命令（tarball/pip 各发行版细节）未取得原文"
+      ],
+      "original_reason": "有具体操作方案但需补充缺失内容才能完整执行。可执行部分：cuBLAS 三种编译命令（nvcc 动态/静态、g++ 静态）完整，头文件 cublas_v2.h 明确，cublasSgemm 完整签名与列主序/1基索引约定齐备，行主序技巧给出具体调用行，工作流（cublasCreate→cudaMalloc/cublasSetMatrix→计算→cublasGetMatrix→cublasDestroy）明确，环境参数 <cuda-toolkit-path> 有标识与说明；cuDNN 有官方 Python Graph API 代码与 C++ 样例 cmake 构建命令。具体缺口：(a) 原题明确包含卷积，答案仅给 matmul 示例，卷积调用只有\"卷积同理：在 graph 上建 convolution 节点\"的指向而无实际卷积代码；(b) cuDNN 安装命令未给出（自认\"未取得原文\"），Python 示例的 cudnn 包安装前提缺失；(c) cuSPARSE 完整调用代码缺失（自认 fetch 预算用尽），头文件/链接参数为未经官方确认的常识写法。综合记 3 分。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "D-cann-glm-5_3-standard-20260921T101954",
+      "task": "D",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msopgen gen -i ./op_dev/add_custom.json -f <framework> -c ai_core-<soc_version> -lan cpp -out ./custom_op",
+        "cd custom_op\nbash build.sh                    # 产物在 build_out/\ncd build_out\n./custom_opp_<target_os>_<target_architecture>.run",
+        "python3 setup.py build bdist_wheel   # wheel包生成在dist目录,安装后即用"
+      ],
+      "original_reason": "操作指导完整：环境变量 source 命令、原型 JSON 全文、msopgen gen 完整命令行、cp 回填命令、build.sh 编译、.run 安装、cmake 验证程序构建运行、PyTorch 侧 registration/add_custom/function.h/setup.py 代码及安装命令均齐备，前置条件(CANN 安装、torch_npu、环境变量)明确。占位符如 <framework>、<soc_version>、${install_path} 均为用户环境参数且有获取方法说明(npu-smi info)，仅需替换环境值即可执行，符合 4 档。未达 5 档因环境值仍需按用户硬件替换，且 EXEC_NPU_CMD 宏内部细节未取得、答案自述仅做内容核查未实际运行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "D-cuda-glm-5_3-standard-20260921T101500",
+      "task": "D",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "cd extension_cpp\npip install --no-build-isolation -e .",
+        "已安装与 PyTorch 构建一致的 CUDA toolkit；若自动探测失败，官方文档建议显式设置 `CUDA_HOME` 环境变量"
+      ],
+      "original_reason": "操作指导完整：前提条件（CUDA_HOME、CXX、nvcc、Ninja、TORCH_CUDA_ARCH_LIST）明确，构建命令完整（pip install --no-build-isolation -e .，与官方仓库一致），kernel/注册/setup.py 代码完整可抄。未给 5 分原因：第 4 节 setup.py 示例源文件名（extension.cpp/extension_kernel.cu）与第 1-3 节文件布局（myadd.cpp/myadd_cuda.cu）不一致，用户需替换源文件名/扩展名/架构列表等明确标识的环境值后才能直接构建，属第 4 档；答案已如实声明仅内容核查未实际运行，按约定不影响档位。",
+      "review_reason": "The final setup.py source list uses `extension.cpp/extension_kernel.cu` while the shown files are `myadd.cpp/myadd_cuda.cu`; copying the supplied route requires correcting inconsistent source content."
+    },
+    {
+      "run_id": "E-cann-glm-5_3-standard-20260921T102303",
+      "task": "E",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "asys collect --task_dir=path1 --tar=\"True\" --output=path2\n# 示例\nasys collect --task_dir=$HOME/cache_path --tar=\"True\" --output=$HOME/dfx_info",
+        "收集信息后，用 **msaicerr** 工具复现和分析 AI Core Error（官方文档路径：【昇腾文档】→【故障处理】→【典型故障专题】→【AI Core Error问题定位专题】）",
+        "- msaicerr 工具的具体命令行用法（文档路径已知，未抓取具体页面）"
+      ],
+      "original_reason": "信息收集步骤可直接执行：asys collect完整命令、参数说明、环境变量前置条件(ASCEND_PROCESS_LOG_PATH等须与业务运行时一致)及输出目录结构齐全，官方来源逐字支持，仅需替换path1/path2等明确标识的路径。但排查路线第4步msaicerr单算子复现仅有\"用 msaicerr 工具复现和分析\"的目标描述和文档路径，无命令行，关键操作无法根据答案直接执行；第2步的plog路径获取方式也未给出具体命令，需补充缺失内容才能完整执行，属3档(具体缺口：msaicerr调用命令、plog定位命令)。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "E-cuda-glm-5_3-standard-20260921T102548",
+      "task": "E",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "<answer>\n\n## 错误本质与为什么栈指向的行不对\n\n`device-side assert triggered` 表示某个 CUDA kernel 内部的 `assert()` 失败（在 PyTorch 中绝大多数是索引越界：`cross_entropy` 的 target ≥ num_classes、`embedding`/`gather`/`scatter`/`index_select` 索引越界或为负）。由于 CUDA kernel 异步执行，错误在之后的某个同步点才被上报，所以 Python traceback 指向的往往不是真正出错的行。PyTorch 官方源码（`c10/cuda/CUDAException.cpp` 的 `c10_cuda_check_implementation`）就是在这个检查点拼接错误信息并检查 device 断言缓存的。\n\n## 定位方法（按推荐顺序）\n\n### 1. 先开同步执行，让栈指对行（NVIDIA 官方）\n\n```bash\nCUDA_LAUNCH_BLOCKING=1 python train.py\n```\n\nNVIDIA CUDA Programming Guide 附录 5.2.3.1 原文：该变量\"specifies whether to disable or enable asynchronous kernel launches… This allows CUDA API errors to be observed at the exact API call that triggered them, rather than later in the execution.\"（取值 `1` 禁用异步，默认 `0`；会变慢，仅用于调试）。\n来源：https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html\n\n### 2. 开 PyTorch 的 Device-Side Assertion（DSA）报告，直接给出 kernel 名与两侧 file:line（PyTorch 官方源码）\n\n```bash\nPYTORCH_USE_CUDA_DSA=1 python train.py\n# 需要同时打出 kernel 启动点的完整回溯时：\nPYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 python train.py\n```\n\n依据 `c10/cuda/CUDADeviceAssertionHost.cpp`（逐字核实）：\n- `check_env_for_dsa_enabled()` 读取环境变量 **`PYTORCH_USE_CUDA_DSA`**（`env_flag_set(\"PYTORCH_USE_CUDA_DSA\")`）；\n- `check_env_for_enable_launch_stacktracing()` 读取 **`PYTORCH_CUDA_DSA_STACKTRACING`**；\n- 启用后报错会调用 `c10_retrieve_device_side_assertion_info()`，输出内容包括：GPU 断言消息、**断言所在的 CUDA 源文件：行号**、device 函数名、失败线程的 thread ID / block ID、**kernel 启动处的 Python/C++ 侧文件：行号、函数名、kernel 名、stream**，以及可选的启动点回溯；\n- 前提条件：所有 GPU compute capability ≥ 6（需要 managed memory，`dsa_check_if_all_devices_support_managed_memory`），否则提示 \"Device-side assertions disabled because not all devices support managed memory.\"；\n- 当前 main 分支中 `TORCH_USE_CUDA_DSA` 在 `USE_CUDA` 下自动定义（`CUDADeviceAssertionHost.h`），运行时仍需上述环境变量激活。\n- **未核实处**：`PYTORCH_USE_CUDA_DSA` 是从哪个 PyTorch 版本开始可用、旧版本会打印何种\"not compiled with TORCH_USE_CUDA_DSA\"提示，本轮未取得官方版本对照表；已知条件是\"较新的、带 DSA 编译的版本\"。\n\n来源（均为官方源码，逐字抓取，无截断）：\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.cpp\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.h\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.cpp\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.h\n\n### 3. 用 Compute Sanitizer 精确到 kernel / 线程（NVIDIA 官方）\n\n```bash\n# PyTorch 程序直接套在 python 外层（memcheck 为默认工具）\ncompute-sanitizer python train.py\n\n# 只检查名字匹配的 kernel；或跳过前 N 次启动、只查 M 次\ncompute-sanitizer --kernel-name regex='embedding' python train.py\ncompute-sanitizer --launch-skip 1000 --launch-count 50 python train.py\n\n# 首个错误处生成 coredump，供 cuda-gdb 事后分析\ncompute-sanitizer --generate-coredump python train.py\n```\n\n官方文档要点（https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html ，该页有明确截断标记，截断于 Memcheck 示例中部）：\n- Compute Sanitizer 随 CUDA toolkit 安装，`--tool` 可选 `memcheck/racecheck/initcheck/synccheck`，默认 memcheck；\n- 对\"Precise\"错误（内存越界/未对齐），可报告 kernel 名、指令 PC、线程与块坐标、访问地址；自编 CUDA kernel 需用 `-lineinfo`（不影响优化）或 `-G` 编译才有 file:line，release 构建只有 kernel 名；\n- **注意**：device 侧 assert 属于硬件报告的 \"Hardware exception (Imprecise)\" 类，官方明言这类错误\"may not be able to attribute the cause of the error back to the source file and line\"——即 compute-sanitizer 能告诉你出错的 kernel，行号归因可能不精确；\n- 该文档未专门讨论 assert 场景，也未说明旧 `cuda-memcheck` 的弃用状态（此点未能核实，需查 CUDA Release Notes）。\n\n### 4. cuda-gdb 现场/事后调试（NVIDIA 官方）\n\n```bash\nCUDA_DEVICE_WAITS_ON_EXCEPTION=1 python train.py   # 进程在设备异常处暂停\ncuda-gdb -p <pid>                                  # 附着检查 live GPU 状态\n```\n\n`CUDA_DEVICE_WAITS_ON_EXCEPTION`（同一环境变量附录 5.2.3.6，取值 0/1，默认 0）：\"a CUDA application will halt and wait when a device-side exception occurs, allowing a debugger, such as cuda-gdb, to be attached to inspect the live GPU state\"。\n\n### 5. 辅助手段（社区通行做法，本轮未抓取正文核实）\n\n- 在可疑区间插 `torch.cuda.synchronize()` 二分定位（效果同 1 的手动版）；\n- 把数据/模型搬到 CPU 复跑，CPU 路径通常给出明确的 \"index out of bounds\" 报错；\n- 事后检查最常见根因：`(target >= num_classes).any()`、`(idx >= num_embeddings).any()`、负索引、混入 NaN。\n\n## 版本适用性（M9 范围）\n\n- `CUDA_LAUNCH_BLOCKING`、`CUDA_DEVICE_WAITS_ON_EXCEPTION`：当前 CUDA Programming Guide（页面更新于 2026-09）记载，适用于现行 CUDA 工具链；引入版本未在所取正文中给出（未核实）。\n- `compute-sanitizer`：随 CUDA toolkit 安装（文档正文未给最低版本号）；`--generate-coredump` 需 CUDA 11.6 起。\n- `PYTORCH_USE_CUDA_DSA` / `PYTORCH_CUDA_DSA_STACKTRACING`：以 PyTorch main 分支源码为准（2026-09 抓取）；确切引入版本未核实。\n- 上述均未能在本轮锁定到具体引入版本号，只能给出有依据的适用条件。\n\n## 来源清单\n\n官方（正文已取得）：\n1. https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html （有截断）\n2. https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html （`CUDA_LAUNCH_BLOCKING` 条目完整取得）\n3. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.cpp\n4. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.h\n5. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.h\n6. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.cpp\n\n第三方（仅见标题/摘要，未取正文）：CSDN（blog.csdn.net/weixin_42561040/article/details/160704542 等）、腾讯云开发者社区（cloud.tencent.com/developer/article/2363866 等）、知乎专栏（zhuanlan.zhihu.com/p/14373043490）。\n\n无法核实处汇总：PyTorch DSA 环境变量的确切引入版本；旧版 `cuda-memcheck` 弃用的官方声明；第三方文章正文中的具体主张。\n\n</answer>\n\n<stop_reason>\n达到并略超检索预算上限后停止：WebSearch 已用满 4 次（上限 4），WebFetch 已用 7 次（上限 8）。任务所需核心信息（官方定位手段、命令、参数、版本条件）已从 NVIDIA 官方文档与 PyTorch 官方源码取得，剩余未核实项（PyTorch DSA 引入版本、cuda-memcheck 弃用声明）在预算内无法通过进一步抓取解决，已在答案中标注。停止原因为：预算耗尽且核心问题已可回答，非因异常中断。\n</stop_reason>"
+      ],
+      "original_reason": "各方法均给出完整命令行与参数：CUDA_LAUNCH_BLOCKING=1 python train.py、PYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1、compute-sanitizer含--kernel-name regex/--launch-skip/--generate-coredump具体用法、cuda-gdb -p <pid>附着流程。前置条件明确标注（compute capability≥6需managed memory、-lineinfo/-G才有file:line、release构建只有kernel名、Imprecise错误行号归因受限）。仅需替换train.py路径、pid等明确环境值。实际运行未验证，但按内容核查操作完整。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "F-cann-glm-5_3-standard-20260921T103605",
+      "task": "F",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "shell 脚本方式（推荐，单机段示例如下，多机时各节点循环本机 8 卡并统一 MASTER_ADDR/MASTER_PORT）",
+        "多机：标准 torchrun 多机用法，各节点分别执行并指定 --node_rank（官方附录未给出多机 torchrun 完整示例，此行为标准 torchrun 参数推展）"
+      ],
+      "original_reason": "五种拉起方式的命令行完整（HCCL_WHITELIST_DISABLE、torch.distributed.launch、torchrun、torch_npu_run 等参数齐全），环境准备命令（sysctl、hccn_tool、ufw disable/systemctl stop firewalld）可直接照抄，待替换项（<rank0节点IP>、<空闲端口>、MASTER_IP_ADDR=**）均明确标识并有说明，符合 4 档。未给 5 档：多机 shell 脚本仅给单机段示例并说明\"多机时各节点循环本机 8 卡\"，多机 torchrun 完整命令为答案自认的\"标准 torchrun 参数推展\"，执行多机场景需用户按说明自行扩展，超出纯环境参数替换。",
+      "review_reason": "The requested multi-node HCCL route is not executable as presented: the shell script is only single-node and the multi-node torchrun command is described as an unexpanded template. Multi-node setup must be supplied, not inferred."
+    },
+    {
+      "run_id": "F-cuda-glm-5_3-standard-20260921T103257",
+      "task": "F",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py",
+        "- `$MASTER_ADDR` 必须在所有节点上一致（通常是 rank 0 所在机器的地址）；`--rdzv-endpoint` 不写端口时默认 29400。",
+        "各命令未实际运行（无本机执行；仅文档内容核查）。"
+      ],
+      "original_reason": "命令与代码完整：torchrun 多机命令、SLURM 示例、init_process_group 调用、环境变量表均可照抄；前置条件明确（需在所有节点执行相同命令、需集群管理工具如 SLURM、$MASTER_ADDR 须一致、含 BatchNorm 时转 SyncBatchNorm）。需替换的仅为用户环境值（$MASTER_ADDR、节点数、脚本名、train_dataset/model 等用户自有对象），均有说明，无需修正内容错误。答案自身声明未实际运行，仅内容核查，按约定不影响 4/5 分界；但训练脚本主体为模板（model、train_dataset 未定义属用户侧对象），不构成内容错误，评 4。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "G-cann-glm-5_3-standard-20260921T103847",
+      "task": "G",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "<answer>\n\n## PyTorch GPU 训练脚本迁移到昇腾 NPU 的方式与工具（CANN 生态）\n\n官方提供**三种迁移方式**：自动迁移（推荐，改动最少）、PyTorch GPU2Ascend 工具迁移（离线脚本转换）、手工迁移。\n\n### 一、前置环境\n\n1. Atlas 训练服务器 + NPU 驱动固件\n2. 安装 CANN 开发套件包 Ascend-cann-toolkit，并 `source ${install_path}/set_env.sh` 设置环境变量（如 `/usr/local/Ascend/ascend-toolkit`）\n3. 安装对应版本的 PyTorch 与 **torch_npu 插件**（Ascend Extension for PyTorch）\n\ntorch_npu 安装（wheel 快速安装示例，CANN 7.0.0 文档）：\n\n```\nwget https://gitee.com/ascend/pytorch/releases/download/v5.0.0-pytorch1.11.0/torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl\npip3 install torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl\n# 验证：\npython3 -c \"import torch;import torch_npu;print(torch_npu.npu.is_available())\"\n```\n\nwhl 包需与 Python 版本（cp37/cp38/cp39/cp310）、架构（aarch64/x86_64）、PyTorch 版本（官方表覆盖 PyTorch 1.11.0 / 2.0.1 / 2.1.0）一一对应；更多版本见 https://gitee.com/ascend/pytorch/releases 。PyTorch 2.1.0 若报 protobuf 问题：`pip install protobuf==3.20`。\n\n### 二、方式 1：自动迁移（推荐）\n\n在训练入口 .py 首行插入：\n\n```python\nimport torch\nimport torch_npu\nfrom torch_npu.contrib import transfer_to_npu\n```\n\n之后可直接在 NPU 上按原流程运行（`python main.py -a resnet50 -b 32 --gpu 1 --dummy`），成功保存权重即迁移成功。\n\n**约束**（CANN 8.0.RC3.alpha003 文档）：\n- 支持 PyTorch 1.11.0、2.1.0、2.2.0（需 1.11.0 及以上）\n- 与 `torch.jit.script` 冲突（会屏蔽该功能，必须使用时改用 GPU2Ascend 工具迁移）\n- 暂不支持 `channel_last`，需用 `contiguous` 替换\n- 与昇腾已适配三方库可能冲突，冲突时改用工具迁移\n- `init_process_group` 后 backend 自动由 nccl 替换为 hccl；脚本中若有 `assert backend in ['gloo','nccl']`、`if backend == 'nccl'` 等判断需手动把 `nccl` 改写为 `hccl`\n\n### 三、方式 2：PyTorch GPU2Ascend 工具迁移（msFmkTransplt）\n\n先装依赖（非 root 加 `--user`）：\n\n```\npip3 install pandas      # >=1.2.4\npip3 install libcst      # 语法树解析\npip3 install prettytable\npip3 install jedi        # 可选，跨文件解析\n```\n\n执行迁移：\n\n```\ncd Ascend-cann-toolkit安装目录/ascend-toolkit/latest/tools/ms_fmk_transplt/\n./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -t 目标模型变量名 -m 训练脚本入口文件]\n```\n\n示例：\n\n```\n./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model\n```\n\n关键参数：`-i` 输入目录（必选）；`-o` 输出目录（必选，单卡输出 `xxx_msft`、多卡输出 `xxx_msft_multi`）；`-v` PyTorch 版本（该版本文档支持 1.11.0、2.1.0）；`distributed` 将 GPU 单卡脚本迁移为 NPU 多卡脚本（仅支持 DataLoader 加载数据场景），此时 `-m` 入口文件必选、`-t` 模型变量名默认 `model`；`-m`（modelarts）可选。输出目录含 `unknown_api.csv`（存疑 API）、`unsupported_api.csv`（不支持 API）、`change_list.csv`（修改记录）、`run_distributed_npu.sh`（多卡启动脚本）等，可据此定位需人工处理的 API。\n\n### 四、方式 3：手工迁移\n\n单卡核心修改：\n1. `import torch_npu`\n2. 指定设备：`torch.device('cuda:{}'.format(args.gpu))` → `torch.device('npu:{}'.format(args.gpu))`；或 `torch.cuda.set_device(...)` → `torch_npu.npu.set_device(...)`\n3. 接口替换：`torch.cuda.is_available()` → `torch_npu.npu.is_available()`；`model.cuda(...)` → `model.npu(...)`；`images.cuda(args.gpu, non_blocking=True)` → `images.npu(args.gpu, non_blocking=True)`\n4. 含不支持的 `torch.nn.parallel.DataParallel` 需手动修改\n\n多卡（分布式）：`dist.init_process_group(backend='nccl', ...)` → `backend='hccl'`\n\n### 五、迁移后异常处理\n\n- 部分 cuda 接口报错多为 API 不支持：用分析迁移工具获取存疑 API 列表，到昇腾开源社区 https://gitee.com/ascend/pytorch 提 ISSUE；或将不支持 API 移至 CPU 运行（改 `torch_npu/csrc/aten/npu_native_functions.yaml` 的 `tocpu` 配置后重新编译）；或参考 Ascend C / 适配插件开发做算子适配。\n- 提升速度可开二进制算子：`torch_npu.npu.set_compile_mode(jit_compile=False)`（需装二进制算子包）。\n\n### 来源（官方正文已获取）\n\n- 迁移操作（自动迁移，CANN 8.0.RC3.alpha003）：https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC3alpha003/devaids/auxiliarydevtool/atlasfmkt_16_0019.html\n- PyTorch GPU2Ascend 工具迁移（CANN 商用版 8.0.RC1）：https://www.hiascend.com/document/detail/zh/canncommercial/80RC1/devaids/auxiliarydevtool/atlasfmkt_16_0021.html\n- 安装 torch_npu 插件（CANN 商用版 7.0.0，含版本下载表）：https://www.hiascend.com/document/detail/zh/canncommercial/700/envdeployment/instg/instg_0048.html\n- 手工迁移（TorchNPU 6.0.RC1）：https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0018.html\n\n### 未核实处\n\n- 最新 CANN 8.x 与 torch_npu/PyTorch（如 PyTorch 2.2+/2.4+）的完整配套表未从官方页面取得正文（CANN 8.0.0 与 8.0.RC3 的\"环境准备\"及工具迁移页两次抓取均只返回标题/评分标签，无正文，原因未确定；仅二手来源提及\"torch_npu 2.4.0.x 配 CANN 8.0\"，未获官方正文印证）。wheel 安装示例取自 CANN 7.0.0 文档。\n- 二进制算子包安装步骤、ModelArts 适配细节仅见引用链接，未取正文。\n- 精度对拍/msprof 调优流程本轮未取得官方正文（原题未强制，未再消耗预算）。\n\n</answer>\n\n<stop_reason>工具预算已用尽：WebSearch 4/4、WebFetch 8/8（其中 3 次抓取仅返回导航/标签无正文，1 次返回站点首页）。三种迁移方式、命令、参数及 torch_npu 安装与版本对应的核心官方正文均已取得，足以回答原题；仅 CANN 8.x 最新完整配套表未能核实，已在答案中注明。</stop_reason>"
+      ],
+      "original_reason": "操作指导完整可直接执行：依赖安装（pip3 install pandas/libcst/prettytable/jedi）、进入工具目录、完整的pytorch_gpu2npu.sh命令行含必选/可选参数说明及示例、输出文件说明、torch_npu wheel安装与验证命令、自动迁移三行import插入位置、运行命令python main.py -a resnet50 -b 32 --gpu 1 --dummy、手工迁移的逐项接口替换前后对照、前置条件（Atlas服务器/驱动/CANN/set_env.sh）均齐全，仅需用户替换路径等环境值，无需修正内容错误。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "G-cuda-glm-5_3-standard-20260921T104118",
+      "task": "G",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "./hipify-clang square.cu --cuda-path=/usr/local/cuda-12.9 -I /usr/local/cuda-12.9/samples/common/inc",
+        "docker pull rocm/pytorch:rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.13.0",
+        "`hipcc` 编译转换后代码的具体命令行：本次抓取的官方页未含编译环节命令，属先验知识。"
+      ],
+      "original_reason": "安装（apt/dnf/zypper）、hipify-perl 转换、hipify-clang 转换（含必需的 --cuda-path 与 CUDA 安装、输入须可编译等前提）、PyTorch Docker pull/run 完整命令及参数（--device /dev/kfd 等）均可照抄执行，仅需替换明确标识的环境值（CUDA 路径 /usr/local/cuda-12.9、镜像标签、发行版包管理器）。未给 5 分的具体缺口：转换后的 hipcc 编译命令行与 pip 安装 ROCm 版 PyTorch 的确切命令未提供（答案已在'未核实'节逐条声明，属答案自行指出的缺口），CUDA 路线端到端执行仍需补写编译一步。",
+      "review_reason": "The requested CUDA/PyTorch→ROCm migration omits the hipcc compile command and exact ROCm PyTorch installation command; final explicitly says the end-to-end CUDA path still needs the compile step. These are missing core operations."
+    },
+    {
+      "run_id": "H-cann-glm-5_3-standard-20260921T104811",
+      "task": "H",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。",
+        "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>",
+        "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+      ],
+      "original_reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "H-cuda-glm-5_3-standard-20260921T104327",
+      "task": "H",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "self.device_input = ...  # 用 pycuda/cuda alloc 分配的 device buffer",
+        "data = next(self.batches)",
+        "config.int8_calibrator = MyCalibrator(batchstream)   # 挂载校准器"
+      ],
+      "original_reason": "主代码为具体可操作方案：校准器类四接口实现、ONNX解析、config.set_flag(trt.BuilderFlag.INT8)、config.int8_calibrator挂载、build_engine触发校准，均与官方文档一致。但存在需修正/补写的缺口：(1) `self.device_input = ...` 为占位符，设备缓冲分配需补写；(2) get_batch内使用 `self.batches` 而__init__只定义了 `self.batch_stream`，属性不一致需修正；(3) 构建段引用未定义变量 `batchstream`（应为MyCalibrator(batch_stream)之类）；(4) Torch-TensorRT片段以 `...` 截断参数。trtexec --calib参数拼写答案自认未核实。属3档：有具体操作方案但需修正错误或补充缺失内容才能直接执行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "I-cann-glm-5_3-standard-20260921T105011",
+      "task": "I",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "cat /usr/local/Ascend/ascend-toolkit/latest/{arch}-linux/ascend_toolkit_install.info\n# {arch} 为 aarch64 或 x86_64",
+        "python -c \"import torch; print(torch.__version__)\"\npython -c \"import torch_npu; print(torch_npu.__version__)\""
+      ],
+      "original_reason": "命令完整可照抄执行：npu-smi info、cat /usr/local/Ascend/driver/version.info、cat ascend_toolkit_install.info、两条 python -c、pip list | grep torch；{arch} 为明确标注且有说明（aarch64 或 x86_64）的用户环境参数；官方配套表与固件驱动页 URL 齐全，六步流程含适用前提（source set_env.sh、固件页需浏览器打开、升降级顺序与降级重装提示）。仅需替换 {arch} 及用户自身版本等环境值，未发现需修正的内容错误→4；因 {arch} 等环境值仍需替换，未达5档\"无需补写或替换\"。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "I-cuda-glm-5_3-standard-20260921T105255",
+      "task": "I",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 5,
+      "recommended_score": 5,
+      "disposition": "retain",
+      "final_quotes": [
+        "python -c \"import torch; print(torch.backends.cudnn.version())\"",
+        "pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu126",
+        "**只有编译自定义 CUDA 扩展**（`pip install -e .`、flash-attn 等源码包）时才要求本地 toolkit 大版本与 `torch.version.cuda` 匹配"
+      ],
+      "original_reason": "命令与步骤完整可直接执行：版本检查命令（python -c 一行式、nvidia-smi、nvcc --version 或 cat /usr/local/cuda/version.json）均为完整命令、无占位符；安装命令给出完整 pip 命令含 --index-url；适用前提明确（nvidia-smi 的 CUDA Version 是驱动最高支持版本、仅编译自定义扩展才要求本地 toolkit 与 torch.version.cuda 匹配、驱动只需满足最低要求且向下兼容）；附五步排错决策流程，每步含判断条件与动作。答案如实声明因 macOS 无 NVIDIA GPU 未实测，属未运行记录，不作为降档依据；仅内容核查，不宣称复现成功。",
+      "review_reason": "The commands contain no unresolved answer-content or environment placeholders that must be substituted for the stated version-check workflow; lack of local GPU execution is not a downgrade."
+    },
+    {
+      "run_id": "J-cann-glm-5_3-standard-20260921T110635",
+      "task": "J",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "### 4. 持久化（写入 ~/.bashrc）\n\n```bash\nvi ~/.bashrc   # 最后一行添加 source /usr/local/Ascend/cann/set_env.sh\n# :wq! 保存退出\nsource ~/.bashrc\n```\n\n### 5. 验证\n\n```bash\necho $ASCEND_HOME_PATH     # 应指向 set_env.sh 中设定的安装路径\necho $LD_LIBRARY_PATH\necho $PYTHONPATH\nnpu-smi info               # 驱动正常\npython3 -c \"import acl; print(acl.get_soc_name())\"  # CANN 可用性\n```\n\n"
+      ],
+      "original_reason": "命令完整可直接执行：source 命令、.run 包安装（chmod/--install）、.bashrc 持久化（vi/:wq!/source ~/.bashrc）、验证命令（npu-smi info、echo $ASCEND_HOME_PATH、python3 -c import acl）均含完整参数与前置条件说明。仅需替换安装路径等环境值且有明确标识，无内容错误需修正。 复核：Original assessor reason explicitly requires replacing installation paths/environment values; unchanged M10 grade4, not5. No claim of runtime validation.",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "J-cuda-glm-5_3-standard-20260921T105802",
+      "task": "J",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PATH=/usr/local/cuda-13.4/bin${PATH:+:${PATH}}",
+        "创建 `/etc/modprobe.d/blacklist-nouveau.conf`，内容为：\n   ```\n   blacklist nouveau\n   options nouveau modeset=0\n   ```\n   然后执行 `sudo update-initramfs -u`。"
+      ],
+      "original_reason": "答案给出可直接执行的完整 export 命令（含 ${PATH:+:${PATH}} 幂等写法），并解释反斜杠续行符；前置条件齐备：CUDA 13.4 驱动需单独安装并 reboot、runfile 方式需先写 /etc/modprobe.d/blacklist-nouveau.conf 并 update-initramfs -u；验证步骤 nvcc --version 明确。唯一的替换项是路径中的版本号 cuda-13.4，已明确标识并附说明，属用户环境参数，符合 4 分；持久化写入位置（~/.bashrc 等）为建议而非缺漏。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "K-cann-glm-5_3-standard-20260921T111330",
+      "task": "K",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "docker run \\\n    --name cann_container \\\n    --device /dev/davinci1 \\",
+        "systemctl daemon-reload && systemctl restart docker",
+        "--runtime=ascend` 启动的完整示例命令及 `ASCEND_VISIBLE_DEVICES` 用法未取得官方正文"
+      ],
+      "original_reason": "主路线（手动挂载）给出完整可照抄的 docker run 命令，含全部 --device、-v、-e 参数与镜像 tag，仅需按环境替换卡号（davinci1）等明确标识的值；ascend-docker-runtime 安装命令完整但文件名含 <version>/<arch> 占位；验证代码完整。未给 5 因 --runtime=ascend 启动的完整示例命令缺失（答案自认未取得官方正文），该路线需补写启动命令。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "K-cuda-glm-5_3-standard-20260921T111548",
+      "task": "K",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "sudo nvidia-ctk runtime configure --runtime=docker   # 会修改 /etc/docker/daemon.json",
+        "docker run --gpus all -it --rm -v local_dir:container_dir nvcr.io/nvidia/pytorch:26.08-py3",
+        "python -c \"import torch; print(torch.cuda.is_available())\"   # 期望输出 True"
+      ],
+      "original_reason": "答案提供完整可照抄的命令链：前置依赖（驱动、Docker）、apt 仓库配置与 toolkit 安装、nvidia-ctk runtime configure + systemctl restart docker、docker pull 具体 tag、docker run --gpus all 交互/非交互两种形式、验证命令 python -c 'import torch; print(torch.cuda.is_available())'，并覆盖 --ipc=host、rootless 等前提。唯一需用户替换的是明确标识的挂载路径 local_dir:container_dir（属'明确标识且有说明的用户环境参数'），无需修正任何内容错误，故评 4 而非 5（5 要求无需任何替换）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "L-cann-glm-5_3-standard-20260921T113415",
+      "task": "L",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "python3 msaccucmp.py compare -m my_dump_path -g golden_dump_path \\\n  -op op_name [-o output_index | -i input_index] [-n topn] [-ml max_line] \\\n  [--ignore_single_op_result] [-overflow_detection]",
+        "- **未核实处**：GPU 侧 npy 生成的具体脚本/命令（官方页“准备GPU侧npy数据文件”和“准备TensorFlow模型npy数据文件”本次抓取只返回了页面标题与评分控件，无正文），需到昇腾社区文档“精度调试工具 > 比对数据准备”章节查阅"
+      ],
+      "original_reason": "答案给出完整可执行命令行：整网比对和单算子比对的 python3 msaccucmp.py compare 命令均含全部必要参数及其说明，dump 的 acl.json 配置完整（含必选/可选字段说明、目录结构、命名规则），前置条件明确（安装 CANN、source set_env.sh）。仅需用户替换 my_dump_path/golden_dump_path 等环境路径即可执行，无需修正内容错误。不能给5分的原因：GPU 侧 npy 标杆数据生成命令缺失且答案已如实标注'未核实'，以及答案明确声明'所有命令均未实际运行验证'——后者按约定不作为4/5分界，但 npy 生成缺口的明确标注使其不符合'无需补写任何内容'的5分标准。",
+      "review_reason": "The requested precision-comparison workflow lacks the GPU/CPU reference `.npy` generation command, explicitly marked unverified. That missing prerequisite must be added before the comparison can run."
+    },
+    {
+      "run_id": "L-cuda-glm-5_3-standard-20260921T112954",
+      "task": "L",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "compute-sanitizer --tool memcheck ./app` —— \"precisely detect and report out of bounds and misaligned accesses to global, local and shared memory\"，还能报 CUDA API 错误和 `cudaMalloc` 泄漏。\n- **racecheck**：`compute-sanitizer --tool racecheck ./app` —— 检测共享内存 WAW/WAR/RAW 竞争。\n- **initcheck**：`compute-sanitizer --tool initcheck ./app` —— 检测未初始化 device 全局内存访问（数值结果随机的常见根因）；`--initcheck-address-space shared|all` 可扩展到共享内存。\n- **synccheck**：`compute-sanitizer --tool synccheck ./app` —— 检测 `__syncthreads()`/`__syncwarp()` 在分歧分支中的误用。\n\n官方建议顺序：先跑 memcheck，再跑其他工具。配套编译选项以获得源码行号：`nvcc -Xcompiler -rdynamic -lineinfo -o out in.cu`",
+        "CUDA 侧同样把每阶段中间结果写回显存（临时加输出参数即可）"
+      ],
+      "original_reason": "操作指导整体完整可执行：assert_close调用含必要参数说明（rtol/atol须同时指定、equal_nan、check_device需先.cpu()）；逐元素diff代码可直接运行；compute-sanitizer四工具均给出完整命令行（compute-sanitizer --tool memcheck ./app 等）及配套编译选项 nvcc -Xcompiler -rdynamic -lineinfo -o out in.cu，命令与NVIDIA官方文档一致；仅需用户替换自己的应用名/张量等环境值。扣1分原因：TF32开关、CUDA_LAUNCH_BLOCKING=1、gradcheck参数等处答案自认未在官方页核实，且逐层拆分中'临时加输出参数即可'属示意而非完整代码，需少量补写。",
+      "review_reason": "The primary requested workflow (assert_close, elementwise comparison, compute-sanitizer commands and compile flags) is executable. Unverified TF32/gradcheck and illustrative per-layer guidance are secondary; retain M10=4 without requiring every optional branch to be a full program."
+    },
+    {
+      "run_id": "M-cann-glm-5_3-standard-20260921T115015",
+      "task": "M",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "// 3. 按shape计算切分：blockDim、tileNum、tileLength、尾块处理\n    //    （对齐规则见第5节）",
+        "以上代码均为文档内容核查，未实际编译运行。"
+      ],
+      "original_reason": "TilingData 定义、内核侧 GET_TILING_DATA 解析、aclrt 三步手工搬运均为可直接使用的完整代码；但核心的 TilingFunc 代码第3步切分计算仅是注释占位（'按shape计算切分'无实现，尾块公式散在第5节需自行拼装），且多个关键 API（GetInputShape/SetTilingData 签名）答案自认未核实，需补充或修正才能实际编译运行，属'有具体操作方案但需补充缺失内容'档3。答案已明示'以上代码均为文档内容核查，未实际编译运行'。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "M-cuda-glm-5_3-standard-20260921T115953",
+      "task": "M",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "context.setOptimizationProfileAsync(0, stream);\n\n// 2. 设置实际输入 shape（须在 profile 范围内）\ncontext.setInputShape(\"foo\", Dims{3, {3, 150, 250}});\n\n// 3. 所有输入 shape 设置完后 enqueue\ncontext.enqueueV3(stream);",
+        "int blockSize = 256;                                  // 或经启发式选择\nint numBlocks = (N + blockSize - 1) / blockSize;      // N 为运行时实际元素数\nmyKernel<<<numBlocks, blockSize, 0, stream>>>(d_data, N);"
+      ],
+      "original_reason": "答案给出可直接照抄的完整代码：TensorRT 构建期 profile 创建、运行期选 profile→设 shape→enqueue 的 C++/Python 完整调用序列，含必要前置条件（shape 须落在 profile 范围内、stream 一致性、切换 profile 须在 enqueueV3 完成后）；CUDA 侧 grid/block 计算公式、执行配置语法、动态共享内存示例均为完整可运行片段。仅需替换明确的环境值（输入名 \"foo\"、维度值、N、d_data、stream 等）即可执行，符合 4 分。未给 5 分因片段为示例性质（如 builder/config 上下文未完整给出），且答案自身声明所有代码未实际运行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "N-cann-glm-5_3-standard-20260921T123059",
+      "task": "N",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "**生效方式**：编译为 `.so`，`make install` 到 `${INSTALL_DIR}/opp/vendors/*xxx*/custom_fusion_passes/`（`${INSTALL_DIR}` 默认如 `/usr/local/Ascend/cann`；xxx 仅一层自定义目录"
+      ],
+      "original_reason": "操作指导基本可直接执行：atc参数、配置文件两种格式、完整C++代码（含头文件与注册宏）、安装目录规则（${INSTALL_DIR}/opp/vendors/*xxx*/custom_fusion_passes/，xxx说明为一层自定义目录）、验证步骤（export DUMP_GE_GRAPH=1后Netron对比pbtxt）均给出且与来源一致。扣1分因：Pass本身编译为.so的具体编译命令（CMake/make目标）未给出，仅说“编译为 .so，make install”；vendors目录xxx与${INSTALL_DIR}需按用户环境替换（有说明，属4分允许范围）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "N-cuda-glm-5_3-standard-20260921T121638",
+      "task": "N",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "trtexec --onnx=resnet50-v1-12-quantized.onnx --shapes=data:4x3x224x224 \\\n  --stronglyTyped --noDataTransfers --useCudaGraph --useSpinWait \\\n  --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun",
+        "auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());\nstd::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON);",
+        "nsys profile -t cuda [application]",
+        "networkDefinition->markUnfusedTensorsAsDebugTensors(); // 不阻止融合，保留调试"
+      ],
+      "original_reason": "final 提供完整可照抄的命令与代码：trtexec 命令含全部参数及示例模型名/形状，与官方 benchmarking 文档逐字一致；nsys profile -t cuda、IEngineInspector C++ 代码、markUnfusedTensorsAsDebugTensors/markDebug、setTensorDebugState、setBuilderOptimizationLevel(0)、DISABLE_COMPILATION_CACHE 均为文档原文级别的完整调用；trtexec 路径（NGC 容器 /opt/tensorrt/bin/trtexec）已给出。仅需替换用户环境值（ONNX 文件路径、应用名），无需修正内容错误。次要扣分点：nsys analyze/stats 具体报告名未从官方正文确认（final 已自曝并以 nsys stats --help 为准），但该处 final 已如实声明且给出核实途径，不构成需修正的内容错误，故 4 分而非 5 分（5 分要求所有指导及前提完全无需补写）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "O-cann-glm-5_3-standard-20260921T123523",
+      "task": "O",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "python3 setup.py build bdist_wheel\n```\n（样例工程可用 `bash build_and_run.sh` 一键编译安装运行测试）",
+        "   （命令与参数来自 CSDN 文章 https://blog.csdn.net/sinat_41617212/article/details/154621323，非官方页，参数拼写请在本地 `msopgen --help` 核对）",
+        "4. 所有代码均未实际运行验证，仅为文档内容核查。"
+      ],
+      "original_reason": "torch_npu 侧操作指导完整：完整 C++/Python 代码、文件结构、编译命令（python3 setup.py build bdist_wheel、bash build_and_run.sh、git clone 示例仓库）及版本前提条件，仅需替换用户环境参数即可执行；CANN 侧 msopgen 命令参数需按答案提示在本地 --help 核对（有明确说明的核对指引，非内容错误），aclnn 适配层细节指向官方文档链接。未实际运行验证，答案自身已声明'仅为文档内容核查'。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "O-cuda-glm-5_3-standard-20260921T123954",
+      "task": "O",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 5,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "# 加载方式（顺序重要：必须先加载 C++ 算子定义，再调用 torch.library 注册 API）\ntorch.ops.load_library(\"myops/_C.so\")",
+        "setup(\n    name=\"myops\",\n    ext_modules=[\n        cpp_extension.CUDAExtension(\n            name=\"myops._C\",\n            sources=[\"csrc/myops.cpp\", \"csrc/myops_cuda.cu\"]),\n    ],\n    cmdclass={\"build_ext\": cpp_extension.BuildExtension},\n)",
+        "torch.library.opcheck(torch.ops.myops.mymuladd.default, args)  # 检查注册 API 用法是否正确",
+        "return {grad, grad, /*c 不可微*/ torch::Tensor()};",
+        "grad_a = grad * b",
+        "grad_b = grad * a"
+      ],
+      "original_reason": "答案提供端到端可执行方案：完整 TORCH_LIBRARY schema 定义、CUDA kernel 与 TORCH_LIBRARY_IMPL 注册、setuptools/CUDAExtension 的 setup.py 与 pip install 命令、torch.ops.load_library 加载顺序说明、register_fake/register_autograd 的 Python 代码、opcheck 测试代码，并明确前置条件（PyTorch ≥2.4、CUDA 环境、先加载 C++ 库再调用 torch.library API）。命令、参数与前提完整，仅需用户替换路径等环境值即可执行，无需修正内容错误。答案自述未实际编译运行及 CUDAExtension 示例非逐字来自抓取正文，属验证性披露而非可执行性缺口。call_42c5a82700e24df1afdf3e68 佐证 Python register_autograd 亦覆盖。call_32ff5960311941c6be8b7bf9 为搜索页，不用于 M10 评分。",
+      "review_reason": "C++ Autograd backward returns `{grad, grad, ...}` for `mymuladd`, but correct derivatives require `grad*b` and `grad*a`; this is a substantive correction."
+    },
+    {
+      "run_id": "P-cann-glm-5_3-standard-20260921T125031",
+      "task": "P",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "pip3 install --upgrade apex-0.1+ascend-{version}.whl"
+      ],
+      "original_reason": "操作指导仍需替换已标识的用户环境值（apex-0.1+ascend-{version}.whl），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "P-cuda-glm-5_3-standard-20260921T124614",
+      "task": "P",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 5,
+      "recommended_score": 4,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n            output = model(input)              # forward + loss 都在 autocast 内\n            loss = loss_fn(output, target)",
+        "scaler.scale(loss).backward()          # 缩放 loss 并反传，得缩放梯度",
+        "需要 CUDA GPU；速度提升主要来自 Tensor Core 架构（Volta 及以后，2-3x）"
+      ],
+      "original_reason": "答案提供完整训练循环代码：构造 GradScaler、autocast 包 forward+loss、退出后 backward、scale/step/update 顺序齐全，含梯度裁剪、多优化器、累积、bf16 等场景的完整可照抄片段；前置条件明确（需要 CUDA GPU、Tensor Core 架构 Volta 及以后、维度取 8 的倍数）。仅需用户替换自己的模型/数据/损失函数（题面固有内容，非答案缺项），无需修正任何内容错误。",
+      "review_reason": "The AMP loop is complete, but it necessarily requires replacing user-owned model/data/loss objects; this is environment/task substitution under M10=4."
+    },
+    {
+      "run_id": "Q-cann-glm-5_3-standard-20260921T125349",
+      "task": "Q",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6",
+        "msprof --application=\"python train.py\" \\\n       --output=/home/user/profiling_output \\\n       --ai-core=on \\\n       --memory=on",
+        "注意该文作者提示不同 CANN 版本参数名和字段名可能有差异（未核实）"
+      ],
+      "original_reason": "主路径操作可直接执行：npu-smi info、export OOM_SNAPSHOT_ENABLE=1、官方原文给出的 PYTORCH_NPU_ALLOC_CONF 各配置示例均为完整命令行，前置版本约束（HDK/CANN 门槛、参数互斥规则）明确，仅需按现场替换路径等环境值。扣1分原因：msprof 命令参数名（--memory=on 等）来自第三方博客且作者本人标注跨版本可能差异，_record_memory_history 在昇腾官方文档的用法未核实，这两条次要路径需现场修正/核实后才能保证执行，不满足'无需补写或修正'的5分标准。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Q-cuda-glm-5_3-standard-20260921T125557",
+      "task": "Q",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128,garbage_collection_threshold:0.8",
+        "out = cp.checkpoint(block, x, use_reentrant=False)",
+        "max_split_size_mb`、`roundup_power2_divisions`、`garbage_collection_threshold` 只在 `backend:native` 下有意义，在 cudaMallocAsync 下被忽略"
+      ],
+      "original_reason": "答案给出完整可执行的 export 命令（含多选项组合语法）、可直接调用的 torch.cuda 诊断 API 列表、语法正确的 checkpoint/checkpoint_sequential 代码（含必要的 use_reentrant=False），并写明各操作的前提条件（max_split_size_mb 仅在 backend:native 下有意义、empty_cache 不进训练循环、expandable_segments 实验性）。所需替换仅为用户模型/输入张量/block 等环境值，无内容错误需修正。答案自述'仅做了内容核查，未在本机 GPU 环境实际运行验证'，按约定不影响档位。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "R-cann-glm-5_3-standard-20260921T130406",
+      "task": "R",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msprobe overflow_check -i /xxx/dump/step0 -o ./output"
+      ],
+      "original_reason": "操作指导仍需替换已标识的用户环境值（msprobe overflow_check -i /xxx/dump/step0），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "R-cuda-glm-5_3-standard-20260921T125936",
+      "task": "R",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "compute-sanitizer --tool memcheck python train.py",
+        "必须在 `loss.backward()` 之后、`optimizer.step()` 之前调用。",
+        "本答案所有命令均未实际运行（仅内容核查，非运行验证）。"
+      ],
+      "original_reason": "答案给出可直接执行的完整代码与命令：detect_anomaly 上下文管理器与全局开关写法、clip_grad_norm_ 完整参数、AMP+unscale_+裁剪的完整训练循环、数据断言代码块、compute-sanitizer --tool memcheck python train.py 命令行。所需替换项均为明确标识的用户环境参数（model/input/loss_fn/num_classes/max_norm 取值等），无需修正内容错误。答案自身声明 scaler.get_scale() 方法名未核实，但该处为辅助观察项而非关键操作路径，主流程命令与前置条件（loss.backward 后、optimizer.step 前调用裁剪；调试后关闭异常检测）均已明确。答案亦如实标注所有命令未实际运行、仅内容核查，不作为降档依据。对应档 4。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "S-cann-glm-5_3-standard-20260921T131217",
+      "task": "S",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export IMAGE=quay.io/ascend/vllm-ascend:v0.23.0\ndocker pull \"$IMAGE\"",
+        "vllm serve Qwen/Qwen3-0.6B \\\n    --dtype float16 \\",
+        "cd /usr/local/Ascend/mindie/1.0.RC3/mindie-service\nnohup ./bin/mindieservice_daemon > output.log 2>&1 &"
+      ],
+      "original_reason": "vLLM-Ascend完整路线仍需替换已说明的MODEL_CACHE、DEVICE等用户环境值，依冻结M10第4档；不能因指导完整就跳到无需替换的第5档。保留另一MindIE-Motor路线未核实说明。未执行硬件测试。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "S-cuda-glm-5_3-standard-20260921T132027",
+      "task": "S",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+        "curl -v localhost:8000/v2/health/ready     # 返回 200 即就绪",
+        "./trtexec --onnx=model.onnx --saveEngine=model.plan --fp16"
+      ],
+      "original_reason": "操作指导完整：trtexec 构建命令含全部必要参数，config.pbtxt 给出完整可写示例，docker run 含端口映射、挂载与镜像 tag（已将官方 <xx.yy> 占位替换为 26.08-py3），验证命令 curl 与 SDK 容器示例齐全，前置条件（NVIDIA Container Toolkit、绝对路径）已说明。仅需替换明确标识的用户环境参数（模型路径 /full/path/to、输入 tensor 名与形状、GPU 数量），故评 4 分而非 5 分。答案自身声明 model-control-mode 等选项未经官方页核实，但不属于原题必需步骤。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "T-cann-glm-5_3-standard-20260921T133012",
+      "task": "T",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "--input_shape=\"data:1,-1\"  --dynamic_dims=\"4;8;16;64\" --input_format=ND",
+        "ACL 三个动态接口（`aclmdlSetDynamicBatchSize`/`aclmdlSetDynamicHWSize`/`aclmdlSetInputDynamicDims`）的函数签名、参数表未抓取，仅有官方参数页中的接口名称与调用时机说明。",
+        "官方示例仅展示 ModelDeployConfig 片段，ScheduleConfig 完整结构未取得"
+      ],
+      "original_reason": "ATC 侧操作指导完整：三条参数的完整示例（含档位语法、--input_format=ND、互斥与 AIPP 前提、swapoff -a 环境建议）可直接嵌入 atc 命令使用，型号覆盖与约束明确。但整体需补充缺失内容才能全程执行，具体缺口由答案自列：ACL 推理侧仅有接口名称与调用时机，无函数签名、参数表或调用代码；MindIE 侧 maxBatchSize 等调度参数所在 ScheduleConfig 的 JSON 层级未取得（官方示例仅展示 ModelDeployConfig 片段，完整结构需借第三方文章补足）。按档3：有具体操作方案但需补充缺失内容方可执行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "T-cuda-glm-5_3-standard-20260921T132550",
+      "task": "T",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244",
+        "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }",
+        "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）"
+      ],
+      "original_reason": "操作指导具体且基本完整：trtexec 命令含完整参数（--onnx、--minShapes/--optShapes/--maxShapes/--shapes 及具体 shape 值）可直接照抄运行；Triton 侧给出 config.pbtxt 完整片段（platform、max_batch_size、input/output、dynamic_batching 块）；运行期 API 给出 set_optimization_profile_async(0, stream) 与 set_input_shape 调用顺序及 stream 一致性前提。仅需替换的均为用户环境值（模型路径、输入名、具体维度、batch 上限），且上下文有说明。未给5分的原因：final 自述 trtexec 完整参数列表需 --help 获取、preferred_batch_size 字段名单复数存疑、以及未给出完整端到端可运行脚本（如 config.pbtxt 与引擎构建的完整文件级示例需用户自行拼装），故按需替换环境参数但非完全免补写的4分。",
+      "review_reason": "Root: original question asks dynamic-shape/profile and batching configuration. Final provides trtexec min/opt/max and configuration fields; an additional complete server/project is not required by the original question. Retain 4 for explained model/shape substitutions; do not add a whole-program requirement."
+    },
+    {
+      "run_id": "U-cann-glm-5_3-standard-20260921T133309",
+      "task": "U",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "# 1. 上板采集（替换为自己的算子可执行文件与输出路径）\nmsprof op --output=./prof_out ./add_custom_npu",
+        "pipe.InitBuffer(inQueueX, 2, 256);   // 第2个参数=2 即双缓冲"
+      ],
+      "original_reason": "答案给出完整可照抄执行的命令与代码：msprof op 上板采集、simulator 仿真、InitBuffer 双缓冲正/反例代码、16KB 搬运阈值及操作步骤序列，仅需替换明确标识的用户环境参数（算子可执行文件路径、输出目录）。无内容错误需修正；--aic-metrics 取值表未核实但主流程不依赖该参数即可运行（来源示例“msprof op ./add_custom_npu”无该参数）。未实际运行验证，仅内容核查。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "V-cann-glm-5_3-standard-20260921T141713",
+      "task": "V",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "（代码综合自官方 Stream管理/数据复制示例；官方注明“不可以直接拷贝编译运行，仅供参考”，需自行补齐 aclInit/SetDevice/异常处理。）",
+        "aclrtMemcpyAsync(devIn[(i+1)%2], size, hostIn[(i+1)%2], size,\n                     ACL_MEMCPY_HOST_TO_DEVICE, sCopy);"
+      ],
+      "original_reason": "答案提供了具体可操作方案：完整的双 Stream+Event 双缓冲代码、aclrtMemcpyAsync 完整签名与约束、锁页内存申请方式。但官方示例明确“不可以直接拷贝编译运行，仅供参考”，且代码缺 aclInit/aclrtSetDevice/Context 初始化与异常处理分支，事件数组声明（devIn[(i+1)%2]）依赖未定义的数组结构，首个迭代 Event 未记录即被等待的边界也需读者自行处理，需补充缺失内容才能执行，故 3 分。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "V-cuda-glm-5_3-standard-20260921T141029",
+      "task": "V",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 5,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "for (int i = 0; i < nStreams; ++i) {\n    int offset = i*streamSize;\n    cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes,\n                    cudaMemcpyHostToDevice, stream[i]);\n    kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);",
+        "所有代码均未在本机运行（无 GPU 环境，仅内容核查）。"
+      ],
+      "original_reason": "操作指导完整：完整 API 签名（含 cudaMemcpyAsync 第五参数为流、kernel 启动第四参数为流）、两种可照抄运行的多流流水线代码模式（V1/V2）、event 跨流依赖与轮询代码、编译选项（nvcc --default-stream per-thread）、前置条件（pinned 内存 cudaMallocHost、非默认流、查询 asyncEngineCount）均已给出。用户仅需替换数据规模、指针等自身环境值，无需修正内容错误。答案明确标注代码未在本机运行（仅内容核查），按规则这不影响 4/5 分界。",
+      "review_reason": "The claimed runnable stream examples use undefined/template-only `kernel`, `grid`, `block`, `stream[i]`, buffers and sizes; missing declarations/allocation require content completion."
+    },
+    {
+      "run_id": "W-cann-glm-5_3-standard-20260921T142119",
+      "task": "W",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "export HCCL_ALGO=<算法名，如 ring/nhr/nb/pipeline等，按官方HCCL_ALGO文档取值>",
+        "未核实处：`HCCL_ALGO` 的确切语法（全局 vs 按算子配置格式、各算法名完整拼写）在官方 hiascend 页面与 gitcode blob 页均未能抓回正文"
+      ],
+      "original_reason": "答案给出了大量可直接执行的具体命令：npu-smi info -t board/-t link、hccn_tool -i 0 -ip -g/-link -g/-roce_reset、export HCCL_IF_NAME=eth0,...,eth7 等，命令行完整、参数齐全，排查流程有 A/B 测试步骤（固定 512MB 跑 all_reduce benchmark 对比 64MB/256MB/1GB）。但存在需修正/补充的缺口：HCCL_ALGO 示例为占位符 '<算法名，如 ring/nhr/nb/pipeline等，按官方HCCL_ALGO文档取值>'，且答案明确承认 HCCL_ALGO 确切语法（全局 vs 按算子格式）未核实、hccn_tool 完整子命令清单未取得——用户需查官方文档补充才能确定关键操作，非仅替换环境参数。属'有具体操作方案，但需修正错误或补充缺失内容才能执行'。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "W-cuda-glm-5_3-standard-20260921T143422",
+      "task": "W",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "mpirun -np 8 -x NCCL_ALGO=Ring  -x NCCL_PROTO=Simple ./build/all_reduce_perf -b 8 -e 1G -f 2 -g 1",
+        "cmake -DMULTINODE=1 . && make\nsrun/mpirun -n <nproc> ./nvbandwidth -p multinode"
+      ],
+      "original_reason": "诊断与调优命令完整可执行：nvidia-smi topo、NCCL_DEBUG 环境变量导出、nvbandwidth 编译运行（cmake -DMULTINODE=1 && make）、带完整参数的 mpirun nccl-tests 对比示例，仅需替换 <nproc>/<n> 等明确标识的环境参数；nccl-tests 用法答案已注明为通用写法（未从官方核实），属小保留但不需修正即可运行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "X-cann-glm-5_3-standard-20260921T144956",
+      "task": "X",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 5,
+      "recommended_score": 4,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "if(COMMAND add_ops_compile_options)\n  add_ops_compile_options(ALL OPTIONS -sanitizer)",
+        "mssanitizer --tool=memcheck --leak-check=yes application        # 内存泄漏",
+        "（若部署报 `ASCEND_CUSTOM_OPP_PATH` 含多路径冒号的错误，先 `unset ASCEND_CUSTOM_OPP_PATH`。）",
+        "mssanitizer --tool=memcheck -- bash run.sh"
+      ],
+      "original_reason": "操作指导完整：前置条件明确（已完成算子开发工具链环境准备与算子工程）、关键第一步（CMakeLists注入-sanitizer选项）给出可直接复制的代码片段、重新编译部署给出完整bash命令、执行检测给出完整命令行（含-- bash run.sh与可选参数--leak-check=yes、--check-unused-memory=yes），并给出报告解读与故障处理（unset ASCEND_CUSTOM_OPP_PATH）。所有命令均可照抄执行，仅需替换用户环境相关的路径/工程名，且答案如实说明输出示例来自官方文档而非实测复现——这不影响可执行性判定。",
+      "review_reason": "The command uses user-owned `run.sh`/application and build paths; these are explicit environment/project values, so complete guidance with substitution is M10=4."
+    },
+    {
+      "run_id": "X-cuda-glm-5_3-standard-20260921T144239",
+      "task": "X",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "nvcc -Xcompiler -rdynamic -lineinfo -o out in.cu",
+        "compute-sanitizer --tool memcheck ./out",
+        "`-Xcompiler -rdynamic`：保留 host 函数符号，使 host backtrace 显示函数名（Linux；Windows 用 `/Zi`）"
+      ],
+      "original_reason": "命令行完整可直接照抄：编译命令、运行命令、报告解读步骤、参数表齐全，且前提条件（-lineinfo/-G 与 host 符号 -rdynamic）均明确；仅需替换用户环境值（源文件名 in.cu、输出名 out、Windows 下用 /Zi），无需修正内容错误。答案自行声明'以上命令均未实际运行'，按内容核查评 4，不据此降档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Y-cann-glm-5_3-standard-20260921T145535",
+      "task": "Y",
+      "ecosystem": "cann",
+      "model": "glm-5.3",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "atc --model=model.onnx --framework=5 --output=model_910 \\\n    --soc_version=Ascend910B4 --input_shape=\"input:1,3,224,224\"",
+        "npu-smi info -t board -i 0 -c 0    # A3 系列取 Chip Name + NPU Name"
+      ],
+      "original_reason": "答案含可直接照抄执行的操作清单：npu-smi info / -m / -t board 查芯片型号（含 A3 与非 A3 分支及 id、chip_id 获取方法），完整 atc 命令行含 --model、--framework=5、--output、--soc_version、--input_shape、--precision_mode 各参数，以及精度比对（--debug_dir + npudiff）和驱动固件检查（-v / -t board）步骤。仅需替换的参数为用户环境值（模型路径、芯片型号、设备号），且有说明如何获取；未核实项（ais_bench 具体命令、逐算子差异表）已明确标注为待自查，不构成需修正的内容错误，故评 4。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Y-cuda-glm-5_3-standard-20260921T145801",
+      "task": "Y",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "original_score": 5,
+      "recommended_score": 4,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "/usr/local/cuda/bin/nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_75,code=sm_75 \\\n  -gencode=arch=compute_80,code=sm_80 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -gencode=arch=compute_90,code=compute_90 \\\n  -O2 -o mykernel.o -c mykernel.cu",
+        "export CUDA_FORCE_PTX_JIT=1   # 强制 JIT，若程序能跑说明含 PTX、Hopper 兼容\n./your_app\nunset CUDA_FORCE_PTX_JIT",
+        "**驱动**：CUDA 13.x 需 r580+ 驱动；目标机先升级到最新驱动（官方迁移建议第一步即安装最新 driver）。",
+        "./your_app"
+      ],
+      "original_reason": "操作指导完整且前提明确：给出可照抄的完整 nvcc 多架构命令（含全部 -gencode 参数、-O2、-c、输出文件）、-arch=sm_XX 简写的确切展开语义、CUDA_FORCE_PTX_JIT 验证三步（set→运行→unset）、TensorRT Python 配置行 config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS，以及前置条件（CUDA 11.8+ 生成 sm_90、CUDA 13.x 需 r580+ 驱动、先装最新驱动）。仅文件名/应用名（mykernel.cu、./your_app）属于用户自有文件替换，无内容错误或缺步骤需修正，达到第5档。",
+      "review_reason": "`mykernel.cu`, `mykernel.o`, and `./your_app` are explicit user file/application substitutions. The migration content is complete, so M10=4."
+    },
+    {
+      "run_id": "A-cann-deepseek-v4_1-flash-standard-20260921T094956",
+      "task": "A",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "atc --model=model.onnx --framework=5 --output=model \\\n    --input_shape='x:1,3,48,1440' --input_format=NCHW --soc_version=Ascend310B4"
+      ],
+      "original_reason": "第六节小结提供可直接照抄的完整 bash 序列：set_env.sh 环境配置、npu-smi info 查询 soc_version（附 Ascendxxxyy 推导规则说明）、静态与动态 shape 的 atc 完整命令（含 framework=5、input_shape、input_format 等必要参数）、成功判据（ATC run success 与生成 model.om）。动态 shape 命令中的 'x:1,3,48,1440' 为官方 SVTR 示例原样值，静态命令可直接运行。需替换的仅为用户环境值（模型路径、soc_version），均明确标识且有说明，符合4分；实际未在硬件执行，答案已如实声明，不作为扣分项。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "A-cuda-deepseek-v4_1-flash-standard-20260921T111713",
+      "task": "A",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+        "pip install cuda-python numpy pillow",
+        "**未实际执行任何命令**：全部为文档内容核查，引擎构建、推理、版本兼容性均**未运行验证**。"
+      ],
+      "original_reason": "操作指导完整：torch.onnx.export完整Python代码可直接运行；trtexec命令含全部必要参数（--onnx、--saveEngine、--minShapes等），可直接照抄；Python API端到端脚本完整（缩进已修正）；Runtime部署代码完整；依赖安装命令明确（pip install cuda-python numpy pillow）。用户需替换模型路径、输入shape等明确标识的环境参数。扣1分原因：答案明确声明未实际运行任何命令；第三方教程命令标注为TRT 9时代参数不能直接照抄用于TRT 11；Python脚本缩进为推断修正而非原文验证。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "B-cann-deepseek-v4_1-flash-standard-20260921T095622",
+      "task": "B",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msprof --output=./prof_out --ascendcl=on --runtime-api=on --task-time=l1 --aicpu=on --ai-core=on --aic-metrics=PipeUtilization --sys-hardware-mem=on python3 train.py",
+        "source /usr/local/Ascend/ascend-toolkit/set_env.sh",
+        "> **未取得/未核实**：msprof 的“性能数据解析与导出（msprof 命令）”页（atlasprofiling_16_0018）与“性能数据文件参考”页（atlasprofiling_16_0056）**未抓取正文**，故解析/导出命令的确切写法未在此列出；请在 MindStudio 文档对应章节查阅。上述 4–7 步的“看哪个文件得出什么结论”属通用分析方法，未逐条从官方原文取回。"
+      ],
+      "original_reason": "操作指导基本可直接照抄执行：两条 msprof 完整命令行（含全部关键参数）直接可运行，仅需替换路径/训练脚本名等用户环境值；Profiler 代码完整含 schedule、on_trace_ready 与 prof.step() 调用说明；前置条件（source set_env.sh、npu-smi info、import torch_npu 验证）齐备且明确。未达5分的原因：train_one_step 为示例占位需用户替换为自身训练逻辑，且解析/导出命令页未抓取导致该子操作未给出具体命令（答案已披露）。属第4档：仅需替换明确标识并有说明的环境参数。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "B-cuda-deepseek-v4_1-flash-standard-20260921T095421",
+      "task": "B",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "<answer>\n\n# 用 Nsight Systems 抓 timeline 定位 PyTorch GPU 利用率瓶颈\n\n以下命令与参数均以 NVIDIA 官方文档为依据（来源见文末），并在能标注处附官方原文；末尾单列「未核实项」。\n\n## 一、采集命令（官方 User Guide 证据）\n\n官方 `nsys profile` 用法（User Guide 逐字）：\n```\nnsys [global-options] profile [options] [application] [application-arguments]\n```\n\n推荐的 PyTorch 训练采集命令：\n```bash\nnsys profile \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas,nccl \\\n  --cuda-memory-usage=true \\\n  --python-sampling=true \\\n  --capture-range=cudaProfilerApi \\\n  --capture-range-end=stop \\\n  --force-overwrite=true \\\n  --output=/tmp/train_prof \\\n  python train.py --epochs 1\n```\n\n关键参数（官方 User Guide 取值，逐字）：\n- `--trace` 或 `-t`：默认值为 `cuda,opengl,nvtx,osrt`；可选取值包含 `cudnn`、`cublas`、`cusolver`、`nccl`、`python-gil`、`mpi`、`ucx`、`gds`、`openmp`、`none` 等。注意文档在 trace 列表中只有 `python-gil`，Python 函数级采集走独立的 `--python-functions-trace`。\n- `--capture-range` 或 `-c`：取值 `none`、`cudaProfilerApi`、`hotkey`、`nvtx`。\n- `--capture-range-end`：取值 `none`、`stop`、默认 `stop-shutdown`、`repeat[:N][:mode]`、`repeat-shutdown:N[:mode]`。\n- `--cudabacktrace`：`all`、默认 `none`、`kernel`、`memory`、`sync`、`other`；可组合，每个值后可用 `:阈值ns`，默认阈值 1000ns。文档注明「CPU sampling must be enabled」。\n- `--gpu-metrics-devices` 与 `--gpu-metrics-frequency`（默认 `10000`）：采集 GPU 硬件指标（SM Active、Tensor Active 等）所需。\n- `--delay`/`-y`（秒，默认 0）、`--duration`/`-d`（秒）：延迟/限时采集，用于跳过 warmup 之外的窗口。\n- `--cuda-memory-usage`（`true`/`false`）：在 launch 选项表中出现，用于采集显存使用。\n- `--pytorch`：取值 `autograd-nvtx`、`autograd-shapes-nvtx`、`functions-trace`、`functions-trace-shapes`、默认 `none`，可自动注入 PyTorch 相关的 NVTX 标注。\n- `--force-overwrite` 或 `-f`：`true`/`false`。\n- `--export`：`arrow, arrowdir, hdf, jsonlines, sqlite, parquetdir, text, none`（导出 sqlite 供 `nsys stats` 用）。\n\n`--stats=true` 可在采集结束自动打印统计摘要；第三方示例（caijizhuo，2024-05-19，2026-03-17 更新）给出：\n```\nnsys profile --stats=true --trace=cuda,nvtx,cudnn,cublas ./a.out\n```\n该写法与官方 `--stats`（`true`/`false`）一致。\n\n### 只采关键区间：代码侧打点\n官方文档确认 `--capture-range=cudaProfilerApi` 与 CUDA Profiler API 配合；第三方示例（caijizhuo）给出对应的 PyTorch 用法：\n```python\nimport torch\n# warmup\nfor i in range(10):\n    _ = torch.matmul(x, y)\n\ntorch.cuda.cudart().cudaProfilerStart()\nfor i in range(100):\n    torch.cuda.nvtx.range_push(\"your_ops_name\")\n    _ = your_ops(x, y)\n    torch.cuda.nvtx.range_pop()\ntorch.cuda.synchronize()\ntorch.cuda.cudart().cudaProfilerStop()\n```\n若用 `--capture-range=nvtx`，则改以 NVTX 区间驱动采集起止。\n\n## 二、分析步骤\n\n### 1. 生成统计报表\n```\nnsys stats [options] /tmp/train_prof.nsys-rep\n```\n官方 Analysis Guide 列出的报告名（逐字，可作 `--report` 取值）包括：\n`cuda_api_sum`、`cuda_api_trace`、`cuda_gpu_kern_sum[:nvtx-name][:base|:mangled]`、`cuda_gpu_kern_gb_sum`、`cuda_gpu_mem_time_sum`、`cuda_gpu_mem_size_sum`、`cuda_gpu_sum`、`cuda_gpu_trace`、`cuda_kern_exec_sum`（kernel 启动与执行时间）、`nvtx_sum`、`nvtx_pushpop_sum`、`nvtx_kern_sum`、`nvtx_gpu_proj_sum`、`osrt_sum`、`syscall_sum`、`um_sum` 等。文档注明默认时间单位是纳秒，可用 `--timeunit` 改。\n\n常用：\n```\nnsys stats --report cuda_gpu_kern_sum,cuda_api_sum,cuda_gpu_mem_time_sum,osrt_sum \\\n           --timeunit=msec /tmp/train_prof.nsys-rep\n```\n\n### 2. 用专家规则/recipe 自动找瓶颈\n官方 `nsys analyze` 的专家规则包括：`cuda_memcpy_async`、`cuda_memcpy_sync`、`cuda_memset_sync`、`cuda_api_sync`、`gpu_gaps`、`gpu_time_util`。用法（逐字）：\n```\nnsys [global-options] analyze [options] [nsys-rep-or-sqlite-file]\n```\n```\nnsys analyze /tmp/train_prof.nsys-rep\n```\n官方 Analysis Guide 中：\n- **GPU Starvation**：「identifies time ranges where a GPU is idle for longer than 500ms」，建议用 CPU sampling、OS runtime blocked-state backtrace、线程同步 API，并「Add NVTX annotations to CPU code」以定位空隙原因；会排除 profiling overhead 造成的空隙、首个 GPU 操作前的初始空隙、最后一个 GPU 操作后的末尾空隙。\n- **GPU Low Utilization**：明确「utilization refers to the 'time' utilization and not the 'resource' utilization」，即只判断 GPU 是否在用，不反映用了多少资源；并发操作会累加，可能超过 100%。\n- 相关 recipe：`gpu_gaps`、`gpu_time_util`、`cuda_gpu_time_util_map`、`gpu_metric_util_map`（SM Active / SM Issue / Tensor Active）、`gpu_metric_util_sum`、`nccl_gpu_overlap_trace`、`nccl_gpu_time_util_map`、`mpi_gpu_time_util_map`、`ucx_gpu_time_util_map`（后三者计算通信与计算 kernel 的重叠率）。recipe 用法（逐字）：`nsys recipe [args] <recipe-name> [recipe args]`。\n\n### 3. GUI timeline 人工定位\n- 在 Nsight Systems GUI 打开 `.nsys-rep`（Windows/Linux 本地；macOS 仅支持查看/远程 profiler 采集的 Linux 报告）。\n- 看 **CUDA HW / GPU 行**：大片空白 = GPU 空闲，瓶颈在 CPU/IO/同步。\n- 对照 **CPU 线程行**：定位是 Python 开销、DataLoader 等待、锁/同步、kernel launch 间隙还是 `cudaMemcpy` 阻塞。\n- 用 NVTX 区间把 timeline 与训练阶段（数据加载/前向/反向/优化器/日志）对齐。\n- GPU 忙但「低利用率」时，结合 `gpu_metric_util_map` 判断是否小 kernel/launch-bound/访存受限；进一步用 Nsight Compute 看单 kernel。\n\n### 4. 典型根因与对策方向\n- DataLoader 瓶颈：增大 `num_workers`、`pin_memory=True`、`persistent_workers`、`prefetch_factor`。\n- 同步点：避免频繁 `.item()`/`.cpu()`；检查 `--cudabacktrace=sync`。\n- batch 太小或 kernel 过小 → launch-bound。\n- 多卡：用 `nccl_gpu_overlap_trace` / `nccl_gpu_time_util_map` 看通信与计算重叠、是否存在 NCCL 等待。\n- 采集开销：`--cuda-trace-all-apis` 等会显著增大开销（文档 Warning），排查时慎用。\n\n## 三、版本与环境（M4/M9 相关）\n\n官方 Get Started 页（实抓）：\n- 当前版本：**Nsight Systems 2026.5.1**（安装包字符串 `2026.5.1.161-3889610`）。\n- Target Software：**64-bit applications only**；**CUDA 12.0+ for CUDA trace**；**Driver 418 or newer**（「Driver 535 and newer improves GPU profiling stability」）。\n- GPU：**Turing or newer**。\n- Linux x86-64 支持 Ubuntu 26.04/24.04/22.04、WSL-Ubuntu 2.0、CentOS 7+、RHEL 8/9/10、SLES 15/16、Debian 12/13、Fedora 41、Rocky 8/9/10 等；macOS 仅支持查看/远程 profiler。\n- Release Notes 2026.5.1 提及 CUDA 13.4 支持、Rubin GPU 架构支持等。\n- CLI 安装（Linux x86_64，CLI-only）：`nsightsystems-linux-cli-public-2026.5.1.161-3889610.deb` / `.rpm`。\n\n版本冲突留痕：首轮搜索快照第 3 条显示「Nsight Systems 2025.1.1 Is Available Now」，而实抓同一 URL 得 2026.5.1，属快照/缓存陈旧，以实抓页面为准。\n\n## 四、来源\n\n- NVIDIA Nsight Systems User Guide（官方）：https://docs.nvidia.com/nsight-systems/UserGuide/index.html\n- NVIDIA Nsight Systems Post-Collection Analysis Guide（官方）：https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html\n- NVIDIA Nsight Systems Get Started（官方）：https://developer.nvidia.com/nsight-systems/get-started\n- 第三方交叉核对：caijizhuo「cuda性能分析工具nsys使用」https://caijizhuo.github.io/20240519171831_2854729219/ （2024-05-19 发布，2026-03-17 更新）\n- 其他被发现的第三方材料（未逐篇抓取）：CSDN `qq_37794738/article/details/137379665`、知乎 `zhuanlan.zhihu.com/p/716133647`、CSDN `weixin_44231807/article/details/148511876`、CSDN `MD2017/article/details/141457836`、volcengine `article/1827273`、ashburnlee.github.io 博客。\n\n## 五、明确未核实项\n\n1. `nsys stats` 的**逐字 usage 行**（如 `nsys [global-options] stats [options] [nsys-rep-or-sqlite-file]`）未从官方页面直接取回；官方 User Guide 对 `stats` 仅描述为「generate statistical information」，报告名来自官方 Analysis Guide。命令语法部分依赖先验知识，未逐字核实。\n2. `nsys profile` 中 `-o/--output` 的精确条目未在抓回片段中直接出现（`--output` 在 `analyze`/`export` 项出现）；profile 的 `-o` 属先验知识。\n3. `--gpu-metrics-devices` 在 User Guide 表中该行描述被省略，其是否需 root/驱动支持、是否所有 GPU 可用未核实。\n4. 官方 User Guide 多次抓取均被截断（返回含 `[...]`、省略的 Note），因此 M2 完整性判定为**截断/未知**，不能宣称取得全文。\n5. 未运行任何命令；本回答为内容核查，未经实际执行验证。\n6. Analysis Guide 返回内容其自身声明未包含 `nsys stats` 的调用示例，属「未取得」，非「网页不存在该内容」。\n\n<stop_reason>\n在冻结预算内完成了证据采集：WebSearch 3 次、WebFetch 5 次（均未超上限），已取得官方 User Guide（profile/analyze 选项与 usage）、官方 Analysis Guide（报告名、专家规则、低利用率/GPU starvation 规则、通信重叠 recipe）、官方 Get Started（版本 2026.5.1、CUDA 12.0+/Driver 418+/Turing+），以及 1 篇第三方交叉核对材料；另发现 7 个相关第三方来源（M5 计数用）。停止原因：原题所需的核心官方证据（采集命令、分析步骤、报告名、可锁定的版本与环境）已齐备；剩余唯一缺口是 `nsys stats` 逐字 usage 行——对同一官方 User Guide 页的第 3 次抓取仍只返回开头章节、未命中 stats 命令选项，判定继续重复抓取同页会得到冗余截断结果，故停止而不动用剩余预算。未核实项已按上文单列，未执行代码、未调用其他模型或子 Agent。\n</stop_reason>\n</answer>"
+      ],
+      "original_reason": "操作可执行性：采集命令为完整命令行，所有参数（--trace、--capture-range、--capture-range-end、--force-overwrite 等）取值与官方 User Guide 选项表一致；分析步骤给出可直接运行的 nsys stats/analyze 命令与报告名；代码侧打点给出完整可粘贴的 Python 片段（cudaProfilerStart/Stop + NVTX range_push/pop）；适用前提明确（Nsight Systems 2026.5.1、CUDA 12.0+、Driver 418+、Turing+、macOS 仅查看）。仅需替换 train.py、/tmp/train_prof 等用户环境值，且答案明确标注这些与未核实项（nsys stats 逐字 usage、profile 的 -o 条目为先验知识），无需修正即可执行。仅内容核查，未实际运行。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "C-cann-deepseek-v4_1-flash-standard-20260921T095856",
+      "task": "C",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "第一段 `GetWorkspaceSize` 计算所需 workspace 内存，申请 NPU 内存后，第二段执行计算。",
+        "因而**未能取到 `aclnnMatmul` 的函数原型、参数表与约束**。",
+        "官方文档仅在其简介（ascendtb_0001.html）给出架构层（Operation/PluginOperation/GraphOperation）与所支持的框架，**未在该页给出可直接照抄的调用代码或参数**。"
+      ],
+      "original_reason": "AOL 侧有具体操作方案：两段式接口原型（GetWorkspaceSize 后执行）、头文件/动态库依赖（aclnnop/aclnn_*.h、libopapi.so）、安装路径（/usr/local/Ascend/ascend-toolkit/latest）、无需编译算子等前置条件明确，但原型仅以 aclnnAdd 为例，目标算子 aclnnMatmul 的函数原型、参数表与约束 final 明确承认未取到；ATB 侧无可照抄代码。属第3档：有具体操作方案但需补充缺失内容（MatMul 原型、ATB 调用代码）才能执行。具体缺口：aclnnMatmul 参数表、ATB 具体 API 调用步骤。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "C-cuda-deepseek-v4_1-flash-standard-20260921T100035",
+      "task": "C",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到",
+        "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);",
+        "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。"
+      ],
+      "original_reason": "答案给出了可确定的具体调用方案：cublasSgemm与cublasGemmEx的完整C调用（含头文件、handle、alpha/beta、列主序说明）可直接照抄并替换m/n/k等环境参数；但答案自己声明推荐路线的关键操作缺少可执行内容——cuDNN Frontend Graph API的具体C++代码示例未取得，且cudnnConvolutionForward/cusparseSpMM的逐参数签名\"部分来自既有知识，未逐条在本次抓取中比对\"，需补充/核对后才能执行，属3档（有具体操作方案但需补充缺失内容）。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "D-cann-deepseek-v4_1-flash-standard-20260921T100558",
+      "task": "D",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "（官方文档把 tiling 结构体与 tiling 函数的具体写法放在独立章节《Host侧tiling实现》，本轮未逐字取回该章节正文内容，**此处的函数名以官方章节标题为准，具体代码请查该章**。）",
+        "实现算子适配主体函数：*\"根据Ascend C算子原型构造得到对应的input、output、attr\"*（完成 PyTorch 原生算子入参/出参/属性到自定义算子格式的转换）。",
+        "${INSTALL_DIR}/python/site-packages/bin/msopgen gen -i $HOME/sample/add_custom.json \\\n  -c ai_core-<soc_version> -lan cpp -out $HOME/sample/AddCustom"
+      ],
+      "original_reason": "答案给出了大量可直接照抄的完整命令（msopgen、build.sh、.run部署、环境变量、cmake/make、verify_result.py、yaml配置、LD_LIBRARY_PATH），操作方案具体；但存在明确缺口使其不能直接评4-5：Host侧tiling实现的具体代码（TilingData结构体、tiling函数注册）答案自认未取回，op-plugin适配主体函数仅有目标描述无实现代码，且'-f pytorch生成工程后与aclnn/op-plugin如何端到端串接'官方示例缺失。按档需补充缺失内容（Host侧tiling代码与适配函数实现）才能完整执行，评3分；所缺点均已具体指出。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "D-cuda-deepseek-v4_1-flash-standard-20260921T100330",
+      "task": "D",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "CUDAExtension('lltm_cuda', [\n            'lltm_cuda.cpp',\n            'lltm_cuda_kernel.cu',\n        ])",
+        "python setup.py install",
+        "B 路线的 CUDA setup.py 我没有逐字官方原文，只能由 `CUDAExtension` 官方示例 + A 路线组合给出"
+      ],
+      "original_reason": "A路线操作指导完整可直接执行：完整setup.py、lltm_cuda.cpp、CUDA kernel与启动代码、安装命令`python setup.py install`、前置条件（ABI兼容、Ninja、CUDA工具链需另装）均齐备，仅需用户替换文件名等环境值。扣一分原因：答案自述B路线CUDA版setup.py无逐字官方原文（需由CUDAExtension示例组合）、`pip install .`等现代命令未核实、CUDA backward host函数未完整复现，存在少量需补写内容。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "E-cann-deepseek-v4_1-flash-standard-20260921T100749",
+      "task": "E",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "cd ${Toolkit包安装路径}/tools/msaicerr\npython3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result\n```\n\n约束（官方原文要点）：\n- **不要进入 `-p` 指定目录或其子目录执行**该工具；\n- `-out` 目录**不能**是 `-p` 目录或其子目录；\n- 否则会解析卡住或失败。\n- `-out` 不指定时结果默认放当前路径。\n- 有多个 AI Core Error 时，工具按日志时间解析**第一次出现**的那个。\n\n然后按终端提示的 `info.txt` 路径查看，`info.txt` 的提示信息与原因对照（官方表1，逐字摘录关键行）：\n\n| 关键信息 | 问题原因 |\n|---|---|\n| `Failed to execute the built-in sample operator. Check the environment.` | 环境异常（系统环境/硬件问题） |\n| `Failed to execute the single-operator test case. The operator logic may be incorrect.` | 单算子实现异常或编译过程异常（区分自定义算子/内置算子；`debug_info.txt` 会给出可复现的单算子脚本） |\n",
+        "# 4) 导出 Device 侧日志（root）\nmsnpureport -f"
+      ],
+      "original_reason": "答案给出完整可照抄的命令与前置条件：mkdir、环境变量 export、msnpureport -f（注明 root、在可写目录执行）、grep 检索、ascend-dmi --dg -i aicore -s（注明需单独安装于 MindCluster ToolBox）、msaicerr.py -p/-out 完整命令及关键约束（不得在 -p 目录内执行、-out 不能为其子目录）、asys collect/launch 及不支持场景。需替换的仅为明确标识的环境参数（${HOME}、${Toolkit包安装路径}、aic_err_info_timestamp、CANN 版本号），且均有替换说明，无需修正内容错误。答案已声明未实际运行验证，按内容核查评4分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "E-cuda-deepseek-v4_1-flash-standard-20260921T101017",
+      "task": "E",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "PYTORCH_USE_CUDA_DSA=1 CUDA_LAUNCH_BLOCKING=1 python train.py\n# 需要 kernel 启动处主机堆栈时再叠加：\nPYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 CUDA_LAUNCH_BLOCKING=1 python train.py"
+      ],
+      "original_reason": "给出完整可直接照抄的命令序列：CUDA_LAUNCH_BLOCKING=1 python train.py、PYTORCH_USE_CUDA_DSA=1 CUDA_LAUNCH_BLOCKING=1 python train.py、compute-sanitizer --tool memcheck python train.py，仅需替换明确标识的脚本名等用户环境值；前置条件（compute capability ≥ 6 / managed memory、断言计数上限、环队列上限、需重启进程、CUDA toolkit 版本一致性、-lineinfo/-rdynamic）均已说明。未给 5 分的原因：DSA 开关在新旧版本间的适用名（PYTORCH_USE_CUDA_DSA vs TORCH_USE_CUDA_DSA）答案自认未核实，旧版本用户可能需按其提示改试另一开关名，属需依环境调整的内容；其余命令无需修正。答案明确未实际执行，仅内容核查，不据此升降档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "F-cann-deepseek-v4_1-flash-standard-20260921T101651",
+      "task": "F",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "torchrun --nnodes 2 --node_rank 0 --nproc_per_node 8",
+        "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015",
+        "hccn_tool -i 0 -ip -s address 10.***.***.2 netmask 255.255.255.0",
+        "# 初始化进程组，通信方式设为 hccl"
+      ],
+      "original_reason": "启动指导完整：多机torchrun命令给出全部必配参数（--nnodes/--node_rank/--nproc_per_node/--master_addr/--master_port），仅需替换明确标注的<主节点IP>等环境值；前置条件齐全（sysctl预留端口、hccn_tool配置device IP与网络健康检测、关闭防火墙、somaxconn/tcp_max_syn_backlog调优均为完整可执行命令行）。初始化代码为官方多机示例核心骨架，分布式逻辑（init_process_group hccl+全局RANK、set_device、DDP封装、DistributedSampler）完整可照抄，仅ToyModel/数据集等用户自有内容需替换，且答案链接了官方完整示例。社区脚本的NNONES笔误与多余反斜杠被答案明确标注'不能直接照抄'，不影响官方主路径。未实际运行，仅内容核查，不宣称复现成功；因存在需替换的IP占位与骨架省略，不给5分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "F-cuda-deepseek-v4_1-flash-standard-20260921T101319",
+      "task": "F",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "# 在所有节点上执行（节点间 TCP 可达）\ntorchrun \\\n  --nnodes=2 \\\n  --nproc-per-node=8 \\\n  --rdzv-id=100 \\\n  --rdzv-backend=c10d \\\n  --rdzv-endpoint=$MASTER_ADDR:29400 \\\n  train.py",
+        "    local_rank = int(os.environ[\"LOCAL_RANK\"])\n    torch.cuda.set_device(local_rank)\n    # 默认 init_method=\"env://\"，从环境变量读取 MASTER_ADDR/MASTER_PORT/RANK/WORLD_SIZE\n    dist.init_process_group(backend=\"nccl\")"
+      ],
+      "original_reason": "操作指导完整：torchrun 单机/多机命令含全部必要 rendezvous 参数，初始化代码完整可写（LOCAL_RANK 读取、set_device、init_process_group），环境变量给出 export 形式，前置条件明确（所有节点同一命令、节点间 TCP 可达、每进程独占 GPU）。需替换的仅是明确标识的环境参数（$MASTER_ADDR、$NUM_TRAINERS、eth0、rdzv-id 等）且均有说明。训练主体代码以类方法片段（_run_epoch、_save_checkpoint）呈现而非完整脚本文件，脚本需按 final 组装，故不到 5。未实际执行，final 已声明仅为内容核查。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "G-cann-deepseek-v4_1-flash-standard-20260921T101916",
+      "task": "G",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "./pytorch_gpu2npu.sh -i /home/train/ -o /home/out -v 2.1.0 [-s]",
+        "pip3 install pandas         #pandas版本号需大于或等于1.2.4"
+      ],
+      "original_reason": "工具迁移路线操作指导完整可照抄执行：依赖安装（pip3 install pandas/libcst/prettytable/jedi）、进入工具路径、pytorch_gpu2npu.sh完整命令行与单卡/分布式示例、run_distributed_npu.sh后处理及环境变量、安装验证脚本，均为官方原文；仅需替换明确标识的用户环境参数（Ascend-cann-toolkit安装目录、脚本路径、torch版本）。自动迁移的导入路径被明确标注'待官方0014页核实'、torch_npu pip命令未取得，属答案如实声明的缺口而非未标注错误，且存在一条完整可执行路线，故评4档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "G-cuda-deepseek-v4_1-flash-standard-20260921T102120",
+      "task": "G",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "./hipify-clang square.cu --cuda-path=/usr/local/cuda-12.9 -I /usr/local/cuda-12.9/samples/common/inc",
+        "pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/rocm7.2"
+      ],
+      "original_reason": "操作指导完整：pip安装命令含完整index-url；wget命令列出具体wheel文件名；docker pull/run命令含所有必要参数（--device=/dev/kfd等）；hipify-clang给出完整参数表和多个用法示例（含--cuda-path、--分隔符、多文件转换、JSON编译数据库）；hipify-perl和hipify_torch的CLI/Python/CMake用法均完整。用户仅需替换明确标识的环境参数：CUDA安装路径（--cuda-path=/usr/local/cuda-12.9）、Python版本（cp310/cp312 wheel选择）、Ubuntu版本、项目源文件路径。所有替换点在答案中均有明确说明，无需修正内容错误。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "H-cann-deepseek-v4_1-flash-standard-20260921T102601",
+      "task": "H",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msmodelslim quant \\\n  --model_path ${MODEL_PATH} \\\n  --save_path ${SAVE_PATH} \\\n  --device npu --device_id 0 1 \\\n  --model_type Qwen2.5-7B-Instruct \\\n  --quant_type w8a8 \\\n  --trust_remote_code true",
+        "vllm serve /home/models/Qwen2.5-7B-w8a8 \\\n  --served-model-name \"Qwen2.5-7B-w8a8\" \\\n  --max-model-len 4096 \\\n  --quantization ascend",
+        "- 依赖 **Python 版本不低于 3.8，且不高于 3.12**。\n- 若使用昇腾 NPU 设备，需安装 **TorchNPU**（参考《Ascend for PyTorch 安装》）。"
+      ],
+      "original_reason": "操作指导完整：给出安装（git clone + bash install.sh + msmodelslim --help 验证）、一键量化命令（含全部必选参数 model_path/save_path/model_type/quant_type）、传统量化脚本命令、YAML 配置示例、部署命令（vllm serve --quantization ascend）及 curl 请求示例，前置条件（Python 版本、TorchNPU、镜像来源）均已说明。仅需替换 ${MODEL_PATH}、${SAVE_PATH} 等明确标识且有说明的用户环境参数，无内容错误需修正，符合档4。未达档5因环境变量占位符需用户替换，且 torch_npu/CANN 具体版本需用户按配套表确认；答案自身声明命令未实际运行，按规则不作为扣分依据。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "H-cuda-deepseek-v4_1-flash-standard-20260921T102341",
+      "task": "H",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "## 3. 部署（反序列化 + 推理）\n```python\nwith open(\"model.int8.plan\", \"rb\") as f:\n    engine = runtime.deserialize_cuda_engine(f.read())\ncontext = engine.create_execution_context()\n# 绑定 I/O、分配 device 缓冲后：\ncontext.set_tensor_address(\"input\",  int(d_input))\ncontext.set_tensor_address(\"output\", int(d_output))\ncontext.execute_async_v3(stream_handle)\n```\n> 这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。\n\n---\n\n"
+      ],
+      "original_reason": "原题明确要求INT8推理部署；最终部署代码用注释代替I/O绑定与device缓冲分配，d_input/d_output/stream_handle未构造，runtime亦未在该部署流程初始化，需补写操作内容，不能归仅替换环境参数的4分。依原M10档位判3分；未做硬件运行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "I-cann-deepseek-v4_1-flash-standard-20260921T102748",
+      "task": "I",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "python -c \"import torch; print(torch.__version__)\"\npython -c \"import torch_npu; print(torch_npu.__version__)\"\npip show torch_npu          # torch_npu 导入失败时也可用这条",
+        "npu-smi info                # 设备列表顶部给出 Driver Version、Firmware Version\ncat /usr/local/Ascend/driver/version.info   # 驱动默认安装路径下的版本文件",
+        "（注意：`{arch}`、`/usr/local/Ascend/...` 属于需按本机替换的环境值；若 `ascend_toolkit_install.info` 不在 `{arch}-linux` 子目录，用上一行的顶层路径或 `$ASCEND_HOME_PATH` 路径。）"
+      ],
+      "original_reason": "答案给出可直接照抄运行的完整命令：python -c 查 torch/torch_npu 版本、pip show torch_npu（含 import 失败时的替代命令）、npu-smi info 查驱动固件、cat /usr/local/Ascend/driver/version.info、cat ascend_toolkit_install.info（含 {arch}-linux 子目录与 $ASCEND_HOME_PATH 两种回退路径），并以三步流程说明如何用官方配套表和固件驱动选择器完成对照排查。仅需替换明确标识且有说明的用户环境参数（{arch} 取 aarch64/x86_64、安装路径），答案对替换值与路径变体均有显式说明，符合第4档；因环境值需按本机替换且部分命令依赖本机已装组件，未达第5档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "I-cuda-deepseek-v4_1-flash-standard-20260921T103011",
+      "task": "I",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "安装命令示例（照抄，按需替换版本与 CUDA 后缀）：\n```bash\npip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128"
+      ],
+      "original_reason": "答案给出完整可照抄的命令：nvidia-smi（含 --query-gpu 变体）、nvcc --version、cat /usr/local/cuda/version.json 与 cudnn_version.h、Python 代码块、pip/conda 安装命令，均含必要参数与前置条件说明（如右上角 CUDA Version 是上限、cuDNN 旧版头文件路径）。仅需替换用户环境值（如 pip 命令中按需替换的版本号与 CUDA 后缀，答案已明确标注「按需替换版本与 CUDA 后缀」），无需修正内容错误，符合第4档。答案声明未在本机运行，按规则不作为降档依据。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "J-cann-deepseek-v4_1-flash-standard-20260921T103505",
+      "task": "J",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "chmod +x Ascend-cann-toolkit_<version>_linux-<arch>.run\n./Ascend-cann-toolkit_<version>_linux-<arch>.run --check          # 校验完整性",
+        "（`<arch>` = `aarch64` 或 `x86_64`）",
+        "- **驱动/固件 Ubuntu 安装步骤**：相关官方页（Atlas 200I A2 Install_10.html）抓取仅返回站点标题，无正文；该步骤未核实。"
+      ],
+      "original_reason": "安装依赖（apt-get/pip3 含固定版本号）、ulimit、chmod/--check/--install、source set_env.sh、export LD_LIBRARY_PATH、安装后 cat 校验均为可直接照抄的完整命令；仅 <arch>（已说明 aarch64 或 x86_64）、<version>/<chip_type>（取决于用户下载的软件包）为需替换的环境参数且有说明，符合4档。不到5分：驱动/固件安装步骤未取得官方正文（答案自标未核实），且软件包文件名占位符需用户按实际下载包填写。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "J-cuda-deepseek-v4_1-flash-standard-20260921T103157",
+      "task": "J",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "第 2 步里 `sudo dpkg --install cuda-repo-<distro>...deb` 是\"本地安装器\"路径的残留，与随后的 keyring 网络仓库流程重复/冲突，实际采用网络安装器时应跳过该行",
+        "官方未在该页给出驱动命令，仅指向 Driver Installation Guide"
+      ],
+      "original_reason": "核心环境变量命令为官方逐字文本，可直接执行（含 ${VAR:+:...} 安全空值写法），持久化步骤（追加 ~/.bashrc 后 source）完整明确。安装步骤含明确标识且有说明的占位符（<distro>、<arch> 等，附示例 ubuntu2204/x86_64）。扣一分原因：第2步 dpkg --install 行存在需判断跳过的冗余命令，驱动安装步骤无具体命令仅指向外部指南，需补充才能完整执行全部流程。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "K-cann-deepseek-v4_1-flash-standard-20260921T103730",
+      "task": "K",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "docker run -itd -e ASCEND_VISIBLE_DEVICES=xxx --pids-limit 409600 image-name:tag /bin/bash",
+        "`<镜像标签>` 需替换为实际标签，例如 `2.10.0-310p-ubuntu22.04-py3.11`",
+        "python3 -c \"import torch;import torch_npu; a = torch.randn(3, 4).npu(); print(a + a);\""
+      ],
+      "original_reason": "答案给出完整可照抄的命令链：runtime 安装（chmod/--check/--install/systemctl restart docker）、docker run（两条路线均逐字引用官方命令并含全部参数如 --pids-limit、-v 挂载、-e LD_LIBRARY_PATH）、进容器、验证命令 python3 -c \"import torch;import torch_npu; ...\"。前置条件明确（root 用户、runc UID 为 0、CentOS 需 --pids-limit 409600、SELinux 提示在来源中）。仅需替换明确标识且有说明的环境参数：`<镜像标签>`（附示例）、`<version>/<arch>`、`<CONTAINER ID>`、`PY_VERSION 按镜像实际 Python 版本修改`，符合4档；因需替换这些占位值故非5档。答案如实声明\"本次未执行任何容器命令\"，仅为内容核查，不据此升降档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "K-cuda-deepseek-v4_1-flash-standard-20260921T103936",
+      "task": "K",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3",
+        "$ sudo nvidia-ctk runtime configure --runtime=docker\n$ sudo systemctl restart docker",
+        "其中 `xx.xx` 为容器版本，官方举例 `22.01`；NGC 目录页当前最新标签为 **`26.08-py3`**，标签格式一律为 `xx.xx-py3`",
+        "上述命令**均未在本机实际运行**（工具限制），仅做内容核查。"
+      ],
+      "original_reason": "操作指导完整且前置条件明确：三种包管理器的完整安装命令（指定 1.20.1-1）、运行时配置（nvidia-ctk runtime configure --runtime=docker 与 systemctl restart docker，含 rootless 变体）、docker run --gpus all 运行命令与容器内 torch.cuda.is_available()/nvidia-smi 验证均可照抄执行。仅需替换明确标识且有说明的环境参数：镜像标签 xx.xx（附标签格式说明与最新标签 26.08-py3）、挂载路径 local_dir:container_dir、NGC API Key。旧 nvidia-docker 路径的官方 -v 笔误已指出并给出 --runtime=nvidia 替代；NGC 登录步骤未核实但已明确标注且非必需路径。答案声明未在本机实际运行、仅内容核查，按约定不影响分档，计4分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "L-cann-deepseek-v4_1-flash-standard-20260921T104258",
+      "task": "L",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "cd /usr/local/Ascend/ascend-toolkit/latest/tools/operator_cmp/compare\npython3 msaccucmp.py convert -d $HOME/dump -out $HOME/dumptonumpy -v 2"
+      ],
+      "original_reason": "答案提供了完整可照抄的命令行：msaccucmp.py compare整网/单算子比对、convert子命令、acl.json完整JSON配置样例、Python转txt代码，以及前置条件（dump_path需提前创建且有读写权限、工具脚本路径$HOME/Ascend/ascend-toolkit/latest/tools/operator_cmp/compare）。仅需用户替换路径、model_name、op_name等明确标识的环境参数即可执行。未给5分因训练场景dump开关缺失、msaccucmp.py其他子命令未核实，且未在本机实际运行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "L-cuda-deepseek-v4_1-flash-standard-20260921T104029",
+      "task": "L",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "diff_report(out_cuda, ref_cpu, \"myop\", rtol=1.3e-6, atol=1e-5)",
+        "torch.manual_seed(0)   # 同时给 CPU 和 CUDA RNG 设种子",
+        "cpu_model = model.to(\"cpu\").to(torch.float64)\ngpu_model = model.to(\"cuda\").to(torch.float32)",
+        "以上代码/命令均为**内容核查**，本轮**未运行**，不声称复现成功。"
+      ],
+      "original_reason": "答案提供可直接执行的完整脚本与命令：逐元素定位 diff_report（含完整函数体与带具体 rtol/atol 的调用）、逐层 forward hook 采集代码、种子与确定性设置、以及具名编译器对照实验（-fmad=false、--use_fast_math 移除、-G 对照）。用户仅需替换明确标识的环境参数（out_cuda/ref_cpu/model/x 即用户自身算子输出与参考、自身模型），符合第 4 档。不给 5 的原因：辅助项 CUBLAS_WORKSPACE_CONFIG 确切取值与 compute-sanitizer 命令被答案自身标注为未核实；且答案明确声明代码未实际运行、仅内容核查（据规则不据此升降档，仅如实记录）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "M-cann-deepseek-v4_1-flash-standard-20260921T104506",
+      "task": "M",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "// 注册（Tiling下沉场景用 DEVICE_IMPL_OP_OPTILING；普通工程化实践中为 IMPL_OP_OPTILING）\n// IMPL_OP_OPTILING(AddCustom).Tiling(TilingFunc);",
+        "**`IMPL_OP_OPTILING`（非 DEVICE 前缀）的官方正文未直接取到**：只在第三方 S7 出现（`IMPL_OP_OPTILING(AddExample).Tiling(TilingFunc)`）；官方页面仅取到 `DEVICE_IMPL_OP_OPTILING`（属 Tiling 下沉场景）。"
+      ],
+      "original_reason": "第6节给出三文件最小可照抄骨架（xxx_tiling.h宏定义、op_host/xxx.cpp的TilingFunc含动态shape取参、kernel入口GET_TILING_DATA），命令/代码/参数具体；但存在需修正/补充的具体缺口：(a) TilingFunc注册行被注释且依赖未核实的IMPL_OP_OPTILING（final第7节自认官方正文未取到，仅第三方出现），照抄后算子注册不成立；(b) GET_TILING_DATA配套host示例字段名与骨架TilingData字段不完全对应，需自行对齐。属于'有具体操作方案但需补充缺失内容才能执行'，缺口已由答案自身标注。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "M-cuda-deepseek-v4_1-flash-standard-20260921T104804",
+      "task": "M",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+        "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))",
+        "context.setOptimizationProfileAsync(0, stream)"
+      ],
+      "original_reason": "答案给出可照抄的完整 trtexec 命令行（构建期 --minShapes/--optShapes/--maxShapes 加运行时 --shapes，并说明仅 ONNX 输入时必需），以及 C++/Python 双语完整 API 调用序列（createOptimizationProfile/setDimensions/addOptimizationProfile → setOptimizationProfileAsync(0, stream) → setInputShape → getTensorShape → enqueueV3(stream)），前置约束明确（profile 须先于输入维度设置、stream 须与后续 enqueueV3 同流、每 execution context 独立 profile）。用户仅需替换明确标识的环境值（张量名 foo/input、shape 数值、模型路径）。API 路径需将官方片段组装为完整程序、输入地址注册仅在第四节与社区引文中出现而非主流程逐步展示，未达第 5 档'无需补写'；答案自标全部代码未运行，按约定不影响档位。综合第 4 档：操作指导完整，仅需替换环境参数。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "N-cann-deepseek-v4_1-flash-standard-20260921T105237",
+      "task": "N",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "pyatc --model=./model.onnx --framework=5 --soc_version=xxx --output=./model   # 离线，pyatc 与 atc 参数一致",
+        "export ASCEND_GE_PY_PASS_PATH=/path/to/my_pass.py     # 也可指向目录，多个用冒号分隔",
+        "export DUMP_GE_GRAPH=1                                # 验证"
+      ],
+      "original_reason": "Python 路线操作完整：环境准备（source set_env.sh）、加载（export ASCEND_GE_PY_PASS_PATH）、编译（pyatc 完整命令行含参数）、验证（DUMP_GE_GRAPH + 日志变量）与排查表齐备，仅需替换 soc_version、路径等明确标识的环境值，无需修正内容错误；官方 optimization_switch 示例虽标注「仅供参考不支持直接拷贝运行」，但必填结构完整。C++ 路线缺编译命令细节，但答案自身已明示该缺口，且 Python 路线为可直接执行的完整替代，不降档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "N-cuda-deepseek-v4_1-flash-standard-20260921T105008",
+      "task": "N",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "trtexec --onnx=vit-quantized.onnx \\\n    --shapes=input:128x3x224x224 \\\n    --profilingVerbosity=detailed \\\n    --dumpLayerInfo \\\n    --dumpProfile",
+        "inspector = engine.create_engine_inspector()\nprint(inspector.get_layer_information(0, LayerInformationFormat.JSON))"
+      ],
+      "original_reason": "最终答案给出可照抄执行的完整命令与代码：trtexec 命令含全部必要参数，IEngineInspector 的 Python/C++ 代码完整，cuda.compute 示例含 import 与参数，nsys 组合命令完整，且前置条件（构建时 ProfilingVerbosity、debug tensor 需 build 期标记）均已说明。仅需替换模型路径、输入 shape 等用户环境值即可运行；答案自身声明未实际运行（\"未运行\"），不据此升降档。部分控制项（FP16/INT8 flag 精确语义）待补不影响主要操作路径的完整性。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "O-cann-deepseek-v4_1-flash-standard-20260921T105502",
+      "task": "O",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msopgen gen -i ./op_dev/add_custom.json -f <framework> -c ai_core-<soc_version> -lan cpp -out ./custom_op",
+        "bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0\npip3 install --upgrade dist/torch_npu-2.1.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "确认 soc_version：`npu-smi info`，取查询到的 \"Name\" 前面加 `Ascend` 前缀"
+      ],
+      "original_reason": "路线 A 给出完整可执行链：msopgen gen 完整命令、cp 回填、bash build.sh、./custom_opp_<os>_<arch>.run、CMakePresets.json ENABLE_BINARY_PACKAGE=True、export LD_LIBRARY_PATH、op-plugin yaml 与 C++ 完整文件、bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0、pip3 install wheel、python3 test_ops_custom.py 测试脚本，均来自官方正文。仅 <soc_version>/<framework>/路径等环境参数需按用户环境替换且有说明（npu-smi info 查询规则）。未到 5：答案自认 msopgen -f 精确取值未确证（留默认未由官方确认）、host 侧注册宏归属未核实，存在需用户按所用 CANN 版本核对的点。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "O-cuda-deepseek-v4_1-flash-standard-20260921T105756",
+      "task": "O",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "ext_modules=[cpp_extension.CUDAExtension(\"extension_cpp\", [\"muladd.cpp\", \"muladd_cuda.cu\"])],",
+        "pip install -e .\n# 或：python setup.py develop",
+        "torch.ops.extension_cpp.mymuladd(a, b, c)\ntorch.ops.extension_cpp.mymuladd.default(a, b, c)   # 指定 default overload",
+        "（教程把 `CUDAExtension` 的 `setup.py` 示例指向 https://github.com/pytorch/extension-cpp，**未在本页给出完整示例**，此点记为未核实。）"
+      ],
+      "original_reason": "两条路线均给出完整可照抄内容：C++ 端 schema、CPU/CUDA kernel（含 getCurrentCUDAStream）、TORCH_LIBRARY_IMPL、C++ autograd 注册代码齐全；构建端给出 setup.py（CUDAExtension）与 `pip install -e .` 命令；调用与自检（`torch.ops.extension_cpp.mymuladd(a, b, c)`、opcheck）明确；前置条件（PyTorch ≥2.4、.cu 需 nvcc、流一致）已说明。仅需替换命名空间、文件名等环境值即可执行，符合第4档。不给5分的原因：CUDAExtension 的 setup.py 为答案自行改写并自标'属常规约定，非教程原文'且记为未核实，`from . import _C` 的包结构与扁平 setup.py 需用户自行组装；答案声明未实际运行、仅内容核查（按约定不影响4/5分界，仅作记录）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "P-cann-deepseek-v4_1-flash-standard-20260921T110159",
+      "task": "P",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)",
+        "bash scripts/build.sh --python=3.7        # setuptools<=65.7.0",
+        "pip3 install --upgrade apex-0.1+ascend-{version}.whl",
+        "以上均**未在本机运行验证**（未安装 CANN/torch_npu/NPU，未执行任何训练脚本），操作步骤仅基于官方文档原文。"
+      ],
+      "original_reason": "torch_npu amp 路线给出可直接照抄的完整代码（导入、GradScaler 定义时机、autocast、scale/step/update），loss scale 静态配置给出完整可运行语句 amp.GradScaler(init_scale = 2.**10, dynamic = False)；apex 路线给出完整安装命令链（git clone、build.sh --python=3.7 附 setuptools<=65.7.0 前提、pip3 install）与用法代码。需替换的仅为明确标识且有说明的用户环境值：模型/数据集/超参（ToyModel、args）、wheel 文件名中的 {version}（注释说明为 python 版本和 cpu 架构），属4档'仅需替换明确标识且有说明的用户环境参数'；答案亦如实声明未在本机运行验证，不影响内容完整性判定。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "P-cuda-deepseek-v4_1-flash-standard-20260921T110042",
+      "task": "P",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "scaler = torch.amp.GradScaler(\"cuda\")   # 每个训练过程用一个新的 scaler\n\nfor inputs, targets in loader:\n    opt.zero_grad(set_to_none=True)\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):",
+        "前置条件（recipe 原文）**：PyTorch 1.6 或更高、CUDA-capable GPU；Tensor Core 架构（Volta/Turing/Ampere）收益最大（2–3X）"
+      ],
+      "original_reason": "给出完整可运行训练循环（含 import、optimizer、scaler 构造、autocast 上下文、scale/step/update 顺序），前置条件明确（PyTorch 1.6+、CUDA GPU、Tensor Core 架构收益说明）；仅需替换用户环境值（MyModel、loader、loss_fn），且这些占位符明确标识，无需修正内容错误，符合第4档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Q-cann-deepseek-v4_1-flash-standard-20260921T110338",
+      "task": "Q",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6",
+        "npu-smi info -t memory       # HBM 已用/总量",
+        "out = checkpoint(block_fn, x, use_reentrant=False)",
+        "TorchNPU ≥26.2.0 且 PyTorch ≥2.13.0"
+      ],
+      "original_reason": "操作指导完整：npu-smi 排查命令（info/-t memory/-t proc/-i 0 -t common）、torch_npu 内存诊断 Python 代码、六条 export PYTORCH_NPU_ALLOC_CONF 官方配置示例（语法键:值,键:值 无空格、互斥约束、各参数版本前提如 HDK≥23.0.0 / TorchNPU≥26.2.0）齐备，无缺参数、无内容错误需修正，答案还甄别并拒绝了第三方错误说法（max_split_size_mb:128 并非关闭 ATB 预分配）。仅需替换明确标识且有说明的用户环境值（设备号 -i 0、checkpoint 示例中的 block_fn/x 等用户模型部分、按症状选择参数组合，答案附 reserved/allocated 判读逻辑），属 4 分档；checkpoint 需用户接入自身模型结构，未达无需补写即可直接执行的 5 分档。未实际运行不影响档位判定。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Q-cuda-deepseek-v4_1-flash-standard-20260921T110602",
+      "task": "Q",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512\n# 或（新名）\nexport PYTORCH_ALLOC_CONF=max_split_size_mb:512",
+        "out = cp.checkpoint(fn, x, use_reentrant=False)          # 直接调用",
+        "del some_tensor          # 先解引用\ngc.collect()\ntorch.cuda.empty_cache()"
+      ],
+      "original_reason": "操作指导完整：诊断命令（nvidia-smi、memory_allocated/reserved、memory_summary、_record_memory_history/_dump_snapshot）可直接运行；环境变量给出bash export与os.environ两种写法并说明须在导入前设置；checkpoint给出直接调用、装饰器、checkpoint_sequential三种完整代码及use_reentrant=False等关键参数；empty_cache配合del/gc.collect()的顺序明确。用户仅需替换设备号、张量名、文件名等环境值即可执行。答案如实声明未实机运行（无GPU环境），按规则不因未运行否定内容；内容核查层面无需修正即可照抄执行，故评4分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "R-cann-deepseek-v4_1-flash-standard-20260921T111937",
+      "task": "R",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output",
+        "数据 dump 的 `config.json` 完整字段示例（未抓取 `pytorch_data_dump_instruct`）。",
+        "msProbe 安装命令与 CANN/工具版本配套关系（`msprobe_install_guide` 未抓取）。"
+      ],
+      "original_reason": "答案给出了完整可抄写的核心命令（overflow_check、compare、merge_result 及 GradScaler 代码），参数与前置条件基本齐全；但整条流水线存在需补充的缺失内容：msProbe 安装命令未给出、dump 环节 config.json 完整字段示例未取回（overflow_check 与 compare 均依赖 dump 数据）、MindSpore 场景溢出检测完整命令正文未取回，须补充这些内容才能端到端照抄执行，对应第3档（3分须指出具体缺口，答案已在\"未能核实处\"自行列出）。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "S-cann-deepseek-v4_1-flash-standard-20260921T112208",
+      "task": "S",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "nohup ./bin/mindieservice_daemon > output.log 2>&1 &",
+        "chmod +x 软件包名.run\n\n# 3) 先配置 ascend-toolkit 环境变量（root 默认路径示例）\nsource /usr/local/Ascend/ascend-toolkit/set_env.sh",
+        "**因此不能直接在 bin 目录内启动 `mindieservice_daemon`**；应在有写权限的目录（如 `Ascend-mindie-server_<version>_linux_<arch>` 目录或其下自建临时目录）启动。"
+      ],
+      "original_reason": "操作指导完整：安装命令（chmod、source、--check、--install --quiet）可直接执行，仅需替换明确标注的'软件包名.run'和路径等环境参数；启动命令完整（nohup ./bin/mindieservice_daemon及直接启动两种方式），成功回显明确；curl验证命令含完整参数说明；关键前置条件（bin目录无写权限不能直接启动、切换用户需rm -f /dev/shm/*、启动目录要求）均已说明。config.json拼装示例中ScheduleConfig为占位注释'/* 见上表 */'需参照上文表格填写，且示例标注为'按文档字段拼装，非官方原文整体示例'，故不满足5分'无需补写'标准，符合4分'仅需替换明确标识且有说明的用户环境参数'。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "S-cuda-deepseek-v4_1-flash-standard-20260921T112441",
+      "task": "S",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "- `<xx.yy>` 为要使用的 Triton 版本；须安装 NVIDIA Container Toolkit 才能让 Docker 识别 GPU。\n- 端口（官方日志原文）：gRPC `0.0.0.0:8001`、HTTP `0.0.0.0:8000`、Metrics `0.0.0.0:8002`。\n- 就绪检查：`curl -v localhost:8000/v2/health/ready`，返回 `HTTP/1.1 200 OK` 即就绪。"
+      ],
+      "original_reason": "操作指导完整：docker run命令包含全部必要参数（--gpus、端口映射、卷挂载、镜像和启动命令），config.pbtxt给出完整可复制的protobuf语法，model repository布局有具体目录树，就绪检查命令明确（curl -v localhost:8000/v2/health/ready），前置条件已说明（须安装NVIDIA Container Toolkit）。仅需替换的环境参数明确标识且有说明：`<xx.yy>`为要使用的Triton版本（有文字说明'为要使用的 Triton 版本'），/full/path/to/model_repository为用户路径。CPU-only变体也给出。缺口在于model.plan的构建（trtexec命令未核实），但答案已透明标注且原题重点在于仓库配置和起服务而非模型构建。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "T-cann-deepseek-v4_1-flash-standard-20260921T113102",
+      "task": "T",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "atc --model=model.onnx --framework=5 \\\n    --output=model_dynamic \\\n    --input_shape=\"input:1,-1,-1\" \\\n    --dynamic_dims=\"1,224,224;4,224,224;8,224,224\" \\\n    --input_format=ND \\\n    --soc_version=Ascend310P3        # soc_version 按实际芯片填写（未核实对照表）",
+        "aclmdlGetInputIndexByName(&index, ACL_DYNAMIC_TENSOR_NAME);\naclmdlIODims dims;\ndims.dimCount = 3;\ndims.dims[0] = 4; dims.dims[1] = 224; dims.dims[2] = 224;   // 必须是转换时设置的档位之一\naclmdlSetInputDynamicDims(modelId, dataset, index, &dims);"
+      ],
+      "original_reason": "答案提供端到端可执行方案：ATC 完整命令行（含 --model/--framework/--input_shape/--dynamic_dims/--input_format/--soc_version 全部必要参数），ACL 侧含 aclmdlGetInputIndexByName 获取 index、dims 填充与 aclmdlSetInputDynamicDims 调用的具体代码，MindIE 侧给出 config.json 片段及参数取值范围与默认值。唯一需替换项 soc_version 已明确标注『按实际芯片填写』，属用户环境参数。缺口（--dynamic_batch_size/--dynamic_image_size 完整正文）答案如实声明未核实而非给出错误步骤，不影响 --dynamic_dims 主路线的可执行性。前置条件（互斥参数、-1 个数对应、执行前选档）均已说明。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "T-cuda-deepseek-v4_1-flash-standard-20260921T112722",
+      "task": "T",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "profile.set_shape(\n    \"input\",\n    min=(1, 3, 224, 224),\n    opt=(8, 3, 224, 224),\n    max=(32, 3, 224, 224),\n)",
+        "docker run --gpus=all -it --shm-size=256m --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v ${PWD}:/workspace/ -v ${PWD}/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:yy.mm-py3 bash\n\ntritonserver --model-repository=/models"
+      ],
+      "original_reason": "答案提供了完整的可执行方案：(1) TRT Python 代码包含完整导入、网络创建、parser、profile set_shape 三组具体数值、build_serialized_network 调用链；(2) Triton config.pbtxt 模板字段齐全（platform、max_batch_size、input/output dims、dynamic_batching 参数、instance_group）；(3) Docker 启动命令完整。仅需用户替换的环境参数已明确标识：model.onnx 路径、nvcr.io/nvidia/tritonserver:yy.mm-py3 中的版本标签、输入/输出名称及维度等。代码内部逻辑经与官方 API 文档比对无错误（set_shape 参数顺序、约束条件均正确）。未标伪代码或省略步骤。C++ 部分虽标注未核验但为附加内容，不影响主要 Python 路径的可执行性。扣1分因 yy.mm 版本标签及部分 Triton TRT backend 参数需用户自行确认版本后填入。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "U-cann-deepseek-v4_1-flash-standard-20260921T113331",
+      "task": "U",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msprof op --output=$HOME/projects/output $HOME/projects/MyApp/out/main blockdim 1",
+        "`soc_version`：命令中以 `--soc-version=Ascendxxxyy` 占位（官方原文即用 xxxyy，需替换为目标芯片，如 Atlas A2/A3 系列）",
+        "本次**未运行任何代码**，命令均来自官方文档原文，未在本机验证执行结果。"
+      ],
+      "original_reason": "操作指导完整：msprof op 及 simulator 命令为官方原文完整命令行，关键参数（--application/--config 二选一、--kernel-name、--aic-metrics、--warm-up 等）含义与取值范围齐全；double buffer 给出官方正/反例完整代码与前提（循环次数>=2）。仅需替换明确标识且有说明的环境值：输出路径 $HOME/projects/output、可执行文件路径、--soc-version=Ascendxxxyy（官方原文即占位，答案已说明需替换为目标芯片），无需修正内容错误。答案如实声明未实际运行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "U-cuda-deepseek-v4_1-flash-standard-20260921T113542",
+      "task": "U",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 5,
+      "recommended_score": 4,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "**基础采集（官方 CLI 指南 §5.3.1 Quickstart）**：\n```\nncu -o profile.ncu-rep ./app\n```",
+        "ncu --kernel-name regex:\"myKernel\" --launch-skip 5 --launch-count 1 ./app",
+        "ncu -o profile.ncu-rep ./app"
+      ],
+      "original_reason": "操作可执行性评估最终答案中的命令与前置条件。采集命令完整：基础采集（ncu -o profile.ncu-rep ./app）、按 kernel 过滤（--kernel-name regex + --launch-skip/--launch-count 及默认值说明）、replay/cache/clock 控制项及其对访存指标的影响、发现命令（--list-sections/--query-metrics 及语法）均给出完整命令行、参数与默认值，并指出 --cache-control all 每次 replay 前 flush cache 等测量前提；代码示例（offsetCopy/strideCopy/coalescedMultiply、cudaOccupancyMaxActiveBlocksPerMultiprocessor 调用）完整可编译。占位符仅 ./app、myKernel 等用户环境值且含义明确；答案还给出未核实项的自行确认途径（--query-metrics --chip）。无缺步骤、无需修正内容，操作指导及适用前提明确，评 5。",
+      "review_reason": "`./app` and `myKernel` are user application/kernel substitutions. The Nsight Compute commands and analysis are complete; no-run disclosure does not affect the score."
+    },
+    {
+      "run_id": "V-cann-deepseek-v4_1-flash-standard-20260921T114012",
+      "task": "V",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "/* 下发算子/模型推理（示意，接口随业务而定：aclopExecuteV2 / aclnnXxx / 模型 execute） */\n        /* MyKernelExecute(devA[i], devOut[i], streamCompute); */",
+        "（注：以上为按官方接口拼装的示意，未在本机运行；算子下发、`ReadFile`、错误分支按业务/官方示例补全。）"
+      ],
+      "original_reason": "给出了完整可编译结构的C代码：aclInit/SetDevice、aclrtMallocHost/Malloc、三stream创建、事件创建、流水线编排、收尾同步与资源释放，接口用法均有官方正文核对。但按3档须指出具体缺口：算子/推理下发为注释占位，ReadFile 未实现，多块循环中 H2D 流等待复用缓冲的调用以注释给出（'实际多块时：aclrtStreamWaitEvent(streamH2D, evComp[i]); 再发下一块 H2D'），且答案自述代码未运行。用户需补充计算下发等业务内容才能实际执行，未达4/5档。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "V-cuda-deepseek-v4_1-flash-standard-20260921T113836",
+      "task": "V",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "nvcc -O3 -arch=sm_80 overlap.cu -o overlap   # 把 sm_80 换成你 GPU 的 compute capability",
+        "CHECK(cudaStreamCreateWithFlags(&stream[i], cudaStreamNonBlocking));"
+      ],
+      "original_reason": "答案提供了完整可编译的overlap.cu代码（含所有include、CHECK宏、kernel定义、pinned分配、多流创建、异步拷贝、同步、验证、清理）和nvcc编译命令。仅需替换明确标识的环境参数：-arch=sm_80 需换成用户GPU的compute capability（答案明确注释'把 sm_80 换成你 GPU 的 compute capability'）。代码结构完整、无伪代码、无缺失步骤，同步和错误检查齐全。达到4分：仅需替换明确标识且有说明的用户环境参数即可执行。答案诚实声明代码未实际运行，但不影响内容完整性评分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "W-cann-deepseek-v4_1-flash-standard-20260921T114201",
+      "task": "W",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "export HCCL_ALGO=\"allreduce=level0:NA;level1:ring/allgather=level0:NA;level1:H-D_R\"",
+        "**常用诊断思路（命令语法需从上述接口参考逐条核对，本轮未取得这些命令的正文参数）**"
+      ],
+      "original_reason": "HCCL_ALGO 部分给出完整可执行命令（export 示例逐字来自官方文档，含全局与按算子两种写法及约束），可直接照抄；但 hccn_tool 诊断仅有功能名称清单和排查思路，无任何具体命令行（答案自述\"命令语法需从上述接口参考逐条核对，本轮未取得这些命令的正文参数\"），RoCE PFC/ECN/MTU 配置命令与推荐值缺失，需补充缺失内容才能完成原题要求的诊断与网络调优操作，对应第 3 档（具体缺口：hccn_tool 命令行语法、RoCE 配置命令）。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "W-cuda-deepseek-v4_1-flash-standard-20260921T114421",
+      "task": "W",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "sudo setpci -s 03:00.0 ECAP_ACS+0x6.w=0000   # 03:00.0 换成各桥 BDF"
+      ],
+      "original_reason": "第9节给出完整可照抄的排查流程：版本与诊断、基线带宽（nvbandwidth/nvloom 编译参数 -DMULTINODE=1、srun 示例）、系统级隐患（/proc/cmdline、lspci ACSCtl、setpci）、NCCL 日志、逐项 A/B 调参命令，命令行完整、前置条件（NCCL>=2.31、需编译、BDF 替换）均注明；仅需替换 <nproc>、BDF 等明确标识的用户环境参数即可执行，评4分而非5（部分前置如工具构建/硬件存在性依赖用户环境，且 ALGO/PROTO 枚举未核实需以 tuning 输出确认）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "X-cann-deepseek-v4_1-flash-standard-20260921T114831",
+      "task": "X",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "mssanitizer -t memcheck ./<test_program>"
+      ],
+      "original_reason": "操作指导仍需替换已标识的用户环境值（mssanitizer -t memcheck ./<test_program>），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "X-cuda-deepseek-v4_1-flash-standard-20260921T114644",
+      "task": "X",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "nvcc -lineinfo -o app app.cu",
+        "compute-sanitizer --tool memcheck ./app arg1 arg2"
+      ],
+      "original_reason": "操作方案完整可照抄：编译命令（nvcc -lineinfo -o app app.cu；-G/-rdynamic 变体）、运行命令（compute-sanitizer --tool memcheck ./app）、cuda-memcheck 等价写法及参数组合示例均给出；参数名、取值与默认值逐项符合官方参数表（print-limit=100、launch-timeout=10/60、demangle=full、destroy-on-device-error=context、error-exitcode=0、target-processes=all 等，call_00_GK0qOVPmyh3ZqBbz5q005302.result）；前置条件明确（CUDA 版本决定工具选择、输出行号需 -lineinfo/-G、编译期插桩要求 PTX 编译器与 compute-sanitizer 同一 Toolkit 版本）。仅需替换 app/二进制名、日志文件名等明确标识的用户环境值，未发现需修正的内容错误，对应第4档（仅替换用户环境参数，无可执行性缺口）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Y-cann-deepseek-v4_1-flash-standard-20260921T115028",
+      "task": "Y",
+      "ecosystem": "cann",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "atc \\\n  --model=resnet50.onnx \\\n  --framework=5 \\\n  --output=resnet50 \\\n  --soc_version=Ascend910B3 \\\n  --input_shape=\"input:1,3,224,224\" \\\n  --input_format=NCHW \\\n  --log=error",
+        "迁移做法：用 `npu-smi info` 查看目标机芯片型号（“Name”列），据此选目标 soc_version，再重转 .om。"
+      ],
+      "original_reason": "操作指导完整：给出可直接照抄的 atc 完整命令（含 --model/--framework/--soc_version/--input_shape/--input_format/--log 全参数）、msfmktrans 扫描命令、npu-smi info / cat /usr/local/Ascend/version.cfg 版本查看、keep_dtype.cfg 格式、7 步迁移检查清单。所需替换的仅为用户环境值（模型路径、目标芯片型号对应的 soc_version、输入 shape），且替换方法有明确说明（“用 npu-smi info 查看目标机芯片型号（Name列），据此选目标 soc_version”），无需修正内容错误即可执行，符合第4档。答案已声明“所有命令未实际运行（无昇腾环境），仅做内容核查”，按规则不作为4/5分界依据。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Y-cuda-deepseek-v4_1-flash-standard-20260921T115233",
+      "task": "Y",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "# 安装最新驱动，然后：\n  CUDA_FORCE_PTX_JIT=1 ./your_app",
+        "config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS",
+        "实际未编译、未在 GPU 上运行任何命令，均为**文档内容核对**，非实测复现。"
+      ],
+      "original_reason": "答案给出完整可照抄的 nvcc 命令行（-gencode 多目标写法、-arch=sm_90 展开）、CUDA_FORCE_PTX_JIT=1 验证步骤及其前置条件（安装最新驱动、测后 unset）、TensorRT hardware compatibility 的 C++/Python 完整配置代码，及适用前提（CUDA≥11.8、kAMPERE_PLUS 仅 ≥8.0 不含 Volta、DriveOS/JetPack 不支持）。仅需替换 mykernel.cu 等用户环境值即可执行；答案明确声明为文档内容核对而非实测复现，未虚称运行通过。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "A-cann-kimi-k3-2-standard-20260921T095009",
+      "task": "A",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "source /usr/local/Ascend/ascend-toolkit/set_env.sh",
+        "atc --framework=5 --model=model.onnx --output=out/model \\\n    --input_format=NCHW \\\n    --input_shape=x:1,3,224,224 \\\n    --log=error \\\n    --soc_version=Ascend910B4",
+        "确认目标芯片型号，soc_version 必须与部署芯片一致。在装有昇腾处理器的服务器上执行 `npu-smi info` 查看处理器版本。",
+        "出现 `ATC run success` 即转换成功，输出 `out/model.om`。"
+      ],
+      "original_reason": "转换操作可直接照抄执行：环境加载命令、完整 atc 命令（含全部必要参数 framework/model/output/input_format/input_shape/log/soc_version）、成功判据\"ATC run success\"、排障方法（--log=debug 配合 export ASCEND_GLOBAL_LOG_LEVEL=0 和 ASCEND_SLOG_PRINT_TO_STDOUT=1）齐备，且与 WebFetch_4 的可执行命令逐参数一致。仅需替换明确标识且有说明的用户环境参数：模型路径、input_shape 输入名（\"输入名以模型实际为准（可用 netron.app 查看）\"）、soc_version（\"在装有昇腾处理器的服务器上执行 `npu-smi info` 查看处理器版本\"），符合4分标准。未给5分：输入名/shape 与 soc_version 须按用户模型与硬件替换而非原样可跑；部署段仅列 aclmdlLoadFromFile/aclmdlExecute 接口名、无可执行步骤（答案自注未核实细节），但原题核心索要的转换命令已完整，不影响4分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "A-cuda-kimi-k3-2-standard-20260921T095515",
+      "task": "A",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 5,
+      "recommended_score": 4,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "trtexec --onnx=model.onnx --saveEngine=model.engine --fp16",
+        "trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x224x224 \\\n  --optShapes=input:16x3x224x224 \\\n  --maxShapes=input:32x3x224x224 \\\n  --saveEngine=model.engine --fp16",
+        "wget -O onnx_helper.py https://raw.githubusercontent.com/NVIDIA/TensorRT/main/quickstart/IntroNotebooks/onnx_helper.py",
+        "trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x224x224 \\\n  --optShapes=input:16x3x224x224 \\\n  --maxShapes=input:32x3x224x224 \\\n  --saveEngine=model.engine --fp16"
+      ],
+      "original_reason": "主路线命令完整可照抄执行：PyTorch 导出为完整可运行 Python 代码（含 dummy_input、opset、动态形状两种写法及切换说明）；trtexec 静态/FP16/强类型/动态 batch 命令均给出完整参数（--onnx/--saveEngine/--minShapes/--optShapes/--maxShapes），与官方 README 参数名一致；部署步骤给出 wget onnx_helper.py 命令和 ONNXClassifierWrapper 完整调用代码，并明确 cuda-python 补丁注意事项；版本前提（TensorRT 11.3.0、CUDA 12.x、Python 3.10–3.14、SM≥7.5）明确列出。仅需用户替换模型路径/文件名等环境值。答案明确标注 --bf16 和裸 runtime API 序列为未核实，但这些是备选路线而非主流程缺口，不影响主路线直接执行。",
+      "review_reason": "The route requires user model/file values (`model.onnx`, model path/file names) and contains optional unverified branches. The main route is complete with substitutions, so M10=4."
+    },
+    {
+      "run_id": "B-cann-kimi-k3-2-standard-20260921T101439",
+      "task": "B",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "<answer>\n\n# 昇腾上跑 PyTorch 定位瓶颈：msprof / Ascend PyTorch Profiler 采集与分析\n\n## 一、工具选择\n\n- **Ascend PyTorch Profiler（`torch_npu.profiler`，推荐）**：在脚本内采集，能拿到 PyTorch 框架层算子、调用栈、显存、NPU kernel 等全链路数据。\n- **msprof 命令行**：CANN Toolkit 自带，不改代码包裹整个任务，采集 CANN 层与硬件层数据；**官方明确说明其不支持采集 Python 调用栈、PyTorch 框架层数据，框架层需用 torch_npu 接口方式采集**。\n\n## 二、前提条件（版本，官方依据）\n\n来源：Ascend/pytorch 官方仓库 `ascend_pytorch_profiler_user_guide.md`（master）：\n\n- 安装**配套版本的 CANN Toolkit**并 `source set_env.sh` 配置环境变量；\n- 基于 **PyTorch 2.1.0 或更高版本**；\n- 单进程多 Device 场景须 PyTorch **2.1.0post14 / 2.5.1post2 / 2.6.0 及之后版本**；\n- 官方快速入门示例环境：PyTorch 2.9.0、Python 3.12、AArch64；\n- CANN↔torch_npu↔PyTorch 的**精确对应表本次未获取**（在 torch_npu 安装文档中，此处标为未核实，安装时需另查配套表）。\n\nmsprof 侧：文档基于 **CANN 8.3.RC1.alpha002 / 8.5.0.alpha001 社区版**，支持 Atlas 训练/推理系列、Atlas A2/A3 系列、Atlas 200I/500 A2。\n\n## 三、Ascend PyTorch Profiler（脚本内采集）\n\n```python\nimport torch\nimport torch_npu\n\nexperimental_config = torch_npu.profiler._ExperimentalConfig(\n    export_type=torch_npu.profiler.ExportType.Text,\n    profiler_level=torch_npu.profiler.ProfilerLevel.Level0,\n    aic_metrics=torch_npu.profiler.AiCMetrics.AiCoreNone)\n\nwith torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU],\n    schedule=torch_npu.profiler.schedule(\n        wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),\n    on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(\"./result\"),\n    profile_memory=False,\n    with_modules=False,\n    experimental_config=experimental_config) as prof:\n    for step in range(steps):\n        train_one_step()\n        prof.step()          # 与 schedule 配套\n```\n\n关键参数：\n- `activities`：CPU / NPU；\n- `schedule(wait, warmup, active, repeat, skip_first)`：只采指定迭代，避免数据过大；\n- `record_shapes=True`（trace 中显示 Input Dims/type）、`with_stack=True`（显示调用栈）、`profile_memory=True`（生成 memory_record.csv / operator_memory.csv 等）；\n- `_ExperimentalConfig`：`profiler_level`（Level0/1/2，Level1 起生成 api_statistic.csv、communication.json，Level2 生成 data_preprocess.csv）、`aic_metrics`（如 `PipeUtilization`）、`export_type`（Text / Db）、`mstx=True` 自定义打点。\n\n也可 `prof.start() / prof.stop()`，或 `prof.export_chrome_trace('./chrome_trace_14.json')`。\n\n**动态采集（不改代码）**：`export PROF_CONFIG_PATH=\"/path/to/profiler_config_path\"`，启动训练后修改自动生成的 `profiler_config.json` 使能采集；或脚本中 `from torch_npu.profiler import dynamic_profile as dp`，`dp.init(...)` / `dp.step()` / `dp.start(...)`。\n\n**大数据离线解析**（取消 on_trace_ready 后）：\n```python\nfrom torch_npu.profiler.profiler import analyse\nanalyse(profiler_path=\"./result_data\", max_process_number=1, export_type=['text'])\n```\n\n## 四、msprof 命令行采集\n\n环境准备后（`source .../set_env.sh`，完成\"使用前准备\"），两种方式：\n\n```bash\n# 方式一（推荐）：命令末尾直接跟用户程序\nmsprof --output=/home/projects/output --task-time=on --ai-core=on \\\n       --runtime-api=on --ascendcl=on python3 train.py --epochs 1\n\n# 方式二：--application\nmsprof --application=\"python3 train.py\" --output=/home/projects/output\n```\n\n常用参数（官方参数表，CANN 8.3/8.5 文档）：\n\n| 参数 | 说明 |\n|---|---|\n| `--output` | 结果存放路径 |\n| `--type` | 解析格式 text（json/csv+db，默认）或 db |\n| `--task-time` | l0/l1/on/off，算子下发+执行耗时（默认 on=l1） |\n| `--ai-core` | AI Core 数据开关；`--aic-mode` task-based（默认）/sample-based |\n| `--aic-metrics` | ArithmeticUtilization、PipeUtilization（多数产品默认）、Memory、MemoryL0、MemoryUB、ResourceConflictRatio、L2Cache、MemoryAccess 等，按产品不同；支持 `Custom:0x49,...` 自定义寄存器 |\n| `--runtime-api` / `--ascendcl` | runtime / acl 接口耗时（默认 off / on） |\n| `--hccl` | 通信数据（多卡场景；官方注明后续版本废弃，建议用 `--task-time` 控制） |\n| `--aicpu` | AICPU 算子详细信息 |\n| `--l2` | L2 Cache 命中率 |\n| `--sys-hardware-mem[=freq]` | 片上内存采集（注意 glibc<2.34 有已知 Bug 19329） |\n| `--ge-api` | 动态 Shape 算子 Host 调度耗时（off/l0/l1） |\n| `--task-memory` | 算子级内存占用 |\n| `--environment` | 自定义环境变量 |\n| `--storage-limit` | 落盘容量上限（默认磁盘可用空间 90%） |\n\n完成后自动解析，输出 `PROF_XXX` 目录（RC 场景需拷回 Toolkit 环境解析）。\n\n## 五、输出结果与分析步骤\n\n输出目录 `{worker_name}_{timestamp}_ascend_pt` 下：\n- `ASCEND_PROFILER_OUTPUT/trace_view.json`：时间线（应用层→CANN层→NPU底层），用 MindStudio Insight、`chrome://tracing/` 或 ui.perfetto.dev 打开；\n- `op_statistic.csv`：算子调用次数与耗时汇总 → 找 Top 耗时算子；\n- `kernel_details.csv`：NPU 上每个算子的 Duration/Wait Time、Shapes、Formats → 看 wait 长（下发瓶颈）还是 duration 长（算子本身瓶颈）；\n- `step_trace_time.csv`：每迭代的 Computing / Communication(Not Overlapped) / Free / Bubble → 判断通信未掩盖或 host 空泡；\n- `memory_record.csv`、`operator_memory.csv`（profile_memory=True）；\n- `communication.json`（Level1+，多卡通信）；\n- `ascend_pytorch_profiler_{Rank_ID}.db` / `analysis.db`：用 MindStudio Insight 查看。\n\n定位流程：\n1. `step_trace_time.csv` 看迭代时间构成：Free/Bubble 大 → host 侧（数据加载）瓶颈；Communication(Not Overlapped) 大 → 通信瓶颈；\n2. `trace_view.json` 看 host/device 时间线是否有 gap（常见于 dataloader，可开 Level2 看 data_preprocess.csv，或用 mstx 打点 `torch_npu.npu.mstx.range_push(\"dataloader\")`）；\n3. `op_statistic.csv` + `kernel_details.csv` 找热点算子，结合 `--aic-metrics=PipeUtilization` / `AiCMetrics.PipeUtilization` 判断 MemoryBound 还是计算瓶颈；\n4. 大集群用 mstx 打点定界关键函数/迭代。\n\n## 六、注意事项（官方原文要点）\n\n- umask ≥ 0027，不用 root，不建议生产环境使用；\n- 数据目录不能含软链接；\n- 各采集方式不可同时开启；不建议与 Dump 同时开启；\n- 建议采集 5min 以内，预留 ≥20 倍原始数据大小的内存/磁盘；\n- `tensorboard_trace_handler` 与 `export_chrome_trace` 二选一（前者已含后者数据）。\n\n## 来源\n\n- https://github.com/Ascend/pytorch/blob/master/docs/zh/developer_notes/ascend_pytorch_profiler_user_guide.md （官方仓库，正文取得但在 analysis.db 章节后截断；接口完整参数表、profiler_config.json 说明、原生 torch.profiler 章节未包含）\n- https://www.hiascend.com/document/detail/zh/mindstudio/2600/msTT_msIT/ascend_pytorch_profiler/docs/zh/ascend_pytorch_profiler/ascend_pytorch_profiler_user_guide.md （仅取得标题/导航，正文未取回）\n- https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha001/devaids/Profiling/atlasprofiling_16_0010.html （msprof 通用命令，正文取得）\n- https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/83RC1alpha002/devaids/Profiling/atlasprofiling_16_0011.html （AI 任务运行性能数据参数，正文取得）\n\n**未核实处**：CANN↔torch_npu↔PyTorch 精确版本配套表（未获取）；msprof 工具在 EP 环境的确切安装路径（prior 中的路径未验证，文档仅说 RC 场景在 `/var`）；analysis.db 表结构与接口完整参数表（来源截断）。\n\n</answer>\n\n<stop_reason>\n信息充分停止：Ascend PyTorch Profiler 与 msprof 两种路线的采集命令、代码、参数、输出与分析步骤均已从官方来源取得直接正文，足以完整回答原题。剩余预算未用完；未继续获取的是版本配套表与被截断章节，已标注为未核实，不影响主流程回答。\n</stop_reason>"
+      ],
+      "original_reason": "操作指导完整且可直接执行：torch_npu.profiler 采集代码为官方原文完整示例（含 experimental_config、schedule、prof.step 配套说明）；msprof 给出两种完整命令形式及逐项参数表（--output/--task-time/--ai-core/--aic-metrics 等）；前置条件明确（配套 CANN 并 source set_env.sh、umask≥0027、不用 root、采集时长与磁盘预留建议）；输出文件与四步分析流程具体。仅需代入用户自身训练脚本与路径，属任务固有内容且已明确标识（'命令末尾直接跟用户程序'），无需修正任何内容错误。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "B-cuda-kimi-k3-2-standard-20260921T095928",
+      "task": "B",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "1. **命令行快速统计**：`nsys stats report.nsys-rep`（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`——`gpu_time_util`、`gpu_gaps` 是官方 analyze 内置规则，直接对应\"GPU 利用率低\"的定位（另有 `cuda_api_sync`、`cuda_memcpy_sync/async`、`cuda_memset_sync` 等规则）。"
+      ],
+      "original_reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "C-cann-kimi-k3-2-standard-20260921T102054",
+      "task": "C",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "aclnnMatmulGetWorkspaceSize(self, mat2, out, cubeMathType, &workspaceSize, &executor);",
+        "git clone https://gitcode.com/cann/ascend-transformer-boost.git\ncd ascend-transformer-boost\nbash scripts/build.sh\nsource output/atb/set_env.sh"
+      ],
+      "original_reason": "操作指导完整：MatMul 给出含 aclInit/aclrtSetDevice/两段式调用/workspace 申请/同步的最小骨架，参数与原型逐字对应官方示例；ATB 给出完整可照抄的 git clone、bash scripts/build.sh、set_env.sh、torch_atb 安装与 Python 调用代码；aclnn Plugin 给出必须实现的六个接口及 Setup/Execute 调用点。仅需替换 deviceId、${version_info} 等明确标识的环境参数即可执行。卷积部分无签名属答案明示的未核实边界，原题要求的\"怎么选怎么调用\"主路径（MatMul/ATB）均可直接执行，不足之处不影响第4档判定（不包含需修正的内容错误）。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "C-cuda-kimi-k3-2-standard-20260921T102458",
+      "task": "C",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "函数签名正文因页面截断未取得**，以下流程为模型先验 + 官方博客佐证，标注未逐字核实",
+        "以下为模型先验，标注未核实：\n\n```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(h, opA, opB, alpha, matA, matB, beta, matC,\n                        CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT, &bufSize); // 先验签名"
+      ],
+      "original_reason": "存在具体操作方案：cuBLAS Sgemm、cuBLASLt、cuDNN graph、cuSPARSE SpMM 四条调用路线均有代码/步骤，前置条件（列主序映射、16字节对齐、workspace 分配、CC 要求）明确。但三处关键代码（cublasLtMatmul、cusparseSpMM、cublasSgemm 签名）明确标注为'模型先验，未逐字核实'（官方页截断），cudnnConvolutionForward legacy 签名 404 未核实——具体缺口：这些先验签名与调用序列需与官方文档核对修正后方可照抄运行；答案自身也声明'以上代码未实际运行'。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "D-cann-kimi-k3-2-standard-20260921T103858",
+      "task": "D",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom",
+        "- `setup.py` 的完整内容（编译时需 include torch_npu 头文件、链接 `opapi`/`libopapi.so` 与 `torch_npu` 库，官方页未展示具体文本，此处为推断）。",
+        "// 反向实现 add_custom_backward_impl_npu ...",
+        "代码未实际运行（无本地执行环境）。"
+      ],
+      "original_reason": "命令链与代码具体：msopgen gen、./build.sh、.run部署、TORCH_LIBRARY/PYBIND11注册、EXEC_NPU_CMD(aclnnAddCustom…)调用、'python3 setup.py build bdist_wheel'、pip install均可确定，前置条件（CANN安装、set_env.sh、PyTorch≥2.1设备名差异）已说明，<soc_version>等占位符有明确标注。但需补充内容才能照抄执行，具体缺口：(a)setup.py内容缺失，答案自认'官方页未展示具体文本，此处为推断'，需补写头文件包含与链接库配置；(b)KernelAdd完整类代码仅以流水概述呈现，反向实现以'// 反向实现 add_custom_backward_impl_npu ...'省略。符合第3档：有具体操作方案但需补充缺失内容。答案声明'代码未实际运行（无本地执行环境）'，本次仅内容核查，不宣称复现成功。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "D-cuda-kimi-k3-2-standard-20260921T103315",
+      "task": "D",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令",
+        "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")",
+        "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")"
+      ],
+      "original_reason": "操作指导基本完整：完整kernel/注册/setup.py代码、构建命令（pip install --no-build-isolation -e .）、TORCH_CUDA_ARCH_LIST设置、JIT替代方案与Python调用示例，前置条件（CUDA toolkit、CUDA_HOME、ninja）均有说明，环境参数（架构列表8.0 8.6）已明确标识需按用户GPU替换。但生产级setup.py摘录中使用了未定义的this_dir（原文WebFetch_4中有 this_dir = os.path.dirname(os.path.curdir) 一行被省略），照抄会NameError，需补一行才能运行，故未达5；最小setup.py与JIT路线可执行，整体高于3，记4。",
+      "review_reason": "Root: supplied production setup.py refers to this_dir without defining it anywhere in the final. The original question explicitly requests setup.py. This is a missing code definition, not an environment substitution; an alternative JIT route does not repair the presented erroneous setup.py."
+    },
+    {
+      "run_id": "E-cann-kimi-k3-2-standard-20260921T104302",
+      "task": "E",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export ASCEND_GLOBAL_LOG_LEVEL=1   # 0=DEBUG, 1=INFO, 2=WARNING, 3=ERROR(默认), 4=NULL",
+        "$Driver_HOME/driver/tools/msnpureport -a        # 导出全部系统日志到 Host",
+        "可用算子 Dump + `msaccucmp.py` 与 CPU/GPU 逐层比对定位首错层"
+      ],
+      "original_reason": "主要操作路径可直接执行：日志级别设置给出完整命令与取值含义，系统日志导出给出完整命令行（$Driver_HOME为明确标识且有说明的环境参数），硬件检查用npu-smi info，版本核对给出cat version.cfg与npu-smi -V。这些与官方正文一致（WebFetch_8的配置示例“export ASCEND_GLOBAL_LOG_LEVEL=1”；WebFetch_10的“$Driver_HOME/driver/tools/msnpureport -a”）。扣1分原因：算子Dump与msaccucmp.py比对分支仅有思路级描述（“可用算子 Dump + `msaccucmp.py` 与 CPU/GPU 逐层比对定位首错层”）无具体命令，ASCEND_SLOG_PRINT_TO_STDOUT未经官方核实（答案已自行标注），HCCL_EXEC_TIMEOUT调整未给出具体设置方式；主流程无需修正即可照抄运行，故4分而非3分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "E-cuda-kimi-k3-2-standard-20260921T104600",
+      "task": "E",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "CUDA_LAUNCH_BLOCKING=1 python train.py",
+        "或代码内（必须在 import torch / 任何 CUDA 操作之前）：",
+        "compute-sanitizer --tool memcheck python train.py"
+      ],
+      "original_reason": "主要操作路径可直接执行：CUDA_LAUNCH_BLOCKING 的命令行（Linux/Windows 双变体）与代码内设置均给出完整命令并注明前置条件（须在 import torch 之前）；compute-sanitizer 各子工具命令行、选项及安装前提（随 CUDA Toolkit 安装）齐全，仅需将 train.py 替换为用户自己的脚本名（明确标识的环境参数）。扣 1 分原因：方法三 TORCH_USE_CUDA_DSA 缺少具体编译步骤（答案自己承认'确切编译步骤'未核实），该方法需补充才能执行；但作为非首选路径且已诚实标注，不影响首选方法的完整性。答案已声明'未实际运行任何命令……仅经内容核查'，按约定不作为 4/5 分界依据。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "F-cann-kimi-k3-2-standard-20260921T105145",
+      "task": "F",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "多机应传全局 rank（官方正文只提示\"配置相应的 rank 与 world_size\"，未给多机 rank 计算代码）",
+        "多机 torchrun 完整命令官方文档未直接给出，需按 PyTorch 通用参数补全"
+      ],
+      "original_reason": "环境准备（sysctl、hccn_tool、防火墙、交换机检查）与多种启动命令（shell 循环、torch.distributed.launch、torch_npu_run 含 --nnodes=8 多机参数）具体可执行，占位符（<rank0 IP>、<端口>）标注清晰。但答案自认两处需补充才能多机执行：多机 rank 应传全局 rank 而示例仅用 local_rank（官方未给多机 rank 计算代码，答案需用户补写），多机 torchrun 完整命令需按通用用法补全，属'需补充缺失内容才能执行'，故 3 分。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "F-cuda-kimi-k3-2-standard-20260921T104958",
+      "task": "F",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "<answer>\n\n## PyTorch 多机多卡分布式训练（DDP + NCCL）\n\n来源（官方）：\n- https://docs.pytorch.org/tutorials/intermediate/ddp_series_multinode.html（Multinode Training 教程）\n- https://docs.pytorch.org/docs/stable/elastic/run.html（torchrun 官方文档，PyTorch 2.14）\n- https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multinode.py（官方示例代码）\n\n### 1. 代码初始化（每个进程）\n\n官方推荐用 torchrun 启动，进程组初始化只需读环境变量，无需手动传 RANK：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\ndef ddp_setup():\n    torch.cuda.set_device(int(os.environ[\"LOCAL_RANK\"]))\n    dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://\n\nddp_setup()\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = MyModel().to(local_rank)\nmodel = DDP(model, device_ids=[local_rank])\n\nloader = DataLoader(dataset, batch_size=bs, shuffle=False,\n                    sampler=DistributedSampler(dataset))  # 每个 epoch 调 sampler.set_epoch(epoch)\n# 训练结束后 dist.destroy_process_group()\n```\n\n注意：PyTorch 2.0.0 起 torchrun 向脚本传 `--local-rank=<rank>`（连字符形式），若脚本用 argparse 解析，建议同时兼容 `--local-rank` 和 `--local_rank`。\n\n### 2. 启动命令\n\n**方式 A：经典 master_addr 写法（两节点，每节点 8 卡）**\n\n```bash\n# 节点 0（主节点）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n\n# 节点 1（相同参数，仅 node_rank 不同）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=1 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n```\n\n**方式 B：官方文档推荐的 rendezvous 写法（多节点，含容错）**\n\n```bash\n# 所有节点运行完全相同的命令\ntorchrun \\\n    --nnodes=$NUM_NODES \\\n    --nproc-per-node=$NUM_TRAINERS \\\n    --max-restarts=3 \\\n    --rdzv-id=$JOB_ID \\\n    --rdzv-backend=c10d \\\n    --rdzv-endpoint=$HOST_NODE_ADDR \\\n    train.py\n```\n- `--rdzv-endpoint` 形如 `<host>[:<port>]`，缺省端口 29400；c10d 为官方推荐 backend（etcd/etcd-v2 为可选，etcd 已进入维护模式）。\n- 弹性训练：`--nnodes=1:4`（min:max）。\n- `--nproc-per-node` 可填 `gpu`/`cpu`/`auto` 或整数，GPU 训练时每进程占一张卡（GPU 0 到 nproc-1）。\n- 也可通过 SLURM 等集群管理器调度，入口命令仍为 torchrun。\n\n### 3. 环境变量\n\n**torchrun 自动注入（脚本内直接读取）：**\n| 变量 | 含义 |\n|---|---|\n| `RANK` | 全局进程 rank |\n| `LOCAL_RANK` | 节点内 GPU rank |\n| `WORLD_SIZE` | 总进程数 |\n| `LOCAL_WORLD_SIZE` | 每节点进程数 |\n| `MASTER_ADDR` / `MASTER_PORT` | rank 0 主机地址与 C10d TCP store 端口 |\n| `GROUP_RANK`、`ROLE_RANK`、`TORCHELASTIC_RUN_ID` 等 | 弹性/角色相关 |\n\n**NCCL 调优/排错（需自行 export）：**\n```bash\nexport NCCL_DEBUG=INFO              # 打印详细日志，排查通信问题\nexport NCCL_SOCKET_IFNAME=eth0      # 显式指定网卡（多网卡机器常需要）\n```\n\n### 4. 版本与前提\n\n- 文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。\n- 前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。\n- 警告：RANK 在故障重启后不保证稳定，不要在训练逻辑中硬编码 rank 假设。\n\n**未核实处**：NCCL 完整环境变量清单（如 NCCL_IB_*、NCCL_NET_GDR_LEVEL 等）未在本次抓取中取得，仅确认了 NCCL_DEBUG 与 NCCL_SOCKET_IFNAME 两项官方提及的变量。\n\n</answer>\n\n<stop_reason>\n信息充分后主动停止：原题要求的初始化方式、启动命令、环境变量均已从官方文档（多节点教程 + torchrun 文档 + 官方示例代码）取得，共使用 1 次 WebSearch（首次查询第 1/2 条即命中官方源）和 3 次 WebFetch，远未达预算上限；继续检索（如 NCCL 环境变量完整清单）对回答原题非必需，故停止。\n</stop_reason>"
+      ],
+      "original_reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "G-cann-kimi-k3-2-standard-20260921T105349",
+      "task": "G",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -m 入口文件 -t 模型变量名]",
+        "所有命令均未实际运行，仅按官方文档原文转录。"
+      ],
+      "original_reason": "操作指导完整：自动迁移给出环境变量export命令和import代码；工具迁移给出依赖安装、cd路径、完整命令行及参数说明和示例；安装验证命令可直接运行。仅需替换明确标识的环境参数（{CANN包安装路径}、原始脚本路径、-v版本、输出路径），符合4分。不满足5分：答案自述命令未实际运行，且CANN 7.0.0版工具迁移页正文未取得（改用MindStudio 70RC1同名文档，两版本参数一致性未核实），存在未消解的前提不确定。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "G-cuda-kimi-k3-2-standard-20260921T105706",
+      "task": "G",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "./hipify-clang square.cu --cuda-path=/usr/local/cuda-12.9 -I /usr/local/cuda-12.9/samples/common/inc",
+        "未核实点：该页带交互选择器，抓取时默认呈现 Docker 标签页，**pip 安装命令（如 `--index-url .../whl/rocmX.Y` 的确切 URL）本次未取回**"
+      ],
+      "original_reason": "答案给出完整可照抄的命令：hipify-clang各用法（含--cuda-path、-I、--分隔符、-p compile_commands.json、--print-stats）、hipify-perl示例、安装命令（apt/dnf/zypper amdrocm-hipify）、PyTorch Docker完整run命令（含--device /dev/kfd等全部参数），前置条件明确（hipify-clang需安装CUDA、输入须可编译、需提供全部include/define）。用户只需替换路径/版本等环境值即可执行，符合4分。不足5分的缺口：hipify-clang默认输出文件命名未说明、ROCm版PyTorch的pip安装命令未取回（答案自身标注为未核实点），属需补充的缺失内容。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "H-cann-kimi-k3-2-standard-20260921T110646",
+      "task": "H",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "```bash\nmsmodelslim quant --model_path {浮点权重路径} --save_path {W8A8量化权重路径} \\\n  --device npu --model_type Qwen2-7B --quant_type w8a8 --trust_remote_code True\n```",
+        "cd ${ATB_SPEED_HOME_PATH}\ntorchrun --master_port 12350 -m examples.run_pa --model_path {w8a8量化权重路径}"
+      ],
+      "original_reason": "操作指导完整：依赖安装pip命令（numpy==1.25.2等）、msModelSlim安装（git clone + bash install.sh）、完整quant.py代码含全部关键参数、命令行一键量化命令、MindIE推理命令均给出，与官方文档一致；仅需替换明确标识的环境参数（{浮点权重路径}、{w8a8量化权重路径}、${ATB_SPEED_HOME_PATH}、设备号）。mindie-service服务化配置final已明确声明未核实并指引用户另查文档，原题主线（量化+推理部署）命令可直接执行，未发现需修正的错误。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "H-cuda-kimi-k3-2-standard-20260921T105946",
+      "task": "H",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理",
+        "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。"
+      ],
+      "original_reason": "校准器代码与构建配置完整可直接参照（与官方 API 文档示例一致），trtexec 命令行完整。但存在具体缺口：(1) 部署推理步骤仅为骨架，'分配 host/device buffer，enqueueV3/execute_async_v2 推理' 是注释而非可执行代码，需补写 buffer 分配与推理调用；(2) batch_stream（ImageBatchStream）未给出实现，代码中直接使用其 nbytes/batch_size 属性；(3) 答案自述'上述代码未实际运行…仅内容核查'。符合档3：有具体操作方案，但需补充缺失内容才能完整执行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "I-cann-kimi-k3-2-standard-20260921T125026",
+      "task": "I",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "npu-smi info                        # 输出 Driver Version / Firmware Version\ncat /usr/local/Ascend/driver/version.info",
+        "python -c \"import torch; print(torch.__version__)\"\npip show torch_npu",
+        "要么按 CANN 版本选对应的 torch+torch_npu（`pip install torch==<表内版本> torch-npu==<对应安装包版本>`），要么换 CANN。"
+      ],
+      "original_reason": "答案给出可直接照抄运行的完整命令块（npu-smi info、cat /usr/local/Ascend/driver/version.info、cat /usr/local/Ascend/ascend-toolkit/latest/*/ascend_toolkit_install.info、python -c \"import torch; print(torch.__version__)\"、pip show torch_npu），命令、参数、前置条件（如'已 source 环境时'）齐全，均为完整命令行而非伪代码；固件驱动查询给出明确 URL 与浏览器操作说明。唯一需替换处是修复命令 pip install torch==<表内版本> torch-npu==<对应安装包版本>，占位符以尖括号明确标识并说明需对照配套表选取，属于按答案内说明的查表替换而非修正内容错误，故不给 5。仅内容核查，未实际运行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "I-cuda-kimi-k3-2-standard-20260921T112844",
+      "task": "I",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 5,
+      "recommended_score": 5,
+      "disposition": "retain",
+      "final_quotes": [
+        "python -c \"import torch; print('torch:', torch.__version__); \\\nprint('CUDA built with:', torch.version.cuda); \\\nprint('cuDNN built with:', torch.backends.cudnn.version()); \\\nprint('cuda available:', torch.cuda.is_available())\""
+      ],
+      "original_reason": "答案给出完整可照抄的诊断命令（nvidia-smi、python -c 检查 torch.version.cuda/cudnn、nvcc --version、grep CUDNN_MAJOR 头文件含路径回退）、完整的 pip 安装命令含 --index-url、以及带前置条件的决策流程（先看驱动档位再选 cuXXX）。命令均为完整命令行，必要参数与前提说明齐全，且已说明 nvidia-smi 的 CUDA Version 含义以避免误用，无需补写或修正即可执行；答案自身注明命令未实际运行，仅内容核查，不作为扣分依据。",
+      "review_reason": "The final diagnostic/install commands are fully specified for the stated workflow; no unresolved placeholder or missing core step remains. No-run disclosure does not lower M10."
+    },
+    {
+      "run_id": "J-cann-kimi-k3-2-standard-20260921T114020",
+      "task": "J",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "bash ./Ascend-cann_9.0.0-beta.1_linux-x86_64.run --install\n\n# 4. 安装算子包（按产品系列选 310b-ops 或 310p-ops）\nwget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/CANN/CANN%209.0.T2/Ascend-cann-310b-ops_9.0.0-beta.1_linux-x86_64.run\nbash ./Ascend-cann-310b-ops_9.0.0-beta.1_linux-x86_64.run --install\n```\n\n**方式 B：在线安装 (Conda)**\n\n```bash\nconda config --add channels https://repo.huaweicloud.com/ascend/repos/conda/\nconda install ascend::cann-toolkit==9.0.0.beta.1\nconda install ascend::cann-310b-ops==9.0.0.beta.1   # 推理系列产品用 cann-310p-ops\n```\n\n### 二、装完 source 哪个 set_env.sh\n\n- **Runfile（root 默认路径）**：\n  ```bash\n  source /usr/local/Ascend/cann/set_env.sh\n  ```\n  （以实际安装路径为准；自定义路径则替换前缀）\n- **Conda 方式**：\n  ```bash\n  source /home/miniconda3/Ascend/cann/set_env.sh\n  ```\n- 验证：`python3 -c \"import acl;print(acl.get_soc_name())\"`\n\n注意：9.0 新布局下路径是 `/usr/local/Ascend/cann/set_env.sh`；旧版（7.0/8.0 的 toolkit 分包布局）是 `/usr/local/Ascend/ascend-toolkit/set_env.sh`。\n\n### 三、环境变量\n\n- 日常只需 source 上述 `set_env.sh`，它会统一注入 CANN 所需变量（官方文档有独立的\"环境变量参考/环境变量列表\"手册页描述全部变量，但 hiascend.com 文档页为 JS 渲染，本轮仅取回框架，未能逐字取得变量清单正文）。"
+      ],
+      "original_reason": "安装与 source 命令完整可照抄：属组配置、apt 依赖、wget URL、bash --install、conda 命令、set_env.sh source 路径、验证命令均齐全，与官方配置 JSON 一致。需替换处仅为明确标识的用户环境参数（aarch64/x86_64 文件名、自定义安装路径前缀、miniconda3 路径），且均有说明（'aarch64 改文件名'、'以实际安装路径为准'），符合 4 分；环境变量清单依赖 set_env.sh 注入，无需手写，无内容错误需修正。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "J-cuda-kimi-k3-2-standard-20260921T113432",
+      "task": "J",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "wget https://developer.download.nvidia.com/compute/cuda/repos/<distro>/<arch>/cuda-keyring_1.1-1_all.deb",
+        "export PATH=/usr/local/cuda/bin:$PATH\nexport LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH",
+        "配置后 `source ~/.bashrc`，用 `nvcc --version` 与 `nvidia-smi` 验证。"
+      ],
+      "original_reason": "最终答案提供了完整的可执行操作方案：安装命令（wget keyring、dpkg -i、apt update、apt install nvidia-open、apt install cuda-toolkit、reboot）和环境变量配置命令（export PATH/LD_LIBRARY_PATH写入~/.bashrc，source后用nvcc --version和nvidia-smi验证）。命令中<distro>和<arch>为明确标识且有说明的用户环境参数（答案注明取ubuntu2204/ubuntu2404/ubuntu2604）。前置条件（linux-headers-$(uname -r)）和适用前提（deb/apt vs runfile时LD_LIBRARY_PATH的必要性）均已说明。仅需替换环境参数即可直接执行，无需修正内容错误，符合4档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "K-cann-kimi-k3-2-standard-20260921T114731",
+      "task": "K",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "docker run -it \\\n--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc \\\n-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \\\n-v /usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/common \\\n-v /usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64/driver \\\n-v /etc/ascend_install.info:/etc/ascend_install.info \\\n-v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \\\n<镜像ID> /bin/bash",
+        "- 用法即 `docker run -e ASCEND_VISIBLE_DEVICES=0,1 <镜像> ...`（README 明确该环境变量决定挂载哪些卡；具体完整 docker run 示例所在官方章节\"在Docker客户端使用\"本次抓取只返回了导航框架，未取得正文，示例写法按该环境变量的官方说明给出）。"
+      ],
+      "original_reason": "方式A给出完整可照抄的docker run命令，含全部--device与-v挂载及CentOS/BC-Linux的--pids-limit 409600前置条件，仅需替换明确标识的<镜像ID>和按卡号增减davinciX；方式B给出runtime安装、重启docker与ASCEND_VISIBLE_DEVICES用法。缺口：方式B的完整docker run示例因'在Docker客户端使用'页未取得正文而按环境变量说明给出，镜像具体地址未核实需用户到AscendHub确认，但方式A独立构成完整可执行路线，符合'仅需替换明确标识且有说明的用户环境参数'档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "K-cuda-kimi-k3-2-standard-20260921T115046",
+      "task": "K",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 5,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "sudo nvidia-ctk runtime configure --runtime=docker   # 修改 /etc/docker/daemon.json\nsudo systemctl restart docker",
+        "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3",
+        "python -c \"import torch; print(torch.cuda.is_available())\"   # 应输出 True",
+        "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3",
+        "- **宿主驱动最低版本（未完全核实）**：26.xx 的支持矩阵页不再内联驱动要求，转而引用 CUDA Compatibility Guide；页面最近一条内联记录为 CUDA 13.0 容器要求驱动 **R575 及以上**。CUDA 13.4.1 的确切最低驱动号需查 CUDA Toolkit Release Notes，此处无法核实，建议保守使用 R575+ 驱动。"
+      ],
+      "original_reason": "操作指导完整可照抄执行：前置条件明确列出（Docker Engine、NVIDIA 驱动、toolkit，且说明宿主无需 CUDA Toolkit）；toolkit 安装为完整 apt 命令链（含前置包、gpg key、repo 配置、版本固定的 install）；运行时配置给出 `nvidia-ctk runtime configure --runtime=docker` 和 `systemctl restart docker`；运行命令 `docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3` 使用具体可拉取的 tag；并附容器内验证命令。所有命令与官方文档（WebFetch_1、WebFetch_2）逐字一致，无需修正或补写；用户环境参数（镜像 tag、设备号 `--gpus '\"device=0,1\"'`、挂载路径）均已明确标识并给出说明。宿主驱动版本一项答案已明确标注为未核实并给出保守 R575+ 建议及核实途径，属前提说明的诚实边界而非操作步骤缺失。",
+      "review_reason": "Root: optional mount/device examples do not force an environment substitution on the complete default command. However, the answer explicitly leaves the selected CUDA 13.4.1 container minimum host driver unverified and substitutes an older CUDA 13.0 driver suggestion; its required host compatibility prerequisite remains to be supplied. Grade 3 is for that prerequisite gap, not optional examples or lack of execution."
+    },
+    {
+      "run_id": "L-cann-kimi-k3-2-standard-20260921T120029",
+      "task": "L",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "工具位置：`$HOME/Ascend/ascend-toolkit/latest/tools/operator_cmp/compare/msaccucmp.py`",
+        "python3 msaccucmp.py compare -m my_dump_path -g golden_dump_path \\\n  -f fusion_rule_file -op <op_name> [-o index | -i index] \\\n  [-n topn] [-out output]",
+        "在 GPU/CPU 上用原始网络（Caffe/TF/ONNX）跑同一输入，保存 npy，命名规则 `{op_name}.{output_index}.{timestamp}.npy`，放到同一父目录。",
+        "`-o`/`-i` 指定 output/input 的 Index（取自 csv 的 TensorIndex，如 `trans_Cast_0:input:0` → 0），默认比对 output index 0"
+      ],
+      "original_reason": "操作指导完整：整网与单算子msaccucmp命令均给出完整命令行（必选/可选参数、互斥关系、默认值、输出文件名），工具绝对路径给出，acl.json给出可照抄的完整JSON示例及字段说明，-op算子名与-o/-i Index的获取方式明确说明。仅需替换my_dump_path、golden_dump_path、fusion_rule_file、op_name、model_name等明确标识的用户环境参数即可执行。golden生成（GPU/CPU跑原始网络保存npy）与dump接口接入（aclInit/aclmdlSetDump）依赖用户自身网络与工程结构，但命名规则与放置目录已明确，且用户原题中已有标杆与运行中的算子；无需修正内容错误。答案自述'命令均为内容核查，未实际运行'，按内容核查评定，不影响分档。评4。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "L-cuda-kimi-k3-2-standard-20260921T115325",
+      "task": "L",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "compute-sanitizer --tool memcheck  python test_op.py   # 越界/未对齐访问（默认工具）\ncompute-sanitizer --tool racecheck python test_op.py   # shared memory 数据竞争（WAW/WAR/RAW）",
+        "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)"
+      ],
+      "original_reason": "答案给出可直接执行的完整命令与代码：compute-sanitizer 四条完整命令行（--tool memcheck/racecheck/initcheck/synccheck python test_op.py）、nvcc 编译选项（-lineinfo/-G/-fdevice-sanitize=memcheck）、CUDA_LAUNCH_BLOCKING=1、Python 比对代码（assert_close 与逐元素定位代码含必要参数与前置条件如 torch.cuda.synchronize()）。容差数值（rtol=1e-5/atol=1e-6）为用户需按 dtype 调整的环境值且答案已说明调整依据（默认容差表）。命令语法与官方文档一致，无需修正内容错误即可执行，仅替换脚本/算子名等环境值，符合4档；未实际运行验证，不据此升降。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "M-cann-kimi-k3-2-standard-20260921T120306",
+      "task": "M",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 5,
+      "recommended_score": 4,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "在算子工程 `op_host` 目录下新建 `算子名称_tiling.h`，包含 `register/tilingdata_base.h`，用注册宏定义",
+        "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(),\n                        context->GetRawTilingData()->GetCapacity());\n    context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());",
+        "GET_TILING_DATA(tilingData, tiling);   // 自动按注册的TilingData类型解析"
+      ],
+      "original_reason": "答案提供了可直接照抄执行的完整内容：TilingData 定义头文件完整代码（含 include guard 与注册宏）、host 侧 TilingFunc 完整函数（GetShapeSize/SetBlockDim/SaveToBuffer/SetDataSize 全链路）、kernel 侧核函数与 Init 完整代码，并给出文件位置（op_host/算子名称_tiling.h、op_host/算子名称.cpp、op_kernel/xxx.cpp）、工程生成工具 msopgen、参数顺序约束、非对齐场景的对齐公式与分支偏移逻辑。代码语法完整、前置条件明确，除算子名/数据类型等必然的用户环境值外无需补写或修正，符合5档。",
+      "review_reason": "The complete Tiling route still requires replacing explicit user operator/file placeholders such as `算子名称_tiling.h`, data types and operator names; this is M10=4."
+    },
+    {
+      "run_id": "M-cuda-kimi-k3-2-standard-20260921T120623",
+      "task": "M",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "trtexec --onnx=model.onnx \\\n  --minShapes=input0:1x3x224x224 \\\n  --optShapes=input0:8x3x640x640 \\\n  --maxShapes=input0:16x3x1280x1280 \\\n  --shapes=input0:4x3x640x640 \\\n  --saveEngine=model.engine --fp16",
+        "context.setOptimizationProfileAsync(0, stream);   // stream 必须与后续 enqueueV3 相同\n     context.setInputShape(\"foo\", Dims{3, {3, 150, 250}});"
+      ],
+      "original_reason": "答案提供了完整的C++/Python代码片段（profile创建、setDimensions、setOptimizationProfileAsync、setInputShape、IOutputAllocator实现）和完整的trtexec命令行（--minShapes/--optShapes/--maxShapes/--shapes），参数格式、前置条件（必须先设profile再设shape、stream一致性）和注意事项均明确。仅需用户替换张量名、维度值和模型路径即可执行。答案自述'所写代码未实际运行'，但不影响操作完整性评分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "N-cann-kimi-k3-2-standard-20260921T121536",
+      "task": "N",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "atc ... --fusion_switch_file=/home/fusion_switch.cfg",
+        "cat * | grep \"GraphId\" | grep -v \"effected_times=0\" | grep \"effected_times=\"",
+        "bash scripts/env_install/pytorch/setup_torch_npu_daily.sh   # 配套 torch_npu daily"
+      ],
+      "original_reason": "主要操作命令完整可直接执行：ATC的--fusion_switch_file参数及cfg完整JSON格式、C++ IR构建global_options代码、日志查看完整grep命令链、graph-autofusion环境搭建完整步骤（source setenv.sh/set_env.sh、export ASCEND_DEVICE_ID=0、bash setup_torch_npu_daily.sh）、torch.compile完整Python代码、AUTOFUSE_DFX_FLAGS调试环境变量及取值。所需替换的仅为明确标识的用户环境参数（/home/fusion_switch.cfg文件路径、ASCEND_DEVICE_ID设备号、debug_dir输出路径）。答案明确标注4项未核实内容（fusion_result.json路径、debug日志级别开启方式、融合pass构建指引、SuperKernel配置细节）均属次要细节且已声明不影响主流程可执行性，无需修正内容错误。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "N-cuda-kimi-k3-2-standard-20260921T121054",
+      "task": "N",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "trtexec --profilingVerbosity=detailed --dumpLayerInfo --exportLayerInfo=<file>.trt.json --onnx=model.onnx",
+        "inspector = engine.create_engine_inspector()`；`inspector.get_layer_information(i, LayerInformationFormat.JSON)"
+      ],
+      "original_reason": "答案给出完整可照抄的命令与 API 调用：trtexec 命令含全部必要 flag（--profilingVerbosity=detailed --dumpLayerInfo --exportLayerInfo=<file>.trt.json --onnx=model.onnx），仅需替换文件路径等环境参数；Python/C++ API 调用（create_engine_inspector、get_layer_information、mark_debug）与前置条件（构建时 ProfilingVerbosity 决定详细度）均明确，且与 WebFetch_1 官方示例一致。未验证项（ncu、cuBLASLt epilogue 枚举）已如实标注，不构成主要操作路径的缺口。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "O-cann-kimi-k3-2-standard-20260921T122048",
+      "task": "O",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "msopgen 创建工程的具体命令参数未逐条核实（官方流程：msopgen 建工程 → kernel/host 实现 → 编译部署 → 生成单算子 API 头文件与库）。",
+        "自定义算子 host 侧 aclnn 封装的完整工程级代码（cann-ops-adv 仓 ophost 源码）未在预算内逐文件取回",
+        "全部命令未实际运行（无本地环境），仅内容核查。"
+      ],
+      "original_reason": "torch_npu集成路线（路线1）操作指导完整：官方样例代码、git clone、bash build_and_run.sh、_load.py加载均可照抄，仅替换环境参数。但原题核心的'注册成aclnn接口'部分存在具体缺口：msopgen创建工程的具体命令参数未逐条核实，host侧aclnn封装的完整工程级代码未取回，需补充这些缺失内容才能完成aclnn注册的端到端执行，符合3档（有具体操作方案，但需补充缺失内容才能执行）。答案自身也声明全部命令未实际运行，仅内容核查。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "O-cuda-kimi-k3-2-standard-20260921T122629",
+      "task": "O",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "torch.ops.load_library(\"/path/to/libmyops.so\")  # 或先 import 扩展模块触发静态注册",
+        "mod = load(name=\"myops\", sources=[\"myops.cpp\", \"myops_cuda.cu\"], extra_cuda_cflags=[\"-O3\"])",
+        "  // launch kernel on at::cuda::getCurrentCUDAStream()"
+      ],
+      "original_reason": "答案给出完整的 TORCH_LIBRARY/TORCH_LIBRARY_IMPL C++ 骨架、Python 加载调用、JIT load 命令、register_autograd/register_fake 代码及 opcheck/gradcheck 验证命令，前置条件（先加载库再调 torch.library、版本要求）说明明确；需用户替换的仅为路径、算子名等环境值，且 CUDA kernel 启动处留为示意注释（『// launch kernel on at::cuda::getCurrentCUDAStream()』），属骨架内核需用户填入自身 kernel，未达5分但无需修正错误，对应第4档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "P-cann-kimi-k3-2-standard-20260921T123522",
+      "task": "P",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "from torch_npu.npu import amp  # 未逐字核验；部分版本可能暴露为 torch_npu.amp",
+        "静态/动态切换的精确 `loss_scale` 取值语义本次未在抓取正文中逐字核验，建议按 Apex 上游语义：固定数值为静态 scale，`\"dynamic\"` 为动态；最终以所用 wheel 的 `inspect.signature(apex.amp.initialize)` 与报错为准",
+        "bash scripts/build.sh --python=3.7\ncd apex/dist/\npip3 uninstall apex\npip3 install --upgrade apex-0.1+ascend-{version}.whl"
+      ],
+      "original_reason": "有具体可操作方案：AMP 训练骨架、静态/动态 loss scale 写法、Apex git clone/build.sh/pip install 完整命令均给出，多数命令可照抄。但需修正/补充才能执行：核心 import 语句 `from torch_npu.npu import amp` 被答案自标『未逐字核验；部分版本可能暴露为 torch_npu.amp』，用户须按报错试错调整；Apex `loss_scale` 静态/动态取值语义亦未逐字确认，需以 inspect.signature 与报错为准；且答案自述未运行代码。属于有具体方案但需补充缺失内容才能执行，缺口已在答案中具体指出。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "Q-cann-kimi-k3-2-standard-20260921T123940",
+      "task": "Q",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6",
+        "output = checkpoint(self.block, x, use_reentrant=False)",
+        "设 `max_split_size_mb`（建议 32~256MB 网格试，官方未给固定推荐值"
+      ],
+      "original_reason": "答案给出完整可复制的环境变量配置命令（export PYTORCH_NPU_ALLOC_CONF=...，与官方配置示例逐字一致）、可直接使用的 torch.utils.checkpoint 代码片段、以及碎片排查步骤（npu-smi info、memory_summary 判断 reserved vs allocated）。适用前提（HDK 版本要求、参数互斥约束）已明确说明。仅 max_split_size_mb 推荐值需用户按环境网格试验（官方确未给固定推荐值），不构成内容错误；无需修正即可执行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Q-cuda-kimi-k3-2-standard-20260921T124246",
+      "task": "Q",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128",
+        "out = checkpoint(my_forward_fn, x, use_reentrant=False)",
+        "torch.cuda.memory._record_memory_history()\nrun_your_code()  # 跑训练，直到 OOM 附近\ntorch.cuda.memory._dump_snapshot(\"my_snapshot.pickle\")"
+      ],
+      "original_reason": "答案给出可直接执行的完整命令：环境变量设置、empty_cache 调用、checkpoint(my_forward_fn, x, use_reentrant=False) 与装饰器形式、_record_memory_history()/_dump_snapshot 快照流程，参数与前置条件（native 后端限制、preserve_rng_state 含义、不要在训练循环每步调 empty_cache）均已说明。需替换的仅为明确标识的用户环境项（my_forward_fn、x、run_your_code()），无需修正内容错误。答案自述 '所有代码未实际运行（未运行）'，按约定不作为 4/5 分界依据，仅内容核查。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "R-cann-kimi-k3-2-standard-20260921T125935",
+      "task": "R",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "python3 msaccucmp.py overflow -d /MyApp20/dump -out /MyApp20/out -n 3",
+        "「溢出数据采集」具体章节本次未取到正文，采集用的环境变量/开关**未核实",
+        "compare 命令的完整参数**未核实**，不在此补造"
+      ],
+      "original_reason": "溢出检测部分操作指导完整：命令行、参数、目录、示例、结果文件解读齐全，可照抄执行（该部分接近 4-5 分）。但存在具体缺口：(1) 前置的溢出数据采集（dump 文件/Debug file 的环境变量与开关）答案明确标注'未核实'，导致主命令的前置条件无法照抄完成；(2) 精度比对 compare 命令参数表未提供；(3) loss scale 部分仅有方法论描述，无具体命令/API。有具体操作方案但需补充缺失内容才能完整执行，符合第 3 档，缺口已逐项指出。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "R-cuda-kimi-k3-2-standard-20260921T125244",
+      "task": "R",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "scaler.unscale_(optimizer)                       # AMP 下必须先 unscale 再 clip",
+        "- `CUDA_LAUNCH_BLOCKING=1 python train.py`：同步 kernel 执行，报错栈指向真正出错 kernel。"
+      ],
+      "original_reason": "各步骤给出完整可执行代码/命令：anomaly detection 开关与上下文管理器、逐层梯度检查循环、unscale_→clip_grad_norm_→step→update 流程（与官方 amp_examples 示例逐字一致，WebFetch_7 证实）、autocast+GradScaler 典型流程、数据 isfinite 断言、CUDA_LAUNCH_BLOCKING=1 与 compute-sanitizer --tool memcheck 完整命令。仅需替换 model/input/target/loss_fn 等用户环境参数（第4档允许）。compute-sanitizer 子参数与 TF32 开关已如实标注未核实，但给出的命令行本身完整可运行，不需修正。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "S-cann-kimi-k3-2-standard-20260921T130625",
+      "task": "S",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "cd /usr/local/Ascend/mindie/latest/mindie-service\n# 后台启动（推荐）\nnohup ./bin/mindieservice_daemon > output.log 2>&1 &",
+        "pip install atb_llm-<version>-cp<xxx>-cp<xxx>-linux_<arch>.whl"
+      ],
+      "original_reason": "操作指导完整：config.json给出具体字段值和完整JSON示例；环境变量5条source命令路径明确；启动命令具体（nohup ./bin/mindieservice_daemon）；curl验证命令完整含期望返回；前置条件（npu-smi检查、模型权重chmod、依赖安装）齐全。仅需用户替换的环境参数：modelWeightPath权重路径、atb_llm whl包的<version>/<arch>占位符（有明确标识和说明）、容器名称。含权限注意事项（bin目录550不能启动、/dev/shm清理）。无需修正内容错误即可执行。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "S-cuda-kimi-k3-2-standard-20260921T131545",
+      "task": "S",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+        "curl -v localhost:8000/v2/health/ready   # 200 即就绪",
+        "四参数合一的 trtexec 完整命令为按官方语法拼接，非原文单条示例"
+      ],
+      "original_reason": "最终答案给出可直接执行的完整命令：docker run 含具体镜像 tag 26.08-py3、端口映射、仓库挂载与服务参数；启动前提（NVIDIA 驱动 + Container Toolkit）已写明；验证命令 curl -v localhost:8000/v2/health/ready 及客户端 SDK 镜像命令完整；config.pbtxt 给出可照抄的最小配置；trtexec 静态与动态 shape 命令含全部必要参数，语法与官方 README 一致。需替换的仅为明确标识的环境值：仓库路径、模型名、输入名与维度。扣至 4 而非 5 的原因：四参数合一的 trtexec 命令为按官方语法拼接（答案自标'非原文单条示例'），且'TensorRT backend 直接加载 ONNX 自动转 TRT'的配置路径答案自认未取得官方逐字说明，属需补充/未证实内容，不满足 5 分'无需补写或修正'标准；但关键操作本身均可据答案确定，超过 3 分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "T-cann-kimi-k3-2-standard-20260921T132936",
+      "task": "T",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "atc --model=model.onnx --framework=5 --output=model_dyn \\\n    --soc_version=Ascend910B \\\n    --input_shape=\"data:-1,3,416,416;img_info:-1,4\" \\\n    --dynamic_batch_size=\"1,2,4,8\"",
+        "aclmdlSetDynamicBatchSize(modelId, dataset, index, batchSize)`（index 用 `ACL_DYNAMIC_TENSOR_NAME` 获取；**注意**：该接口页本次只取回标题/导航，原型签名未能从官方页直接核实",
+        "\"ModelDeployConfig\": { \"maxSeqLen\": 4096, \"maxInputTokenLen\": 2048, \"truncation\": false }"
+      ],
+      "original_reason": "ATC 侧三条 atc 命令完整（含 --model、--framework、--soc_version、--input_shape、动态参数与 --input_format），仅需替换模型路径/档位等用户环境值即可执行；MindIE 侧给出可直接使用的 config.json 示例及参数默认值/范围。ACL 侧 aclmdlSetInputDynamicDims 有官方核实原型与填充示例，但 aclmdlSetDynamicBatchSize/aclmdlSetDynamicHWSize 精确原型未核实、典型流程仅为伪代码骨架（CreateDataset(...) 未展开），这部分需补充才能完整编码；由于答案明确标注了未核实处且核心操作路径可确定，整体评 4（不把是否实际运行作为分界，未含修正性内容错误）。",
+      "review_reason": "The ACL dynamic-batch/HW branches are only pseudocode (`CreateDataset(...)` etc.) and exact APIs are unverified; completing those branches is required for the requested workflow."
+    },
+    {
+      "run_id": "T-cuda-kimi-k3-2-standard-20260921T132501",
+      "task": "T",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "trtexec --onnx=model.onnx --saveEngine=model.plan \\\n  --minShapes=input:1x3x224x224 \\\n  --optShapes=input:8x3x224x224 \\\n  --maxShapes=input:32x3x224x224 \\\n  --fp16",
+        "dynamic_batching {\n  preferred_batch_size: [ 8, 16, 32 ]     # 优先凑这些 batch 大小\n  max_queue_delay_microseconds: 100       # 最长排队等待（微秒）以凑 batch\n}",
+        "docker run --gpus=all -it --rm -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v ${PWD}/model_repository:/models nvcr.io/nvidia/tritonserver:<yy.mm>-py3"
+      ],
+      "original_reason": "答案提供完整可执行的配置：Python API 代码完整（含 import、logger、builder、profile 设置、engine 构建）、trtexec 命令行完整（所有 shape 参数格式正确）、config.pbtxt 完整（所有必要字段）、部署命令完整（tritonserver 和 docker run）、性能验证命令完整。仅需替换用户环境参数（模型路径、容器版本 tag <yy.mm>），无内容错误需修正。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "U-cann-kimi-k3-2-standard-20260921T133539",
+      "task": "U",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu",
+        "需编译时加 `-DASCENDC_TRACE_ON`；仿真核数不能超过物理核数；不支持 MC2/HCCL 算子。",
+        "pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half));   // BUFFER_NUM=2 开启 double buffer"
+      ],
+      "original_reason": "操作指导完整：msprof op 三条命令（含 --aic-metrics、--launch-count、--kernel-name）与 msprof op simulator 命令均与官方文档逐字一致，可直接执行；前置条件明确（上板需 app 功能正常、仿真需 -DASCENDC_TRACE_ON、仿真核数不超物理核数、不支持 MC2/HCCL），与来源一致；double buffer 给出关键代码 pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half)) 并说明 UB 占用翻倍的代价与核对方法。只需替换明确标识且有说明的环境参数（./add_custom_npu、./test、Ascendxxxyy、TILE_LEN）。未达5分：double buffer 代码为骨架片段（TILE_LEN/loopCnt 未定义、非完整可编译算子），部分优化建议（如'调整 UB 内数据排布/偏移错开 bank'）为方向性指导需结合具体算子改写。",
+      "review_reason": "The task asks analysis and optimization guidance. The double-buffer snippet is illustrative and correctly identifies values to adapt; a full compilable operator is not required by the prompt. Retain M10=4."
+    },
+    {
+      "run_id": "V-cann-kimi-k3-2-standard-20260921T134310",
+      "task": "V",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "aclrtMallocHost(&hostBuf[i], chunkSize);          // 关键：非锁页内存 memcpy 会同步返回"
+      ],
+      "original_reason": "给出具体双缓冲流水代码骨架，接口签名、参数（kind、stream）、锁页内存与 64B 对齐前提、aclrtSetDevice 前置条件均明确，但有需修正/补全之处：锁页内存分配段 \"aclrtMallocHost(&hostBuf[i], chunkSize)\" 出现在循环外且引用未定义的 i（缺循环或批量分配）；devBuf、modelId、input/output 的创建与初始化未给出；无错误码检查；答案自述\"示例代码未在真实设备上运行验证\"且第三方骨架\"为教学骨架\"。属第3档：有具体方案但需补缺（缓冲区批量分配、Dataset 构建等）方可执行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "V-cuda-kimi-k3-2-standard-20260921T133919",
+      "task": "V",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "cudaMemcpyAsync(d_in[i], h_in[i], chunkBytes, cudaMemcpyHostToDevice, streams[i]);\n    kernel<<<blocks, threads, 0, streams[i]>>>(d_in[i], d_out[i]);"
+      ],
+      "original_reason": "给出了两段可编译骨架（分块流水与 event 轮询），API 名称、参数、方向枚举、stream 参数与同步调用均完整正确；但属于教学骨架而非可直接运行的完整程序：kernel 函数签名/实现、blocks/threads 配置、chunkBytes 取值、头文件包含与错误检查均需用户补写。属第3档：有具体操作方案，需补充缺失内容才能执行。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "W-cann-kimi-k3-2-standard-20260921T135205",
+      "task": "W",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 3,
+      "recommended_score": 3,
+      "disposition": "retain",
+      "final_quotes": [
+        "hccn_tool -i <device_id> -link -g",
+        "export HCCL_RDMA_TC=100",
+        "故 `-ip -s` 具体参数格式建议以《HCCN Tool 接口参考》\"配置功能\"章节为准",
+        "hccn_tool 各子命令的完整参数列表（官方正文未成功取回，仅目录）。"
+      ],
+      "original_reason": "HCCL_ALGO（含按算子配置示例）与export HCCL_RDMA_TC=100等命令完整、取值说明齐全，可直接执行；诊断顺序link→IP→ping→netstat→perftest→hccl_test明确。但hccn_tool子命令参数格式答案自认未验证：'-ip -s 具体参数格式建议以《HCCN Tool 接口参考》为准'、'各子命令的完整参数列表（官方正文未成功取回，仅目录）'，执行前需按官方文档核实补充。存在具体缺口（命令格式待确认，非仅替换环境参数），评3分而非4分。",
+      "review_reason": "Retain current 3: final/reason records a concrete missing or corrective content gap."
+    },
+    {
+      "run_id": "W-cuda-kimi-k3-2-standard-20260921T135548",
+      "task": "W",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "NCCL_DEBUG=INFO \\\nNCCL_DEBUG_SUBSYS=INIT,GRAPH,ENV,TUNING \\\nNCCL_DEBUG_FILE=/tmp/nccl.%h.%p.log \\\n./my_app",
+        "nvidia-smi topo -m            # 节点内拓扑矩阵\nnvidia-smi topo -p2p n        # GPU 间 NVLink P2P 是否 OK"
+      ],
+      "original_reason": "答案给出可直接照抄的完整命令与前置条件：NCCL_DEBUG=INFO + NCCL_DEBUG_SUBSYS + NCCL_DEBUG_FILE 启动日志、nvidia-smi topo -m/-p2p n/-p2p p、nvidia-imex-ctl -H -N、cat /proc/cmdline 与 dmesg 检查 IOMMU、sudo lspci -vvv | grep ACSCtl、lsmod | grep nvidia-peermem、sudo modprobe nvidia-peermem，均为官方文档原文命令。需替换的仅是明确标识的用户环境参数（./my_app、-g <ngpus>），且答案对 nccl-tests 命令参数已明确标注未核实属社区标准用法。整体无需修正错误即可执行，仅替换环境值，符合 4 档。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "X-cann-kimi-k3-2-standard-20260921T140608",
+      "task": "X",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "mssanitizer --check-device-heap=yes --leak-check=yes ./add_npu",
+        "文档称需参考\"安装指南\"配置环境变量，该页面本次未能取回正文，仅得到导航框架"
+      ],
+      "original_reason": "操作指导基本完整可直接照抄：核心命令、分场景构建/重编译步骤、环境变量、报告解读均具体且与官方源一致；占位符（<你的程序>、<soc_version>、add_npu 等示例名）均为明确标识且有说明的用户环境参数，属4分口径。未给5分的原因：前置条件中'安装指南'的环境变量配置内容答案自述未能取回（'该页面本次未能取回正文，仅得到导航框架'），用户需另行查阅该外部文档才能完成首次部署。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "X-cuda-kimi-k3-2-standard-20260921T140149",
+      "task": "X",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 5,
+      "recommended_score": 3,
+      "disposition": "downgrade",
+      "final_quotes": [
+        "nvcc -Xcompiler -rdynamic -lineinfo -o out in.cu",
+        "compute-sanitizer --tool memcheck ./my_app",
+        "若只在某个 kernel 报错而定位不到，可先用 `CUDA_LAUNCH_BLOCKING=1 ./my_app` 同步启动缩小范围"
+      ],
+      "original_reason": "答案给出完整可照抄的命令链：编译命令（含 -lineinfo、可选 -fdevice-sanitize=memcheck 及 -rdynamic 说明）、运行命令 compute-sanitizer --tool memcheck ./my_app、输出解读的逐行字段说明、常用选项及默认值、性能与 CUDA_LAUNCH_BLOCKING 前置注意事项均齐全；仅需替换源文件/可执行文件名等用户环境值且已明确说明，无需修正内容即可执行。答案已声明未实际运行，不影响内容层面的可执行性判定。",
+      "review_reason": "The final compiles `-o out` but runs `./my_app`; the target mismatch requires correcting the command, so M10=3."
+    },
+    {
+      "run_id": "Y-cann-kimi-k3-2-standard-20260921T140901",
+      "task": "Y",
+      "ecosystem": "cann",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "atc --model=model.onnx --framework=5 --output=model_out \\\n    --soc_version=Ascend910B3 --input_shape=\"input:1,3,224,224\"",
+        "在目标服务器上执行 `npu-smi info` 获取 **Chip Name**，实际配置值为 `Ascend<Chip Name>`（去掉空格）。"
+      ],
+      "original_reason": "给出了完整可照抄的 atc 命令行（含 --framework、--soc_version、--input_shape、--output）和 npu-smi info 取值查询步骤，前置条件明确（目标机驱动固件、CANN 版本不低于转换环境、om 与芯片型号绑定）；仅需用户替换模型路径、目标芯片型号等环境参数即可执行，无需修正错误。精度/性能重测部分为流程性指导，原题为咨询类，不强制代码，与命令部分合并判 4 分。",
+      "review_reason": "Retain: the cited gaps are environment substitutions, optional/secondary branches, or explicit uncertainty disclosures; main requested path is executable without correcting answer content."
+    },
+    {
+      "run_id": "Y-cuda-kimi-k3-2-standard-20260921T141252",
+      "task": "Y",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "original_score": 4,
+      "recommended_score": 4,
+      "disposition": "retain",
+      "final_quotes": [
+        "/usr/local/cuda/bin/nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_80,code=sm_80 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -gencode=arch=compute_90,code=compute_90 \\\n  -O2 -o mykernel.o -c mykernel.cu",
+        "验证已有二进制是否含可用 PTX：安装最新驱动后设 `CUDA_FORCE_PTX_JIT=1` 运行；能跑说明含 PTX、无需重编译即可上 Hopper，失败则必须重编译（测完记得 unset）。",
+        "config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS   # CC>=8.0 通用"
+      ],
+      "original_reason": "nvcc 编译命令完整可执行（含 -O2、输出与源文件，仅 mykernel.cu/mykernel.o 等文件名需替换，且多架构 gencode 示例逐字来自官方指南），CUDA_FORCE_PTX_JIT 验证步骤含前置条件（安装最新驱动）、执行与收尾（unset）。TensorRT 部分为配置片段（config/builder/network 等上下文对象需用户已有构建代码），驱动要求为定性描述（\"CUDA 12.x 需 R525+\" 自认未核实），故需替换明确标识的环境参数并少量补上下文，评 4 分而非 5 分；无需修正内容错误。",
+      "review_reason": "The task asks migration considerations and commands. The nvcc/PTX/engine guidance is complete; the TensorRT line is an example to integrate into the user’s existing builder context, not a required standalone deployment program. Retain M10=4."
+    }
+  ],
+  "summary": {
+    "downgrades": [
+      "C-cann-glm-5_3-standard-20260921T100754",
+      "D-cuda-glm-5_3-standard-20260921T101500",
+      "F-cann-glm-5_3-standard-20260921T103605",
+      "G-cuda-glm-5_3-standard-20260921T104118",
+      "L-cann-glm-5_3-standard-20260921T113415",
+      "O-cuda-glm-5_3-standard-20260921T123954",
+      "P-cuda-glm-5_3-standard-20260921T124614",
+      "T-cuda-glm-5_3-standard-20260921T132550",
+      "V-cuda-glm-5_3-standard-20260921T141029",
+      "X-cann-glm-5_3-standard-20260921T144956",
+      "Y-cuda-glm-5_3-standard-20260921T145801",
+      "U-cuda-deepseek-v4_1-flash-standard-20260921T113542",
+      "A-cuda-kimi-k3-2-standard-20260921T095515",
+      "K-cuda-kimi-k3-2-standard-20260921T115046",
+      "M-cann-kimi-k3-2-standard-20260921T120306",
+      "T-cann-kimi-k3-2-standard-20260921T132936",
+      "X-cuda-kimi-k3-2-standard-20260921T140149"
+    ],
+    "retained": 129
+  },
+  "root_review": {
+    "status": "reviewed_proposals_not_automatic",
+    "adjustments": [
+      "Retain T-CUDA GLM: do not require unrequested full server script.",
+      "D-CUDA Kimi=3: undefined this_dir in requested setup.py.",
+      "K-CUDA Kimi=3: missing selected-container driver prerequisite, not optional mount examples."
+    ],
+    "limitations": "This is an anchor-consistency content review, not hardware execution or full API correctness certification.",
+    "rejected_nonliteral_proposal_quotes": [
+      {
+        "run_id": "P-cuda-glm-5_3-standard-20260921T124614",
+        "rejected_quote": "构造 GradScaler、autocast 包 forward+loss、退出后 backward、scale/step/update 顺序齐全",
+        "reason": "not a literal final-answer substring; not used"
+      },
+      {
+        "run_id": "Y-cuda-glm-5_3-standard-20260921T145801",
+        "rejected_quote": "nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -O2 -o mykernel.o -c mykernel.cu",
+        "reason": "not a literal final-answer substring; not used"
+      },
+      {
+        "run_id": "U-cuda-deepseek-v4_1-flash-standard-20260921T113542",
+        "rejected_quote": "cudaOccupancyMaxActiveBlocksPerMultiprocessor(..., myKernel, ...)",
+        "reason": "not a literal final-answer substring; not used"
+      },
+      {
+        "run_id": "M-cann-kimi-k3-2-standard-20260921T120306",
+        "rejected_quote": "op_host/算子名称_tiling.h、op_host/算子名称.cpp、op_kernel/xxx.cpp",
+        "reason": "not a literal final-answer substring; not used"
+      }
+    ]
+  }
+}
