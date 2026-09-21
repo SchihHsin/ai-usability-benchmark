@@ -3493,6 +3493,843 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 6,
+      "recorded_at": "2026-09-21T05:58:33.782114+00:00",
+      "process_sha256": "90b888517b1066ff215fe41510fc18cc101bd45591b2ca0956e3a003a2e5638d",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "## 三种迁移方式（官方）\n\n来源：PyTorch 训练模型迁移调优指南《脚本迁移说明》(TorchNPU 6.0.0)。前提：脚本原本能在 GPU 或 CPU 上正常运行。\n\n### 方式一：自动迁移（官方推荐，改动最小）\n\n仅需在训练入口脚本（如 train.py）顶部插入库引用，运行时自动将 CUDA 接口替换为 NPU 接口（边训练边转换）。\n\n1. 配置环境变量：\n```bash\nexport PYTHONPATH={CANN包安装路径}/ascend-toolkit/latest/tools/ms_fmk_transplt/torch_npu_bridge:$PYTHONPATH\n```\n2. 在入口 py 文件顶部添加：\n```python\nimport torch\nimport torch_npu\nimport transfer_to_npu\n```\n3. 直接按原训练流程运行即可。\n\n约束（CANN 商用版 7.0.0 文档）：\n- 支持 PyTorch 1.11.0、2.0.1、2.1.0 的脚本。\n- 与 `torch.jit.script` 冲突（自动迁移会屏蔽它），必须用 jit.script 时改用工具迁移。\n- 不支持 `channel_last`，建议用 `contiguous` 替换。\n- 不支持 `torch.nn.DataParallel`，需手工改为 `DistributedDataParallel`；`amp_C` 模块需手工删除；`torch.cuda.default_generators` 需改为 `torch_npu.npu.default_generators`；`torch.cuda.get_device_capability` 返回 None、`get_device_properties` 无 major/minor 属性，需手工处理。\n- 分布式 backend 为 nccl 时会被自动替换为 hccl，但代码中 `if backend == 'nccl'` 之类判断需手工改为 `'hccl'`。\n\n### 方式二：工具迁移（msFmkTransplt / PyTorch GPU2Ascend）\n\n先离线转换脚本再训练，会生成迁移报告（转换日志、不支持算子列表、修改记录等）。\n\n1. 安装依赖：\n```bash\npip3 install pandas      # >= 1.2.4\npip3 install libcst\npip3 install prettytable\npip3 install jedi        # 可选，跨文件解析\n```\n2. 执行迁移：\n```bash\ncd Ascend-cann-toolkit安装目录/ascend-toolkit/latest/tools/ms_fmk_transplt/\n./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -m 入口文件 -t 模型变量名]\n```\n参数：\n- `-i/--input`：原始脚本文件夹（必选）\n- `-o/--output`：输出路径（必选；单卡输出 xxx_msft，开启 distributed 输出 xxx_msft_multi）\n- `-v/--version`：原脚本 PyTorch 版本，支持 1.11.0、2.1.0（必选）\n- `-s/--specify-device`：通过环境变量 DEVICE_ID 指定 device（可选，可能影响原分布式功能）\n- `distributed`：单卡脚本迁移为 NPU 多卡脚本，仅支持 DataLoader 加载数据场景；`-m/--main` 入口 py 文件（必选），`-t/--target_model` 实例化模型变量名（默认 \"model\"）\n- `-m/--modelarts`：迁移后脚本支持 ModelArts 训练（可选）\n\n示例：\n```bash\n./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model\n```\n输出目录含 `transplant_result_file/`（change_list.csv 修改记录、unsupported_api.csv 不支持 API、cuda_op_list.csv、affinity_api_call.csv、精度/性能专家建议等）以及多卡场景的 `run_distributed_npu.sh`。\n\n### 方式三：手工迁移\n\n要点（官方脚本迁移说明）：\n- 定义 NPU 为训练设备，把适配 GPU 的接口切换为 NPU 接口。典型改动（与官方文档一致的手工迁移模式）：\n  - `import torch` 后加 `import torch_npu`\n  - `x.cuda()` / `.to(\"cuda\")` → `.to(\"npu:0\")` 或先 `torch_npu.npu.set_device(0)`；`torch.cuda` 系列接口换为 `torch_npu.npu`（如 `torch_npu.npu.is_available()`、`torch_npu.npu.amp`）\n  - 混合精度 `torch.cuda.amp` → `torch_npu.npu.amp`\n- 多卡：通信后端由 nccl 改为 HCCL（`init_process_group(backend='hccl')`）。\n\n",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_f437548a.result",
+            "evidence_quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移。**推荐用户使用最简单的自动迁移方式**。",
+            "verification": "source",
+            "reason": "原题要求迁移方式与工具。最终答案逐项覆盖：(1)三种迁移方式及其定义，与官方脚本迁移说明正文一致（WebFetch_1）；(2)自动迁移的具体操作（PYTHONPATH、import transfer_to_npu）与约束，与CANN 7.0.0自动迁移页正文一致（WebFetch_4）；(3)工具迁移给出pytorch_gpu2npu.sh完整命令、参数表和输出文件说明，与MindStudio 70RC1迁移操作页一致（WebFetch_6）；(4)环境前提torch_npu安装（wget whl、pip install、验证命令、版本配套表），与CANN 7.0.0安装页一致（WebFetch_8）。未核实处已在答案中明确标注，不影响已支持内容。",
+            "evidence_refs": [
+              "ev-34",
+              "ev-35"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为相关官方来源（昇腾社区hiascend.com的\"脚本迁移说明\"），属首次查询第2—5条命中，记4分。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_545b8b44.result",
+                "quote": "## 2. [脚本迁移说明-模型脚本迁移-模型迁移-PyTorch 训练模型迁移调优指南 …](https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0013.html)"
+              },
+              {
+                "event_id": "WebSearch_0_545b8b44.result",
+                "quote": "脚本迁移操作的目的是将PyTorch的训练脚本迁移到昇腾AI处理器上，以支持模型在NPU上训练。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.6,
+            "upper": 4.4,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_f437548a.result",
+                "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移"
+              },
+              {
+                "event_id": "WebFetch_6_95dca2ff.result",
+                "quote": "./pytorch_gpu2npu.sh -i 原始脚本路径 -o 脚本迁移结果输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -t 目标模型变量名 -m 训练脚本的入口文件]"
+              },
+              {
+                "event_id": "WebFetch_4_cb8555aa.result",
+                "quote": "import transfer_to_npu"
+              },
+              {
+                "event_id": "WebFetch_8_20bd72bc.result",
+                "quote": "torch_npu插件有两种安装方式"
+              },
+              {
+                "event_id": "WebFetch_3_d7470228.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取回正文中，原题所需主流程及参数、前提已说明完整：三种迁移方式及各自定位（脚本迁移说明）、自动迁移的约束与分步操作含代码（自动迁移页）、工具迁移的前提依赖、完整命令、参数表与输出报告说明（迁移操作页）、torch_npu安装与PyTorch/Python版本对应表（安装页）。但原题明确涉及的分支仍不完整：手工迁移仅有要点级说明（如\"多卡迁移需修改芯片间通信方式为昇腾支持的HCCL\"），无分步细节；CANN与torch_npu的显式配套表亦未在正文中直接给出，故记4分。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_f437548a.result",
+                "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移"
+              },
+              {
+                "event_id": "WebFetch_6_95dca2ff.result",
+                "quote": "待迁移脚本的PyTorch版本。目前支持1.11.0、2.1.0。"
+              },
+              {
+                "event_id": "WebFetch_4_cb8555aa.result",
+                "quote": "export PYTHONPATH={CANN包安装路径}/ascend-toolkit/latest/tools/ms_fmk_transplt/torch_npu_bridge:$PYTHONPATH"
+              },
+              {
+                "event_id": "WebFetch_8_20bd72bc.result",
+                "quote": "PyTorch插件安装包版本需与Python版本一一对应"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "适用范围内关系基本明确：自动迁移支持PyTorch 1.11.0/2.0.1/2.1.0（官方直接陈述）、工具迁移-v支持1.11.0/2.1.0（直接陈述）、torch_npu包与PyTorch/Python一一对应（直接表格）。CANN版本与torch_npu的配套关系无直接配套表，需合并两条官方约束（文档属CANN商用版7.0.0开发文档＋所列包均为v5.0.0系列）推得CANN 7.0.0配套torch_npu v5.0.0，属自行合并约束，记4分。工具迁移版本支持取自MindStudio 7.0.RC1版文档（CANN 7.0.0同页抓取仅返回框架），两处陈述无冲突。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_cb8555aa.result",
+                "quote": "自动迁移方式支持PyTorch1.11.0、2.0.1、2.1.0版本的训练脚本的迁移"
+              },
+              {
+                "event_id": "WebFetch_6_95dca2ff.result",
+                "quote": "待迁移脚本的PyTorch版本。目前支持1.11.0、2.1.0。"
+              },
+              {
+                "event_id": "WebFetch_8_20bd72bc.result",
+                "quote": "CANN商用版7.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_8_20bd72bc.result",
+                "quote": "https://gitee.com/ascend/pytorch/releases/download/v5.0.0-pytorch1.11.0/torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算（4次查询）内去重后相关独立第三方来源共6条：CSDN全流程文章、掘金transfer_to_npu文章、devpress迁移实战、CSDN 2023 CANN训练营三种方法、掘金版本配套表（CSDN jieph01与hwcomputing为同内容转载只计一次）、CSDN驱动/CANN/torch安装文章。hiascend、gitcode.com/Ascend/mstt、华为云官方页面按渠道分类排除。首次第三方来源出现于第1次查询第1条。至少6条记5分。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_545b8b44.result",
+                "quote": "PyTorch训练脚本迁移昇腾NPU全流程：从torch.cuda到torch.npu的实 …"
+              },
+              {
+                "event_id": "WebSearch_0_545b8b44.result",
+                "quote": "GPU训练迁到昇腾怎么改：torch.cuda 替换、transfer_to_npu 与迁移 …"
+              },
+              {
+                "event_id": "WebSearch_0_545b8b44.result",
+                "quote": "PyTorch 模型迁移实战：从 GPU 到 NPU_pytorch_passion098-AI编程 …"
+              },
+              {
+                "event_id": "WebSearch_2_cb54dad0.result",
+                "quote": "【2023 · CANN训练营第一季】昇腾AI入门课（PyTorch）之 ..."
+              },
+              {
+                "event_id": "WebSearch_7_c2d9971b.result",
+                "quote": "昇腾CANN与Pytorch版本配套表，以及import torch_npu ..."
+              },
+              {
+                "event_id": "WebSearch_7_c2d9971b.result",
+                "quote": "Ascend昇腾npu设备上安装cann和torch，昇腾npu驱动 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "部分关键说法有可追溯依据并获交叉印证：第三方\"官方提供三种方式\"\"导入torch_npu并使用transfer_to_npu\"与官方正文一致（三种迁移方式、import transfer_to_npu），多来源一致。但版本判断类关键说法\"torch_npu、PyTorch、CANN严格对应（如2.4.0.x配CANN 8.0）\"在已取回官方正文中无对应核对依据（取回页面仅覆盖CANN 7.0.0/torch_npu v5.0.0、PyTorch≤2.1.0），且掘金与CSDN同文转载不构成独立互证，该说法尚未核验。记3分。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_545b8b44.result",
+                "quote": "只需导入torch_npu并使用transfer_to_npu，即可实现GPU训练脚本到昇腾NPU的自动迁移。 官方提供三种方式——自动 …"
+              },
+              {
+                "event_id": "WebFetch_1_f437548a.result",
+                "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移"
+              },
+              {
+                "event_id": "WebSearch_7_c2d9971b.result",
+                "quote": "核心要点：torch_npu、PyTorch、CANN严格对应（如2.4.0.x配CANN 8.0），容器需初始化Ascend环境等。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索前回答给出了正确的方法/解释片段：torch_npu插件安装与设备切换（经官方安装页与自动迁移页核对一致）、nccl换hccl（与官方\"多卡迁移需修改芯片间通信方式为昇腾支持的HCCL\"一致）、msFmkTransplt工具名称正确。但关键细节需外部资料补充：工具命令与参数为错误猜测（实际为./pytorch_gpu2npu.sh -i -o -v），版本配套关系自认不确定，transfer_to_npu自动迁移方式自认不确定是否仍支持。按3档\"能给出正确方法或解释片段，但关键细节需要外部资料补充\"计。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "通过 `pip install torch_npu`（需与 CANN、PyTorch 版本严格对应）安装"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "把 `x.cuda()` / `x.to(\"cuda\")` 改为 `x.to(\"npu:0\")` 或用 `torch.npu.set_device(0)`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "用法大致是 `msfmktransplt -i <脚本目录> -s gpu -d <输出目录>`（具体命令名和参数不确定"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "分布式方面 `torch.distributed` 后端从 `nccl` 换成 `hccl`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "具体对应关系（如 CANN 7.0 对应 torch 2.1 等）我不确定最新细节"
+              }
+            ],
+            "evidence_refs": [
+              "ev-25",
+              "ev-26",
+              "ev-27",
+              "ev-28",
+              "ev-29"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_545b8b44.dispatch",
+              "WebFetch_1_f437548a.dispatch",
+              "WebSearch_2_cb54dad0.dispatch",
+              "WebFetch_3_d7470228.dispatch",
+              "WebFetch_4_cb8555aa.dispatch",
+              "WebSearch_5_8ca56aee.dispatch",
+              "WebFetch_6_95dca2ff.dispatch",
+              "WebSearch_7_c2d9971b.dispatch",
+              "WebFetch_8_20bd72bc.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "采用路线（CANN 7.0.0 + torch 1.11.0）的组件均定到具体版本：CANN 7.0.0、PyTorch 1.11.0、torch_npu 1.11.0.post8（含具体whl文件名），来源为官方配套表。但答案自述最新CANN 8.x/torch 2.4+配套关系未核实，且源码编译分支仅示例v2.0.1-5.0.0，整体配套表未取得最新正文，属于部分组件仅有范围而非全部定版且最新关系未消解，不给5分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "以 CANN 商用版 7.0.0 文档为例，快速安装（Python 3.8 + PyTorch 1.11.0，aarch64）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "本次检索未取得该最新配套表正文，具体 CANN 8.x 与 torch 2.4+ 的对应关系未核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-30",
+              "ev-31"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "操作指导完整：自动迁移给出环境变量export命令和import代码；工具迁移给出依赖安装、cd路径、完整命令行及参数说明和示例；安装验证命令可直接运行。仅需替换明确标识的环境参数（{CANN包安装路径}、原始脚本路径、-v版本、输出路径），符合4分。不满足5分：答案自述命令未实际运行，且CANN 7.0.0版工具迁移页正文未取得（改用MindStudio 70RC1同名文档，两版本参数一致性未核实），存在未消解的前提不确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -m 入口文件 -t 模型变量名]"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "所有命令均未实际运行，仅按官方文档原文转录。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-32",
+              "ev-33"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 79.01919744,
+            "upper": 80.43608576,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              79.0,
+              80.5
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 79.01919744,
+          "upper": 80.43608576,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            79.0,
+            80.5
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_545b8b44.result",
+            "field": "response",
+            "sha256": "f1a811a3d8dbf17bde70c9ac79d991b362b54315d16032615b7ddcfbd9f602d0",
+            "start": 360,
+            "end": 512,
+            "quote": "## 2. [脚本迁移说明-模型脚本迁移-模型迁移-PyTorch 训练模型迁移调优指南 …](https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0013.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_0_545b8b44.result",
+            "field": "response",
+            "sha256": "f1a811a3d8dbf17bde70c9ac79d991b362b54315d16032615b7ddcfbd9f602d0",
+            "start": 514,
+            "end": 562,
+            "quote": "脚本迁移操作的目的是将PyTorch的训练脚本迁移到昇腾AI处理器上，以支持模型在NPU上训练。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_1_f437548a.result",
+            "field": "response",
+            "sha256": "cc9e467bbb6f73c11e99b8d191c84fca7e3e3b0abca77b52bafa80cbd1bbe475",
+            "start": 346,
+            "end": 375,
+            "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_95dca2ff.result",
+            "field": "response",
+            "sha256": "cade0e39b6b2be94a42cb438691f5c95467f2c46987a4a07af8580ecc56e766c",
+            "start": 1032,
+            "end": 1136,
+            "quote": "./pytorch_gpu2npu.sh -i 原始脚本路径 -o 脚本迁移结果输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -t 目标模型变量名 -m 训练脚本的入口文件]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_4_cb8555aa.result",
+            "field": "response",
+            "sha256": "debac1232107cbd5d6df87a28d8709e716939119caea947ffde0fe63905c08d1",
+            "start": 1142,
+            "end": 1164,
+            "quote": "import transfer_to_npu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_8_20bd72bc.result",
+            "field": "response",
+            "sha256": "9b261243c0ef0d7509a76a55d36ea745fd584a0c1dfd7531c885110976d83989",
+            "start": 313,
+            "end": 331,
+            "quote": "torch_npu插件有两种安装方式",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_3_d7470228.result",
+            "field": "response",
+            "sha256": "5185c9cb8611aa4c6e93ef55d16b0f0b8f26d930855ae4df60aa422c8dedbf3e",
+            "start": 90,
+            "end": 109,
+            "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_1_f437548a.result",
+            "field": "response",
+            "sha256": "cc9e467bbb6f73c11e99b8d191c84fca7e3e3b0abca77b52bafa80cbd1bbe475",
+            "start": 346,
+            "end": 375,
+            "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_95dca2ff.result",
+            "field": "response",
+            "sha256": "cade0e39b6b2be94a42cb438691f5c95467f2c46987a4a07af8580ecc56e766c",
+            "start": 2781,
+            "end": 2814,
+            "quote": "待迁移脚本的PyTorch版本。目前支持1.11.0、2.1.0。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_4_cb8555aa.result",
+            "field": "response",
+            "sha256": "debac1232107cbd5d6df87a28d8709e716939119caea947ffde0fe63905c08d1",
+            "start": 916,
+            "end": 1018,
+            "quote": "export PYTHONPATH={CANN包安装路径}/ascend-toolkit/latest/tools/ms_fmk_transplt/torch_npu_bridge:$PYTHONPATH",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_8_20bd72bc.result",
+            "field": "response",
+            "sha256": "9b261243c0ef0d7509a76a55d36ea745fd584a0c1dfd7531c885110976d83989",
+            "start": 1767,
+            "end": 1795,
+            "quote": "PyTorch插件安装包版本需与Python版本一一对应",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_4_cb8555aa.result",
+            "field": "response",
+            "sha256": "debac1232107cbd5d6df87a28d8709e716939119caea947ffde0fe63905c08d1",
+            "start": 306,
+            "end": 349,
+            "quote": "自动迁移方式支持PyTorch1.11.0、2.0.1、2.1.0版本的训练脚本的迁移",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebFetch_6_95dca2ff.result",
+            "field": "response",
+            "sha256": "cade0e39b6b2be94a42cb438691f5c95467f2c46987a4a07af8580ecc56e766c",
+            "start": 2781,
+            "end": 2814,
+            "quote": "待迁移脚本的PyTorch版本。目前支持1.11.0、2.1.0。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebFetch_8_20bd72bc.result",
+            "field": "response",
+            "sha256": "9b261243c0ef0d7509a76a55d36ea745fd584a0c1dfd7531c885110976d83989",
+            "start": 67,
+            "end": 88,
+            "quote": "CANN商用版7.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebFetch_8_20bd72bc.result",
+            "field": "response",
+            "sha256": "9b261243c0ef0d7509a76a55d36ea745fd584a0c1dfd7531c885110976d83989",
+            "start": 1062,
+            "end": 1184,
+            "quote": "https://gitee.com/ascend/pytorch/releases/download/v5.0.0-pytorch1.11.0/torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_0_545b8b44.result",
+            "field": "response",
+            "sha256": "f1a811a3d8dbf17bde70c9ac79d991b362b54315d16032615b7ddcfbd9f602d0",
+            "start": 90,
+            "end": 137,
+            "quote": "PyTorch训练脚本迁移昇腾NPU全流程：从torch.cuda到torch.npu的实 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_0_545b8b44.result",
+            "field": "response",
+            "sha256": "f1a811a3d8dbf17bde70c9ac79d991b362b54315d16032615b7ddcfbd9f602d0",
+            "start": 709,
+            "end": 757,
+            "quote": "GPU训练迁到昇腾怎么改：torch.cuda 替换、transfer_to_npu 与迁移 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebSearch_0_545b8b44.result",
+            "field": "response",
+            "sha256": "f1a811a3d8dbf17bde70c9ac79d991b362b54315d16032615b7ddcfbd9f602d0",
+            "start": 954,
+            "end": 1006,
+            "quote": "PyTorch 模型迁移实战：从 GPU 到 NPU_pytorch_passion098-AI编程 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "WebSearch_2_cb54dad0.result",
+            "field": "response",
+            "sha256": "38bd6ba5c732e6f200477ec0b6977d97a74389082b6eab6aa76d6c8a255bceaf",
+            "start": 1307,
+            "end": 1347,
+            "quote": "【2023 · CANN训练营第一季】昇腾AI入门课（PyTorch）之 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "WebSearch_7_c2d9971b.result",
+            "field": "response",
+            "sha256": "3199d93076415e8faf810ede0f54cc2dc6d854e1ebd83208aa709f00f5b7c1b0",
+            "start": 71,
+            "end": 113,
+            "quote": "昇腾CANN与Pytorch版本配套表，以及import torch_npu ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "WebSearch_7_c2d9971b.result",
+            "field": "response",
+            "sha256": "3199d93076415e8faf810ede0f54cc2dc6d854e1ebd83208aa709f00f5b7c1b0",
+            "start": 849,
+            "end": 887,
+            "quote": "Ascend昇腾npu设备上安装cann和torch，昇腾npu驱动 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "WebSearch_0_545b8b44.result",
+            "field": "response",
+            "sha256": "f1a811a3d8dbf17bde70c9ac79d991b362b54315d16032615b7ddcfbd9f602d0",
+            "start": 817,
+            "end": 887,
+            "quote": "只需导入torch_npu并使用transfer_to_npu，即可实现GPU训练脚本到昇腾NPU的自动迁移。 官方提供三种方式——自动 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebFetch_1_f437548a.result",
+            "field": "response",
+            "sha256": "cc9e467bbb6f73c11e99b8d191c84fca7e3e3b0abca77b52bafa80cbd1bbe475",
+            "start": 346,
+            "end": 375,
+            "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebSearch_7_c2d9971b.result",
+            "field": "response",
+            "sha256": "3199d93076415e8faf810ede0f54cc2dc6d854e1ebd83208aa709f00f5b7c1b0",
+            "start": 168,
+            "end": 235,
+            "quote": "核心要点：torch_npu、PyTorch、CANN严格对应（如2.4.0.x配CANN 8.0），容器需初始化Ascend环境等。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "95b17eeeeed6347d3afbe63e4be4947560d1a4651010168bdcd0730aa649bacb",
+            "start": 331,
+            "end": 383,
+            "quote": "通过 `pip install torch_npu`（需与 CANN、PyTorch 版本严格对应）安装",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "95b17eeeeed6347d3afbe63e4be4947560d1a4651010168bdcd0730aa649bacb",
+            "start": 430,
+            "end": 511,
+            "quote": "把 `x.cuda()` / `x.to(\\\"cuda\\\")` 改为 `x.to(\\\"npu:0\\\")` 或用 `torch.npu.set_device(0)`",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-27",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "95b17eeeeed6347d3afbe63e4be4947560d1a4651010168bdcd0730aa649bacb",
+            "start": 734,
+            "end": 794,
+            "quote": "用法大致是 `msfmktransplt -i <脚本目录> -s gpu -d <输出目录>`（具体命令名和参数不确定",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "95b17eeeeed6347d3afbe63e4be4947560d1a4651010168bdcd0730aa649bacb",
+            "start": 895,
+            "end": 941,
+            "quote": "分布式方面 `torch.distributed` 后端从 `nccl` 换成 `hccl`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "95b17eeeeed6347d3afbe63e4be4947560d1a4651010168bdcd0730aa649bacb",
+            "start": 998,
+            "end": 1039,
+            "quote": "具体对应关系（如 CANN 7.0 对应 torch 2.1 等）我不确定最新细节",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "195748c217341ee4392504f619b7e09cb150f1d10646c04a0589bf9c078ec697",
+            "start": 192,
+            "end": 255,
+            "quote": "以 CANN 商用版 7.0.0 文档为例，快速安装（Python 3.8 + PyTorch 1.11.0，aarch64）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "195748c217341ee4392504f619b7e09cb150f1d10646c04a0589bf9c078ec697",
+            "start": 1058,
+            "end": 1107,
+            "quote": "本次检索未取得该最新配套表正文，具体 CANN 8.x 与 torch 2.4+ 的对应关系未核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "195748c217341ee4392504f619b7e09cb150f1d10646c04a0589bf9c078ec697",
+            "start": 2321,
+            "end": 2412,
+            "quote": "./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -m 入口文件 -t 模型变量名]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "195748c217341ee4392504f619b7e09cb150f1d10646c04a0589bf9c078ec697",
+            "start": 4504,
+            "end": 4526,
+            "quote": "所有命令均未实际运行，仅按官方文档原文转录。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-34",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "195748c217341ee4392504f619b7e09cb150f1d10646c04a0589bf9c078ec697",
+            "start": 1110,
+            "end": 3554,
+            "quote": "## 三种迁移方式（官方）\n\n来源：PyTorch 训练模型迁移调优指南《脚本迁移说明》(TorchNPU 6.0.0)。前提：脚本原本能在 GPU 或 CPU 上正常运行。\n\n### 方式一：自动迁移（官方推荐，改动最小）\n\n仅需在训练入口脚本（如 train.py）顶部插入库引用，运行时自动将 CUDA 接口替换为 NPU 接口（边训练边转换）。\n\n1. 配置环境变量：\n```bash\nexport PYTHONPATH={CANN包安装路径}/ascend-toolkit/latest/tools/ms_fmk_transplt/torch_npu_bridge:$PYTHONPATH\n```\n2. 在入口 py 文件顶部添加：\n```python\nimport torch\nimport torch_npu\nimport transfer_to_npu\n```\n3. 直接按原训练流程运行即可。\n\n约束（CANN 商用版 7.0.0 文档）：\n- 支持 PyTorch 1.11.0、2.0.1、2.1.0 的脚本。\n- 与 `torch.jit.script` 冲突（自动迁移会屏蔽它），必须用 jit.script 时改用工具迁移。\n- 不支持 `channel_last`，建议用 `contiguous` 替换。\n- 不支持 `torch.nn.DataParallel`，需手工改为 `DistributedDataParallel`；`amp_C` 模块需手工删除；`torch.cuda.default_generators` 需改为 `torch_npu.npu.default_generators`；`torch.cuda.get_device_capability` 返回 None、`get_device_properties` 无 major/minor 属性，需手工处理。\n- 分布式 backend 为 nccl 时会被自动替换为 hccl，但代码中 `if backend == 'nccl'` 之类判断需手工改为 `'hccl'`。\n\n### 方式二：工具迁移（msFmkTransplt / PyTorch GPU2Ascend）\n\n先离线转换脚本再训练，会生成迁移报告（转换日志、不支持算子列表、修改记录等）。\n\n1. 安装依赖：\n```bash\npip3 install pandas      # >= 1.2.4\npip3 install libcst\npip3 install prettytable\npip3 install jedi        # 可选，跨文件解析\n```\n2. 执行迁移：\n```bash\ncd Ascend-cann-toolkit安装目录/ascend-toolkit/latest/tools/ms_fmk_transplt/\n./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -m 入口文件 -t 模型变量名]\n```\n参数：\n- `-i/--input`：原始脚本文件夹（必选）\n- `-o/--output`：输出路径（必选；单卡输出 xxx_msft，开启 distributed 输出 xxx_msft_multi）\n- `-v/--version`：原脚本 PyTorch 版本，支持 1.11.0、2.1.0（必选）\n- `-s/--specify-device`：通过环境变量 DEVICE_ID 指定 device（可选，可能影响原分布式功能）\n- `distributed`：单卡脚本迁移为 NPU 多卡脚本，仅支持 DataLoader 加载数据场景；`-m/--main` 入口 py 文件（必选），`-t/--target_model` 实例化模型变量名（默认 \"model\"）\n- `-m/--modelarts`：迁移后脚本支持 ModelArts 训练（可选）\n\n示例：\n```bash\n./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model\n```\n输出目录含 `transplant_result_file/`（change_list.csv 修改记录、unsupported_api.csv 不支持 API、cuda_op_list.csv、affinity_api_call.csv、精度/性能专家建议等）以及多卡场景的 `run_distributed_npu.sh`。\n\n### 方式三：手工迁移\n\n要点（官方脚本迁移说明）：\n- 定义 NPU 为训练设备，把适配 GPU 的接口切换为 NPU 接口。典型改动（与官方文档一致的手工迁移模式）：\n  - `import torch` 后加 `import torch_npu`\n  - `x.cuda()` / `.to(\"cuda\")` → `.to(\"npu:0\")` 或先 `torch_npu.npu.set_device(0)`；`torch.cuda` 系列接口换为 `torch_npu.npu`（如 `torch_npu.npu.is_available()`、`torch_npu.npu.amp`）\n  - 混合精度 `torch.cuda.amp` → `torch_npu.npu.amp`\n- 多卡：通信后端由 nccl 改为 HCCL（`init_process_group(backend='hccl')`）。\n\n",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-35",
+            "event_id": "WebFetch_1_f437548a.result",
+            "field": "response",
+            "sha256": "cc9e467bbb6f73c11e99b8d191c84fca7e3e3b0abca77b52bafa80cbd1bbe475",
+            "start": 346,
+            "end": 397,
+            "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移。**推荐用户使用最简单的自动迁移方式**。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_3_d7470228.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_3_d7470228.result",
+            "alternative_body_event_ids": [
+              "WebFetch_4_cb8555aa.result",
+              "WebFetch_6_95dca2ff.result",
+              "WebFetch_8_20bd72bc.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-8a8813c94d69-predictors.json": "3a8bc32c6485ed3c566c9643b5a3f7b8a1e46c724d35e385065b49c94b2f3452",
+          "reviewed/development/case-8a8813c94d69-outcome.json": "53d31d70f676a466b79f2358ccc9d78f5fc67b88c973aba1ecc61de50412688f",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_f437548a.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_f437548a.result",
+                "quote": "目前支持3种迁移方式：自动迁移（推荐）、工具迁移、手工迁移"
+              }
+            ],
+            "boundary_evidence": null,
+            "reference": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0013.html"
+          },
+          {
+            "event_id": "WebFetch_3_d7470228.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_d7470228.result",
+                "quote": "**标题**: 迁移操作-PyTorch GPU2Ascend工具迁移-msFmkTransplt-分析迁移工具-开发工具-开发工具-CANN商用版7.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_3_d7470228.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "boundary_evidence": null,
+            "note": "仅返回标题与页面评级标签，无可识别正文，属早期障碍独立留存；同一文档（atlasfmkt_16_0021）最后一次派发见WebFetch_6。",
+            "reference": "https://www.hiascend.com/document/detail/zh/canncommercial/700/devtools/auxiliarydevtool/atlasfmkt_16_0021.html"
+          },
+          {
+            "event_id": "WebFetch_4_cb8555aa.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_cb8555aa.result",
+                "quote": "本章节将指导用户将PyTorch训练脚本从GPU平台迁移至昇腾NPU平台。"
+              }
+            ],
+            "boundary_evidence": null,
+            "reference": "https://www.hiascend.com/document/detail/zh/canncommercial/700/devtools/auxiliarydevtool/atlasfmkt_16_0019.html"
+          },
+          {
+            "event_id": "WebFetch_6_95dca2ff.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_95dca2ff.result",
+                "quote": "使用PyTorch GPU2Ascend工具执行PyTorch训练脚本迁移前须安装如下依赖。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_95dca2ff.result",
+                "quote": "<!--THE END-->"
+              }
+            ],
+            "boundary_note": "页面中部出现<!--THE END-->标记，属页面构件痕迹，非明确截断声明；无独立完整正文核对依据。",
+            "reference": "https://www.hiascend.com/document/detail/zh/mindstudio/70RC1/mscommandtoolug/mscommandug/atlasfmkt_16_0021.html"
+          },
+          {
+            "event_id": "WebFetch_8_20bd72bc.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_20bd72bc.result",
+                "quote": "torch_npu插件有两种安装方式"
+              }
+            ],
+            "boundary_evidence": null,
+            "reference": "https://www.hiascend.com/document/detail/zh/canncommercial/700/envdeployment/instg/instg_0048.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

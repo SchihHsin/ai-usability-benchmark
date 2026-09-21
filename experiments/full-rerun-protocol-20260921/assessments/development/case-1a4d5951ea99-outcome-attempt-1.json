@@ -1,0 +1,217 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "## GPU 训练 loss 不收敛 / NaN 的系统排查（PyTorch on CUDA）",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_7_83f462d2.result",
+      "evidence_quote": "Calling `scaler.unscale_(optimizer)` before clipping enables you to clip unscaled gradients as usual",
+      "verification": "source",
+      "reason": "最终答案系统覆盖原题三个子要求：(1) NaN 定位（第0步，torch.autograd.set_detect_anomaly/detect_anomaly 及逐层梯度检查）与官方文档一致（WebFetch_4_5e782f2b：'If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error'）；(2) 梯度爆炸/学习率（第1步，scaler.unscale_ + clip_grad_norm_ 顺序、lr÷10、warmup），unscale_ 顺序与一次性警告由官方 amp_examples 证实（WebFetch_7_83f462d2：'unscale_ should only be called once per optimizer per `step` call'）；(3) 数据排查（第3步，isfinite 断言、坏 batch 二分）。另覆盖 AMP/fp16 数值原因（WebFetch_5_a8f08d60 官方 Note：'If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible'）与 CUDA 层定位。学习率与数据步骤为通用实践，无来源但未被证据矛盾，不构成错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "`torch.autocast` | \"new in version 1.10\" | pytorch.org/docs/stable/amp.html"
+        },
+        {
+          "event_id": "final",
+          "quote": "**未核实处**：compute-sanitizer 具体命令行参数、TF32 开关的官方文档页、`set_detect_anomaly` 的具体引入版本，本次检索未覆盖"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M10: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "scaler.unscale_(optimizer)                       # AMP 下必须先 unscale 再 clip"
+        },
+        {
+          "event_id": "final",
+          "quote": "- `CUDA_LAUNCH_BLOCKING=1 python train.py`：同步 kernel 执行，报错栈指向真正出错 kernel。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation",
+      "M10: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-1a4d5951ea99",
+  "task_id": "R",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "## GPU 训练 loss 不收敛 / NaN 的系统排查（PyTorch on CUDA）",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_7_83f462d2.result",
+        "evidence_quote": "Calling `scaler.unscale_(optimizer)` before clipping enables you to clip unscaled gradients as usual",
+        "verification": "source",
+        "reason": "最终答案系统覆盖原题三个子要求：(1) NaN 定位（第0步，torch.autograd.set_detect_anomaly/detect_anomaly 及逐层梯度检查）与官方文档一致（WebFetch_4_5e782f2b：'If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error'）；(2) 梯度爆炸/学习率（第1步，scaler.unscale_ + clip_grad_norm_ 顺序、lr÷10、warmup），unscale_ 顺序与一次性警告由官方 amp_examples 证实（WebFetch_7_83f462d2：'unscale_ should only be called once per optimizer per `step` call'）；(3) 数据排查（第3步，isfinite 断言、坏 batch 二分）。另覆盖 AMP/fp16 数值原因（WebFetch_5_a8f08d60 官方 Note：'If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible'）与 CUDA 层定位。学习率与数据步骤为通用实践，无来源但未被证据矛盾，不构成错误。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": 4,
+        "upper": 4,
+        "status": "supported",
+        "reason": "所用接口（detect_anomaly/set_detect_anomaly、autocast、torch.amp.GradScaler、unscale_+clip 流程）均给出有依据的适用关系：autocast 标注 'new in version 1.10'（WebFetch_5 官方版本历史原文），GradScaler 新旧 API 迁移有官方弃用警告（WebFetch_5：'torch.cuda.amp.GradScaler(args...) ... is deprecated. Please use torch.amp.GradScaler(\"cuda\", args...) instead.'），anomaly detection 为 2.14 stable 现行 API（WebFetch_4：无 deprecated/beta 标注）。但 set_detect_anomaly 的具体引入版本在答案中明确标注未核实，未定到具体版本，符合第4档（全部组件有依据范围，至少一项未定具体版本）。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "`torch.autocast` | \"new in version 1.10\" | pytorch.org/docs/stable/amp.html"
+          },
+          {
+            "event_id": "final",
+            "quote": "**未核实处**：compute-sanitizer 具体命令行参数、TF32 开关的官方文档页、`set_detect_anomaly` 的具体引入版本，本次检索未覆盖"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": 4,
+        "upper": 4,
+        "status": "supported",
+        "reason": "各步骤给出完整可执行代码/命令：anomaly detection 开关与上下文管理器、逐层梯度检查循环、unscale_→clip_grad_norm_→step→update 流程（与官方 amp_examples 示例逐字一致，WebFetch_7 证实）、autocast+GradScaler 典型流程、数据 isfinite 断言、CUDA_LAUNCH_BLOCKING=1 与 compute-sanitizer --tool memcheck 完整命令。仅需替换 model/input/target/loss_fn 等用户环境参数（第4档允许）。compute-sanitizer 子参数与 TF32 开关已如实标注未核实，但给出的命令行本身完整可运行，不需修正。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "scaler.unscale_(optimizer)                       # AMP 下必须先 unscale 再 clip"
+          },
+          {
+            "event_id": "final",
+            "quote": "- `CUDA_LAUNCH_BLOCKING=1 python train.py`：同步 kernel 执行，报错栈指向真正出错 kernel。"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "17ec451ad8b4453c938a25c5f4167714",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "6e72097392759469f75162160356eacc",
+        "conversationRequestId": "6e72097392759469f75162160356eacc",
+        "agent": "cli"
+      },
+      {
+        "messageId": "17ec451ad8b4453c938a25c5f4167714",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "6e72097392759469f75162160356eacc",
+        "conversationRequestId": "6e72097392759469f75162160356eacc",
+        "rawUsage": {
+          "prompt_tokens": 19683,
+          "completion_tokens": 3737,
+          "total_tokens": 23420,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2789,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 19683,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2789,
+          "credit": 5.24,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19683,
+          "outputTokens": 3737,
+          "totalTokens": 23420,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2789
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "e021bd17efd1664612e53fb395d7b4df9d1572142f088e5d6edc9a0d46e3e2f5",
+    "process_sha256": "21acb3ce06f6767382ab6bca910e16d0794846988343a8a7d04490889bbae9f3",
+    "elapsed_seconds": 162.51,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-3a92a5759fe14ca3aa44553782c10833",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

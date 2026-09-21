@@ -147,6 +147,2034 @@
           "model_requested": "glm-5.3"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T06:04:57.151175+00:00",
+      "process_sha256": "4c900236bfe21a818f1f9b641ee3512c8928ec5f432243eae5903f6ee1c5725a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_ff56fd8a93684e668288c777.result",
+            "evidence_quote": "profile = builder.create_optimization_profile();\nprofile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "verification": "source",
+            "reason": "原题各子要求均被覆盖：(a) TensorRT 动态 shape / optimization profile / min-opt-max 语义与构建期 API——final 给出 set_shape((3,100,200),(3,150,250),(3,200,300)) 与 add_optimization_profile，与官方 Core Concepts 文档逐字一致；(b) 运行期流程——final 明确先 set_optimization_profile_async(0, stream) 再 set_input_shape，并注明 setOptimizationProfileAsync 取代废弃的 setOptimizationProfile，均有官方正文支撑；(c) trtexec 命令行——final 给出 --minShapes/--optShapes/--maxShapes/--shapes 完整示例（input:1x3x244x244 等），与官方 trtexec README 提取结果（call_28a4279c2cbf4e3a9ba39fc4）一致，含244原文与调优缓存失效caveat；(d) Triton dynamic batching——final 的 dynamic_batching { max_queue_delay_microseconds: 100 }、preferred_batch_size: [4,8]、max_batch_size 语义（[-1]+dims）均见于官方 Batchers（call_3d384d510251413d87c67af7）与 Model Configuration（call_dcc7471fe80d479487dbace3）正文；(e) TensorRT+Triton 衔接——final 给出三步整体做法，其中 preferred_batch_size 与多 optimization profile 的关系有官方原文（\"An exception is TensorRT models that specify multiple optimization profiles for different batch sizes\"）直接支撑。final 还诚实标注了未核实项（tensorrt_backend 专门文档、字段名单复数疑点），不影响已答部分的正确性。",
+            "evidence_refs": [
+              "ev-36",
+              "ev-37"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "第1次查询前5条含官方PyTorch托管的Torch-TensorRT文档（第5条docs.pytorch.org，第2/3条为其镜像），摘要直接论及optimization profile与(min,opt,max)；若计为相关官方来源则M1=4。若仅认NVIDIA TensorRT开发者文档为相关官方来源，首次命中为第2次查询第1条(docs.nvidia.com)，M1=3。档位取决于Torch-TensorRT文档是否算本任务相关官方来源，无法区分，保留区间。",
+            "evidence": [
+              {
+                "event_id": "call_cb2937a709824564b31c3bd3.result",
+                "quote": "TensorRT's optimization profile mechanism handles this: each engine is built with a (min, opt, max) shape range for every …"
+              },
+              {
+                "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+                "quote": "Working with Dynamic Shapes — NVIDIA TensorRT"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result",
+            "evidence": [
+              {
+                "event_id": "call_27731f41038b420ba564a8a7.result",
+                "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。"
+              },
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "[...]\n\n## Custom Model Configuration#"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "已提取文档完整正文。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题主流程及参数已由直接正文覆盖：TensorRT profile概念、构建期API（create_optimization_profile/set_shape/add_optimization_profile）、运行期API（set_input_shape）、关键约束（MIN=OPT=MAX tactic、先设profile后设维度、每context独立profile）见dynamic-shapes-basics；trtexec min/opt/max示例见官方仓库README；Triton dynamic_batching全字段与调优流程见batcher.html；max_batch_size与dims(-1)语义见model_configuration.html。缺口：Triton的TensorRT后端动态shape具体配置（tensorrt_plan下min/opt/max声明）未在取得正文出现（backend/README.html仅通用后端说明）；trtexec正式参数规范未取得（trtexec.html 404，README自述需--help）。主流程完整、分支/参考细节缺失→4。",
+            "evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "某些操作存在仅在 `MIN=OPT=MAX` 时才可用的 tactic"
+              },
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+              },
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*."
+              },
+              {
+                "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+                "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: missing official constraint citations",
+            "evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "setOptimizationProfileAsync()` **取代了现已废弃的 `setOptimizationProfile()"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "若使用 `enqueueV3` 而非已废弃的 `enqueueV2`，可跳过本节"
+              },
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+                "quote": "Working with Dynamic Shapes — NVIDIA TensorRT 10.10.10 Developer Guide ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "4次查询预算内去重计数相关独立第三方来源8条：CSDN trtexec实战、CSDN trtexec常用参数、博客园trtexec参数笔记、火山引擎trtexec动态引擎文、CSDN文库trtexec工作流专栏、CSDN Triton动态批处理调优，另HeKun-NVIDIA开发者指南中文翻译仓库与知乎官方概念指南翻译各按转载计1次。官方渠道（docs.nvidia.com、developer.nvidia.cn博客、docs.pytorch.*、triton-inference-server.github.io）已排除，无重复转载。≥6条→5。首次发现：第1次查询第1条。",
+            "evidence": [
+              {
+                "event_id": "call_cb2937a709824564b31c3bd3.result",
+                "quote": "TensorRT trtexec命令实战：动态输入与精度优化参数详解 ..."
+              },
+              {
+                "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+                "quote": "TensorRT-Developer_Guide_in_Chinese/8.TensorRT中的动态 ..."
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "tensorRT trtexec命令常用参数_trtexec --fp32-CSDN博客"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "trtexec 参数笔记 - qinchaojie - 博客园"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "如何编写trtexec命令编译支持动态输入形状的TensorRT引擎？"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "从PyTorch到TensorRT引擎：一份完整的trtexec工作流避坑 ..."
+              },
+              {
+                "event_id": "call_eee4e6cd37404ab38870ebff.result",
+                "quote": "Triton Inference Server动态批处理参数调优：基于业务场景的 ..."
+              },
+              {
+                "event_id": "call_eee4e6cd37404ab38870ebff.result",
+                "quote": "Triton 概念指南（Part 2）：如何使用动态批处理和并行模型 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "关键二手说法两条：①trtexec动态shape参数名与input:shape格式——CSDN(weicao1990)、博客园、CSDN(trtexec实战)相互一致，并与官方仓库README示例交叉印证；②Triton动态批处理机制与字段——知乎官方概念指南转载、CSDN调优文与官方batcher.html一致。日期多为2025-2026（知乎2023但内容未见失效）。可见关键说法均有可追溯依据并获多条独立来源交叉印证，未见未解决矛盾（核对限于摘要级，正文未抓取）→5。",
+            "evidence": [
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "--minShapes=input0:1x3x224x224  # 指定动态输入形状的范围最小值"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "--maxShapes=spec Build with dynamic shapes using a profile with the max shapes provided."
+              },
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "call_eee4e6cd37404ab38870ebff.result",
+                "quote": "动态批处理（Dynamic Batching）作为Triton Inference Server（推理服务器）的核心优化能力，能自动合并推理请求 …"
+              },
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "Dynamic batching is a feature of Triton that allows inference requests to be combined by the server, so that a batch is created dynamically."
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "先验给出两条主线正确完整流程与主要参数：create_optimization_profile/set_shape/add_optimization_profile、set_input_shape（并正确指出旧API set_binding_shape）、trtexec --minShapes格式、Triton max_batch_size/dynamic_batching/max_queue_delay_microseconds，经官方文档事后核对基本正确。但关键约束缺失（MIN=OPT=MAX tactic限制、每execution context独立profile、先设profile后设输入维度），且prior写作preferred_batch_sizes而官方为preferred_batch_size，并自述4处不确定需检索核实→4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "profile.set_shape(\"input_name\", min=..., opt=..., max=...)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "context.set_input_shape(\"input\", actual_shape)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "dynamic_batching { max_queue_delay_microseconds: X preferred_batch_sizes: [4,8] }"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "context.set_input_shape(\"foo\", (3, 150, 250))"
+              },
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "preferred_batch_size: [ 4, 8 ]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-27",
+              "ev-28",
+              "ev-29",
+              "ev-30",
+              "ev-31"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_cb2937a709824564b31c3bd3.dispatch",
+              "call_6dfcb14ea31849d891c5be9a.dispatch",
+              "call_4b7cadaed18049c5b5ef66c1.dispatch",
+              "call_ff56fd8a93684e668288c777.dispatch",
+              "call_27731f41038b420ba564a8a7.dispatch",
+              "call_bf96f1092675469684998ad1.dispatch",
+              "call_28a4279c2cbf4e3a9ba39fc4.dispatch",
+              "call_eee4e6cd37404ab38870ebff.dispatch",
+              "call_3d384d510251413d87c67af7.dispatch",
+              "call_64902194359d44f59e0b2b18.dispatch",
+              "call_dcc7471fe80d479487dbace3.dispatch",
+              "call_09d5a01cf06f43d5b5560e87.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "M9: contradicts predefined applicability",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出"
+              }
+            ],
+            "lower": null,
+            "upper": null,
+            "evidence_refs": [
+              "ev-32"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "操作指导具体且基本完整：trtexec 命令含完整参数（--onnx、--minShapes/--optShapes/--maxShapes/--shapes 及具体 shape 值）可直接照抄运行；Triton 侧给出 config.pbtxt 完整片段（platform、max_batch_size、input/output、dynamic_batching 块）；运行期 API 给出 set_optimization_profile_async(0, stream) 与 set_input_shape 调用顺序及 stream 一致性前提。仅需替换的均为用户环境值（模型路径、输入名、具体维度、batch 上限），且上下文有说明。未给5分的原因：final 自述 trtexec 完整参数列表需 --help 获取、preferred_batch_size 字段名单复数存疑、以及未给出完整端到端可运行脚本（如 config.pbtxt 与引擎构建的完整文件级示例需用户自行拼装），故按需替换环境参数但非完全免补写的4分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-33",
+              "ev-34",
+              "ev-35"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "insufficient_evidence",
+                "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result"
+              },
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: missing official constraint citations"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing official constraint citations"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M2: missing return evidence call_27731f41038b420ba564a8a7.result",
+              "M2: missing return evidence call_64902194359d44f59e0b2b18.result",
+              "M4: missing official constraint citations"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [
+              "M9: contradicts predefined applicability"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+            "field": "response",
+            "sha256": "7423578d20c1486f21df2e83a535b3758e9940de8c81aa73e2e9f90ad5f075d8",
+            "start": 122,
+            "end": 167,
+            "quote": "Working with Dynamic Shapes — NVIDIA TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "field": "response",
+            "sha256": "fd65c602066f37a0735de9d9abdada84cb985add1caf5514c32a2386050ac4ab",
+            "start": 28,
+            "end": 148,
+            "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_dcc7471fe80d479487dbace3.result",
+            "field": "response",
+            "sha256": "824f5c91f948aadfef5f721c70e210034d66c9ee60daaa0eb6e3727f9ccd1276",
+            "start": 5078,
+            "end": 5115,
+            "quote": "[...]\n\n## Custom Model Configuration#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 65,
+            "end": 75,
+            "quote": "已提取文档完整正文。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 5597,
+            "end": 5666,
+            "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 4927,
+            "end": 4962,
+            "quote": "某些操作存在仅在 `MIN=OPT=MAX` 时才可用的 tactic",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "field": "response",
+            "sha256": "0a12f8f476e02e6278a45cae185b6009dac66a67db1513faeb84f5317dcfb068",
+            "start": 4148,
+            "end": 4208,
+            "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_dcc7471fe80d479487dbace3.result",
+            "field": "response",
+            "sha256": "824f5c91f948aadfef5f721c70e210034d66c9ee60daaa0eb6e3727f9ccd1276",
+            "start": 2792,
+            "end": 2885,
+            "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+            "field": "response",
+            "sha256": "6edd20d66948e50b7ffec5aa97d298bc5d2e7f9d13cf6dd160cc6a369f6cb611",
+            "start": 1492,
+            "end": 1625,
+            "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 6475,
+            "end": 6542,
+            "quote": "setOptimizationProfileAsync()` **取代了现已废弃的 `setOptimizationProfile()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 12168,
+            "end": 12208,
+            "quote": "若使用 `enqueueV3` 而非已废弃的 `enqueueV2`，可跳过本节",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "field": "response",
+            "sha256": "fd65c602066f37a0735de9d9abdada84cb985add1caf5514c32a2386050ac4ab",
+            "start": 1498,
+            "end": 1644,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+            "field": "response",
+            "sha256": "7423578d20c1486f21df2e83a535b3758e9940de8c81aa73e2e9f90ad5f075d8",
+            "start": 917,
+            "end": 991,
+            "quote": "Working with Dynamic Shapes — NVIDIA TensorRT 10.10.10 Developer Guide ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_cb2937a709824564b31c3bd3.result",
+            "field": "response",
+            "sha256": "6c29767ca4689bc65621365e8420d7577e683e341f6178f00aa88267b5e58353",
+            "start": 109,
+            "end": 147,
+            "quote": "TensorRT trtexec命令实战：动态输入与精度优化参数详解 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+            "field": "response",
+            "sha256": "7423578d20c1486f21df2e83a535b3758e9940de8c81aa73e2e9f90ad5f075d8",
+            "start": 1641,
+            "end": 1695,
+            "quote": "TensorRT-Developer_Guide_in_Chinese/8.TensorRT中的动态 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 373,
+            "end": 417,
+            "quote": "tensorRT trtexec命令常用参数_trtexec --fp32-CSDN博客",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 771,
+            "end": 802,
+            "quote": "trtexec 参数笔记 - qinchaojie - 博客园",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 1026,
+            "end": 1061,
+            "quote": "如何编写trtexec命令编译支持动态输入形状的TensorRT引擎？",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 1250,
+            "end": 1291,
+            "quote": "从PyTorch到TensorRT引擎：一份完整的trtexec工作流避坑 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_eee4e6cd37404ab38870ebff.result",
+            "field": "response",
+            "sha256": "57f6376b7106f4a4017ed2ca39a51e3f3c1bb347560e97778c17a59a40fdd014",
+            "start": 1080,
+            "end": 1124,
+            "quote": "Triton Inference Server动态批处理参数调优：基于业务场景的 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_eee4e6cd37404ab38870ebff.result",
+            "field": "response",
+            "sha256": "57f6376b7106f4a4017ed2ca39a51e3f3c1bb347560e97778c17a59a40fdd014",
+            "start": 1363,
+            "end": 1401,
+            "quote": "Triton 概念指南（Part 2）：如何使用动态批处理和并行模型 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 522,
+            "end": 570,
+            "quote": "--minShapes=input0:1x3x224x224  # 指定动态输入形状的范围最小值",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 864,
+            "end": 952,
+            "quote": "--maxShapes=spec Build with dynamic shapes using a profile with the max shapes provided.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "field": "response",
+            "sha256": "fd65c602066f37a0735de9d9abdada84cb985add1caf5514c32a2386050ac4ab",
+            "start": 1498,
+            "end": 1644,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "call_eee4e6cd37404ab38870ebff.result",
+            "field": "response",
+            "sha256": "57f6376b7106f4a4017ed2ca39a51e3f3c1bb347560e97778c17a59a40fdd014",
+            "start": 1203,
+            "end": 1277,
+            "quote": "动态批处理（Dynamic Batching）作为Triton Inference Server（推理服务器）的核心优化能力，能自动合并推理请求 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "field": "response",
+            "sha256": "0a12f8f476e02e6278a45cae185b6009dac66a67db1513faeb84f5317dcfb068",
+            "start": 98,
+            "end": 238,
+            "quote": "Dynamic batching is a feature of Triton that allows inference requests to be combined by the server, so that a batch is created dynamically.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f34e8326ecc3b1a04462d636593fee47deb421cad8a48d80d9ab41781d155719",
+            "start": 407,
+            "end": 467,
+            "quote": "profile.set_shape(\\\"input_name\\\", min=..., opt=..., max=...)",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-28",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f34e8326ecc3b1a04462d636593fee47deb421cad8a48d80d9ab41781d155719",
+            "start": 774,
+            "end": 822,
+            "quote": "context.set_input_shape(\\\"input\\\", actual_shape)",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-29",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f34e8326ecc3b1a04462d636593fee47deb421cad8a48d80d9ab41781d155719",
+            "start": 1164,
+            "end": 1245,
+            "quote": "dynamic_batching { max_queue_delay_microseconds: X preferred_batch_sizes: [4,8] }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 748,
+            "end": 793,
+            "quote": "context.set_input_shape(\"foo\", (3, 150, 250))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "field": "response",
+            "sha256": "0a12f8f476e02e6278a45cae185b6009dac66a67db1513faeb84f5317dcfb068",
+            "start": 3011,
+            "end": 3041,
+            "quote": "preferred_batch_size: [ 4, 8 ]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 6122,
+            "end": 6214,
+            "quote": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 2414,
+            "end": 2576,
+            "quote": "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-34",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 3765,
+            "end": 3827,
+            "quote": "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-35",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 2669,
+            "end": 2727,
+            "quote": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-36",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 923,
+            "end": 1033,
+            "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-37",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 5548,
+            "end": 5707,
+            "quote": "profile = builder.create_optimization_profile();\nprofile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_27731f41038b420ba564a8a7.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_27731f41038b420ba564a8a7.result",
+            "alternative_body_event_ids": [
+              "call_28a4279c2cbf4e3a9ba39fc4.result",
+              "call_3d384d510251413d87c67af7.result",
+              "call_dcc7471fe80d479487dbace3.result",
+              "call_09d5a01cf06f43d5b5560e87.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_64902194359d44f59e0b2b18.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_64902194359d44f59e0b2b18.result",
+            "alternative_body_event_ids": [
+              "call_dcc7471fe80d479487dbace3.result",
+              "call_09d5a01cf06f43d5b5560e87.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-d804bb3ac8dc-predictors.json": "fed347f6acfbc0707a956939b488c981732a1047875e676c8ab478694915d4ec",
+          "reviewed/development/case-d804bb3ac8dc-outcome.json": "4451061498c8bab0885688cd789dfe52b2c0d8443351acb3a051302989775d73",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_4b7cadaed18049c5b5ef66c1.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_4b7cadaed18049c5b5ef66c1.result",
+                "quote": "Here is an overview of the steps for building an engine with dynamic shapes:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_4b7cadaed18049c5b5ef66c1.result",
+                "quote": "shape layers, data-dependent shapes, and restrictions for dynamic networks."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html"
+          },
+          {
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "已提取文档完整正文。"
+              }
+            ],
+            "note": "工具自述完整，不足以证明complete，无独立核对依据",
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html"
+          },
+          {
+            "event_id": "call_27731f41038b420ba564a8a7.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/trtexec.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "interval": [
+              1,
+              1
+            ],
+            "evidence": [
+              {
+                "event_id": "call_27731f41038b420ba564a8a7.result",
+                "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_27731f41038b420ba564a8a7.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/trtexec.html"
+          },
+          {
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/samples/trtexec/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。"
+              }
+            ],
+            "reference": "https://github.com/NVIDIA/TensorRT/blob/main/samples/trtexec/README.md"
+          },
+          {
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "dynamic_batching {\n    preferred_batch_size: [ 4, 8 ]\n  }"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "Triton will then form and schedule the next batch that mixes new and rescheduled requests."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html"
+          },
+          {
+            "event_id": "call_64902194359d44f59e0b2b18.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.md",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "interval": null,
+            "merged_into": "call_dcc7471fe80d479487dbace3.result",
+            "note": "同一文档(model_configuration)的早期失败派发，最终状态由最后一次派发(.html)决定，此障碍独立留存",
+            "evidence": [
+              {
+                "event_id": "call_64902194359d44f59e0b2b18.result",
+                "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_64902194359d44f59e0b2b18.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.md"
+          },
+          {
+            "event_id": "call_dcc7471fe80d479487dbace3.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "[...]\n\n## Custom Model Configuration#"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html"
+          },
+          {
+            "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/backend/README.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+                "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+                "quote": "For a standard install the globally available backends are in /opt/tritonserver/backends.\n\n[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/backend/README.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T06:10:05.556612+00:00",
+      "process_sha256": "4c900236bfe21a818f1f9b641ee3512c8928ec5f432243eae5903f6ee1c5725a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_ff56fd8a93684e668288c777.result",
+            "evidence_quote": "profile = builder.create_optimization_profile();\nprofile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "verification": "source",
+            "reason": "原题各子要求均被覆盖：(a) TensorRT 动态 shape / optimization profile / min-opt-max 语义与构建期 API——final 给出 set_shape((3,100,200),(3,150,250),(3,200,300)) 与 add_optimization_profile，与官方 Core Concepts 文档逐字一致；(b) 运行期流程——final 明确先 set_optimization_profile_async(0, stream) 再 set_input_shape，并注明 setOptimizationProfileAsync 取代废弃的 setOptimizationProfile，均有官方正文支撑；(c) trtexec 命令行——final 给出 --minShapes/--optShapes/--maxShapes/--shapes 完整示例（input:1x3x244x244 等），与官方 trtexec README 提取结果（call_28a4279c2cbf4e3a9ba39fc4）一致，含244原文与调优缓存失效caveat；(d) Triton dynamic batching——final 的 dynamic_batching { max_queue_delay_microseconds: 100 }、preferred_batch_size: [4,8]、max_batch_size 语义（[-1]+dims）均见于官方 Batchers（call_3d384d510251413d87c67af7）与 Model Configuration（call_dcc7471fe80d479487dbace3）正文；(e) TensorRT+Triton 衔接——final 给出三步整体做法，其中 preferred_batch_size 与多 optimization profile 的关系有官方原文（\"An exception is TensorRT models that specify multiple optimization profiles for different batch sizes\"）直接支撑。final 还诚实标注了未核实项（tensorrt_backend 专门文档、字段名单复数疑点），不影响已答部分的正确性。",
+            "evidence_refs": [
+              "ev-36",
+              "ev-37"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "第1次查询前5条含官方PyTorch托管的Torch-TensorRT文档（第5条docs.pytorch.org，第2/3条为其镜像），摘要直接论及optimization profile与(min,opt,max)；若计为相关官方来源则M1=4。若仅认NVIDIA TensorRT开发者文档为相关官方来源，首次命中为第2次查询第1条(docs.nvidia.com)，M1=3。档位取决于Torch-TensorRT文档是否算本任务相关官方来源，无法区分，保留区间。",
+            "evidence": [
+              {
+                "event_id": "call_cb2937a709824564b31c3bd3.result",
+                "quote": "TensorRT's optimization profile mechanism handles this: each engine is built with a (min, opt, max) shape range for every …"
+              },
+              {
+                "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+                "quote": "Working with Dynamic Shapes — NVIDIA TensorRT"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result",
+            "evidence": [
+              {
+                "event_id": "call_27731f41038b420ba564a8a7.result",
+                "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。"
+              },
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "[...]\n\n## Custom Model Configuration#"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "已提取文档完整正文。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题主流程及参数已由直接正文覆盖：TensorRT profile概念、构建期API（create_optimization_profile/set_shape/add_optimization_profile）、运行期API（set_input_shape）、关键约束（MIN=OPT=MAX tactic、先设profile后设维度、每context独立profile）见dynamic-shapes-basics；trtexec min/opt/max示例见官方仓库README；Triton dynamic_batching全字段与调优流程见batcher.html；max_batch_size与dims(-1)语义见model_configuration.html。缺口：Triton的TensorRT后端动态shape具体配置（tensorrt_plan下min/opt/max声明）未在取得正文出现（backend/README.html仅通用后端说明）；trtexec正式参数规范未取得（trtexec.html 404，README自述需--help）。主流程完整、分支/参考细节缺失→4。",
+            "evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "某些操作存在仅在 `MIN=OPT=MAX` 时才可用的 tactic"
+              },
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+              },
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*."
+              },
+              {
+                "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+                "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: missing official constraint citations",
+            "evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "setOptimizationProfileAsync()` **取代了现已废弃的 `setOptimizationProfile()"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "若使用 `enqueueV3` 而非已废弃的 `enqueueV2`，可跳过本节"
+              },
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+                "quote": "Working with Dynamic Shapes — NVIDIA TensorRT 10.10.10 Developer Guide ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "4次查询预算内去重计数相关独立第三方来源8条：CSDN trtexec实战、CSDN trtexec常用参数、博客园trtexec参数笔记、火山引擎trtexec动态引擎文、CSDN文库trtexec工作流专栏、CSDN Triton动态批处理调优，另HeKun-NVIDIA开发者指南中文翻译仓库与知乎官方概念指南翻译各按转载计1次。官方渠道（docs.nvidia.com、developer.nvidia.cn博客、docs.pytorch.*、triton-inference-server.github.io）已排除，无重复转载。≥6条→5。首次发现：第1次查询第1条。",
+            "evidence": [
+              {
+                "event_id": "call_cb2937a709824564b31c3bd3.result",
+                "quote": "TensorRT trtexec命令实战：动态输入与精度优化参数详解 ..."
+              },
+              {
+                "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+                "quote": "TensorRT-Developer_Guide_in_Chinese/8.TensorRT中的动态 ..."
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "tensorRT trtexec命令常用参数_trtexec --fp32-CSDN博客"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "trtexec 参数笔记 - qinchaojie - 博客园"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "如何编写trtexec命令编译支持动态输入形状的TensorRT引擎？"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "从PyTorch到TensorRT引擎：一份完整的trtexec工作流避坑 ..."
+              },
+              {
+                "event_id": "call_eee4e6cd37404ab38870ebff.result",
+                "quote": "Triton Inference Server动态批处理参数调优：基于业务场景的 ..."
+              },
+              {
+                "event_id": "call_eee4e6cd37404ab38870ebff.result",
+                "quote": "Triton 概念指南（Part 2）：如何使用动态批处理和并行模型 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "关键二手说法两条：①trtexec动态shape参数名与input:shape格式——CSDN(weicao1990)、博客园、CSDN(trtexec实战)相互一致，并与官方仓库README示例交叉印证；②Triton动态批处理机制与字段——知乎官方概念指南转载、CSDN调优文与官方batcher.html一致。日期多为2025-2026（知乎2023但内容未见失效）。可见关键说法均有可追溯依据并获多条独立来源交叉印证，未见未解决矛盾（核对限于摘要级，正文未抓取）→5。",
+            "evidence": [
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "--minShapes=input0:1x3x224x224  # 指定动态输入形状的范围最小值"
+              },
+              {
+                "event_id": "call_bf96f1092675469684998ad1.result",
+                "quote": "--maxShapes=spec Build with dynamic shapes using a profile with the max shapes provided."
+              },
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "call_eee4e6cd37404ab38870ebff.result",
+                "quote": "动态批处理（Dynamic Batching）作为Triton Inference Server（推理服务器）的核心优化能力，能自动合并推理请求 …"
+              },
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "Dynamic batching is a feature of Triton that allows inference requests to be combined by the server, so that a batch is created dynamically."
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "先验给出两条主线正确完整流程与主要参数：create_optimization_profile/set_shape/add_optimization_profile、set_input_shape（并正确指出旧API set_binding_shape）、trtexec --minShapes格式、Triton max_batch_size/dynamic_batching/max_queue_delay_microseconds，经官方文档事后核对基本正确。但关键约束缺失（MIN=OPT=MAX tactic限制、每execution context独立profile、先设profile后设输入维度），且prior写作preferred_batch_sizes而官方为preferred_batch_size，并自述4处不确定需检索核实→4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "profile.set_shape(\"input_name\", min=..., opt=..., max=...)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "context.set_input_shape(\"input\", actual_shape)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "dynamic_batching { max_queue_delay_microseconds: X preferred_batch_sizes: [4,8] }"
+              },
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "context.set_input_shape(\"foo\", (3, 150, 250))"
+              },
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "preferred_batch_size: [ 4, 8 ]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-27",
+              "ev-28",
+              "ev-29",
+              "ev-30",
+              "ev-31"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_cb2937a709824564b31c3bd3.dispatch",
+              "call_6dfcb14ea31849d891c5be9a.dispatch",
+              "call_4b7cadaed18049c5b5ef66c1.dispatch",
+              "call_ff56fd8a93684e668288c777.dispatch",
+              "call_27731f41038b420ba564a8a7.dispatch",
+              "call_bf96f1092675469684998ad1.dispatch",
+              "call_28a4279c2cbf4e3a9ba39fc4.dispatch",
+              "call_eee4e6cd37404ab38870ebff.dispatch",
+              "call_3d384d510251413d87c67af7.dispatch",
+              "call_64902194359d44f59e0b2b18.dispatch",
+              "call_dcc7471fe80d479487dbace3.dispatch",
+              "call_09d5a01cf06f43d5b5560e87.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 2,
+            "status": "scored",
+            "reason": "本题预先定义M9适用，不能改记N/A。最终答案仅提latest和另见10.x.x文档路径，明确说未能确定latest对应的确切TensorRT版本，也未给出有依据的TensorRT/Triton适用版本范围；依原M9第2档评分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出"
+              }
+            ],
+            "lower": 2,
+            "upper": 2,
+            "evidence_refs": [
+              "ev-32"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "操作指导具体且基本完整：trtexec 命令含完整参数（--onnx、--minShapes/--optShapes/--maxShapes/--shapes 及具体 shape 值）可直接照抄运行；Triton 侧给出 config.pbtxt 完整片段（platform、max_batch_size、input/output、dynamic_batching 块）；运行期 API 给出 set_optimization_profile_async(0, stream) 与 set_input_shape 调用顺序及 stream 一致性前提。仅需替换的均为用户环境值（模型路径、输入名、具体维度、batch 上限），且上下文有说明。未给5分的原因：final 自述 trtexec 完整参数列表需 --help 获取、preferred_batch_size 字段名单复数存疑、以及未给出完整端到端可运行脚本（如 config.pbtxt 与引擎构建的完整文件级示例需用户自行拼装），故按需替换环境参数但非完全免补写的4分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-33",
+              "ev-34",
+              "ev-35"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "insufficient_evidence",
+                "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result"
+              },
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: missing official constraint citations"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing official constraint citations"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M2: missing return evidence call_27731f41038b420ba564a8a7.result",
+              "M2: missing return evidence call_64902194359d44f59e0b2b18.result",
+              "M4: missing official constraint citations"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+            "field": "response",
+            "sha256": "7423578d20c1486f21df2e83a535b3758e9940de8c81aa73e2e9f90ad5f075d8",
+            "start": 122,
+            "end": 167,
+            "quote": "Working with Dynamic Shapes — NVIDIA TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "field": "response",
+            "sha256": "fd65c602066f37a0735de9d9abdada84cb985add1caf5514c32a2386050ac4ab",
+            "start": 28,
+            "end": 148,
+            "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_dcc7471fe80d479487dbace3.result",
+            "field": "response",
+            "sha256": "824f5c91f948aadfef5f721c70e210034d66c9ee60daaa0eb6e3727f9ccd1276",
+            "start": 5078,
+            "end": 5115,
+            "quote": "[...]\n\n## Custom Model Configuration#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 65,
+            "end": 75,
+            "quote": "已提取文档完整正文。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 5597,
+            "end": 5666,
+            "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 4927,
+            "end": 4962,
+            "quote": "某些操作存在仅在 `MIN=OPT=MAX` 时才可用的 tactic",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "field": "response",
+            "sha256": "0a12f8f476e02e6278a45cae185b6009dac66a67db1513faeb84f5317dcfb068",
+            "start": 4148,
+            "end": 4208,
+            "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_dcc7471fe80d479487dbace3.result",
+            "field": "response",
+            "sha256": "824f5c91f948aadfef5f721c70e210034d66c9ee60daaa0eb6e3727f9ccd1276",
+            "start": 2792,
+            "end": 2885,
+            "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+            "field": "response",
+            "sha256": "6edd20d66948e50b7ffec5aa97d298bc5d2e7f9d13cf6dd160cc6a369f6cb611",
+            "start": 1492,
+            "end": 1625,
+            "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 6475,
+            "end": 6542,
+            "quote": "setOptimizationProfileAsync()` **取代了现已废弃的 `setOptimizationProfile()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 12168,
+            "end": 12208,
+            "quote": "若使用 `enqueueV3` 而非已废弃的 `enqueueV2`，可跳过本节",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "field": "response",
+            "sha256": "fd65c602066f37a0735de9d9abdada84cb985add1caf5514c32a2386050ac4ab",
+            "start": 1498,
+            "end": 1644,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+            "field": "response",
+            "sha256": "7423578d20c1486f21df2e83a535b3758e9940de8c81aa73e2e9f90ad5f075d8",
+            "start": 917,
+            "end": 991,
+            "quote": "Working with Dynamic Shapes — NVIDIA TensorRT 10.10.10 Developer Guide ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_cb2937a709824564b31c3bd3.result",
+            "field": "response",
+            "sha256": "6c29767ca4689bc65621365e8420d7577e683e341f6178f00aa88267b5e58353",
+            "start": 109,
+            "end": 147,
+            "quote": "TensorRT trtexec命令实战：动态输入与精度优化参数详解 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+            "field": "response",
+            "sha256": "7423578d20c1486f21df2e83a535b3758e9940de8c81aa73e2e9f90ad5f075d8",
+            "start": 1641,
+            "end": 1695,
+            "quote": "TensorRT-Developer_Guide_in_Chinese/8.TensorRT中的动态 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 373,
+            "end": 417,
+            "quote": "tensorRT trtexec命令常用参数_trtexec --fp32-CSDN博客",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 771,
+            "end": 802,
+            "quote": "trtexec 参数笔记 - qinchaojie - 博客园",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 1026,
+            "end": 1061,
+            "quote": "如何编写trtexec命令编译支持动态输入形状的TensorRT引擎？",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 1250,
+            "end": 1291,
+            "quote": "从PyTorch到TensorRT引擎：一份完整的trtexec工作流避坑 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_eee4e6cd37404ab38870ebff.result",
+            "field": "response",
+            "sha256": "57f6376b7106f4a4017ed2ca39a51e3f3c1bb347560e97778c17a59a40fdd014",
+            "start": 1080,
+            "end": 1124,
+            "quote": "Triton Inference Server动态批处理参数调优：基于业务场景的 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_eee4e6cd37404ab38870ebff.result",
+            "field": "response",
+            "sha256": "57f6376b7106f4a4017ed2ca39a51e3f3c1bb347560e97778c17a59a40fdd014",
+            "start": 1363,
+            "end": 1401,
+            "quote": "Triton 概念指南（Part 2）：如何使用动态批处理和并行模型 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 522,
+            "end": 570,
+            "quote": "--minShapes=input0:1x3x224x224  # 指定动态输入形状的范围最小值",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "call_bf96f1092675469684998ad1.result",
+            "field": "response",
+            "sha256": "b34d058c7480674e4180ba0c892ef5fe215ee577d5c4b762d45bbf666cbbdb8e",
+            "start": 864,
+            "end": 952,
+            "quote": "--maxShapes=spec Build with dynamic shapes using a profile with the max shapes provided.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "field": "response",
+            "sha256": "fd65c602066f37a0735de9d9abdada84cb985add1caf5514c32a2386050ac4ab",
+            "start": 1498,
+            "end": 1644,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "call_eee4e6cd37404ab38870ebff.result",
+            "field": "response",
+            "sha256": "57f6376b7106f4a4017ed2ca39a51e3f3c1bb347560e97778c17a59a40fdd014",
+            "start": 1203,
+            "end": 1277,
+            "quote": "动态批处理（Dynamic Batching）作为Triton Inference Server（推理服务器）的核心优化能力，能自动合并推理请求 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "field": "response",
+            "sha256": "0a12f8f476e02e6278a45cae185b6009dac66a67db1513faeb84f5317dcfb068",
+            "start": 98,
+            "end": 238,
+            "quote": "Dynamic batching is a feature of Triton that allows inference requests to be combined by the server, so that a batch is created dynamically.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f34e8326ecc3b1a04462d636593fee47deb421cad8a48d80d9ab41781d155719",
+            "start": 407,
+            "end": 467,
+            "quote": "profile.set_shape(\\\"input_name\\\", min=..., opt=..., max=...)",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-28",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f34e8326ecc3b1a04462d636593fee47deb421cad8a48d80d9ab41781d155719",
+            "start": 774,
+            "end": 822,
+            "quote": "context.set_input_shape(\\\"input\\\", actual_shape)",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-29",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f34e8326ecc3b1a04462d636593fee47deb421cad8a48d80d9ab41781d155719",
+            "start": 1164,
+            "end": 1245,
+            "quote": "dynamic_batching { max_queue_delay_microseconds: X preferred_batch_sizes: [4,8] }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 748,
+            "end": 793,
+            "quote": "context.set_input_shape(\"foo\", (3, 150, 250))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "field": "response",
+            "sha256": "0a12f8f476e02e6278a45cae185b6009dac66a67db1513faeb84f5317dcfb068",
+            "start": 3011,
+            "end": 3041,
+            "quote": "preferred_batch_size: [ 4, 8 ]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 6122,
+            "end": 6214,
+            "quote": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 2414,
+            "end": 2576,
+            "quote": "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-34",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 3765,
+            "end": 3827,
+            "quote": "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-35",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 2669,
+            "end": 2727,
+            "quote": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-36",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "175107abe164a8dfdad5b369ea80e283ae9f7d469844b0ebdea7e650486f8e66",
+            "start": 923,
+            "end": 1033,
+            "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-37",
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "field": "response",
+            "sha256": "6e9915acdf96cd1c81e38c723f3b6d139885b5b444a382caf44e106f33bbc6d7",
+            "start": 5548,
+            "end": 5707,
+            "quote": "profile = builder.create_optimization_profile();\nprofile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_27731f41038b420ba564a8a7.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_27731f41038b420ba564a8a7.result",
+            "alternative_body_event_ids": [
+              "call_28a4279c2cbf4e3a9ba39fc4.result",
+              "call_3d384d510251413d87c67af7.result",
+              "call_dcc7471fe80d479487dbace3.result",
+              "call_09d5a01cf06f43d5b5560e87.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_64902194359d44f59e0b2b18.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_64902194359d44f59e0b2b18.result",
+            "alternative_body_event_ids": [
+              "call_dcc7471fe80d479487dbace3.result",
+              "call_09d5a01cf06f43d5b5560e87.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-d804bb3ac8dc-predictors.json": "fed347f6acfbc0707a956939b488c981732a1047875e676c8ab478694915d4ec",
+          "reviewed/development/case-d804bb3ac8dc-outcome.json": "e3af9cb59d93fd6d6df7b7710e8bc4b0d136fac9fc0ac623bb34c25aaaa15d3c",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_4b7cadaed18049c5b5ef66c1.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_4b7cadaed18049c5b5ef66c1.result",
+                "quote": "Here is an overview of the steps for building an engine with dynamic shapes:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_4b7cadaed18049c5b5ef66c1.result",
+                "quote": "shape layers, data-dependent shapes, and restrictions for dynamic networks."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html"
+          },
+          {
+            "event_id": "call_ff56fd8a93684e668288c777.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_ff56fd8a93684e668288c777.result",
+                "quote": "已提取文档完整正文。"
+              }
+            ],
+            "note": "工具自述完整，不足以证明complete，无独立核对依据",
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html"
+          },
+          {
+            "event_id": "call_27731f41038b420ba564a8a7.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/trtexec.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "interval": [
+              1,
+              1
+            ],
+            "evidence": [
+              {
+                "event_id": "call_27731f41038b420ba564a8a7.result",
+                "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_27731f41038b420ba564a8a7.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/trtexec.html"
+          },
+          {
+            "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/samples/trtexec/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+                "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。"
+              }
+            ],
+            "reference": "https://github.com/NVIDIA/TensorRT/blob/main/samples/trtexec/README.md"
+          },
+          {
+            "event_id": "call_3d384d510251413d87c67af7.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "dynamic_batching {\n    preferred_batch_size: [ 4, 8 ]\n  }"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_3d384d510251413d87c67af7.result",
+                "quote": "Triton will then form and schedule the next batch that mixes new and rescheduled requests."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html"
+          },
+          {
+            "event_id": "call_64902194359d44f59e0b2b18.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.md",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "interval": null,
+            "merged_into": "call_dcc7471fe80d479487dbace3.result",
+            "note": "同一文档(model_configuration)的早期失败派发，最终状态由最后一次派发(.html)决定，此障碍独立留存",
+            "evidence": [
+              {
+                "event_id": "call_64902194359d44f59e0b2b18.result",
+                "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_64902194359d44f59e0b2b18.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.md"
+          },
+          {
+            "event_id": "call_dcc7471fe80d479487dbace3.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_dcc7471fe80d479487dbace3.result",
+                "quote": "[...]\n\n## Custom Model Configuration#"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html"
+          },
+          {
+            "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/backend/README.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+                "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+                "quote": "For a standard install the globally available backends are in /opt/tritonserver/backends.\n\n[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/backend/README.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

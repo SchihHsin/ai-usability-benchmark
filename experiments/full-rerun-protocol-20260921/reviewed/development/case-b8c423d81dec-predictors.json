@@ -16,11 +16,11 @@
     },
     {
       "id": "M2",
-      "score": null,
-      "lower": null,
-      "upper": null,
-      "status": "insufficient_evidence",
-      "reason": "M2: incomplete/duplicate fetch inventory; M2: ownership unknown WebFetch_1_75dd9582.result; M2: ownership unknown WebFetch_3_8dcdc2f1.result; M2: no assessable official document",
+      "score": 4.0,
+      "lower": 4.0,
+      "upper": 4.0,
+      "status": "scored",
+      "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
       "evidence": [
         {
           "event_id": "WebFetch_1_75dd9582.result",
@@ -60,11 +60,11 @@
     },
     {
       "id": "M4",
-      "score": null,
-      "lower": null,
-      "upper": null,
-      "status": "insufficient_evidence",
-      "reason": "M4: missing official constraint citations",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "官方页面直接给出弃用替代规则（torch.cuda.amp→torch.amp）与版本条件（recipe要求PyTorch 1.6+，torch.autocast新于1.10），直接套用即可确定所选接口适用关系，无冲突无缺失。",
       "evidence": [
         {
           "event_id": "WebFetch_3_8dcdc2f1.result",
@@ -147,16 +147,13 @@
   "m2_documents": [
     {
       "reference": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html",
-      "event_ids": [
-        "WebFetch_1_75dd9582.result"
-      ],
       "ownership": "official",
       "representation": "body",
-      "completeness": "unknown",
+      "completeness": "incomplete",
       "evidence": [
         {
           "event_id": "WebFetch_1_75dd9582.result",
-          "quote": "[...]\n\n## Troubleshooting#"
+          "quote": "torch.cuda.amp provides convenience methods for mixed precision, where some operations use the `torch.float32` (`float`) datatype and other operations use `torch.float16` (`half`). Some ops, like linear layers and convolutions, are much faster in `float16` or `bfloat16`. Other ops, like reductions, often require the dynamic range of `float32`. Mixed precision tries to match each op to its appropriate datatype, which can reduce your network’s runtime and memory footprint."
         }
       ],
       "boundary_evidence": [
@@ -164,25 +161,35 @@
           "event_id": "WebFetch_1_75dd9582.result",
           "quote": "## Saving/Resuming#"
         }
-      ]
+      ],
+      "event_id": "WebFetch_1_75dd9582.result",
+      "url": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html"
     },
     {
       "reference": "https://pytorch.org/docs/stable/amp.html",
-      "event_ids": [
-        "WebFetch_2_f39d1390.result",
-        "WebFetch_3_8dcdc2f1.result"
-      ],
       "ownership": "official",
       "representation": "body",
       "completeness": "unknown",
       "evidence": [
         {
-          "event_id": "WebFetch_3_8dcdc2f1.result",
-          "quote": "See `torch.amp.GradScaler`. `torch.cuda.amp.GradScaler(args...)` is deprecated."
-        },
-        {
           "event_id": "WebFetch_2_f39d1390.result",
-          "quote": "The canonical `torch.amp.GradScaler` class definition itself is **not documented on this page**"
+          "quote": "class torch.autocast(device_type, dtype=None, enabled=True, cache_enabled=None)"
+        }
+      ],
+      "boundary_evidence": [],
+      "note": "同一URL去fragment合并重试（WebFetch_2与WebFetch_3），最终状态以最后一次返回（WebFetch_3）判定",
+      "event_id": "WebFetch_2_f39d1390.result",
+      "url": "https://pytorch.org/docs/stable/amp.html"
+    },
+    {
+      "reference": "https://pytorch.org/docs/stable/amp.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "incomplete",
+      "evidence": [
+        {
+          "event_id": "WebFetch_3_8dcdc2f1.result",
+          "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)` or `torch.amp.autocast(\"cpu\", args...)` instead. `torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` or `torch.amp.GradScaler(\"cpu\", args...)` instead."
         }
       ],
       "boundary_evidence": [
@@ -191,7 +198,9 @@
           "quote": "## Autocast Op Reference#"
         }
       ],
-      "note": "同一URL去fragment合并重试（WebFetch_2与WebFetch_3），最终状态以最后一次返回（WebFetch_3）判定"
+      "note": "同一URL去fragment合并重试（WebFetch_2与WebFetch_3），最终状态以最后一次返回（WebFetch_3）判定",
+      "event_id": "WebFetch_3_8dcdc2f1.result",
+      "url": "https://pytorch.org/docs/stable/amp.html#torch.amp.GradScaler"
     }
   ],
   "m4_check": {
@@ -222,14 +231,8 @@
   "not_dispatched_documents": [],
   "quote_audit": [],
   "execution_gate": {
-    "errors": [
-      "M2: incomplete/duplicate fetch inventory",
-      "M2: ownership unknown WebFetch_1_75dd9582.result",
-      "M2: ownership unknown WebFetch_3_8dcdc2f1.result",
-      "M2: no assessable official document",
-      "M4: missing official constraint citations"
-    ],
-    "passed": false,
+    "errors": [],
+    "passed": true,
     "scope": "structural evidence checks, not semantic validation"
   },
   "case": "case-b8c423d81dec",
@@ -339,13 +342,125 @@
     "raw_file": "assessments/development/case-b8c423d81dec-predictors.json",
     "repairs": [
       {
-        "event_id": null,
-        "original_completeness": "incomplete",
-        "replacement_completeness": "unknown",
-        "basis": "Observed body retained, but claimed completeness boundary is not verified; apply frozen 4–5 uncertainty rule."
+        "case": "case-b8c423d81dec",
+        "kind": "predictors",
+        "phase": "before_quote",
+        "path": [
+          "m2_documents"
+        ],
+        "original": [
+          {
+            "reference": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html",
+            "event_ids": [
+              "WebFetch_1_75dd9582.result"
+            ],
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_75dd9582.result",
+                "quote": "[...]\n\n## Troubleshooting#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_75dd9582.result",
+                "quote": "## Saving/Resuming#"
+              }
+            ]
+          },
+          {
+            "reference": "https://pytorch.org/docs/stable/amp.html",
+            "event_ids": [
+              "WebFetch_2_f39d1390.result",
+              "WebFetch_3_8dcdc2f1.result"
+            ],
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_8dcdc2f1.result",
+                "quote": "See `torch.amp.GradScaler`. `torch.cuda.amp.GradScaler(args...)` is deprecated."
+              },
+              {
+                "event_id": "WebFetch_2_f39d1390.result",
+                "quote": "The canonical `torch.amp.GradScaler` class definition itself is **not documented on this page**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_8dcdc2f1.result",
+                "quote": "## Autocast Op Reference#"
+              }
+            ],
+            "note": "同一URL去fragment合并重试（WebFetch_2与WebFetch_3），最终状态以最后一次返回（WebFetch_3）判定"
+          }
+        ],
+        "replacement": [
+          {
+            "reference": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_75dd9582.result",
+                "quote": "torch.cuda.amp provides convenience methods for mixed precision, where some operations use the `torch.float32` (`float`) datatype and other operations use `torch.float16` (`half`). Some ops, like linear layers and convolutions, are much faster in `float16` or `bfloat16`. Other ops, like reductions, often require the dynamic range of `float32`. Mixed precision tries to match each op to its appropriate datatype, which can reduce your network’s runtime and memory footprint."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_75dd9582.result",
+                "quote": "## Saving/Resuming#"
+              }
+            ],
+            "event_id": "WebFetch_1_75dd9582.result",
+            "url": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html"
+          },
+          {
+            "reference": "https://pytorch.org/docs/stable/amp.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_f39d1390.result",
+                "quote": "class torch.autocast(device_type, dtype=None, enabled=True, cache_enabled=None)"
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "同一URL去fragment合并重试（WebFetch_2与WebFetch_3），最终状态以最后一次返回（WebFetch_3）判定",
+            "event_id": "WebFetch_2_f39d1390.result",
+            "url": "https://pytorch.org/docs/stable/amp.html"
+          },
+          {
+            "reference": "https://pytorch.org/docs/stable/amp.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_8dcdc2f1.result",
+                "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)` or `torch.amp.autocast(\"cpu\", args...)` instead. `torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` or `torch.amp.GradScaler(\"cpu\", args...)` instead."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_8dcdc2f1.result",
+                "quote": "## Autocast Op Reference#"
+              }
+            ],
+            "note": "同一URL去fragment合并重试（WebFetch_2与WebFetch_3），最终状态以最后一次返回（WebFetch_3）判定",
+            "event_id": "WebFetch_3_8dcdc2f1.result",
+            "url": "https://pytorch.org/docs/stable/amp.html#torch.amp.GradScaler"
+          }
+        ],
+        "basis": "Root verified all3 actual official fetches. Expand grouped event_ids to one row per attempt; preserve completeness states and latest same-URL aggregation. Each row quotes its own actual body. No attribution based on mere platform inference."
       },
       {
-        "event_id": null,
+        "event_id": "WebFetch_2_f39d1390.result",
         "original_completeness": "incomplete",
         "replacement_completeness": "unknown",
         "basis": "Observed body retained, but claimed completeness boundary is not verified; apply frozen 4–5 uncertainty rule."

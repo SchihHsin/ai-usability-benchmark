@@ -8,6 +8,8 @@ R = Path(__file__).resolve().parent
 
 
 def eligible(row, metric_id):
+    if row and row.get('collection_status') == 'technical_attempts_exhausted':
+        return None, 'technical_attempts_exhausted'
     if not row or not row.get('collected'):
         return None, 'not_collected'
     if not row.get('assessed'):

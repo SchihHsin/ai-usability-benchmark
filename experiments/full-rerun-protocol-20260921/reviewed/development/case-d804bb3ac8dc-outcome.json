@@ -1,0 +1,215 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_ff56fd8a93684e668288c777.result",
+      "evidence_quote": "profile = builder.create_optimization_profile();\nprofile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))\nconfig.add_optimization_profile(profile)",
+      "verification": "source",
+      "reason": "原题各子要求均被覆盖：(a) TensorRT 动态 shape / optimization profile / min-opt-max 语义与构建期 API——final 给出 set_shape((3,100,200),(3,150,250),(3,200,300)) 与 add_optimization_profile，与官方 Core Concepts 文档逐字一致；(b) 运行期流程——final 明确先 set_optimization_profile_async(0, stream) 再 set_input_shape，并注明 setOptimizationProfileAsync 取代废弃的 setOptimizationProfile，均有官方正文支撑；(c) trtexec 命令行——final 给出 --minShapes/--optShapes/--maxShapes/--shapes 完整示例（input:1x3x244x244 等），与官方 trtexec README 提取结果（call_28a4279c2cbf4e3a9ba39fc4）一致，含244原文与调优缓存失效caveat；(d) Triton dynamic batching——final 的 dynamic_batching { max_queue_delay_microseconds: 100 }、preferred_batch_size: [4,8]、max_batch_size 语义（[-1]+dims）均见于官方 Batchers（call_3d384d510251413d87c67af7）与 Model Configuration（call_dcc7471fe80d479487dbace3）正文；(e) TensorRT+Triton 衔接——final 给出三步整体做法，其中 preferred_batch_size 与多 optimization profile 的关系有官方原文（\"An exception is TensorRT models that specify multiple optimization profiles for different batch sizes\"）直接支撑。final 还诚实标注了未核实项（tensorrt_backend 专门文档、字段名单复数疑点），不影响已答部分的正确性。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 2,
+      "status": "scored",
+      "reason": "本题预先定义M9适用，不能改记N/A。最终答案仅提latest和另见10.x.x文档路径，明确说未能确定latest对应的确切TensorRT版本，也未给出有依据的TensorRT/Triton适用版本范围；依原M9第2档评分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出"
+        }
+      ],
+      "lower": 2,
+      "upper": 2
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "supported",
+      "reason": "操作指导具体且基本完整：trtexec 命令含完整参数（--onnx、--minShapes/--optShapes/--maxShapes/--shapes 及具体 shape 值）可直接照抄运行；Triton 侧给出 config.pbtxt 完整片段（platform、max_batch_size、input/output、dynamic_batching 块）；运行期 API 给出 set_optimization_profile_async(0, stream) 与 set_input_shape 调用顺序及 stream 一致性前提。仅需替换的均为用户环境值（模型路径、输入名、具体维度、batch 上限），且上下文有说明。未给5分的原因：final 自述 trtexec 完整参数列表需 --help 获取、preferred_batch_size 字段名单复数存疑、以及未给出完整端到端可运行脚本（如 config.pbtxt 与引擎构建的完整文件级示例需用户自行拼装），故按需替换环境参数但非完全免补写的4分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-d804bb3ac8dc",
+  "task_id": "T",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "099ed06be54b4bb1a7b6855354732c15",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "b84fc0b186bda213eb4555abf036593b",
+        "conversationRequestId": "b84fc0b186bda213eb4555abf036593b",
+        "agent": "cli"
+      },
+      {
+        "messageId": "099ed06be54b4bb1a7b6855354732c15",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "b84fc0b186bda213eb4555abf036593b",
+        "conversationRequestId": "b84fc0b186bda213eb4555abf036593b",
+        "rawUsage": {
+          "prompt_tokens": 24149,
+          "completion_tokens": 2249,
+          "total_tokens": 26398,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1118,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 21141,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1118,
+          "credit": 4.76,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 24149,
+          "outputTokens": 2249,
+          "totalTokens": 26398,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1118
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "a68dadf1e1937cbfd15c824b19383dd64f017b14325b9ec59d36e00cf702a32e",
+    "process_sha256": "4c900236bfe21a818f1f9b641ee3512c8928ec5f432243eae5903f6ee1c5725a",
+    "elapsed_seconds": 44.71,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-cfedfb9633b24c73a540b458ba6996a4",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-d804bb3ac8dc-outcome.json",
+    "repairs": [
+      {
+        "case": "case-d804bb3ac8dc",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          0
+        ],
+        "original": {
+          "id": "M9",
+          "score": null,
+          "status": "not_applicable",
+          "reason": "原题为配置方法类问题（如何配置动态 batch/shape），实际不需要将任何组件锁定到具体库版本或工具链版本；答案按 API 与参数给出配置方法即可。final 未指定版本且自述 \"latest\" 对应版本未标出，但因原题无定版需求，按规则记 N/A，不为提分强行指定版本。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "docs.nvidia.com/.../latest/ 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出"
+            }
+          ]
+        },
+        "replacement": {
+          "id": "M9",
+          "score": 2,
+          "status": "scored",
+          "reason": "本题预先定义M9适用，不能改记N/A。最终答案仅提latest和另见10.x.x文档路径，明确说未能确定latest对应的确切TensorRT版本，也未给出有依据的TensorRT/Triton适用版本范围；依原M9第2档评分。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "docs.nvidia.com/.../latest/ 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出"
+            }
+          ],
+          "lower": 2,
+          "upper": 2
+        },
+        "basis": "Root read final unresolved version statement and fixed predefined applicability violation. Uses frozen M9 grade2 (version mentioned without evidenced applicability range), no rubric change."
+      },
+      {
+        "event_id": "run-end",
+        "original": "docs.nvidia.com/.../latest/ 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出",
+        "replacement": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "完整参数列表需运行 ./trtexec --help（README 本身未给出逐项格式规范，此点无法进一步核实）",
+        "replacement": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

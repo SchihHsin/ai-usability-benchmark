@@ -1,17 +1,18 @@
 {
   "summary": {
-    "generated": "2026-09-21T13:54:26",
+    "generated": "2026-09-21T14:10:06",
     "expected": 156,
-    "collected": 137,
-    "assessed": 102,
-    "gate_passed": 93,
-    "quote_audit_clean": 98,
+    "collected": 141,
+    "assessed": 107,
+    "gate_passed": 98,
+    "quote_audit_clean": 104,
     "m11_states": {
-      "bounded": 71,
-      "incomplete_inputs": 15,
-      "calculated": 16,
-      "not_assessed": 54
-    }
+      "bounded": 73,
+      "incomplete_inputs": 16,
+      "calculated": 18,
+      "not_assessed": 49
+    },
+    "collection_exhausted": 1
   },
   "rows": [
     {
@@ -12282,7 +12283,394 @@
       "run_id": "T-cuda-glm-5_3-standard-20260921T132550",
       "process": "runs/T-cuda-glm-5_3-standard-20260921T132550/process.jsonl",
       "evaluation": "runs/T-cuda-glm-5_3-standard-20260921T132550/evaluation.json",
-      "assessed": false
+      "assessed": true,
+      "metrics": [
+        {
+          "id": "M1",
+          "score": null,
+          "lower": 3,
+          "upper": 4,
+          "status": "bounded",
+          "reason": "第1次查询前5条含官方PyTorch托管的Torch-TensorRT文档（第5条docs.pytorch.org，第2/3条为其镜像），摘要直接论及optimization profile与(min,opt,max)；若计为相关官方来源则M1=4。若仅认NVIDIA TensorRT开发者文档为相关官方来源，首次命中为第2次查询第1条(docs.nvidia.com)，M1=3。档位取决于Torch-TensorRT文档是否算本任务相关官方来源，无法区分，保留区间。",
+          "evidence": [
+            {
+              "event_id": "call_cb2937a709824564b31c3bd3.result",
+              "quote": "TensorRT's optimization profile mechanism handles this: each engine is built with a (min, opt, max) shape range for every …"
+            },
+            {
+              "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+              "quote": "Working with Dynamic Shapes — NVIDIA TensorRT"
+            }
+          ],
+          "evidence_refs": [
+            "ev-1"
+          ],
+          "event_refs": [],
+          "candidate_score": null,
+          "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+        },
+        {
+          "id": "M2",
+          "score": null,
+          "lower": null,
+          "upper": null,
+          "status": "insufficient_evidence",
+          "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result",
+          "evidence": [
+            {
+              "event_id": "call_27731f41038b420ba564a8a7.result",
+              "quote": "Page Not Found. This page no longer exists. It is a non-supported format."
+            },
+            {
+              "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+              "quote": "以下内容提取自该页面的 **\"Example 3: Running an ONNX model with full dimensions and dynamic shapes\"** 章节，这是文档中唯一系统讲解动态 shape 参数的部分。"
+            },
+            {
+              "event_id": "call_dcc7471fe80d479487dbace3.result",
+              "quote": "[...]\n\n## Custom Model Configuration#"
+            },
+            {
+              "event_id": "call_ff56fd8a93684e668288c777.result",
+              "quote": "已提取文档完整正文。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-2",
+            "ev-3",
+            "ev-4"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M3",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "原题主流程及参数已由直接正文覆盖：TensorRT profile概念、构建期API（create_optimization_profile/set_shape/add_optimization_profile）、运行期API（set_input_shape）、关键约束（MIN=OPT=MAX tactic、先设profile后设维度、每context独立profile）见dynamic-shapes-basics；trtexec min/opt/max示例见官方仓库README；Triton dynamic_batching全字段与调优流程见batcher.html；max_batch_size与dims(-1)语义见model_configuration.html。缺口：Triton的TensorRT后端动态shape具体配置（tensorrt_plan下min/opt/max声明）未在取得正文出现（backend/README.html仅通用后端说明）；trtexec正式参数规范未取得（trtexec.html 404，README自述需--help）。主流程完整、分支/参考细节缺失→4。",
+          "evidence": [
+            {
+              "event_id": "call_ff56fd8a93684e668288c777.result",
+              "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+            },
+            {
+              "event_id": "call_ff56fd8a93684e668288c777.result",
+              "quote": "某些操作存在仅在 `MIN=OPT=MAX` 时才可用的 tactic"
+            },
+            {
+              "event_id": "call_3d384d510251413d87c67af7.result",
+              "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+            },
+            {
+              "event_id": "call_dcc7471fe80d479487dbace3.result",
+              "quote": "For models with *max_batch_size* greater-than 0, the full shape is formed as [ -1 ] + *dims*."
+            },
+            {
+              "event_id": "call_09d5a01cf06f43d5b5560e87.result",
+              "quote": "**TensorRT**: The TensorRT backend is used to execute TensorRT models. The tensorrt_backend repo contains the source for the backend."
+            }
+          ],
+          "evidence_refs": [
+            "ev-5",
+            "ev-6",
+            "ev-7",
+            "ev-8",
+            "ev-9"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M4",
+          "score": null,
+          "lower": null,
+          "upper": null,
+          "status": "insufficient_evidence",
+          "reason": "M4: missing official constraint citations",
+          "evidence": [
+            {
+              "event_id": "call_ff56fd8a93684e668288c777.result",
+              "quote": "setOptimizationProfileAsync()` **取代了现已废弃的 `setOptimizationProfile()"
+            },
+            {
+              "event_id": "call_ff56fd8a93684e668288c777.result",
+              "quote": "若使用 `enqueueV3` 而非已废弃的 `enqueueV2`，可跳过本节"
+            },
+            {
+              "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+              "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+            },
+            {
+              "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+              "quote": "Working with Dynamic Shapes — NVIDIA TensorRT 10.10.10 Developer Guide ..."
+            }
+          ],
+          "evidence_refs": [
+            "ev-10",
+            "ev-11",
+            "ev-12",
+            "ev-13"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M5",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "4次查询预算内去重计数相关独立第三方来源8条：CSDN trtexec实战、CSDN trtexec常用参数、博客园trtexec参数笔记、火山引擎trtexec动态引擎文、CSDN文库trtexec工作流专栏、CSDN Triton动态批处理调优，另HeKun-NVIDIA开发者指南中文翻译仓库与知乎官方概念指南翻译各按转载计1次。官方渠道（docs.nvidia.com、developer.nvidia.cn博客、docs.pytorch.*、triton-inference-server.github.io）已排除，无重复转载。≥6条→5。首次发现：第1次查询第1条。",
+          "evidence": [
+            {
+              "event_id": "call_cb2937a709824564b31c3bd3.result",
+              "quote": "TensorRT trtexec命令实战：动态输入与精度优化参数详解 ..."
+            },
+            {
+              "event_id": "call_6dfcb14ea31849d891c5be9a.result",
+              "quote": "TensorRT-Developer_Guide_in_Chinese/8.TensorRT中的动态 ..."
+            },
+            {
+              "event_id": "call_bf96f1092675469684998ad1.result",
+              "quote": "tensorRT trtexec命令常用参数_trtexec --fp32-CSDN博客"
+            },
+            {
+              "event_id": "call_bf96f1092675469684998ad1.result",
+              "quote": "trtexec 参数笔记 - qinchaojie - 博客园"
+            },
+            {
+              "event_id": "call_bf96f1092675469684998ad1.result",
+              "quote": "如何编写trtexec命令编译支持动态输入形状的TensorRT引擎？"
+            },
+            {
+              "event_id": "call_bf96f1092675469684998ad1.result",
+              "quote": "从PyTorch到TensorRT引擎：一份完整的trtexec工作流避坑 ..."
+            },
+            {
+              "event_id": "call_eee4e6cd37404ab38870ebff.result",
+              "quote": "Triton Inference Server动态批处理参数调优：基于业务场景的 ..."
+            },
+            {
+              "event_id": "call_eee4e6cd37404ab38870ebff.result",
+              "quote": "Triton 概念指南（Part 2）：如何使用动态批处理和并行模型 ..."
+            }
+          ],
+          "evidence_refs": [
+            "ev-14",
+            "ev-15",
+            "ev-16",
+            "ev-17",
+            "ev-18",
+            "ev-19",
+            "ev-20",
+            "ev-21"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M6",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "关键二手说法两条：①trtexec动态shape参数名与input:shape格式——CSDN(weicao1990)、博客园、CSDN(trtexec实战)相互一致，并与官方仓库README示例交叉印证；②Triton动态批处理机制与字段——知乎官方概念指南转载、CSDN调优文与官方batcher.html一致。日期多为2025-2026（知乎2023但内容未见失效）。可见关键说法均有可追溯依据并获多条独立来源交叉印证，未见未解决矛盾（核对限于摘要级，正文未抓取）→5。",
+          "evidence": [
+            {
+              "event_id": "call_bf96f1092675469684998ad1.result",
+              "quote": "--minShapes=input0:1x3x224x224  # 指定动态输入形状的范围最小值"
+            },
+            {
+              "event_id": "call_bf96f1092675469684998ad1.result",
+              "quote": "--maxShapes=spec Build with dynamic shapes using a profile with the max shapes provided."
+            },
+            {
+              "event_id": "call_28a4279c2cbf4e3a9ba39fc4.result",
+              "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+            },
+            {
+              "event_id": "call_eee4e6cd37404ab38870ebff.result",
+              "quote": "动态批处理（Dynamic Batching）作为Triton Inference Server（推理服务器）的核心优化能力，能自动合并推理请求 …"
+            },
+            {
+              "event_id": "call_3d384d510251413d87c67af7.result",
+              "quote": "Dynamic batching is a feature of Triton that allows inference requests to be combined by the server, so that a batch is created dynamically."
+            }
+          ],
+          "evidence_refs": [
+            "ev-22",
+            "ev-23",
+            "ev-24",
+            "ev-25",
+            "ev-26"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M7",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "先验给出两条主线正确完整流程与主要参数：create_optimization_profile/set_shape/add_optimization_profile、set_input_shape（并正确指出旧API set_binding_shape）、trtexec --minShapes格式、Triton max_batch_size/dynamic_batching/max_queue_delay_microseconds，经官方文档事后核对基本正确。但关键约束缺失（MIN=OPT=MAX tactic限制、每execution context独立profile、先设profile后设输入维度），且prior写作preferred_batch_sizes而官方为preferred_batch_size，并自述4处不确定需检索核实→4。",
+          "evidence": [
+            {
+              "event_id": "client-note-00005",
+              "quote": "profile.set_shape(\"input_name\", min=..., opt=..., max=...)"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "context.set_input_shape(\"input\", actual_shape)"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "dynamic_batching { max_queue_delay_microseconds: X preferred_batch_sizes: [4,8] }"
+            },
+            {
+              "event_id": "call_ff56fd8a93684e668288c777.result",
+              "quote": "context.set_input_shape(\"foo\", (3, 150, 250))"
+            },
+            {
+              "event_id": "call_3d384d510251413d87c67af7.result",
+              "quote": "preferred_batch_size: [ 4, 8 ]"
+            }
+          ],
+          "evidence_refs": [
+            "ev-27",
+            "ev-28",
+            "ev-29",
+            "ev-30",
+            "ev-31"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M8",
+          "score": 1,
+          "lower": 1,
+          "upper": 1,
+          "status": "scored",
+          "reason": "调度器实际dispatch计数 S+F=12",
+          "evidence": [],
+          "evidence_refs": [],
+          "event_refs": [
+            "call_cb2937a709824564b31c3bd3.dispatch",
+            "call_6dfcb14ea31849d891c5be9a.dispatch",
+            "call_4b7cadaed18049c5b5ef66c1.dispatch",
+            "call_ff56fd8a93684e668288c777.dispatch",
+            "call_27731f41038b420ba564a8a7.dispatch",
+            "call_bf96f1092675469684998ad1.dispatch",
+            "call_28a4279c2cbf4e3a9ba39fc4.dispatch",
+            "call_eee4e6cd37404ab38870ebff.dispatch",
+            "call_3d384d510251413d87c67af7.dispatch",
+            "call_64902194359d44f59e0b2b18.dispatch",
+            "call_dcc7471fe80d479487dbace3.dispatch",
+            "call_09d5a01cf06f43d5b5560e87.dispatch"
+          ]
+        },
+        {
+          "id": "M9",
+          "score": 2,
+          "status": "scored",
+          "reason": "本题预先定义M9适用，不能改记N/A。最终答案仅提latest和另见10.x.x文档路径，明确说未能确定latest对应的确切TensorRT版本，也未给出有依据的TensorRT/Triton适用版本范围；依原M9第2档评分。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "docs.nvidia.com/.../latest/` 未标注具体 TensorRT 版本号（搜索结果中另见 10.x.x 路径存在），\"latest\" 对应的确切版本未在页面中标出"
+            }
+          ],
+          "lower": 2,
+          "upper": 2,
+          "evidence_refs": [
+            "ev-32"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M10",
+          "score": 4,
+          "status": "supported",
+          "reason": "操作指导具体且基本完整：trtexec 命令含完整参数（--onnx、--minShapes/--optShapes/--maxShapes/--shapes 及具体 shape 值）可直接照抄运行；Triton 侧给出 config.pbtxt 完整片段（platform、max_batch_size、input/output、dynamic_batching 块）；运行期 API 给出 set_optimization_profile_async(0, stream) 与 set_input_shape 调用顺序及 stream 一致性前提。仅需替换的均为用户环境值（模型路径、输入名、具体维度、batch 上限），且上下文有说明。未给5分的原因：final 自述 trtexec 完整参数列表需 --help 获取、preferred_batch_size 字段名单复数存疑、以及未给出完整端到端可运行脚本（如 config.pbtxt 与引擎构建的完整文件级示例需用户自行拼装），故按需替换环境参数但非完全免补写的4分。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "./trtexec --onnx=model.onnx \\\n  --minShapes=input:1x3x244x244 \\\n  --optShapes=input:16x3x244x244 \\\n  --maxShapes=input:32x3x244x244 \\\n  --shapes=input:5x3x244x244"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "  dynamic_batching {\n    max_queue_delay_microseconds: 100\n  }"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "完整参数列表需运行 `./trtexec --help`（README 本身未给出逐项格式规范，此点无法进一步核实）"
+            }
+          ],
+          "evidence_refs": [
+            "ev-33",
+            "ev-34",
+            "ev-35"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M11",
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing official constraint citations"
+            }
+          ],
+          "decisions": []
+        }
+      ],
+      "overall": {
+        "scale": "0–100",
+        "status": "incomplete_inputs",
+        "score": null,
+        "missing_inputs": [
+          {
+            "metric": "M2",
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence call_27731f41038b420ba564a8a7.result; M2: missing return evidence call_64902194359d44f59e0b2b18.result"
+          },
+          {
+            "metric": "M4",
+            "status": "insufficient_evidence",
+            "reason": "M4: missing official constraint citations"
+          }
+        ],
+        "decisions": []
+      },
+      "gate": {
+        "predictors": {
+          "errors": [
+            "M2: missing return evidence call_27731f41038b420ba564a8a7.result",
+            "M2: missing return evidence call_64902194359d44f59e0b2b18.result",
+            "M4: missing official constraint citations"
+          ],
+          "passed": false,
+          "scope": "structural evidence checks, not semantic validation"
+        },
+        "outcome": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        }
+      },
+      "assessment_files": {
+        "reviewed/development/case-d804bb3ac8dc-predictors.json": "fed347f6acfbc0707a956939b488c981732a1047875e676c8ab478694915d4ec",
+        "reviewed/development/case-d804bb3ac8dc-outcome.json": "e3af9cb59d93fd6d6df7b7710e8bc4b0d136fac9fc0ac623bb34c25aaaa15d3c",
+        "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+        "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+      },
+      "gate_passed": false,
+      "quote_issues": 0
     },
     {
       "task": "U",
@@ -12300,7 +12688,17 @@
       "ecosystem": "cuda",
       "model": "glm-5.3",
       "paired_analysis": true,
-      "collected": false
+      "collected": false,
+      "collection_status": "technical_attempts_exhausted",
+      "collection_failure": {
+        "task": "U",
+        "ecosystem": "cuda",
+        "reason": "two technical failures exhausted retry allowance",
+        "runs": [
+          "U-cuda-glm-5_3-standard-20260921T133705",
+          "U-cuda-glm-5_3-standard-20260921T134726"
+        ]
+      }
     },
     {
       "task": "V",
@@ -19716,12 +20114,12 @@
       },
       "assessment_files": {
         "reviewed/development/case-bc40ff67d07b-predictors.json": "88794346831576d7425b908b10ef20738dc55f4973be3d79c5e5feb240fc35b3",
-        "reviewed/development/case-bc40ff67d07b-outcome.json": "dbfc78564a51f1965da593bbd037345fe4cd18ab82325696cd6dae288d3dcb6e",
+        "reviewed/development/case-bc40ff67d07b-outcome.json": "b0d4399da29fdbc7a68f08fbefd044dc5ee867a8f6ce0b8c67e787effe3d7afc",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
       "gate_passed": true,
-      "quote_issues": 1
+      "quote_issues": 0
     },
     {
       "task": "L",
@@ -22681,7 +23079,309 @@
       "run_id": "R-cann-deepseek-v4_1-flash-standard-20260921T111937",
       "process": "runs/R-cann-deepseek-v4_1-flash-standard-20260921T111937/process.jsonl",
       "evaluation": "runs/R-cann-deepseek-v4_1-flash-standard-20260921T111937/evaluation.json",
-      "assessed": false
+      "assessed": true,
+      "metrics": [
+        {
+          "id": "M1",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "首次查询第5条即出现相关官方来源（hiascend.com 官方博客），属第2—5条命中档。",
+          "evidence": [
+            {
+              "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+              "quote": "5. [CANN精度调试工具详解](https://www.hiascend.com/developer/blog/details/02152211175104217059)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-1"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M2",
+          "score": null,
+          "lower": 3.5,
+          "upper": 4.125,
+          "status": "bounded",
+          "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+          "evidence": [
+            {
+              "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+              "quote": "**标题**: CANN精度调试工具详解\n\n[昇腾社区首页](https://www.hiascend.com/zh)"
+            },
+            {
+              "event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+              "quote": "**标题**: 溢出检测与解析-MindSpore训练场景-功能介绍-精度调试 msProbe-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分"
+            },
+            {
+              "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+              "quote": "**⚠️ 内容截断说明**: 文档正文在\"附录 → 自定义映射文件（cell_mapping）\"部分结束"
+            },
+            {
+              "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+              "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+            }
+          ],
+          "evidence_refs": [
+            "ev-2",
+            "ev-3",
+            "ev-4",
+            "ev-5"
+          ],
+          "event_refs": [],
+          "candidate_score": null,
+          "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+        },
+        {
+          "id": "M3",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "原题三大子项均有官方主流程与参数：loss scale（GradScaler dynamic/init_scale 参数、静态loss scale、梯度裁剪代码）、溢出检测（overflow_check 命令、参数表、输出JSON结构）、算子精度比对（compare 命令、参数表、指标公式、error/warning判定规则）。但 dump 采集配置（config.json 的 level/task 完整规格）、msprobe 安装要求等分支细节仅以链接引用未取回，且 compare 文档自述截断，故不满5档。",
+          "evidence": [
+            {
+              "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+              "quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)"
+            },
+            {
+              "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+              "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output"
+            },
+            {
+              "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+              "quote": "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output"
+            }
+          ],
+          "evidence_refs": [
+            "ev-6",
+            "ev-7",
+            "ev-8"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M4",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "官方页面各自标明版本（TorchNPU6.0.0、MindStudio26.0.0、MindStudio 81RC1、msProbe 1.0），且 TorchNPU 6.0.0 明确了 amp.GradScaler 的 dynamic/init_scale 参数在该版本的适用性，但 msprobe/msProbe 1.0 与 CANN/torch_npu 具体版本的配套对应关系未取得，完成版本锁定仍缺关系。",
+          "evidence": [
+            {
+              "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+              "quote": "适配简介-（可选）混合精度适配-关键特性适配-模型迁移-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区"
+            },
+            {
+              "event_id": "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+              "quote": "msProbe 使用指南[](https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/README.html#msprobe \"Link to this heading\")\n\nMindStudio Probe（msProbe）针对昇腾 AI 处理器提供全场景精度调试能力"
+            },
+            {
+              "event_id": "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+              "quote": "精度调试 | MindStudio 81RC1 文档 | 昇思MindSpore社区"
+            }
+          ],
+          "evidence_refs": [
+            "ev-9",
+            "ev-10",
+            "ev-11"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M5",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "三轮搜索中去重后相关独立第三方来源（CSDN×6、掘金、知乎、raybyte）≥6条，其中掘金与hwcomputing.csdn同题同日疑似镜像只计一次后仍超过6条。",
+          "evidence": [
+            {
+              "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+              "quote": "1. [昇腾模型迁移调试：msprobe/msdebug精度比对与溢出检测 ...](https://blog.csdn.net/weixin_27734811/article/details/165403202)"
+            },
+            {
+              "event_id": "call_00_IcDA6KKsJzYg1mBYIbv08271.result",
+              "quote": "5. [PyTorch的GradScaler - 知乎](https://zhuanlan.zhihu.com/p/2020212840615653898)"
+            },
+            {
+              "event_id": "call_00_xruSCSu2bJmJOlPB4WZs4352.result",
+              "quote": "5. [昇腾模型调试工具链实战：精度比对、溢出检测与性能调优指南](https://blog.csdn.net/weixin_33521678/article/details/165403199)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-12",
+            "ev-13",
+            "ev-14"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M6",
+          "score": null,
+          "lower": 1,
+          "upper": 5,
+          "status": "insufficient_evidence",
+          "reason": "存在第三方来源（CSDN/掘金/知乎等出现在搜索结果中，故非 not_applicable），但全部8次抓取均为官方页面，无任何第三方正文被取回，仅有搜索摘要片段，无法核验作者身份、日期有效性与多源一致性。",
+          "evidence": [
+            {
+              "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+              "quote": "2026年9月14日 · 昇腾AI处理器为此提供了msprobe/msdebug工具链：通过精度比对对比NPU与CPU参考实现的逐层张量输出"
+            }
+          ],
+          "evidence_refs": [
+            "ev-15"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M7",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "检索前回答给出了正确的排查框架与方法片段：区分loss不收敛与精度对不齐、GradScaler动态loss scale、msprobe工具存在性及overflow/compare功能、逐层比对思路——均被后续官方来源证实（msprobe确实提供溢出检测与精度比对）。但关键细节（确切命令、参数格式、环境变量名、CANN版本对应）先验自认不确定且确实缺失，属'能给出正确方法或解释片段，关键细节需外部补充'档。'NPU_ERR'环境变量等具体主张未获官方来源印证。",
+          "evidence": [
+            {
+              "event_id": "client-note-00005",
+              "quote": "昇腾有专门的精度工具 **msprobe**（MindStudio Probe，旧称 msaccucmp / precision_tool），提供 `overflow` 检测和精度比对（compare）两大子功能"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "不确定处（需检索核实）**\n- msprobe 的确切命令、子命令名（`overflow`、`compare`、`dump`）与参数格式。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-16",
+            "ev-17"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M8",
+          "score": 1,
+          "lower": 1,
+          "upper": 1,
+          "status": "scored",
+          "reason": "调度器实际dispatch计数 S+F=11",
+          "evidence": [],
+          "raw_status": "scored",
+          "evidence_refs": [],
+          "event_refs": [
+            "call_00_REwh4BoMyhb14ZoNmxh61116.dispatch",
+            "call_00_M3H10BtOmynGkCwbgQ3X7152.dispatch",
+            "call_00_xruSCSu2bJmJOlPB4WZs4352.dispatch",
+            "call_00_vyJD3LJBI5d909pgPIMD7606.dispatch",
+            "call_00_fbN2ePXQgH6EjkL5Hn9i4900.dispatch",
+            "call_00_rNZAxFnzXHEQdIlLFeTr7572.dispatch",
+            "call_00_Q1rK5ftwA7XIZE0srp5D2656.dispatch",
+            "call_00_rYtgCssmXlHofAX7GhNM8421.dispatch",
+            "call_00_IcDA6KKsJzYg1mBYIbv08271.dispatch",
+            "call_00_996CAgpxRVJNp9fpuZNC0912.dispatch",
+            "call_00_dVipZfPvLRTzrPvdqnw40477.dispatch"
+          ]
+        },
+        {
+          "id": "M9",
+          "score": 3,
+          "lower": null,
+          "upper": null,
+          "status": "supported",
+          "reason": "部分所需组件有明确版本依据：msProbe 工具文档（MindStudio Probe 1.0）、TorchNPU 6.0.0、MindStudio 81RC1/26.0.0 均在最终答案中给出；但 CANN 版本未取得，soc_version 及 CANN↔TorchNPU↔PyTorch 配套版本表未取回，且多套版本号之间的适用关系未确认，属于关键定版信息缺失，对应第3档。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "CANN 版本未在已取回正文中给出；`soc_version`、CANN↔TorchNPU↔PyTorch 配套版本表本轮未取回（msProbe 安装指南章节未抓取）。"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "msProbe 工具文档版本：**MindStudio Probe 1.0**（readthedocs）。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-18",
+            "ev-19"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M10",
+          "score": 3,
+          "lower": null,
+          "upper": null,
+          "status": "supported",
+          "reason": "答案给出了完整可抄写的核心命令（overflow_check、compare、merge_result 及 GradScaler 代码），参数与前置条件基本齐全；但整条流水线存在需补充的缺失内容：msProbe 安装命令未给出、dump 环节 config.json 完整字段示例未取回（overflow_check 与 compare 均依赖 dump 数据）、MindSpore 场景溢出检测完整命令正文未取回，须补充这些内容才能端到端照抄执行，对应第3档（3分须指出具体缺口，答案已在\"未能核实处\"自行列出）。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "数据 dump 的 `config.json` 完整字段示例（未抓取 `pytorch_data_dump_instruct`）。"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "msProbe 安装命令与 CANN/工具版本配套关系（`msprobe_install_guide` 未抓取）。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-20",
+            "ev-21",
+            "ev-22"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M11",
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "存在第三方来源（CSDN/掘金/知乎等出现在搜索结果中，故非 not_applicable），但全部8次抓取均为官方页面，无任何第三方正文被取回，仅有搜索摘要片段，无法核验作者身份、日期有效性与多源一致性。"
+            }
+          ],
+          "decisions": []
+        }
+      ],
+      "overall": {
+        "scale": "0–100",
+        "status": "incomplete_inputs",
+        "score": null,
+        "missing_inputs": [
+          {
+            "metric": "M6",
+            "status": "insufficient_evidence",
+            "reason": "存在第三方来源（CSDN/掘金/知乎等出现在搜索结果中，故非 not_applicable），但全部8次抓取均为官方页面，无任何第三方正文被取回，仅有搜索摘要片段，无法核验作者身份、日期有效性与多源一致性。"
+          }
+        ],
+        "decisions": []
+      },
+      "gate": {
+        "predictors": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        },
+        "outcome": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        }
+      },
+      "assessment_files": {
+        "reviewed/development/case-64ba07b9d1aa-predictors.json": "e71043582a74d11ca27bc18d738984f732a550ed7fde6723f2980fe4e29384ab",
+        "reviewed/development/case-64ba07b9d1aa-outcome.json": "12ec2481816ac96464d04eebedbd1fc10d9d9a0aafdc2ade4aba55a1977f1126",
+        "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+        "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+      },
+      "gate_passed": true,
+      "quote_issues": 1
     },
     {
       "task": "R",
@@ -22703,7 +23403,361 @@
       "run_id": "S-cann-deepseek-v4_1-flash-standard-20260921T112208",
       "process": "runs/S-cann-deepseek-v4_1-flash-standard-20260921T112208/process.jsonl",
       "evaluation": "runs/S-cann-deepseek-v4_1-flash-standard-20260921T112208/evaluation.json",
-      "assessed": false
+      "assessed": true,
+      "metrics": [
+        {
+          "id": "M1",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "首次查询第1条即为相关官方来源（mindspore.cn 官方文档，MindSpore Transformers 的 MindIE 服务化部署页），第4条亦为 hiascend.com 官方文档。",
+          "evidence": [
+            {
+              "event_id": "call_00_P552USehvBr74HzsEoAA3481.result",
+              "quote": "## 1. [MindIE服务化部署 | MindSpore Transformers 1.3.2 文档 | 昇 ...](https://www.mindspore.cn/mindformers/docs/zh-CN/r1.3.2/usage/mindie_deployment.html)"
+            },
+            {
+              "event_id": "call_00_P552USehvBr74HzsEoAA3481.result",
+              "quote": "## 4. [配置参数说明-MindIE1.0.RC3-昇腾社区](https://www.hiascend.com/document/detail/zh/mindie/10RC3/mindieservice/servicedev/mindie_service0285.html)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-1",
+            "ev-2"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M2",
+          "score": null,
+          "lower": null,
+          "upper": null,
+          "status": "insufficient_evidence",
+          "reason": "M2: missing return evidence call_00_ePq0xmuynR6jaDwqYeMR4390.result; M2: missing return evidence call_00_ZVOJRxebF2HSopyiQc2i5298.result",
+          "evidence": [
+            {
+              "event_id": "call_00_AUW0Rn1EVotHtEBHN31G1430.result",
+              "quote": "**标题**: 配置参数说明-MindIE Server-MindIE Service组件-MindIE Service开发指南-服务化集成部署-MindIE1.0.RC3开发文档-昇腾社区\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+            },
+            {
+              "event_id": "call_00_xhEh3DQtnECjMF67juqk4891.result",
+              "quote": "**标题**: 访问被拦截！\n\n您的请求疑似攻击行为！"
+            },
+            {
+              "event_id": "call_00_pMkcFAx70RI5OUdRxpmc8937.result",
+              "quote": "以下为该文档（服务参数配置）的完整正文提取，按原文层级（根配置 → ServerConfig → BackendConfig → ModelDeployConfig → ModelConfig → ScheduleConfig → LogConfig）组织"
+            },
+            {
+              "event_id": "call_00_wRLnVxqOMXIAEP2ATaJw3098.result",
+              "quote": "nohup ./bin/mindieservice_daemon > output.log 2>&1 &"
+            }
+          ],
+          "evidence_refs": [
+            "ev-3",
+            "ev-4",
+            "ev-5",
+            "ev-6"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M3",
+          "score": null,
+          "lower": 1,
+          "upper": 5,
+          "status": "insufficient_evidence",
+          "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取回正文覆盖配置文件全字段（ServerConfig/BackendConfig/ModelConfig/ScheduleConfig 含默认值与约束）、启动命令、安装步骤、版本配套；但原题涉及的完整 config.json 示例、HTTPS 证书生成步骤、权重转换细节分散且部分官方页（mindspore.cn 部署页、hiascend 配套表）被拦截未取得。",
+          "evidence": [
+            {
+              "event_id": "call_00_pMkcFAx70RI5OUdRxpmc8937.result",
+              "quote": "**port** | int32_t | `[1024, 65535]` | **必填**，默认 `1025` | 业务面 RESTful 接口绑定的端口号。"
+            },
+            {
+              "event_id": "call_00_wRLnVxqOMXIAEP2ATaJw3098.result",
+              "quote": "（推荐）使用后台进程方式启动服务。后台进程方式启动服务后，关闭窗口时进程也会保留。 nohup ./bin/mindieservice_daemon > output.log 2>&1 &"
+            },
+            {
+              "event_id": "call_00_ZVOJRxebF2HSopyiQc2i5298.result",
+              "quote": "./软件包名.run --install --quiet"
+            },
+            {
+              "event_id": "call_00_ePq0xmuynR6jaDwqYeMR4390.result",
+              "quote": "MindIE、CANN与Ascend Extension for Pytorch版本必须配套使用。其配套关系如[表1](https://mindie-llm-doc.readthedocs.io/zh-cn/latest/user_guide/install/source/preparing_software_and_dependencies/#table1)所示。"
+            }
+          ],
+          "raw_status": "scored",
+          "evidence_refs": [
+            "ev-7",
+            "ev-8",
+            "ev-9"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M4",
+          "score": null,
+          "lower": null,
+          "upper": null,
+          "status": "insufficient_evidence",
+          "reason": "M4: missing official constraint citations",
+          "evidence": [
+            {
+              "event_id": "call_00_ePq0xmuynR6jaDwqYeMR4390.result",
+              "quote": "MindIE CANN Ascend Extension for Pytorch 3.0.0 8.5.1 7.3.0（torch、torch_npu：2.9.0）（推荐）"
+            },
+            {
+              "event_id": "call_00_tkdessjSZ6FWlehGoRMK8554.result",
+              "quote": "**标题**: 准备软件包-安装开发环境-MindIE安装指南-环境准备-MindIE1.0.RC2开发文档-昇腾社区\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+            },
+            {
+              "event_id": "call_00_aacuzwo7bTTx85xxhXNC9851.result",
+              "quote": "MindIE与CANN版本必须配套使用，其版本配套关系如表1所示。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-10",
+            "ev-11",
+            "ev-12"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M5",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "搜索结果中去重后的相关独立第三方来源4条：CSDN两篇（qebrufoqibue、adasdfadsa）、知乎一篇、博客园一篇；GitHub Ascend/MindIE-LLM 为官方仓库排除。",
+          "evidence": [
+            {
+              "event_id": "call_00_P552USehvBr74HzsEoAA3481.result",
+              "quote": "## 5. [MindIE单机及多机服务化部署_docker mindie配置-CSDN博客](https://blog.csdn.net/qebrufoqibue/article/details/154350820)"
+            },
+            {
+              "event_id": "call_00_GTCak0ZFyfMt4lwmlocT9100.result",
+              "quote": "## 5. [MindIE服务化部署及性能调优介绍 - 知乎](https://zhuanlan.zhihu.com/p/1924488831194858710)"
+            },
+            {
+              "event_id": "call_00_aacuzwo7bTTx85xxhXNC9851.result",
+              "quote": "## 4. [MindIE+MindFormers推理方案指导 - cc_beolus - 博客园](https://www.cnblogs.com/beolus/p/18675728)"
+            },
+            {
+              "event_id": "call_00_mlvxF1U4UtY1hHNTVT5V6262.result",
+              "quote": "## 5. [MindIE 单机部署指南 - CSDN博客](https://blog.csdn.net/adasdfadsa/article/details/147870055)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-13",
+            "ev-14",
+            "ev-15",
+            "ev-16"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M6",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "关键操作性主张（配置路径、启动命令、端口）均有官方文档可追溯依据，且知乎片段与官方文档一致，未见未解决矛盾；但第三方来源仅以搜索摘要形式出现、未取回正文复核，独立交叉印证有限，未达5。",
+          "evidence": [
+            {
+              "event_id": "call_00_pMkcFAx70RI5OUdRxpmc8937.result",
+              "quote": "**run 包安装方式**获取路径：`{MindIE安装目录}/latest/mindie-service/conf/config.json`"
+            },
+            {
+              "event_id": "call_00_GTCak0ZFyfMt4lwmlocT9100.result",
+              "quote": "启动 MindIE 服务 修改MindIE配置文件 cd /usr/local/Ascend/mindie/latest/mindie-service/conf vim config.json"
+            },
+            {
+              "event_id": "call_00_wRLnVxqOMXIAEP2ATaJw3098.result",
+              "quote": "MindIE Server启动的默认IP地址和端口号为https://127.0.0.1:1025"
+            }
+          ],
+          "evidence_refs": [
+            "ev-17",
+            "ev-18",
+            "ev-19"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M7",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "检索前回答给出正确完整流程：MindIE-Service 路线、配置文件路径、mindieservice_daemon 启动、端口1025、OpenAI 兼容验证，均被检索证据印证；但具体字段默认值、版本配套关系等参数当时自认不确定，需外部补充。",
+          "evidence": [
+            {
+              "event_id": "client-note-00005",
+              "quote": "MindIE-Service 的配置文件一般在 `/usr/local/Ascend/mindie/latest/mindie-service/conf/config.json`"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "进入 `mindie-service` 目录执行 `./bin/mindieservice_daemon`（或 `python` 方式启动）"
+            },
+            {
+              "event_id": "call_00_wRLnVxqOMXIAEP2ATaJw3098.result",
+              "quote": "./bin/mindieservice_daemon"
+            }
+          ],
+          "evidence_refs": [
+            "ev-20",
+            "ev-21",
+            "ev-22"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M8",
+          "score": 1,
+          "lower": 1,
+          "upper": 1,
+          "status": "scored",
+          "reason": "调度器实际dispatch计数 S+F=11",
+          "evidence": [],
+          "raw_status": "scored",
+          "evidence_refs": [],
+          "event_refs": [
+            "call_00_P552USehvBr74HzsEoAA3481.dispatch",
+            "call_00_AUW0Rn1EVotHtEBHN31G1430.dispatch",
+            "call_00_pMkcFAx70RI5OUdRxpmc8937.dispatch",
+            "call_00_xhEh3DQtnECjMF67juqk4891.dispatch",
+            "call_00_GTCak0ZFyfMt4lwmlocT9100.dispatch",
+            "call_00_wRLnVxqOMXIAEP2ATaJw3098.dispatch",
+            "call_00_aacuzwo7bTTx85xxhXNC9851.dispatch",
+            "call_00_tkdessjSZ6FWlehGoRMK8554.dispatch",
+            "call_00_ePq0xmuynR6jaDwqYeMR4390.dispatch",
+            "call_00_mlvxF1U4UtY1hHNTVT5V6262.dispatch",
+            "call_00_ZVOJRxebF2HSopyiQc2i5298.dispatch"
+          ]
+        },
+        {
+          "id": "M9",
+          "score": 4,
+          "lower": null,
+          "upper": null,
+          "status": "applicable",
+          "reason": "答案给出了具体的版本配套组合（MindIE 3.0.0 ↔ CANN 8.5.1 ↔ Ascend Extension for PyTorch 7.3.0/torch 2.9.0推荐），来自readthedocs官方副本，有明确依据。但答案同时承认该表来自'latest'版本线副本，官方hiascend对应页仅返回标题未能交叉比对，且列出了多条Release线（1.0.RC2/RC3/1.0.0/3.0.0）要求用户按'文档版本=安装包版本'自行对齐，未定到一个确切版本组合。符合'所有组件给出有依据的适用范围，但至少一项尚未定到具体版本'的4分档。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "| MindIE | CANN | Ascend Extension for PyTorch |\n|---|---|---|\n| 3.0.0 | 8.5.1 | 7.3.0（torch、torch_npu：2.9.0）（推荐）；7.2.0（torch、torch_npu：2.1.0） |"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "版本配套表来自 readthedocs 副本的“表1”（MindIE 3.0.0 ↔ CANN 8.5.1），官方 hiascend 的对应页 `mindie_instg_0008.html` 本轮仅返回标题、未能取得正文表，**未做两处交叉比对**。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-23",
+            "ev-24"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M10",
+          "score": 4,
+          "lower": null,
+          "upper": null,
+          "status": "applicable",
+          "reason": "操作指导完整：安装命令（chmod、source、--check、--install --quiet）可直接执行，仅需替换明确标注的'软件包名.run'和路径等环境参数；启动命令完整（nohup ./bin/mindieservice_daemon及直接启动两种方式），成功回显明确；curl验证命令含完整参数说明；关键前置条件（bin目录无写权限不能直接启动、切换用户需rm -f /dev/shm/*、启动目录要求）均已说明。config.json拼装示例中ScheduleConfig为占位注释'/* 见上表 */'需参照上文表格填写，且示例标注为'按文档字段拼装，非官方原文整体示例'，故不满足5分'无需补写'标准，符合4分'仅需替换明确标识且有说明的用户环境参数'。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "nohup ./bin/mindieservice_daemon > output.log 2>&1 &"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "chmod +x 软件包名.run\n\n# 3) 先配置 ascend-toolkit 环境变量（root 默认路径示例）\nsource /usr/local/Ascend/ascend-toolkit/set_env.sh"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "**因此不能直接在 bin 目录内启动 `mindieservice_daemon`**；应在有写权限的目录（如 `Ascend-mindie-server_<version>_linux_<arch>` 目录或其下自建临时目录）启动。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-25",
+            "ev-26",
+            "ev-27"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M11",
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence call_00_ePq0xmuynR6jaDwqYeMR4390.result; M2: missing return evidence call_00_ZVOJRxebF2HSopyiQc2i5298.result"
+            },
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取回正文覆盖配置文件全字段（ServerConfig/BackendConfig/ModelConfig/ScheduleConfig 含默认值与约束）、启动命令、安装步骤、版本配套；但原题涉及的完整 config.json 示例、HTTPS 证书生成步骤、权重转换细节分散且部分官方页（mindspore.cn 部署页、hiascend 配套表）被拦截未取得。"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing official constraint citations"
+            }
+          ],
+          "decisions": []
+        }
+      ],
+      "overall": {
+        "scale": "0–100",
+        "status": "incomplete_inputs",
+        "score": null,
+        "missing_inputs": [
+          {
+            "metric": "M2",
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence call_00_ePq0xmuynR6jaDwqYeMR4390.result; M2: missing return evidence call_00_ZVOJRxebF2HSopyiQc2i5298.result"
+          },
+          {
+            "metric": "M3",
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取回正文覆盖配置文件全字段（ServerConfig/BackendConfig/ModelConfig/ScheduleConfig 含默认值与约束）、启动命令、安装步骤、版本配套；但原题涉及的完整 config.json 示例、HTTPS 证书生成步骤、权重转换细节分散且部分官方页（mindspore.cn 部署页、hiascend 配套表）被拦截未取得。"
+          },
+          {
+            "metric": "M4",
+            "status": "insufficient_evidence",
+            "reason": "M4: missing official constraint citations"
+          }
+        ],
+        "decisions": []
+      },
+      "gate": {
+        "predictors": {
+          "errors": [
+            "M2: missing return evidence call_00_ePq0xmuynR6jaDwqYeMR4390.result",
+            "M2: missing return evidence call_00_ZVOJRxebF2HSopyiQc2i5298.result",
+            "M4: missing official constraint citations"
+          ],
+          "passed": false,
+          "scope": "structural evidence checks, not semantic validation"
+        },
+        "outcome": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        }
+      },
+      "assessment_files": {
+        "reviewed/development/case-ab8f0838e58d-predictors.json": "da8d709027d09946ce1a9191e7979b471b4086f2dbd2ba4e9895a50e487b2724",
+        "reviewed/development/case-ab8f0838e58d-outcome.json": "64a7000fc878d73afe093da88fdd29d8308c911e7a9c5edcd20851a7b2104c8e",
+        "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+        "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+      },
+      "gate_passed": false,
+      "quote_issues": 1
     },
     {
       "task": "S",
@@ -22962,11 +24016,11 @@
         },
         {
           "id": "M4",
-          "score": null,
-          "lower": null,
-          "upper": null,
-          "status": "insufficient_evidence",
-          "reason": "M4: missing official constraint citations",
+          "score": 2,
+          "lower": 2,
+          "upper": 2,
+          "status": "scored",
+          "reason": "检索结果显示多套CANN版本并存（8.0.0.alpha001商用版、8.0.RC2.alpha002、80RC3alpha003、82RC1alpha003社区版），但已取得的官方正文中无ATC/ONNX/芯片适用关系说明；soc_version参数官方页多次抓取仅得框架，无法确定版本选择依据。",
           "evidence": [
             {
               "event_id": "WebFetch_3_b28af548.result",
@@ -23181,11 +24235,6 @@
               "metric": "M2",
               "status": "insufficient_evidence",
               "reason": "M2: ownership unknown WebFetch_9_b2d0fc77.result"
-            },
-            {
-              "metric": "M4",
-              "status": "insufficient_evidence",
-              "reason": "M4: missing official constraint citations"
             }
           ],
           "decisions": []
@@ -23200,11 +24249,6 @@
             "metric": "M2",
             "status": "insufficient_evidence",
             "reason": "M2: ownership unknown WebFetch_9_b2d0fc77.result"
-          },
-          {
-            "metric": "M4",
-            "status": "insufficient_evidence",
-            "reason": "M4: missing official constraint citations"
           }
         ],
         "decisions": []
@@ -23212,8 +24256,7 @@
       "gate": {
         "predictors": {
           "errors": [
-            "M2: ownership unknown WebFetch_9_b2d0fc77.result",
-            "M4: missing official constraint citations"
+            "M2: ownership unknown WebFetch_9_b2d0fc77.result"
           ],
           "passed": false,
           "scope": "structural evidence checks, not semantic validation"
@@ -23225,8 +24268,8 @@
         }
       },
       "assessment_files": {
-        "reviewed/development/case-cbe4ee4d1ade-predictors.json": "4ffd7b403880b84294b1f5d4bce59796965dfb894eb418ecbc00448ef5d5f8b4",
-        "reviewed/development/case-cbe4ee4d1ade-outcome.json": "308eaa53a177017891bdfd882c29f680464126bba4a914b79bb7bf1a8f61aad1",
+        "reviewed/development/case-cbe4ee4d1ade-predictors.json": "ac81c32960ef4a390abdcdf739f933a6e47f09fb4f77e07d2b7447d9cca194b4",
+        "reviewed/development/case-cbe4ee4d1ade-outcome.json": "6186f777501f0bcc0c4ee7e19930df2a3ce17bde1e707cbf9a31e0fcad372679",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
@@ -27124,12 +28167,12 @@
       },
       "assessment_files": {
         "reviewed/development/case-8a8813c94d69-predictors.json": "3a8bc32c6485ed3c566c9643b5a3f7b8a1e46c724d35e385065b49c94b2f3452",
-        "reviewed/development/case-8a8813c94d69-outcome.json": "b01c70551a01b1af67690c15bfda96c5c9b484993d436f99816fc5baff29b9e9",
+        "reviewed/development/case-8a8813c94d69-outcome.json": "53d31d70f676a466b79f2358ccc9d78f5fc67b88c973aba1ecc61de50412688f",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
       "gate_passed": true,
-      "quote_issues": 1
+      "quote_issues": 0
     },
     {
       "task": "G",
@@ -29566,10 +30609,10 @@
         },
         {
           "id": "M10",
-          "score": null,
+          "score": 4,
           "lower": null,
           "upper": null,
-          "status": "insufficient_evidence",
+          "status": "supported",
           "reason": "方式A给出完整可照抄的docker run命令，含全部--device与-v挂载及CentOS/BC-Linux的--pids-limit 409600前置条件，仅需替换明确标识的<镜像ID>和按卡号增减davinciX；方式B给出runtime安装、重启docker与ASCEND_VISIBLE_DEVICES用法。缺口：方式B的完整docker run示例因'在Docker客户端使用'页未取得正文而按环境变量说明给出，镜像具体地址未核实需用户到AscendHub确认，但方式A独立构成完整可执行路线，符合'仅需替换明确标识且有说明的用户环境参数'档。",
           "evidence": [
             {
@@ -29578,12 +30621,12 @@
             },
             {
               "event_id": "run-end",
-              "quote": "用法即 docker run -e ASCEND_VISIBLE_DEVICES=0,1 <镜像> ...（README 明确该环境变量决定挂载哪些卡；具体完整 docker run 示例所在官方章节……本次抓取只返回了导航框架，未取得正文"
+              "quote": "- 用法即 `docker run -e ASCEND_VISIBLE_DEVICES=0,1 <镜像> ...`（README 明确该环境变量决定挂载哪些卡；具体完整 docker run 示例所在官方章节\"在Docker客户端使用\"本次抓取只返回了导航框架，未取得正文，示例写法按该环境变量的官方说明给出）。"
             }
           ],
-          "raw_status": "supported",
           "evidence_refs": [
-            "ev-29"
+            "ev-29",
+            "ev-30"
           ],
           "event_refs": []
         },
@@ -29623,12 +30666,12 @@
       },
       "assessment_files": {
         "reviewed/development/case-b8ee3cf483b7-predictors.json": "5272b1226edfe9fef7fc81d4d9fe4c2f4d32462de8b022b44f079af8c984afb2",
-        "reviewed/development/case-b8ee3cf483b7-outcome.json": "c5918f4de7e18a37dfd97a76490c6487379ca6576b95655a98f5049eb44714db",
+        "reviewed/development/case-b8ee3cf483b7-outcome.json": "7354187e8ac93a123c5d8f86b9224d74d5d98b71d7e39179b98bc8f40cb8e21a",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
       "gate_passed": true,
-      "quote_issues": 1
+      "quote_issues": 0
     },
     {
       "task": "K",
@@ -31978,11 +33021,11 @@
         },
         {
           "id": "M4",
-          "score": null,
-          "lower": null,
-          "upper": null,
-          "status": "insufficient_evidence",
-          "reason": "M4: missing official constraint citations",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "doc1给出CANN9.0(商用/社区)与TorchNPU26.0.0的安装配套引用，属部分适用关系；但CANN各版本(8.1/8.2/8.3.RC/9.0商用)与torch_npu/PyTorch版本的完整对应矩阵未取得，完成版本选择所需对应关系仍缺，评3分。",
           "evidence": [
             {
               "event_id": "WebFetch_1_7dde33f6.result",
@@ -32156,37 +33199,35 @@
         {
           "id": "M11",
           "scale": "0–100",
-          "status": "incomplete_inputs",
+          "status": "bounded",
           "score": null,
-          "missing_inputs": [
-            {
-              "metric": "M4",
-              "status": "insufficient_evidence",
-              "reason": "M4: missing official constraint citations"
-            }
-          ],
-          "decisions": []
+          "lower": 71.98574592,
+          "upper": 72.73187328,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            71.9,
+            72.8
+          ]
         }
       ],
       "overall": {
         "scale": "0–100",
-        "status": "incomplete_inputs",
+        "status": "bounded",
         "score": null,
-        "missing_inputs": [
-          {
-            "metric": "M4",
-            "status": "insufficient_evidence",
-            "reason": "M4: missing official constraint citations"
-          }
-        ],
-        "decisions": []
+        "lower": 71.98574592,
+        "upper": 72.73187328,
+        "decisions": [],
+        "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+        "display_interval": [
+          71.9,
+          72.8
+        ]
       },
       "gate": {
         "predictors": {
-          "errors": [
-            "M4: missing official constraint citations"
-          ],
-          "passed": false,
+          "errors": [],
+          "passed": true,
           "scope": "structural evidence checks, not semantic validation"
         },
         "outcome": {
@@ -32196,12 +33237,12 @@
         }
       },
       "assessment_files": {
-        "reviewed/development/case-2317548a2df9-predictors.json": "4370855d3bc8e141c4f004399f4fc0da6d08740e87fbcbcbfd6b567679dfb734",
+        "reviewed/development/case-2317548a2df9-predictors.json": "29411442a361baece8b8a22bb0693aa1abae4b681def1e91adcf8912f79555c5",
         "reviewed/development/case-2317548a2df9-outcome.json": "72876c76263f84115b7316042344121cc62d6d47962eb4d886b862942acccd37",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
-      "gate_passed": false,
+      "gate_passed": true,
       "quote_issues": 0
     },
     {
@@ -32849,11 +33890,11 @@
         },
         {
           "id": "M2",
-          "score": null,
-          "lower": null,
-          "upper": null,
-          "status": "insufficient_evidence",
-          "reason": "M2: incomplete/duplicate fetch inventory; M2: ownership unknown WebFetch_1_75dd9582.result; M2: ownership unknown WebFetch_3_8dcdc2f1.result; M2: no assessable official document",
+          "score": 4.0,
+          "lower": 4.0,
+          "upper": 4.0,
+          "status": "scored",
+          "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
           "evidence": [
             {
               "event_id": "WebFetch_1_75dd9582.result",
@@ -32905,11 +33946,11 @@
         },
         {
           "id": "M4",
-          "score": null,
-          "lower": null,
-          "upper": null,
-          "status": "insufficient_evidence",
-          "reason": "M4: missing official constraint citations",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "官方页面直接给出弃用替代规则（torch.cuda.amp→torch.amp）与版本条件（recipe要求PyTorch 1.6+，torch.autocast新于1.10），直接套用即可确定所选接口适用关系，无冲突无缺失。",
           "evidence": [
             {
               "event_id": "WebFetch_3_8dcdc2f1.result",
@@ -33058,51 +34099,29 @@
         {
           "id": "M11",
           "scale": "0–100",
-          "status": "incomplete_inputs",
-          "score": null,
-          "missing_inputs": [
-            {
-              "metric": "M2",
-              "status": "insufficient_evidence",
-              "reason": "M2: incomplete/duplicate fetch inventory; M2: ownership unknown WebFetch_1_75dd9582.result; M2: ownership unknown WebFetch_3_8dcdc2f1.result; M2: no assessable official document"
-            },
-            {
-              "metric": "M4",
-              "status": "insufficient_evidence",
-              "reason": "M4: missing official constraint citations"
-            }
-          ],
-          "decisions": []
+          "status": "calculated",
+          "score": 96.0,
+          "lower": 96.0,
+          "upper": 96.0,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 96.0
         }
       ],
       "overall": {
         "scale": "0–100",
-        "status": "incomplete_inputs",
-        "score": null,
-        "missing_inputs": [
-          {
-            "metric": "M2",
-            "status": "insufficient_evidence",
-            "reason": "M2: incomplete/duplicate fetch inventory; M2: ownership unknown WebFetch_1_75dd9582.result; M2: ownership unknown WebFetch_3_8dcdc2f1.result; M2: no assessable official document"
-          },
-          {
-            "metric": "M4",
-            "status": "insufficient_evidence",
-            "reason": "M4: missing official constraint citations"
-          }
-        ],
-        "decisions": []
+        "status": "calculated",
+        "score": 96.0,
+        "lower": 96.0,
+        "upper": 96.0,
+        "decisions": [],
+        "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+        "display_score": 96.0
       },
       "gate": {
         "predictors": {
-          "errors": [
-            "M2: incomplete/duplicate fetch inventory",
-            "M2: ownership unknown WebFetch_1_75dd9582.result",
-            "M2: ownership unknown WebFetch_3_8dcdc2f1.result",
-            "M2: no assessable official document",
-            "M4: missing official constraint citations"
-          ],
-          "passed": false,
+          "errors": [],
+          "passed": true,
           "scope": "structural evidence checks, not semantic validation"
         },
         "outcome": {
@@ -33112,12 +34131,12 @@
         }
       },
       "assessment_files": {
-        "reviewed/development/case-b8c423d81dec-predictors.json": "28cd94e3a545a611c1a30c152113b6281f5d386b513360fb108f8f746c1746a3",
+        "reviewed/development/case-b8c423d81dec-predictors.json": "71980fe0e9ab7c88fd98bbdd38f0a7d8ed33ac20baade09c855c06545f98f536",
         "reviewed/development/case-b8c423d81dec-outcome.json": "1f663cb56c9c598780c2047f1fc85b1c51c4bc8d14630ca510aaee545d57ec72",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
-      "gate_passed": false,
+      "gate_passed": true,
       "quote_issues": 0
     },
     {
@@ -33219,11 +34238,11 @@
         },
         {
           "id": "M4",
-          "score": null,
-          "lower": null,
-          "upper": null,
-          "status": "insufficient_evidence",
-          "reason": "M4: missing official constraint citations",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "ALLOC_CONF 各参数的版本适用关系由官方使用约束直接给出（expandable_segments 需 HDK 23.0.0+；page_size 需 HDK 25.0.RC1+/CANN商发8.1.RC1+；TorchNPU 26.2.0+ 支持 PYTORCH_ALLOC_CONF），可直接套用；但适用范围内的检查点接口未取得任何官方版本关系，缺失关系存在，不能打4/5；官方源之间未见未消解冲突，判3。",
           "evidence": [
             {
               "event_id": "WebFetch_1_4df161ff.result",
@@ -33426,37 +34445,35 @@
         {
           "id": "M11",
           "scale": "0–100",
-          "status": "incomplete_inputs",
+          "status": "bounded",
           "score": null,
-          "missing_inputs": [
-            {
-              "metric": "M4",
-              "status": "insufficient_evidence",
-              "reason": "M4: missing official constraint citations"
-            }
-          ],
-          "decisions": []
+          "lower": 72.669696,
+          "upper": 73.18784,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            72.6,
+            73.2
+          ]
         }
       ],
       "overall": {
         "scale": "0–100",
-        "status": "incomplete_inputs",
+        "status": "bounded",
         "score": null,
-        "missing_inputs": [
-          {
-            "metric": "M4",
-            "status": "insufficient_evidence",
-            "reason": "M4: missing official constraint citations"
-          }
-        ],
-        "decisions": []
+        "lower": 72.669696,
+        "upper": 73.18784,
+        "decisions": [],
+        "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+        "display_interval": [
+          72.6,
+          73.2
+        ]
       },
       "gate": {
         "predictors": {
-          "errors": [
-            "M4: missing official constraint citations"
-          ],
-          "passed": false,
+          "errors": [],
+          "passed": true,
           "scope": "structural evidence checks, not semantic validation"
         },
         "outcome": {
@@ -33466,12 +34483,12 @@
         }
       },
       "assessment_files": {
-        "reviewed/development/case-57e686704c8c-predictors.json": "3da67bd054d6d9ac7afaf60ea0c139f70e928850819294227655f95a09d781a5",
-        "reviewed/development/case-57e686704c8c-outcome.json": "0023ed7cb7de0f4fd68033cd1d3f401b679dca4bdb8043e971aa139948d54c71",
+        "reviewed/development/case-57e686704c8c-predictors.json": "e85fb86a610a7ac01b5d64a65097400ede6371e9661a534dfd4bc902e0ac0e50",
+        "reviewed/development/case-57e686704c8c-outcome.json": "ed04bcf238f1ee44e12e20c7930e3b7e3efe57acfd9a58f70dd549290935da36",
         "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
         "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
       },
-      "gate_passed": false,
+      "gate_passed": true,
       "quote_issues": 0
     },
     {
@@ -33887,7 +34904,321 @@
       "run_id": "R-cann-kimi-k3-2-standard-20260921T125935",
       "process": "runs/R-cann-kimi-k3-2-standard-20260921T125935/process.jsonl",
       "evaluation": "runs/R-cann-kimi-k3-2-standard-20260921T125935/evaluation.json",
-      "assessed": false
+      "assessed": true,
+      "metrics": [
+        {
+          "id": "M1",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "首次查询即出现相关官方来源，排名第2（hiascend.com 算子溢出分析文档），符合第2—5条出现官方源的标准。",
+          "evidence": [
+            {
+              "event_id": "WebSearch_0_2775e1a1.result",
+              "quote": "## 2. [算子溢出分析-算子溢出分析-精度比对工具使用指南（训练 ...](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-1"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M2",
+          "score": null,
+          "lower": null,
+          "upper": null,
+          "status": "insufficient_evidence",
+          "reason": "M2: missing return evidence WebFetch_1_73ad8bd7.result",
+          "evidence": [
+            {
+              "event_id": "WebFetch_1_73ad8bd7.result",
+              "quote": "python3 msaccucmp.py overflow -d dump_path -out output_path [-n topn]"
+            },
+            {
+              "event_id": "WebFetch_3_50f8c669.result",
+              "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+            },
+            {
+              "event_id": "WebFetch_6_83c1a7db.result",
+              "quote": "页面找不到或无权限"
+            },
+            {
+              "event_id": "WebFetch_8_4dc98a33.result",
+              "quote": "[昇腾社区首页](https://www.hiascend.com/zh)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-2",
+            "ev-3",
+            "ev-4",
+            "ev-5"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M3",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "算子溢出检测有完整操作段落（命令、参数、步骤、输出解读），精度比对仅有简介级概览（指标列表、dump类型），但比对命令操作细节及loss scale排查章节未取得（tfmigr_000002仅返回前言），关键步骤仍有缺失。",
+          "evidence": [
+            {
+              "event_id": "WebFetch_1_73ad8bd7.result",
+              "quote": "1. 以HwHiAiUser用户登录开发环境。\n2. 进入/home/HwHiAiUser/Ascend/ascend-toolkit/latest/toolkit/tools/operator_cmp/compare目录。\n3. 执行算子溢出检测命令。"
+            },
+            {
+              "event_id": "WebFetch_10_8eeb3b24.result",
+              "quote": "目前提供Vector比对能力，包含余弦相似度、最大绝对误差、累积相对误差、欧氏相对距离、KL散度、标准差的算法比对。"
+            },
+            {
+              "event_id": "WebFetch_11_f56cecf9.result",
+              "quote": "# 前言\n\n#### 概述\n\n本文档适用于AI算法工程师"
+            }
+          ],
+          "evidence_refs": [
+            "ev-6",
+            "ev-7",
+            "ev-8"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M4",
+          "score": 2,
+          "lower": 2,
+          "upper": 2,
+          "status": "scored",
+          "reason": "抓取到的官方文档均标注版本（CANN商用版5.0.4.6），搜索结果显示同一工具文档存在于多个版本路径（5046/601/850/mindstudio 700），但取得的正文中无任何版本适用关系说明，无法判断用户的CANN版本应选哪套工具接口。",
+          "evidence": [
+            {
+              "event_id": "WebFetch_1_73ad8bd7.result",
+              "quote": "CANN商用版5.0.4.6开发文档-昇腾社区"
+            },
+            {
+              "event_id": "WebSearch_9_68d6e34f.result",
+              "quote": "https://www.hiascend.com/document/detail/zh/canncommercial/601/devtools/auxiliarydevtool/atlasaccuracy_16_0055.html"
+            }
+          ],
+          "evidence_refs": [
+            "ev-9",
+            "ev-10"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M5",
+          "score": null,
+          "lower": 3,
+          "upper": 4,
+          "status": "bounded",
+          "reason": "搜索结果中独立第三方来源：2篇CSDN独立技术文章（weixin_28833069、weixin_33521678）+1篇掘金文章 + 1篇知乎文章（p/589651588），共4条确定计数；'CANN文档速递12期'跨平台转载内容独立性和非官方性不确定，若计入则达5条。区间[3,4]。",
+          "evidence": [
+            {
+              "event_id": "WebSearch_0_2775e1a1.result",
+              "quote": "## 1. [昇腾NPU模型迁移调试工具链：精度比对、溢出检测与性能 ...](https://blog.csdn.net/weixin_28833069/article/details/164776792)"
+            },
+            {
+              "event_id": "WebSearch_0_2775e1a1.result",
+              "quote": "## 3. [昇腾模型调试工具链实战：精度比对、溢出检测与性能调优 ...](https://blog.csdn.net/weixin_33521678/article/details/165403199)"
+            },
+            {
+              "event_id": "WebSearch_2_2ad4b063.result",
+              "quote": "## 4. [基于训练和推理场景下的MindStudio高精度对比 - 知乎](https://zhuanlan.zhihu.com/p/589651588)"
+            }
+          ],
+          "evidence_refs": [
+            "ev-11",
+            "ev-12",
+            "ev-13"
+          ],
+          "event_refs": [],
+          "candidate_score": 3,
+          "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+        },
+        {
+          "id": "M6",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "搜索摘要中部分关键说法（精度比对工具的定位和能力、msaccucmp/msprobe工具存在性）可由已取得的官方文档印证，但第三方全文均未抓取成功（唯一CSDN fetch被预算阻断），更多关键操作细节未获核验，也无独立来源交叉印证。",
+          "evidence": [
+            {
+              "event_id": "WebSearch_0_2775e1a1.result",
+              "quote": "昇腾NPU基于CANN工具链，提供了msprobe、msdebug …"
+            },
+            {
+              "event_id": "WebFetch_10_8eeb3b24.result",
+              "quote": "精度比对工具能够定位到模型中算子的精度问题，提供比对Atlas 训练系列产品运算结果与原始网络基于GPU/CPU运算结果"
+            },
+            {
+              "event_id": "WebFetch_12_13421824_916a37b2.result",
+              "quote": "Error: BENCHMARK_BUDGET_DENIED fetch: 上限8次，本请求未派发。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-14",
+            "ev-15",
+            "ev-16"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M7",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "检索前回答给出了正确的完整排查流程（分层对比、loss scale检查、溢出检测、算子精度比对的方法框架），核心概念和工具方向均正确；但具体参数、环境变量名称、工具路径等需外部补充，且msaccucmp overflow命令参数与官方实际格式略有出入。",
+          "evidence": [
+            {
+              "event_id": "client-note-00005",
+              "quote": "分层排查：输入数据 → 模型权重 → 前向输出 → loss → 梯度 → 参数更新，逐层 dump 对比 CPU/GPU 基线。"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "msaccucmp.py compare -m my_dump -g golden_dump -f fusion_rule -out out_dir` 形式的命令"
+            },
+            {
+              "event_id": "WebFetch_1_73ad8bd7.result",
+              "quote": "python3 msaccucmp.py overflow -d dump_path -out output_path [-n topn]"
+            }
+          ],
+          "evidence_refs": [
+            "ev-17",
+            "ev-18",
+            "ev-19"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M8",
+          "score": 1,
+          "lower": 1,
+          "upper": 1,
+          "status": "scored",
+          "reason": "调度器实际dispatch计数 S+F=12",
+          "evidence": [],
+          "evidence_refs": [],
+          "event_refs": [
+            "WebSearch_0_2775e1a1.dispatch",
+            "WebFetch_1_73ad8bd7.dispatch",
+            "WebSearch_2_2ad4b063.dispatch",
+            "WebFetch_3_50f8c669.dispatch",
+            "WebSearch_4_7bf4adb9.dispatch",
+            "WebFetch_5_9b39f05a.dispatch",
+            "WebFetch_6_83c1a7db.dispatch",
+            "WebFetch_7_dde69243.dispatch",
+            "WebFetch_8_4dc98a33.dispatch",
+            "WebSearch_9_68d6e34f.dispatch",
+            "WebFetch_10_8eeb3b24.dispatch",
+            "WebFetch_11_f56cecf9.dispatch"
+          ]
+        },
+        {
+          "id": "M9",
+          "score": 3,
+          "lower": null,
+          "upper": null,
+          "status": "partial",
+          "reason": "适用范围为'所用溢出检测与精度排查工具接口'。已锁定：溢出检测与比对简介正文确认来自 CANN 商用版 5.0.4.6，工具路径明确，属具体版本。未确定：msaccucmp.py compare 命令参数、msprobe/msdebug 新工具链及 5.0.4.6 与 8.5.0 的命令差异均未核实，答案自己承认'未能核实 5.0.4.6 与 8.5.0 的命令差异'。部分所需组件有明确版本依据（msaccucmp@5.0.4.6），其余（compare 命令、msprobe）未确定，符合第 3 档。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "已核实正文来自 **CANN 商用版 5.0.4.6** 文档集（msaccucmp.py 溢出分析、精度比对简介）"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "本次**未能核实 5.0.4.6 与 8.5.0 的命令差异"
+            }
+          ],
+          "evidence_refs": [
+            "ev-20",
+            "ev-21"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M10",
+          "score": 3,
+          "lower": null,
+          "upper": null,
+          "status": "partial",
+          "reason": "溢出检测部分操作指导完整：命令行、参数、目录、示例、结果文件解读齐全，可照抄执行（该部分接近 4-5 分）。但存在具体缺口：(1) 前置的溢出数据采集（dump 文件/Debug file 的环境变量与开关）答案明确标注'未核实'，导致主命令的前置条件无法照抄完成；(2) 精度比对 compare 命令参数表未提供；(3) loss scale 部分仅有方法论描述，无具体命令/API。有具体操作方案但需补充缺失内容才能完整执行，符合第 3 档，缺口已逐项指出。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "python3 msaccucmp.py overflow -d /MyApp20/dump -out /MyApp20/out -n 3"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "「溢出数据采集」具体章节本次未取到正文，采集用的环境变量/开关**未核实"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "compare 命令的完整参数**未核实**，不在此补造"
+            }
+          ],
+          "evidence_refs": [
+            "ev-22",
+            "ev-23",
+            "ev-24"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M11",
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence WebFetch_1_73ad8bd7.result"
+            }
+          ],
+          "decisions": []
+        }
+      ],
+      "overall": {
+        "scale": "0–100",
+        "status": "incomplete_inputs",
+        "score": null,
+        "missing_inputs": [
+          {
+            "metric": "M2",
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence WebFetch_1_73ad8bd7.result"
+          }
+        ],
+        "decisions": []
+      },
+      "gate": {
+        "predictors": {
+          "errors": [
+            "M2: missing return evidence WebFetch_1_73ad8bd7.result"
+          ],
+          "passed": false,
+          "scope": "structural evidence checks, not semantic validation"
+        },
+        "outcome": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        }
+      },
+      "assessment_files": {
+        "reviewed/development/case-75773b817b12-predictors.json": "5a95d5f5ae2fb917d9c223578f8d9dfeabbc28b9254b758b39ab3bf96606c266",
+        "reviewed/development/case-75773b817b12-outcome.json": "8e51289fa5e4512a1dbe60825a037bbfc0cd315bcd1e53284ff04f4387bcd65f",
+        "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+        "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+      },
+      "gate_passed": false,
+      "quote_issues": 0
     },
     {
       "task": "R",
@@ -33898,7 +35229,366 @@
       "run_id": "R-cuda-kimi-k3-2-standard-20260921T125244",
       "process": "runs/R-cuda-kimi-k3-2-standard-20260921T125244/process.jsonl",
       "evaluation": "runs/R-cuda-kimi-k3-2-standard-20260921T125244/evaluation.json",
-      "assessed": false
+      "assessed": true,
+      "metrics": [
+        {
+          "id": "M1",
+          "score": null,
+          "lower": 1,
+          "upper": 4,
+          "status": "bounded",
+          "reason": "4次查询均完成且返回前5条。预算内未出现任何 pytorch.org 域名结果（第3次 site:pytorch.org 限定查询也只返回 runebook/CSDN/知乎/ac.cn 镜像）。唯一'官方'候选是第1次查询第4位的 docs.pytorch.ac.cn（PyTorch 文档中文镜像，归属未确认为官方本体）。若镜像计为官方来源则档4（首次查询第2—5条命中）；若仅认 pytorch.org 则预算内未发现官方来源（档1）。归属未知，保留区间。",
+          "evidence": [
+            {
+              "event_id": "WebSearch_0_aedad955.result",
+              "quote": "自动微分包 - torch.autograd — PyTorch 2.13 文档 - PyTorch ..."
+            },
+            {
+              "event_id": "WebSearch_2_3b470c82.result",
+              "quote": "https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.detect_anomaly"
+            },
+            {
+              "event_id": "WebSearch_2_3b470c82.result",
+              "quote": "site:pytorch.org torch.autograd detect_anomaly documentation"
+            }
+          ],
+          "evidence_refs": [
+            "ev-1",
+            "ev-2",
+            "ev-3"
+          ],
+          "event_refs": [],
+          "candidate_score": null,
+          "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+        },
+        {
+          "id": "M2",
+          "score": null,
+          "lower": 3.25,
+          "upper": 3.75,
+          "status": "bounded",
+          "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+          "evidence": [
+            {
+              "event_id": "WebFetch_4_5e782f2b.result",
+              "quote": "该章节在本页中为**完整内容，未被截断**"
+            },
+            {
+              "event_id": "WebFetch_5_a8f08d60.result",
+              "quote": "**所提供的页面内容不完整 / 已被截断。**"
+            },
+            {
+              "event_id": "WebFetch_6_ec06b821.result",
+              "quote": "The site configured at this address does not contain the requested file."
+            },
+            {
+              "event_id": "WebFetch_7_83f462d2.result",
+              "quote": "内容与代码均未被截断，该页所提供的文本覆盖了所有请求章节的结尾"
+            }
+          ],
+          "evidence_refs": [
+            "ev-4",
+            "ev-5",
+            "ev-6",
+            "ev-7"
+          ],
+          "event_refs": [],
+          "candidate_score": null,
+          "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+        },
+        {
+          "id": "M3",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "scored",
+          "reason": "已取得官方正文对 NaN 定位（detect_anomaly/set_detect_anomaly 签名、check_nan 参数、性能警告、示例）与 AMP NaN 机制（fp16 上限65504、scale/unscale_/clip_grad_norm_ 完整工作流、BCE 约束）给出完整解释与操作段落；但原题明确列举的学习率排查（降lr/warmup/lr finder）与数据侧检查（isfinite/标签范围/坏样本定位）在取得的官方正文中完全没有对应内容，关键步骤缺失→3。",
+          "evidence": [
+            {
+              "event_id": "WebFetch_4_5e782f2b.result",
+              "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error. Default `True`."
+            },
+            {
+              "event_id": "WebFetch_7_83f462d2.result",
+              "quote": "If these gradients do not contain infs or NaNs, optimizer.step() is then called,"
+            },
+            {
+              "event_id": "WebFetch_5_a8f08d60.result",
+              "quote": "If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible."
+            }
+          ],
+          "evidence_refs": [
+            "ev-8",
+            "ev-9",
+            "ev-10"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M4",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "需自行合并官方约束才能确定适用形式：(1) stable 2.14 文档收录 detect_anomaly/set_detect_anomaly 且无任何 New in version/Deprecated 标注；(2) amp 页明确弃用 torch.cuda.amp.* 并给出 torch.amp.autocast(\"cuda\")/torch.amp.GradScaler(\"cuda\") 替代规则及 new in version 1.10。合并后可确定任务所用排查接口的当前适用形式→4；无直接覆盖全部接口的单一版本适用表，故非5。GradScaler 类页404但所需弃用对应关系已由 amp.html 覆盖，无未消解冲突。",
+          "evidence": [
+            {
+              "event_id": "WebFetch_4_5e782f2b.result",
+              "quote": "本文档属于 **PyTorch v2.14.0 (stable)**"
+            },
+            {
+              "event_id": "WebFetch_4_5e782f2b.result",
+              "quote": "`detect_anomaly` 和 `set_detect_anomaly` 这两个 API **没有附带任何 \"New in version X\" / \"Deprecated since version X\" 的版本变更注释**"
+            },
+            {
+              "event_id": "WebFetch_5_a8f08d60.result",
+              "quote": "`torch.autocast` and `torch.cpu.amp.autocast` are new in version `1.10`."
+            },
+            {
+              "event_id": "WebFetch_5_a8f08d60.result",
+              "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)`"
+            }
+          ],
+          "evidence_refs": [
+            "ev-11",
+            "ev-12",
+            "ev-13",
+            "ev-14"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M5",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "统一预算内去重计数：相关独立第三方来源7条——CSDN×3（ybacm/iii12/vivi_cin）、知乎×3（p/443166496、p/2057485938033537412、p/461202163）、CSDN weixin_28694295×1（wenku.csdn 专栏与其标题相同，判为转载仅计一次）。runebook/it-docs/pytorch.ac.cn 为官方文档镜像不计。7≥6→5。首次发现：第1次查询第1条（CSDN ybacm），1次查询即命中。",
+          "evidence": [
+            {
+              "event_id": "WebSearch_0_aedad955.result",
+              "quote": "https://blog.csdn.net/ybacm/article/details/131528711"
+            },
+            {
+              "event_id": "WebSearch_0_aedad955.result",
+              "quote": "https://blog.csdn.net/iii12/article/details/154371958"
+            },
+            {
+              "event_id": "WebSearch_1_3d05be09.result",
+              "quote": "https://zhuanlan.zhihu.com/p/443166496"
+            },
+            {
+              "event_id": "WebSearch_1_3d05be09.result",
+              "quote": "https://blog.csdn.net/vivi_cin/article/details/143350841"
+            },
+            {
+              "event_id": "WebSearch_1_3d05be09.result",
+              "quote": "https://zhuanlan.zhihu.com/p/2057485938033537412"
+            },
+            {
+              "event_id": "WebSearch_2_3b470c82.result",
+              "quote": "https://zhuanlan.zhihu.com/p/461202163"
+            },
+            {
+              "event_id": "WebSearch_3_a1b21747.result",
+              "quote": "https://blog.csdn.net/weixin_28694295/article/details/160580104"
+            }
+          ],
+          "evidence_refs": [
+            "ev-15",
+            "ev-16",
+            "ev-17",
+            "ev-18",
+            "ev-19",
+            "ev-20",
+            "ev-21"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M6",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "scored",
+          "reason": "第三方可见关键说法（detect_anomaly 可定位 NaN/梯度错误、AMP fp16 溢出致 NaN、scaler 遇 inf/NaN 跳过 step）彼此一致且与抓取到的官方正文一致，未见未消解矛盾；但全部第三方正文均未抓取，作者权威性无法从摘要片段确认，文章内其余说法未核验，独立交叉印证停留在片段层面→4（非5）。",
+          "evidence": [
+            {
+              "event_id": "WebSearch_1_3d05be09.result",
+              "quote": "1.计算loss 时，出现了除以0的情况2.loss过大，被半精度判断为inf"
+            },
+            {
+              "event_id": "WebSearch_2_3b470c82.result",
+              "quote": "然后使用了 detect_anomaly () 来检测"
+            },
+            {
+              "event_id": "WebFetch_7_83f462d2.result",
+              "quote": "otherwise, optimizer.step() is skipped."
+            },
+            {
+              "event_id": "WebFetch_4_5e782f2b.result",
+              "quote": "Context-manager that enables anomaly detection for the autograd engine."
+            }
+          ],
+          "evidence_refs": [
+            "ev-22",
+            "ev-23",
+            "ev-24",
+            "ev-25"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M7",
+          "score": 5,
+          "lower": 5,
+          "upper": 5,
+          "status": "scored",
+          "reason": "检索前回答已覆盖原题三大支柱与完整系统流程：NaN 定位（set_detect_anomaly/detect_anomaly，事后与官方正文核对一致，含 check_nan 语义）、梯度爆炸（clip_grad_norm_ 返回范数、AMP fp16>65504 溢出，均获官方正文印证）、学习率（÷10、warmup、lr finder）、数据（isfinite 断言、脏标签、batch 二分）、数值稳定算子与 CUDA 工具，并正确预判了 cuda.amp→torch.amp 迁移（官方弃用警告证实）。流程、解释、参数与约束均准确覆盖→5。",
+          "evidence": [
+            {
+              "event_id": "client-note-00005",
+              "quote": "PyTorch 开启 `torch.autograd.set_detect_anomaly(True)`（或 `with torch.autograd.detect_anomaly():`），能在反向传播产生 NaN 时抛出并指出是哪个算子/前向节点引入。"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "学习率过大是 loss 发散最常见原因：降低 lr（如 ÷10）、使用 warmup（线性 warmup 若干 step）、或 lr finder。"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "若 loss scale 不合适或模型中出现 fp16 溢出（>65504），会产生 inf → NaN"
+            },
+            {
+              "event_id": "client-note-00005",
+              "quote": "输入含 NaN/Inf：`assert torch.isfinite(x).all()` 检查数据管道；脏标签（如分类 target 为负数或 ≥ num_classes）。"
+            },
+            {
+              "event_id": "WebFetch_5_a8f08d60.result",
+              "quote": "cannot operate in the fp16 numerical range of max 65504 and will cause gradients to overflow instead of underflow"
+            },
+            {
+              "event_id": "WebFetch_5_a8f08d60.result",
+              "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)`"
+            }
+          ],
+          "evidence_refs": [
+            "ev-26",
+            "ev-27",
+            "ev-28",
+            "ev-29",
+            "ev-30",
+            "ev-31"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M8",
+          "score": 2,
+          "lower": 2,
+          "upper": 2,
+          "status": "scored",
+          "reason": "调度器实际dispatch计数 S+F=8",
+          "evidence": [],
+          "evidence_refs": [],
+          "event_refs": [
+            "WebSearch_0_aedad955.dispatch",
+            "WebSearch_1_3d05be09.dispatch",
+            "WebSearch_2_3b470c82.dispatch",
+            "WebSearch_3_a1b21747.dispatch",
+            "WebFetch_4_5e782f2b.dispatch",
+            "WebFetch_5_a8f08d60.dispatch",
+            "WebFetch_6_ec06b821.dispatch",
+            "WebFetch_7_83f462d2.dispatch"
+          ]
+        },
+        {
+          "id": "M9",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "supported",
+          "reason": "所用接口（detect_anomaly/set_detect_anomaly、autocast、torch.amp.GradScaler、unscale_+clip 流程）均给出有依据的适用关系：autocast 标注 'new in version 1.10'（WebFetch_5 官方版本历史原文），GradScaler 新旧 API 迁移有官方弃用警告（WebFetch_5：'torch.cuda.amp.GradScaler(args...) ... is deprecated. Please use torch.amp.GradScaler(\"cuda\", args...) instead.'），anomaly detection 为 2.14 stable 现行 API（WebFetch_4：无 deprecated/beta 标注）。但 set_detect_anomaly 的具体引入版本在答案中明确标注未核实，未定到具体版本，符合第4档（全部组件有依据范围，至少一项未定具体版本）。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "`torch.autocast` | \"new in version 1.10\" | pytorch.org/docs/stable/amp.html"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "**未核实处**：compute-sanitizer 具体命令行参数、TF32 开关的官方文档页、`set_detect_anomaly` 的具体引入版本，本次检索未覆盖"
+            }
+          ],
+          "evidence_refs": [
+            "ev-32",
+            "ev-33"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M10",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "supported",
+          "reason": "各步骤给出完整可执行代码/命令：anomaly detection 开关与上下文管理器、逐层梯度检查循环、unscale_→clip_grad_norm_→step→update 流程（与官方 amp_examples 示例逐字一致，WebFetch_7 证实）、autocast+GradScaler 典型流程、数据 isfinite 断言、CUDA_LAUNCH_BLOCKING=1 与 compute-sanitizer --tool memcheck 完整命令。仅需替换 model/input/target/loss_fn 等用户环境参数（第4档允许）。compute-sanitizer 子参数与 TF32 开关已如实标注未核实，但给出的命令行本身完整可运行，不需修正。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "scaler.unscale_(optimizer)                       # AMP 下必须先 unscale 再 clip"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "- `CUDA_LAUNCH_BLOCKING=1 python train.py`：同步 kernel 执行，报错栈指向真正出错 kernel。"
+            }
+          ],
+          "evidence_refs": [
+            "ev-34",
+            "ev-35"
+          ],
+          "event_refs": []
+        },
+        {
+          "id": "M11",
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 88.36,
+          "lower": 88.36,
+          "upper": 88.36,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 88.4
+        }
+      ],
+      "overall": {
+        "scale": "0–100",
+        "status": "calculated",
+        "score": 88.36,
+        "lower": 88.36,
+        "upper": 88.36,
+        "decisions": [],
+        "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+        "display_score": 88.4
+      },
+      "gate": {
+        "predictors": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        },
+        "outcome": {
+          "errors": [],
+          "passed": true,
+          "scope": "structural evidence checks, not semantic validation"
+        }
+      },
+      "assessment_files": {
+        "reviewed/development/case-1a4d5951ea99-predictors.json": "6d7f9c1afd87da1bba348bb08a8fc521d0eba8daea24d8cf949fb3c84cc908b2",
+        "reviewed/development/case-1a4d5951ea99-outcome.json": "474a0a4bbd2612b501209032688716dd4593639e12e3824386ae1eb9cd993f3a",
+        "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+        "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+      },
+      "gate_passed": true,
+      "quote_issues": 0
     },
     {
       "task": "S",
@@ -33993,28 +35683,44 @@
       "ecosystem": "cann",
       "model": "kimi-k3-2",
       "paired_analysis": true,
-      "collected": false
+      "collected": true,
+      "run_id": "W-cann-kimi-k3-2-standard-20260921T135205",
+      "process": "runs/W-cann-kimi-k3-2-standard-20260921T135205/process.jsonl",
+      "evaluation": "runs/W-cann-kimi-k3-2-standard-20260921T135205/evaluation.json",
+      "assessed": false
     },
     {
       "task": "W",
       "ecosystem": "cuda",
       "model": "kimi-k3-2",
       "paired_analysis": true,
-      "collected": false
+      "collected": true,
+      "run_id": "W-cuda-kimi-k3-2-standard-20260921T135548",
+      "process": "runs/W-cuda-kimi-k3-2-standard-20260921T135548/process.jsonl",
+      "evaluation": "runs/W-cuda-kimi-k3-2-standard-20260921T135548/evaluation.json",
+      "assessed": false
     },
     {
       "task": "X",
       "ecosystem": "cann",
       "model": "kimi-k3-2",
       "paired_analysis": true,
-      "collected": false
+      "collected": true,
+      "run_id": "X-cann-kimi-k3-2-standard-20260921T140608",
+      "process": "runs/X-cann-kimi-k3-2-standard-20260921T140608/process.jsonl",
+      "evaluation": "runs/X-cann-kimi-k3-2-standard-20260921T140608/evaluation.json",
+      "assessed": false
     },
     {
       "task": "X",
       "ecosystem": "cuda",
       "model": "kimi-k3-2",
       "paired_analysis": true,
-      "collected": false
+      "collected": true,
+      "run_id": "X-cuda-kimi-k3-2-standard-20260921T140149",
+      "process": "runs/X-cuda-kimi-k3-2-standard-20260921T140149/process.jsonl",
+      "evaluation": "runs/X-cuda-kimi-k3-2-standard-20260921T140149/evaluation.json",
+      "assessed": false
     },
     {
       "task": "Y",
@@ -34149,6 +35855,41 @@
       "ecosystem": "cuda",
       "model": "glm-5.3",
       "run_id": "U-cuda-glm-5_3-standard-20260921T133705",
+      "exit_code": 0,
+      "response_models": [
+        "glm-5.3"
+      ],
+      "adapter_errors": []
+    },
+    {
+      "completion_errors": [],
+      "completed": false,
+      "stop_reason": "missing_client_result",
+      "check_issues": [
+        "call_9329faeebe9b48beb3d0dc7e: 未保存返回，派发状态=False",
+        "call_0ef429b7b80844aea7935a00: 未保存返回，派发状态=False"
+      ],
+      "task": "U",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "run_id": "U-cuda-glm-5_3-standard-20260921T134726",
+      "exit_code": 0,
+      "response_models": [
+        "glm-5.3"
+      ],
+      "adapter_errors": []
+    },
+    {
+      "completion_errors": [],
+      "completed": false,
+      "stop_reason": "missing_client_result",
+      "check_issues": [
+        "call_404e624c12f24b548d506efb: 未保存返回，派发状态=False"
+      ],
+      "task": "V",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "run_id": "V-cuda-glm-5_3-standard-20260921T135857",
       "exit_code": 0,
       "response_models": [
         "glm-5.3"

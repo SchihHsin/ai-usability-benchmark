@@ -81,3 +81,15 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Root verified many exact source/final/prior restorations. Reject reviewer substitutions of final for M7 prior and source for answer_quote; decisions recorded reviewer-proposal-decisions-1332.json. Do not auto-apply reviewer proposals.
 - GLM P-CANN repository-migration notice explicitly not version conflict removed from unresolved_conflicts; original record retained. M4 unchanged. GLM J/M/O per-return evidence corrected. GLM N/R official search metadata registered with processSHA, not body credit. DeepSeek O per-return quotes restored. Kimi M-CANN erroneous WebFetch1 reference corrected to actual WebSearch1 official PDF URL metadata, not PDF acquisition.
 - Latest pushed1c5d786 verified. Further corrections after this commit need push. Installed skill/paper unchanged. Continue156 collection+all possible assessments; no fitting.
+
+
+## 2026-09-21 14:04 continuation
+
+- Collected139/156 last build. GLM U-CUDA133705 and134726 both technical failures (missing tool returns); no third retry. collection-exhausted.json marks this one unit uncollected. GLM Luna now runs run_remaining_glm.py (same runner/args/order/freeze29-hash checks; skips only completed and exhaustedU-CUDA) throughV-Z. Do not resume original run_model.py glm or it would reattemptU.
+- Kimi W-CANN134810 prior_only_no_final_answer failed, retry135205 succeeded; W-CUDA135548 succeeded. Kimi46/52 advancingX-Z.
+- Root Kimi60105 ended, restarted50539. GLM67275 active. DeepSeek agent full snapshot/technical retries still active; followup sent when agent prematurely finalized.
+- Latest report103 assessed,94 gates,101 quote-clean. New review work after build pending. M6 DeepSeekD/F changed from inappropriateN/A to originalgrade3 based on actual third-party snippets+official support; unknown claims preserved, notes in review-notes-deepseek-df-m6.json. No channel auto-zero.
+- recover_assessment_shapes.py now handles unscored M3_note as well as -note, preserves supplementary notes; checked actual recoveredcase34f. No model call/grade changes.
+- Root restored remaining exact source/final quotations; F-CANN Kimi answer_quote still not found as exact passage, don't fabricate.
+- audit_arithmetic.py independent polynomial check87 computable rows, issues=[]; repeat after final results. paired_summary.py excludes exhausted cell with explicit reason, reports only eligible pairs, no statistical inference. results.html now explicitly marks exhausted cell and links failure record.
+- Latest pushedc20db75 verified; later changes await next push. Frozen29 hashes verified unchanged. Paper/installedSkill unchanged. Continue all other collect/assess units; explicitly report genuine exhausted failures, never claim156 success.

@@ -147,6 +147,864 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T06:04:57.447872+00:00",
+      "process_sha256": "21acb3ce06f6767382ab6bca910e16d0794846988343a8a7d04490889bbae9f3",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "## GPU 训练 loss 不收敛 / NaN 的系统排查（PyTorch on CUDA）",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_7_83f462d2.result",
+            "evidence_quote": "Calling `scaler.unscale_(optimizer)` before clipping enables you to clip unscaled gradients as usual",
+            "verification": "source",
+            "reason": "最终答案系统覆盖原题三个子要求：(1) NaN 定位（第0步，torch.autograd.set_detect_anomaly/detect_anomaly 及逐层梯度检查）与官方文档一致（WebFetch_4_5e782f2b：'If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error'）；(2) 梯度爆炸/学习率（第1步，scaler.unscale_ + clip_grad_norm_ 顺序、lr÷10、warmup），unscale_ 顺序与一次性警告由官方 amp_examples 证实（WebFetch_7_83f462d2：'unscale_ should only be called once per optimizer per `step` call'）；(3) 数据排查（第3步，isfinite 断言、坏 batch 二分）。另覆盖 AMP/fp16 数值原因（WebFetch_5_a8f08d60 官方 Note：'If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible'）与 CUDA 层定位。学习率与数据步骤为通用实践，无来源但未被证据矛盾，不构成错误。",
+            "evidence_refs": [
+              "ev-36",
+              "ev-37"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": null,
+            "lower": 1,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "4次查询均完成且返回前5条。预算内未出现任何 pytorch.org 域名结果（第3次 site:pytorch.org 限定查询也只返回 runebook/CSDN/知乎/ac.cn 镜像）。唯一'官方'候选是第1次查询第4位的 docs.pytorch.ac.cn（PyTorch 文档中文镜像，归属未确认为官方本体）。若镜像计为官方来源则档4（首次查询第2—5条命中）；若仅认 pytorch.org 则预算内未发现官方来源（档1）。归属未知，保留区间。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_aedad955.result",
+                "quote": "自动微分包 - torch.autograd — PyTorch 2.13 文档 - PyTorch ..."
+              },
+              {
+                "event_id": "WebSearch_2_3b470c82.result",
+                "quote": "https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.detect_anomaly"
+              },
+              {
+                "event_id": "WebSearch_2_3b470c82.result",
+                "quote": "site:pytorch.org torch.autograd detect_anomaly documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.25,
+            "upper": 3.75,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "该章节在本页中为**完整内容，未被截断**"
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "**所提供的页面内容不完整 / 已被截断。**"
+              },
+              {
+                "event_id": "WebFetch_6_ec06b821.result",
+                "quote": "The site configured at this address does not contain the requested file."
+              },
+              {
+                "event_id": "WebFetch_7_83f462d2.result",
+                "quote": "内容与代码均未被截断，该页所提供的文本覆盖了所有请求章节的结尾"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得官方正文对 NaN 定位（detect_anomaly/set_detect_anomaly 签名、check_nan 参数、性能警告、示例）与 AMP NaN 机制（fp16 上限65504、scale/unscale_/clip_grad_norm_ 完整工作流、BCE 约束）给出完整解释与操作段落；但原题明确列举的学习率排查（降lr/warmup/lr finder）与数据侧检查（isfinite/标签范围/坏样本定位）在取得的官方正文中完全没有对应内容，关键步骤缺失→3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error. Default `True`."
+              },
+              {
+                "event_id": "WebFetch_7_83f462d2.result",
+                "quote": "If these gradients do not contain infs or NaNs, optimizer.step() is then called,"
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible."
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "需自行合并官方约束才能确定适用形式：(1) stable 2.14 文档收录 detect_anomaly/set_detect_anomaly 且无任何 New in version/Deprecated 标注；(2) amp 页明确弃用 torch.cuda.amp.* 并给出 torch.amp.autocast(\"cuda\")/torch.amp.GradScaler(\"cuda\") 替代规则及 new in version 1.10。合并后可确定任务所用排查接口的当前适用形式→4；无直接覆盖全部接口的单一版本适用表，故非5。GradScaler 类页404但所需弃用对应关系已由 amp.html 覆盖，无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "本文档属于 **PyTorch v2.14.0 (stable)**"
+              },
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "`detect_anomaly` 和 `set_detect_anomaly` 这两个 API **没有附带任何 \"New in version X\" / \"Deprecated since version X\" 的版本变更注释**"
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "`torch.autocast` and `torch.cpu.amp.autocast` are new in version `1.10`."
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内去重计数：相关独立第三方来源7条——CSDN×3（ybacm/iii12/vivi_cin）、知乎×3（p/443166496、p/2057485938033537412、p/461202163）、CSDN weixin_28694295×1（wenku.csdn 专栏与其标题相同，判为转载仅计一次）。runebook/it-docs/pytorch.ac.cn 为官方文档镜像不计。7≥6→5。首次发现：第1次查询第1条（CSDN ybacm），1次查询即命中。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_aedad955.result",
+                "quote": "https://blog.csdn.net/ybacm/article/details/131528711"
+              },
+              {
+                "event_id": "WebSearch_0_aedad955.result",
+                "quote": "https://blog.csdn.net/iii12/article/details/154371958"
+              },
+              {
+                "event_id": "WebSearch_1_3d05be09.result",
+                "quote": "https://zhuanlan.zhihu.com/p/443166496"
+              },
+              {
+                "event_id": "WebSearch_1_3d05be09.result",
+                "quote": "https://blog.csdn.net/vivi_cin/article/details/143350841"
+              },
+              {
+                "event_id": "WebSearch_1_3d05be09.result",
+                "quote": "https://zhuanlan.zhihu.com/p/2057485938033537412"
+              },
+              {
+                "event_id": "WebSearch_2_3b470c82.result",
+                "quote": "https://zhuanlan.zhihu.com/p/461202163"
+              },
+              {
+                "event_id": "WebSearch_3_a1b21747.result",
+                "quote": "https://blog.csdn.net/weixin_28694295/article/details/160580104"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "第三方可见关键说法（detect_anomaly 可定位 NaN/梯度错误、AMP fp16 溢出致 NaN、scaler 遇 inf/NaN 跳过 step）彼此一致且与抓取到的官方正文一致，未见未消解矛盾；但全部第三方正文均未抓取，作者权威性无法从摘要片段确认，文章内其余说法未核验，独立交叉印证停留在片段层面→4（非5）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_1_3d05be09.result",
+                "quote": "1.计算loss 时，出现了除以0的情况2.loss过大，被半精度判断为inf"
+              },
+              {
+                "event_id": "WebSearch_2_3b470c82.result",
+                "quote": "然后使用了 detect_anomaly () 来检测"
+              },
+              {
+                "event_id": "WebFetch_7_83f462d2.result",
+                "quote": "otherwise, optimizer.step() is skipped."
+              },
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "Context-manager that enables anomaly detection for the autograd engine."
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已覆盖原题三大支柱与完整系统流程：NaN 定位（set_detect_anomaly/detect_anomaly，事后与官方正文核对一致，含 check_nan 语义）、梯度爆炸（clip_grad_norm_ 返回范数、AMP fp16>65504 溢出，均获官方正文印证）、学习率（÷10、warmup、lr finder）、数据（isfinite 断言、脏标签、batch 二分）、数值稳定算子与 CUDA 工具，并正确预判了 cuda.amp→torch.amp 迁移（官方弃用警告证实）。流程、解释、参数与约束均准确覆盖→5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "PyTorch 开启 `torch.autograd.set_detect_anomaly(True)`（或 `with torch.autograd.detect_anomaly():`），能在反向传播产生 NaN 时抛出并指出是哪个算子/前向节点引入。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "学习率过大是 loss 发散最常见原因：降低 lr（如 ÷10）、使用 warmup（线性 warmup 若干 step）、或 lr finder。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "若 loss scale 不合适或模型中出现 fp16 溢出（>65504），会产生 inf → NaN"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "输入含 NaN/Inf：`assert torch.isfinite(x).all()` 检查数据管道；脏标签（如分类 target 为负数或 ≥ num_classes）。"
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "cannot operate in the fp16 numerical range of max 65504 and will cause gradients to overflow instead of underflow"
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-26",
+              "ev-27",
+              "ev-28",
+              "ev-29",
+              "ev-30",
+              "ev-31"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_aedad955.dispatch",
+              "WebSearch_1_3d05be09.dispatch",
+              "WebSearch_2_3b470c82.dispatch",
+              "WebSearch_3_a1b21747.dispatch",
+              "WebFetch_4_5e782f2b.dispatch",
+              "WebFetch_5_a8f08d60.dispatch",
+              "WebFetch_6_ec06b821.dispatch",
+              "WebFetch_7_83f462d2.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "所用接口（detect_anomaly/set_detect_anomaly、autocast、torch.amp.GradScaler、unscale_+clip 流程）均给出有依据的适用关系：autocast 标注 'new in version 1.10'（WebFetch_5 官方版本历史原文），GradScaler 新旧 API 迁移有官方弃用警告（WebFetch_5：'torch.cuda.amp.GradScaler(args...) ... is deprecated. Please use torch.amp.GradScaler(\"cuda\", args...) instead.'），anomaly detection 为 2.14 stable 现行 API（WebFetch_4：无 deprecated/beta 标注）。但 set_detect_anomaly 的具体引入版本在答案中明确标注未核实，未定到具体版本，符合第4档（全部组件有依据范围，至少一项未定具体版本）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "`torch.autocast` | \"new in version 1.10\" | pytorch.org/docs/stable/amp.html"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**未核实处**：compute-sanitizer 具体命令行参数、TF32 开关的官方文档页、`set_detect_anomaly` 的具体引入版本，本次检索未覆盖"
+              }
+            ],
+            "evidence_refs": [
+              "ev-32",
+              "ev-33"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "各步骤给出完整可执行代码/命令：anomaly detection 开关与上下文管理器、逐层梯度检查循环、unscale_→clip_grad_norm_→step→update 流程（与官方 amp_examples 示例逐字一致，WebFetch_7 证实）、autocast+GradScaler 典型流程、数据 isfinite 断言、CUDA_LAUNCH_BLOCKING=1 与 compute-sanitizer --tool memcheck 完整命令。仅需替换 model/input/target/loss_fn 等用户环境参数（第4档允许）。compute-sanitizer 子参数与 TF32 开关已如实标注未核实，但给出的命令行本身完整可运行，不需修正。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "scaler.unscale_(optimizer)                       # AMP 下必须先 unscale 再 clip"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "- `CUDA_LAUNCH_BLOCKING=1 python train.py`：同步 kernel 执行，报错栈指向真正出错 kernel。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-34",
+              "ev-35"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 88.36,
+            "lower": 88.36,
+            "upper": 88.36,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 88.4
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 88.36,
+          "lower": 88.36,
+          "upper": 88.36,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 88.4
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_aedad955.result",
+            "field": "response",
+            "sha256": "572d9d300ea30af37adf05477b2073d2606070b98a711da0a43bee4e65aa01da",
+            "start": 1035,
+            "end": 1089,
+            "quote": "自动微分包 - torch.autograd — PyTorch 2.13 文档 - PyTorch ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_2_3b470c82.result",
+            "field": "response",
+            "sha256": "831e3c8db5461a99e07fdfe71926c8e16e9bbf04e7774b1bb8f2afd448cd2476",
+            "start": 139,
+            "end": 214,
+            "quote": "https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.detect_anomaly",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebSearch_2_3b470c82.result",
+            "field": "response",
+            "sha256": "831e3c8db5461a99e07fdfe71926c8e16e9bbf04e7774b1bb8f2afd448cd2476",
+            "start": 22,
+            "end": 82,
+            "quote": "site:pytorch.org torch.autograd detect_anomaly documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_5e782f2b.result",
+            "field": "response",
+            "sha256": "69afd19a2df31074e49f4c9d0a47636592160e50b91dea757203470c7b0c360f",
+            "start": 145,
+            "end": 166,
+            "quote": "该章节在本页中为**完整内容，未被截断**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "field": "response",
+            "sha256": "b84fb1c50ca72b04898bbf3d3c135c7250d02257efcc6a98dcae708bcf065cf8",
+            "start": 55,
+            "end": 78,
+            "quote": "**所提供的页面内容不完整 / 已被截断。**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_6_ec06b821.result",
+            "field": "response",
+            "sha256": "5607ad690d2124048982f0623e6fdada95c9a6e79e997d51dcb3dfed337cec47",
+            "start": 66,
+            "end": 138,
+            "quote": "The site configured at this address does not contain the requested file.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_7_83f462d2.result",
+            "field": "response",
+            "sha256": "da124129298cb00a8e753df850c7119aed6f4c7a09f8bb4f59e6ff8471bee375",
+            "start": 49,
+            "end": 80,
+            "quote": "内容与代码均未被截断，该页所提供的文本覆盖了所有请求章节的结尾",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_4_5e782f2b.result",
+            "field": "response",
+            "sha256": "69afd19a2df31074e49f4c9d0a47636592160e50b91dea757203470c7b0c360f",
+            "start": 995,
+            "end": 1109,
+            "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error. Default `True`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_7_83f462d2.result",
+            "field": "response",
+            "sha256": "da124129298cb00a8e753df850c7119aed6f4c7a09f8bb4f59e6ff8471bee375",
+            "start": 1802,
+            "end": 1882,
+            "quote": "If these gradients do not contain infs or NaNs, optimizer.step() is then called,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "field": "response",
+            "sha256": "b84fb1c50ca72b04898bbf3d3c135c7250d02257efcc6a98dcae708bcf065cf8",
+            "start": 10478,
+            "end": 10586,
+            "quote": "If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_4_5e782f2b.result",
+            "field": "response",
+            "sha256": "69afd19a2df31074e49f4c9d0a47636592160e50b91dea757203470c7b0c360f",
+            "start": 4892,
+            "end": 4926,
+            "quote": "本文档属于 **PyTorch v2.14.0 (stable)**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_4_5e782f2b.result",
+            "field": "response",
+            "sha256": "69afd19a2df31074e49f4c9d0a47636592160e50b91dea757203470c7b0c360f",
+            "start": 5017,
+            "end": 5133,
+            "quote": "`detect_anomaly` 和 `set_detect_anomaly` 这两个 API **没有附带任何 \"New in version X\" / \"Deprecated since version X\" 的版本变更注释**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "field": "response",
+            "sha256": "b84fb1c50ca72b04898bbf3d3c135c7250d02257efcc6a98dcae708bcf065cf8",
+            "start": 1544,
+            "end": 1616,
+            "quote": "`torch.autocast` and `torch.cpu.amp.autocast` are new in version `1.10`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "field": "response",
+            "sha256": "b84fb1c50ca72b04898bbf3d3c135c7250d02257efcc6a98dcae708bcf065cf8",
+            "start": 784,
+            "end": 926,
+            "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_aedad955.result",
+            "field": "response",
+            "sha256": "572d9d300ea30af37adf05477b2073d2606070b98a711da0a43bee4e65aa01da",
+            "start": 147,
+            "end": 200,
+            "quote": "https://blog.csdn.net/ybacm/article/details/131528711",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_0_aedad955.result",
+            "field": "response",
+            "sha256": "572d9d300ea30af37adf05477b2073d2606070b98a711da0a43bee4e65aa01da",
+            "start": 1393,
+            "end": 1446,
+            "quote": "https://blog.csdn.net/iii12/article/details/154371958",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_1_3d05be09.result",
+            "field": "response",
+            "sha256": "f07c59d79b5d262e43275ddae144d0c9e1268694c17be9d54eea7016a4c44dec",
+            "start": 652,
+            "end": 690,
+            "quote": "https://zhuanlan.zhihu.com/p/443166496",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebSearch_1_3d05be09.result",
+            "field": "response",
+            "sha256": "f07c59d79b5d262e43275ddae144d0c9e1268694c17be9d54eea7016a4c44dec",
+            "start": 394,
+            "end": 450,
+            "quote": "https://blog.csdn.net/vivi_cin/article/details/143350841",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "WebSearch_1_3d05be09.result",
+            "field": "response",
+            "sha256": "f07c59d79b5d262e43275ddae144d0c9e1268694c17be9d54eea7016a4c44dec",
+            "start": 933,
+            "end": 981,
+            "quote": "https://zhuanlan.zhihu.com/p/2057485938033537412",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "WebSearch_2_3b470c82.result",
+            "field": "response",
+            "sha256": "831e3c8db5461a99e07fdfe71926c8e16e9bbf04e7774b1bb8f2afd448cd2476",
+            "start": 1481,
+            "end": 1519,
+            "quote": "https://zhuanlan.zhihu.com/p/461202163",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "WebSearch_3_a1b21747.result",
+            "field": "response",
+            "sha256": "2b1a23aac2bc1973f5088dafebb7cf991fed109e202c5a8629d28f0ba7d67410",
+            "start": 1265,
+            "end": 1328,
+            "quote": "https://blog.csdn.net/weixin_28694295/article/details/160580104",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "WebSearch_1_3d05be09.result",
+            "field": "response",
+            "sha256": "f07c59d79b5d262e43275ddae144d0c9e1268694c17be9d54eea7016a4c44dec",
+            "start": 759,
+            "end": 798,
+            "quote": "1.计算loss 时，出现了除以0的情况2.loss过大，被半精度判断为inf",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebSearch_2_3b470c82.result",
+            "field": "response",
+            "sha256": "831e3c8db5461a99e07fdfe71926c8e16e9bbf04e7774b1bb8f2afd448cd2476",
+            "start": 673,
+            "end": 700,
+            "quote": "然后使用了 detect_anomaly () 来检测",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_7_83f462d2.result",
+            "field": "response",
+            "sha256": "da124129298cb00a8e753df850c7119aed6f4c7a09f8bb4f59e6ff8471bee375",
+            "start": 1893,
+            "end": 1932,
+            "quote": "otherwise, optimizer.step() is skipped.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_4_5e782f2b.result",
+            "field": "response",
+            "sha256": "69afd19a2df31074e49f4c9d0a47636592160e50b91dea757203470c7b0c360f",
+            "start": 718,
+            "end": 789,
+            "quote": "Context-manager that enables anomaly detection for the autograd engine.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a1c13c31013e553eb8f12cabcf0dc84aa2818054864d61764eff4beac96b080e",
+            "start": 394,
+            "end": 522,
+            "quote": "PyTorch 开启 `torch.autograd.set_detect_anomaly(True)`（或 `with torch.autograd.detect_anomaly():`），能在反向传播产生 NaN 时抛出并指出是哪个算子/前向节点引入。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a1c13c31013e553eb8f12cabcf0dc84aa2818054864d61764eff4beac96b080e",
+            "start": 761,
+            "end": 835,
+            "quote": "学习率过大是 loss 发散最常见原因：降低 lr（如 ÷10）、使用 warmup（线性 warmup 若干 step）、或 lr finder。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a1c13c31013e553eb8f12cabcf0dc84aa2818054864d61764eff4beac96b080e",
+            "start": 983,
+            "end": 1035,
+            "quote": "若 loss scale 不合适或模型中出现 fp16 溢出（>65504），会产生 inf → NaN",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a1c13c31013e553eb8f12cabcf0dc84aa2818054864d61764eff4beac96b080e",
+            "start": 1287,
+            "end": 1374,
+            "quote": "输入含 NaN/Inf：`assert torch.isfinite(x).all()` 检查数据管道；脏标签（如分类 target 为负数或 ≥ num_classes）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "field": "response",
+            "sha256": "b84fb1c50ca72b04898bbf3d3c135c7250d02257efcc6a98dcae708bcf065cf8",
+            "start": 10099,
+            "end": 10212,
+            "quote": "cannot operate in the fp16 numerical range of max 65504 and will cause gradients to overflow instead of underflow",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "field": "response",
+            "sha256": "b84fb1c50ca72b04898bbf3d3c135c7250d02257efcc6a98dcae708bcf065cf8",
+            "start": 784,
+            "end": 926,
+            "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "3c1b305d3bb3abb7f4db8c9a29c8048693fe60c9d0bff4ba20eca055eef07852",
+            "start": 3311,
+            "end": 3386,
+            "quote": "`torch.autocast` | \"new in version 1.10\" | pytorch.org/docs/stable/amp.html",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "3c1b305d3bb3abb7f4db8c9a29c8048693fe60c9d0bff4ba20eca055eef07852",
+            "start": 3625,
+            "end": 3710,
+            "quote": "**未核实处**：compute-sanitizer 具体命令行参数、TF32 开关的官方文档页、`set_detect_anomaly` 的具体引入版本，本次检索未覆盖",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-34",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "3c1b305d3bb3abb7f4db8c9a29c8048693fe60c9d0bff4ba20eca055eef07852",
+            "start": 991,
+            "end": 1065,
+            "quote": "scaler.unscale_(optimizer)                       # AMP 下必须先 unscale 再 clip",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-35",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "3c1b305d3bb3abb7f4db8c9a29c8048693fe60c9d0bff4ba20eca055eef07852",
+            "start": 2843,
+            "end": 2916,
+            "quote": "- `CUDA_LAUNCH_BLOCKING=1 python train.py`：同步 kernel 执行，报错栈指向真正出错 kernel。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-36",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "3c1b305d3bb3abb7f4db8c9a29c8048693fe60c9d0bff4ba20eca055eef07852",
+            "start": 111,
+            "end": 158,
+            "quote": "## GPU 训练 loss 不收敛 / NaN 的系统排查（PyTorch on CUDA）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-37",
+            "event_id": "WebFetch_7_83f462d2.result",
+            "field": "response",
+            "sha256": "da124129298cb00a8e753df850c7119aed6f4c7a09f8bb4f59e6ff8471bee375",
+            "start": 3220,
+            "end": 3320,
+            "quote": "Calling `scaler.unscale_(optimizer)` before clipping enables you to clip unscaled gradients as usual",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_6_ec06b821.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_6_ec06b821.result",
+            "alternative_body_event_ids": [
+              "WebFetch_7_83f462d2.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-1a4d5951ea99-predictors.json": "6d7f9c1afd87da1bba348bb08a8fc521d0eba8daea24d8cf949fb3c84cc908b2",
+          "reviewed/development/case-1a4d5951ea99-outcome.json": "474a0a4bbd2612b501209032688716dd4593639e12e3824386ae1eb9cd993f3a",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_4_5e782f2b.result",
+            "url": "https://pytorch.org/docs/stable/autograd.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "该章节在本页中为**完整内容，未被截断**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_5e782f2b.result",
+                "quote": "章节末尾还附带了两个相关的 `grad_mode` 上下文管理器条目（仅一行简介）"
+              }
+            ],
+            "reference": "PyTorch v2.14.0 (stable) torch.autograd 文档 'Debugging and anomaly detection' 章节（docs.pytorch.org/docs/2.14/autograd.html#debugging-and-anomaly-detection）"
+          },
+          {
+            "event_id": "WebFetch_5_a8f08d60.result",
+            "url": "https://pytorch.org/docs/stable/amp.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "**所提供的页面内容不完整 / 已被截断。**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "`torch.amp.GradScaler` 主类的完整 API 文档缺失"
+              }
+            ],
+            "reference": "PyTorch 2.14 torch.amp 文档页（autocast 全文 + Gradient Scaling 原理；GradScaler 主类小节缺失）"
+          },
+          {
+            "event_id": "WebFetch_6_ec06b821.result",
+            "url": "https://pytorch.org/docs/stable/generated/torch.amp.GradScaler.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "none",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ec06b821.result",
+                "quote": "The site configured at this address does not contain the requested file."
+              }
+            ],
+            "boundary_evidence": [],
+            "reference": null
+          },
+          {
+            "event_id": "WebFetch_7_83f462d2.result",
+            "url": "https://pytorch.org/docs/stable/notes/amp_examples.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_7_83f462d2.result",
+                "quote": "内容与代码均未被截断，该页所提供的文本覆盖了所有请求章节的结尾"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_7_83f462d2.result",
+                "quote": "所提供的网页文本还包含请求范围之外的章节"
+              },
+              {
+                "event_id": "WebFetch_5_a8f08d60.result",
+                "quote": "[AMP Examples 页面](https://docs.pytorch.org/docs/2.14/notes.amp_examples.html#working-with-scaled-gradients)"
+              }
+            ],
+            "reference": "PyTorch 2.14 AMP Examples（notes/amp_examples.html）：Typical Mixed Precision Training / Gradient clipping / Working with Scaled Gradients 章节"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }
