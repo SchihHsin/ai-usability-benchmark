@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt…卷积 → cuDNN…矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
-      "answer_event_id": "final",
+      "status": "supported",
+      "answer_quote": "- 稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt（需要 FP8/FP4 块缩放、算法启发式、epilogue 融合时；cuBLAS 12.9 官方博客确认 Hopper FP8 channel/block scaling、Blackwell FP4/FP8 block-scaled 类型均通过 cuBLASLt API 暴露）。\n- 卷积 → cuDNN（内部以 implicit GEMM 等方式实现，graph API 支持算子融合）。\n- 矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+      "answer_event_id": "run-end",
       "evidence_id": "WebFetch_1_5db26793.result",
       "evidence_quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API.",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；子要求逐项核对：(1)官方库清单——cuBLAS/cuBLASLt 定位由 WebFetch_1 官方原文证实；cuDNN 'Convolution, including cross-correlation' 由 WebFetch_3 证实；cuSPARSE SpMV/SpMM 与稀疏格式由 WebFetch_6 第1.1节、第3章证实。(2)怎么选——答案给出按稠密GEMM/卷积/稀疏场景的选型规则，且明确'稠密 GEMM 不应选 cuSPARSE'，与官方定位一致。(3)怎么调用——cuBLAS 列主序/IDX2C/Tensor Core 16字节对齐规则由 WebFetch_1 完整原文支持；cuDNN graph API 11步工作流与 conv_fprop API 表由 WebFetch_4 官方原文支持；cuSPARSE 稠密端行/列主序及 ld 约束由 WebFetch_6 第3.3.1节原文支持；版本适用关系由 WebFetch_9 support matrix 原文支持。部分函数签名（cublasLtMatmul/cublasSgemm/cusparseSpMM）正文因截断未取得，答案已如实标注'未核实'并区分先验，不构成矛盾。总体上各子要求均有官方来源支撑。",
-      "raw_status": "supported"
+      "reason": "子要求逐项核对：(1)官方库清单——cuBLAS/cuBLASLt 定位由 WebFetch_1 官方原文证实；cuDNN 'Convolution, including cross-correlation' 由 WebFetch_3 证实；cuSPARSE SpMV/SpMM 与稀疏格式由 WebFetch_6 第1.1节、第3章证实。(2)怎么选——答案给出按稠密GEMM/卷积/稀疏场景的选型规则，且明确'稠密 GEMM 不应选 cuSPARSE'，与官方定位一致。(3)怎么调用——cuBLAS 列主序/IDX2C/Tensor Core 16字节对齐规则由 WebFetch_1 完整原文支持；cuDNN graph API 11步工作流与 conv_fprop API 表由 WebFetch_4 官方原文支持；cuSPARSE 稠密端行/列主序及 ld 约束由 WebFetch_6 第3.3.1节原文支持；版本适用关系由 WebFetch_9 support matrix 原文支持。部分函数签名（cublasLtMatmul/cublasSgemm/cusparseSpMM）正文因截断未取得，答案已如实标注'未核实'并区分先验，不构成矛盾。总体上各子要求均有官方来源支撑。"
     }
   ],
   "m9_m10": [
@@ -23,7 +22,7 @@
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "cuDNN 9.26.0 for CUDA 12.x：CUDA 12.0–12.9（12.7 未列）…官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
+          "quote": "- **cuDNN 9.26.0 for CUDA 12.x**：CUDA 12.0–12.9（12.7 未列）；动态链接兼容所有 CUDA 12.x（含未来版本）；Linux 驱动 ≥525.60.13、Windows ≥527.41；支持 CC 7.5–12.x（Turing/Ampere/Ada/Hopper/Blackwell，Blackwell 需 CUDA ≥12.8 + 驱动 ≥570.26/570.65）\n- **cuDNN 9.26.0 for CUDA 13.x**：CUDA 13.0–13.4；驱动 ≥615.71.09（Linux）；官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
         },
         {
           "event_id": "run-end",
@@ -34,10 +33,10 @@
     },
     {
       "id": "M10",
-      "score": null,
+      "score": 3,
       "lower": null,
       "upper": null,
-      "status": "insufficient_evidence",
+      "status": "executable_with_gaps",
       "reason": "存在具体操作方案：cuBLAS Sgemm、cuBLASLt、cuDNN graph、cuSPARSE SpMM 四条调用路线均有代码/步骤，前置条件（列主序映射、16字节对齐、workspace 分配、CC 要求）明确。但三处关键代码（cublasLtMatmul、cusparseSpMM、cublasSgemm 签名）明确标注为'模型先验，未逐字核实'（官方页截断），cudnnConvolutionForward legacy 签名 404 未核实——具体缺口：这些先验签名与调用序列需与官方文档核对修正后方可照抄运行；答案自身也声明'以上代码未实际运行'。",
       "evidence": [
         {
@@ -46,38 +45,18 @@
         },
         {
           "event_id": "run-end",
-          "quote": "以下为模型先验，标注未核实：```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(..."
+          "quote": "以下为模型先验，标注未核实：\n\n```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(h, opA, opB, alpha, matA, matB, beta, matC,\n                        CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT, &bufSize); // 先验签名"
         }
-      ],
-      "raw_status": "executable_with_gaps"
+      ]
     }
   ],
   "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt…卷积 → cuDNN…矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。"
-        }
-      ]
-    },
     {
       "metric": "M9",
       "bad_refs": [
         {
           "event_id": "run-end",
-          "quote": "cuDNN 9.26.0 for CUDA 12.x：CUDA 12.0–12.9（12.7 未列）…官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
-        }
-      ]
-    },
-    {
-      "metric": "M10",
-      "bad_refs": [
-        {
-          "event_id": "run-end",
-          "quote": "以下为模型先验，标注未核实：```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(..."
+          "quote": "本次抓取文档为 cuBLAS 13.4 / cuSPARSE 13.4，对应 CUDA 13.4；cuBLAS 12.9 随 CUDA 12.9（官方博客）；Tensor Core 需 CC ≥7.0"
         }
       ]
     }
@@ -194,7 +173,22 @@
     "raw_file": "assessments/development/case-7cedd4ab7a0a-outcome.json",
     "repairs": [
       {
+        "event_id": "run-end",
+        "original": "稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt…卷积 → cuDNN…矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+        "replacement": "- 稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt（需要 FP8/FP4 块缩放、算法启发式、epilogue 融合时；cuBLAS 12.9 官方博客确认 Hopper FP8 channel/block scaling、Blackwell FP4/FP8 block-scaled 类型均通过 cuBLASLt API 暴露）。\n- 卷积 → cuDNN（内部以 implicit GEMM 等方式实现，graph API 支持算子融合）。\n- 矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
         "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "event_id": "run-end",
+        "original": "cuDNN 9.26.0 for CUDA 12.x：CUDA 12.0–12.9（12.7 未列）…官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）",
+        "replacement": "- **cuDNN 9.26.0 for CUDA 12.x**：CUDA 12.0–12.9（12.7 未列）；动态链接兼容所有 CUDA 12.x（含未来版本）；Linux 驱动 ≥525.60.13、Windows ≥527.41；支持 CC 7.5–12.x（Turing/Ampere/Ada/Hopper/Blackwell，Blackwell 需 CUDA ≥12.8 + 驱动 ≥570.26/570.65）\n- **cuDNN 9.26.0 for CUDA 13.x**：CUDA 13.0–13.4；驱动 ≥615.71.09（Linux）；官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
       },
       {
         "basis": "final alias maps to frozen final answer"
@@ -210,8 +204,26 @@
       },
       {
         "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "event_id": "run-end",
+        "original": "以下为模型先验，标注未核实：```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(...",
+        "replacement": "以下为模型先验，标注未核实：\n\n```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(h, opA, opB, alpha, matA, matB, beta, matC,\n                        CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT, &bufSize); // 先验签名",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
       }
     ],
-    "semantic_validation": false
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": {
+      "process_sha256": "fa1f59cda377e4e33dadb0bd928a881691da2a5a948e9acf5649d1892edccc2a",
+      "evidence": [
+        {
+          "event_id": "WebSearch_0_91b072fc.result",
+          "quote": "1. Introduction — cuBLAS 13.4 documentation",
+          "url": "https://docs.nvidia.com/cuda/cublas/index.html",
+          "basis": "Root verified exact title of result 1 and its NVIDIA official URL in the captured search response; supports document version only, not body completeness."
+        }
+      ]
+    }
   }
 }

@@ -841,6 +841,3493 @@
           }
         ]
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T03:53:53.041047+00:00",
+      "process_sha256": "0ce49bc0ad3d676620d1a13c3536abcd637c6055091f327a429459307f6ccc3f",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+            "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "verification": "source",
+            "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。",
+            "evidence_refs": [
+              "ev-26",
+              "ev-27"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为msModelSlim官方文档(readthedocs托管的项目官方文档)，第3条为其快速入门页。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)"
+              },
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "3. [快速入门 - msModelSlim Documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "--quantization ascend 指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "实际采用路线(msModelSlim+vLLM-Ascend容器)中版本适用关系由官方直接给出：PCI ID自动匹配镜像版本规则、固定的msmodelslim-26.1.0安装源、transformers量化5.x/推理4.x的明确降级规则，直接套用即可，无需自行合并；CANN版本由容器捆绑无需选择。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim-26.1.0-py3-none-any.whl"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索预算内相关独立第三方来源去重后4条：技术站文章(jishuzhan与51cto为同内容镜像计1)、阿里云开发者社区、知乎、CSDN；GitHub Ascend/msit为官方仓库排除。3—4条对应档3。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)"
+              },
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在实质性第三方材料(非N/A)。第三方仅以搜索摘要形式出现，未抓取全文；摘要中的关键说法(基于ModelSlim做W8A8量化演示、MindIE支持W8A8等)与已取回官方文档一致，有可追溯依据支持部分关键说法，其余内容未核验。",
+            "evidence": [
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：工具msModelSlim、Calibrator校准API、W8A8模式、权重转换与MindIE部署路径，且API路径被检索到的官方文档证实；但具体参数拼写、版本配套、config字段确需外部补充(先验自己也如此声明)。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_f7d68b128d314ff3a11a12df.dispatch",
+              "call_76bf4ed41e0046158836a7cb.dispatch",
+              "call_e0abf8b83efa4f1197854fbf.dispatch",
+              "call_977411b909a549a0a185f217.dispatch",
+              "call_be6de196a1e846c1b2c22484.dispatch",
+              "call_50ece96ecf8a498b95ef698d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 5,
+            "status": "supported",
+            "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+              }
+            ],
+            "evidence_refs": [
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 308,
+            "end": 388,
+            "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 540,
+            "end": 577,
+            "quote": "3. [快速入门 - msModelSlim Documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 4753,
+            "end": 4887,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 2288,
+            "end": 2333,
+            "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 482,
+            "end": 514,
+            "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 3923,
+            "end": 3976,
+            "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 1953,
+            "end": 2078,
+            "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 1851,
+            "end": 1899,
+            "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 2965,
+            "end": 3000,
+            "quote": "msmodelslim-26.1.0-py3-none-any.whl",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 6608,
+            "end": 6684,
+            "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 68,
+            "end": 161,
+            "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 535,
+            "end": 626,
+            "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 692,
+            "end": 766,
+            "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 895,
+            "end": 942,
+            "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 1196,
+            "end": 1271,
+            "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 1017,
+            "end": 1082,
+            "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 384,
+            "end": 484,
+            "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 663,
+            "end": 734,
+            "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5002,
+            "end": 5119,
+            "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5166,
+            "end": 5233,
+            "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 360,
+            "end": 409,
+            "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1027,
+            "end": 1067,
+            "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1102,
+            "end": 1267,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 41,
+            "end": 141,
+            "quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 74,
+            "end": 198,
+            "quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-7fccb8afa341-predictors.json": "ba005510a9a273a98f126045b89afdf8f9bd9f1b92fe538d84da4542713b7a8f",
+          "reviewed/development/case-7fccb8afa341-outcome.json": "21e7bbb979e1b2699a49d6145faa55088cb3d7301f88622d63488c9f450ca6e2",
+          "consolidate_evaluations.py": "99c678cf938aeaf3eaf86c597ae7684134bd42fd65849c9313432d017d2237af",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "# msModelSlim 快速入门¶"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "🎉 至此，快速入门体验已全部完成。已完成 msModelSlim 一键量化与 vLLM-Ascend 推理部署的完整流程"
+              }
+            ],
+            "reference": "https://msmodelslim.readthedocs.io/zh-cn/latest/zh/quick_start/quantization_quick_start/"
+          },
+          {
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "W8A8量化精度调优策略是结合msModelSlim量化工具和精度测试工具precision tool进行精度验证和调优开展"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "模型量化后，可基于MindIE、vLLM等进行部署推理。"
+              }
+            ],
+            "reference": "https://modelslim.readthedocs.io/zh-cn/latest/zh/case_studies/w8a8_accuracy_tuning_policy/"
+          },
+          {
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "此量化方式对权重和激活值同时进行量化，将高位浮点数转为8 bit"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "bash examples/models/llama/run_pa.sh {W8A8量化权重路径}"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindie/10RC2/mindiellm/llmdev/mindie_llm0014.html"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "--quantization ascend 指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "{\"search\": 3, \"fetch\": 3}"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T03:55:29.785697+00:00",
+      "process_sha256": "0ce49bc0ad3d676620d1a13c3536abcd637c6055091f327a429459307f6ccc3f",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+            "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "verification": "source",
+            "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为msModelSlim官方文档(readthedocs托管的项目官方文档)，第3条为其快速入门页。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)"
+              },
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "3. [快速入门 - msModelSlim Documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "实际采用路线(msModelSlim+vLLM-Ascend容器)中版本适用关系由官方直接给出：PCI ID自动匹配镜像版本规则、固定的msmodelslim-26.1.0安装源、transformers量化5.x/推理4.x的明确降级规则，直接套用即可，无需自行合并；CANN版本由容器捆绑无需选择。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim-26.1.0-py3-none-any.whl"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索预算内相关独立第三方来源去重后4条：技术站文章(jishuzhan与51cto为同内容镜像计1)、阿里云开发者社区、知乎、CSDN；GitHub Ascend/msit为官方仓库排除。3—4条对应档3。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)"
+              },
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在实质性第三方材料(非N/A)。第三方仅以搜索摘要形式出现，未抓取全文；摘要中的关键说法(基于ModelSlim做W8A8量化演示、MindIE支持W8A8等)与已取回官方文档一致，有可追溯依据支持部分关键说法，其余内容未核验。",
+            "evidence": [
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：工具msModelSlim、Calibrator校准API、W8A8模式、权重转换与MindIE部署路径，且API路径被检索到的官方文档证实；但具体参数拼写、版本配套、config字段确需外部补充(先验自己也如此声明)。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_f7d68b128d314ff3a11a12df.dispatch",
+              "call_76bf4ed41e0046158836a7cb.dispatch",
+              "call_e0abf8b83efa4f1197854fbf.dispatch",
+              "call_977411b909a549a0a185f217.dispatch",
+              "call_be6de196a1e846c1b2c22484.dispatch",
+              "call_50ece96ecf8a498b95ef698d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 5,
+            "status": "supported",
+            "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 91.57632,
+            "upper": 93.5424,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              91.5,
+              93.6
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 91.57632,
+          "upper": 93.5424,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            91.5,
+            93.6
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 308,
+            "end": 388,
+            "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 540,
+            "end": 577,
+            "quote": "3. [快速入门 - msModelSlim Documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 4753,
+            "end": 4887,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 2288,
+            "end": 2333,
+            "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 482,
+            "end": 514,
+            "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 7956,
+            "end": 8026,
+            "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 3923,
+            "end": 3976,
+            "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 1953,
+            "end": 2078,
+            "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 1851,
+            "end": 1899,
+            "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 2965,
+            "end": 3000,
+            "quote": "msmodelslim-26.1.0-py3-none-any.whl",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 6608,
+            "end": 6684,
+            "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 68,
+            "end": 161,
+            "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 535,
+            "end": 626,
+            "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 692,
+            "end": 766,
+            "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 895,
+            "end": 942,
+            "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 1196,
+            "end": 1271,
+            "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 1017,
+            "end": 1082,
+            "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 384,
+            "end": 484,
+            "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 663,
+            "end": 734,
+            "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5002,
+            "end": 5119,
+            "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5166,
+            "end": 5233,
+            "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 360,
+            "end": 409,
+            "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1027,
+            "end": 1067,
+            "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1102,
+            "end": 1267,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 41,
+            "end": 141,
+            "quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 74,
+            "end": 198,
+            "quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-7fccb8afa341-predictors.json": "c61cb1222072a6c0ede39f38c73d0c07c14a9196048049bab5955da9fbf5bd9d",
+          "reviewed/development/case-7fccb8afa341-outcome.json": "21e7bbb979e1b2699a49d6145faa55088cb3d7301f88622d63488c9f450ca6e2",
+          "consolidate_evaluations.py": "99c678cf938aeaf3eaf86c597ae7684134bd42fd65849c9313432d017d2237af",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "# msModelSlim 快速入门¶"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "🎉 至此，快速入门体验已全部完成。已完成 msModelSlim 一键量化与 vLLM-Ascend 推理部署的完整流程"
+              }
+            ],
+            "reference": "https://msmodelslim.readthedocs.io/zh-cn/latest/zh/quick_start/quantization_quick_start/"
+          },
+          {
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "W8A8量化精度调优策略是结合msModelSlim量化工具和精度测试工具precision tool进行精度验证和调优开展"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "模型量化后，可基于MindIE、vLLM等进行部署推理。"
+              }
+            ],
+            "reference": "https://modelslim.readthedocs.io/zh-cn/latest/zh/case_studies/w8a8_accuracy_tuning_policy/"
+          },
+          {
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "此量化方式对权重和激活值同时进行量化，将高位浮点数转为8 bit"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "bash examples/models/llama/run_pa.sh {W8A8量化权重路径}"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindie/10RC2/mindiellm/llmdev/mindie_llm0014.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "{\"search\": 3, \"fetch\": 3}"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 5,
+      "recorded_at": "2026-09-21T04:02:09.037780+00:00",
+      "process_sha256": "0ce49bc0ad3d676620d1a13c3536abcd637c6055091f327a429459307f6ccc3f",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+            "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "verification": "source",
+            "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为msModelSlim官方文档(readthedocs托管的项目官方文档)，第3条为其快速入门页。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)"
+              },
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "3. [快速入门 - msModelSlim Documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "实际采用路线(msModelSlim+vLLM-Ascend容器)中版本适用关系由官方直接给出：PCI ID自动匹配镜像版本规则、固定的msmodelslim-26.1.0安装源、transformers量化5.x/推理4.x的明确降级规则，直接套用即可，无需自行合并；CANN版本由容器捆绑无需选择。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim-26.1.0-py3-none-any.whl"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索预算内相关独立第三方来源去重后4条：技术站文章(jishuzhan与51cto为同内容镜像计1)、阿里云开发者社区、知乎、CSDN；GitHub Ascend/msit为官方仓库排除。3—4条对应档3。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)"
+              },
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在实质性第三方材料(非N/A)。第三方仅以搜索摘要形式出现，未抓取全文；摘要中的关键说法(基于ModelSlim做W8A8量化演示、MindIE支持W8A8等)与已取回官方文档一致，有可追溯依据支持部分关键说法，其余内容未核验。",
+            "evidence": [
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：工具msModelSlim、Calibrator校准API、W8A8模式、权重转换与MindIE部署路径，且API路径被检索到的官方文档证实；但具体参数拼写、版本配套、config字段确需外部补充(先验自己也如此声明)。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_f7d68b128d314ff3a11a12df.dispatch",
+              "call_76bf4ed41e0046158836a7cb.dispatch",
+              "call_e0abf8b83efa4f1197854fbf.dispatch",
+              "call_977411b909a549a0a185f217.dispatch",
+              "call_be6de196a1e846c1b2c22484.dispatch",
+              "call_50ece96ecf8a498b95ef698d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 5,
+            "status": "supported",
+            "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 91.57632,
+            "upper": 93.5424,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              91.5,
+              93.6
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 91.57632,
+          "upper": 93.5424,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            91.5,
+            93.6
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 308,
+            "end": 388,
+            "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 540,
+            "end": 577,
+            "quote": "3. [快速入门 - msModelSlim Documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 4753,
+            "end": 4887,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 2288,
+            "end": 2333,
+            "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 482,
+            "end": 514,
+            "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 7956,
+            "end": 8026,
+            "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 3923,
+            "end": 3976,
+            "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 1953,
+            "end": 2078,
+            "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 1851,
+            "end": 1899,
+            "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 2965,
+            "end": 3000,
+            "quote": "msmodelslim-26.1.0-py3-none-any.whl",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 6608,
+            "end": 6684,
+            "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 68,
+            "end": 161,
+            "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 535,
+            "end": 626,
+            "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 692,
+            "end": 766,
+            "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 895,
+            "end": 942,
+            "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 1196,
+            "end": 1271,
+            "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 1017,
+            "end": 1082,
+            "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 384,
+            "end": 484,
+            "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 663,
+            "end": 734,
+            "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5002,
+            "end": 5119,
+            "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5166,
+            "end": 5233,
+            "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 360,
+            "end": 409,
+            "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1027,
+            "end": 1067,
+            "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1102,
+            "end": 1267,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 41,
+            "end": 141,
+            "quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 74,
+            "end": 198,
+            "quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-7fccb8afa341-predictors.json": "c61cb1222072a6c0ede39f38c73d0c07c14a9196048049bab5955da9fbf5bd9d",
+          "reviewed/development/case-7fccb8afa341-outcome.json": "21e7bbb979e1b2699a49d6145faa55088cb3d7301f88622d63488c9f450ca6e2",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "# msModelSlim 快速入门¶"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "🎉 至此，快速入门体验已全部完成。已完成 msModelSlim 一键量化与 vLLM-Ascend 推理部署的完整流程"
+              }
+            ],
+            "reference": "https://msmodelslim.readthedocs.io/zh-cn/latest/zh/quick_start/quantization_quick_start/"
+          },
+          {
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "W8A8量化精度调优策略是结合msModelSlim量化工具和精度测试工具precision tool进行精度验证和调优开展"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "模型量化后，可基于MindIE、vLLM等进行部署推理。"
+              }
+            ],
+            "reference": "https://modelslim.readthedocs.io/zh-cn/latest/zh/case_studies/w8a8_accuracy_tuning_policy/"
+          },
+          {
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "此量化方式对权重和激活值同时进行量化，将高位浮点数转为8 bit"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "bash examples/models/llama/run_pa.sh {W8A8量化权重路径}"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindie/10RC2/mindiellm/llmdev/mindie_llm0014.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "{\"search\": 3, \"fetch\": 3}"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 6,
+      "recorded_at": "2026-09-21T04:15:14.220017+00:00",
+      "process_sha256": "0ce49bc0ad3d676620d1a13c3536abcd637c6055091f327a429459307f6ccc3f",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+            "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "verification": "source",
+            "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为msModelSlim官方文档(readthedocs托管的项目官方文档)，第3条为其快速入门页。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)"
+              },
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "3. [快速入门 - msModelSlim Documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "实际采用路线(msModelSlim+vLLM-Ascend容器)中版本适用关系由官方直接给出：PCI ID自动匹配镜像版本规则、固定的msmodelslim-26.1.0安装源、transformers量化5.x/推理4.x的明确降级规则，直接套用即可，无需自行合并；CANN版本由容器捆绑无需选择。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim-26.1.0-py3-none-any.whl"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索预算内相关独立第三方来源去重后4条：技术站文章(jishuzhan与51cto为同内容镜像计1)、阿里云开发者社区、知乎、CSDN；GitHub Ascend/msit为官方仓库排除。3—4条对应档3。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)"
+              },
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在实质性第三方材料(非N/A)。第三方仅以搜索摘要形式出现，未抓取全文；摘要中的关键说法(基于ModelSlim做W8A8量化演示、MindIE支持W8A8等)与已取回官方文档一致，有可追溯依据支持部分关键说法，其余内容未核验。",
+            "evidence": [
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：工具msModelSlim、Calibrator校准API、W8A8模式、权重转换与MindIE部署路径，且API路径被检索到的官方文档证实；但具体参数拼写、版本配套、config字段确需外部补充(先验自己也如此声明)。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_f7d68b128d314ff3a11a12df.dispatch",
+              "call_76bf4ed41e0046158836a7cb.dispatch",
+              "call_e0abf8b83efa4f1197854fbf.dispatch",
+              "call_977411b909a549a0a185f217.dispatch",
+              "call_be6de196a1e846c1b2c22484.dispatch",
+              "call_50ece96ecf8a498b95ef698d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 5,
+            "status": "supported",
+            "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 91.57632,
+            "upper": 93.5424,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              91.5,
+              93.6
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 91.57632,
+          "upper": 93.5424,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            91.5,
+            93.6
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 308,
+            "end": 388,
+            "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 540,
+            "end": 577,
+            "quote": "3. [快速入门 - msModelSlim Documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 4753,
+            "end": 4887,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 2288,
+            "end": 2333,
+            "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 482,
+            "end": 514,
+            "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 7956,
+            "end": 8026,
+            "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 3923,
+            "end": 3976,
+            "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 1953,
+            "end": 2078,
+            "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 1851,
+            "end": 1899,
+            "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 2965,
+            "end": 3000,
+            "quote": "msmodelslim-26.1.0-py3-none-any.whl",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 6608,
+            "end": 6684,
+            "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 68,
+            "end": 161,
+            "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 535,
+            "end": 626,
+            "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 692,
+            "end": 766,
+            "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 895,
+            "end": 942,
+            "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 1196,
+            "end": 1271,
+            "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 1017,
+            "end": 1082,
+            "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 384,
+            "end": 484,
+            "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 663,
+            "end": 734,
+            "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5002,
+            "end": 5119,
+            "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5166,
+            "end": 5233,
+            "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 360,
+            "end": 409,
+            "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1027,
+            "end": 1067,
+            "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1102,
+            "end": 1267,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 41,
+            "end": 141,
+            "quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 74,
+            "end": 198,
+            "quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-7fccb8afa341-predictors.json": "d83014d177d7d4c87af8f22971039a5ddd7e02a28bae991dce8d0fc603309e98",
+          "reviewed/development/case-7fccb8afa341-outcome.json": "8999dc68949919f8cbd570c80356d06cf3d7802b784d00b965002acc27a5d2ca",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "# msModelSlim 快速入门¶"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "🎉 至此，快速入门体验已全部完成。已完成 msModelSlim 一键量化与 vLLM-Ascend 推理部署的完整流程"
+              }
+            ],
+            "reference": "https://msmodelslim.readthedocs.io/zh-cn/latest/zh/quick_start/quantization_quick_start/"
+          },
+          {
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "W8A8量化精度调优策略是结合msModelSlim量化工具和精度测试工具precision tool进行精度验证和调优开展"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "模型量化后，可基于MindIE、vLLM等进行部署推理。"
+              }
+            ],
+            "reference": "https://modelslim.readthedocs.io/zh-cn/latest/zh/case_studies/w8a8_accuracy_tuning_policy/"
+          },
+          {
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "此量化方式对权重和激活值同时进行量化，将高位浮点数转为8 bit"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "bash examples/models/llama/run_pa.sh {W8A8量化权重路径}"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindie/10RC2/mindiellm/llmdev/mindie_llm0014.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "{\"search\": 3, \"fetch\": 3}"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 7,
+      "recorded_at": "2026-09-21T04:16:32.110267+00:00",
+      "process_sha256": "0ce49bc0ad3d676620d1a13c3536abcd637c6055091f327a429459307f6ccc3f",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+            "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "verification": "source",
+            "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为msModelSlim官方文档(readthedocs托管的项目官方文档)，第3条为其快速入门页。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)"
+              },
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "3. [快速入门 - msModelSlim Documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "已取回正文完整覆盖原题：量化工具(msModelSlim含安装命令与版本)、W8A8量化完整流程(一键量化命令、Calibrator/QuantConfig代码、参数调优)、部署(vLLM-Ascend启动命令与--quantization ascend、MindIE config.json quantize字段)及前提约束(仅支持vLLM-Ascend容器、transformers版本要求)均已说明，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,"
+              },
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "实际采用路线(msModelSlim+vLLM-Ascend容器)中版本适用关系由官方直接给出：PCI ID自动匹配镜像版本规则、固定的msmodelslim-26.1.0安装源、transformers量化5.x/推理4.x的明确降级规则，直接套用即可，无需自行合并；CANN版本由容器捆绑无需选择。",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msmodelslim-26.1.0-py3-none-any.whl"
+              },
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索预算内相关独立第三方来源去重后4条：技术站文章(jishuzhan与51cto为同内容镜像计1)、阿里云开发者社区、知乎、CSDN；GitHub Ascend/msit为官方仓库排除。3—4条对应档3。",
+            "evidence": [
+              {
+                "event_id": "call_f7d68b128d314ff3a11a12df.result",
+                "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)"
+              },
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在实质性第三方材料(非N/A)。第三方仅以搜索摘要形式出现，未抓取全文；摘要中的关键说法(基于ModelSlim做W8A8量化演示、MindIE支持W8A8等)与已取回官方文档一致，有可追溯依据支持部分关键说法，其余内容未核验。",
+            "evidence": [
+              {
+                "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+                "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …"
+              },
+              {
+                "event_id": "call_be6de196a1e846c1b2c22484.result",
+                "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程：工具msModelSlim、Calibrator校准API、W8A8模式、权重转换与MindIE部署路径，且API路径被检索到的官方文档证实；但具体参数拼写、版本配套、config字段确需外部补充(先验自己也如此声明)。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重"
+              },
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_f7d68b128d314ff3a11a12df.dispatch",
+              "call_76bf4ed41e0046158836a7cb.dispatch",
+              "call_e0abf8b83efa4f1197854fbf.dispatch",
+              "call_977411b909a549a0a185f217.dispatch",
+              "call_be6de196a1e846c1b2c22484.dispatch",
+              "call_50ece96ecf8a498b95ef698d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 5,
+            "status": "supported",
+            "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 91.57632,
+            "upper": 93.5424,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              91.5,
+              93.6
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 91.57632,
+          "upper": 93.5424,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            91.5,
+            93.6
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 308,
+            "end": 388,
+            "quote": "2. [msModelSlim Documentation](https://msmodelslim.readthedocs.io/zh-cn/latest/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 540,
+            "end": 577,
+            "quote": "3. [快速入门 - msModelSlim Documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 4753,
+            "end": 4887,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 --device npu --model_type Qwen3.6-27B --quant_type w8a8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 2288,
+            "end": 2333,
+            "quote": "W8A8量化权重的config.json中应包含quantize字段，其值为\"w8a8\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 482,
+            "end": 514,
+            "quote": "本教程**仅支持**在标准化 vLLM-Ascend 容器中执行",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 7956,
+            "end": 8026,
+            "quote": "`--quantization ascend`：指定使用 Ascend 量化推理后端，加载 msModelSlim 生成的 W8A8 权重。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 3923,
+            "end": 3976,
+            "quote": "quant_config = QuantConfig(\n    a_bit=8,\n    w_bit=8,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "field": "response",
+            "sha256": "0f74fd309e4cfce07b2030af990e2fd1fa21f4a803380d837bb063569ebd22b6",
+            "start": 1953,
+            "end": 2078,
+            "quote": "python examples/models/llama/convert_quant_weights.py --model_path {浮点权重路径} --save_directory {W8A8量化权重路径} --w_bit 8 --a_bit 8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 1851,
+            "end": 1899,
+            "quote": "通过 `lspci` 获取 NPU 的 PCI ID，自动匹配 vLLM-Ascend 官方镜像",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 2965,
+            "end": 3000,
+            "quote": "msmodelslim-26.1.0-py3-none-any.whl",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 6608,
+            "end": 6684,
+            "quote": "msModelSlim 量化阶段需要 transformers 5.x，而 vLLM 运行时需要 transformers 4.x，因此推理前需降级恢复",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_f7d68b128d314ff3a11a12df.result",
+            "field": "response",
+            "sha256": "89b68096efb2c1ac697bcc592efa496ae17b62bafb7e36bce83038251363d79a",
+            "start": 68,
+            "end": 161,
+            "quote": "1. [昇腾大模型量化实战：ModelSlim 工具上手与 W8A8 精度 ...](https://jishuzhan.net/article/2003625934021263362)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 535,
+            "end": 626,
+            "quote": "2. [昇腾msmodelslim实现DeepSeek模型w8a8量化原理与代码 ...](https://developer.aliyun.com/article/1659301)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 692,
+            "end": 766,
+            "quote": "3. [【LLM国产化】量化技术在MindIE中的应用 - 知乎](https://zhuanlan.zhihu.com/p/2782845882)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 895,
+            "end": 942,
+            "quote": "4. [MindIE量化介绍（w8a8、w8a16、w8a8s、w8a8sc）-CSDN博客]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_e0abf8b83efa4f1197854fbf.result",
+            "field": "response",
+            "sha256": "9cf42a1084524a52e77d896b533e0047ddd7133108e6e0cdabc50b82103cfc4a",
+            "start": 1196,
+            "end": 1271,
+            "quote": "本文将以 Qwen2.5-72B 模型 为例，基于 MindStudio ModelSlim 工具 ，完整演示 W8A8（权重量化8bit，激活量 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_be6de196a1e846c1b2c22484.result",
+            "field": "response",
+            "sha256": "edf1043e32941c2ce087bfcdf1037cbbe37801732d0f7f1ae8932ead9809f022",
+            "start": 1017,
+            "end": 1082,
+            "quote": "W8A8、W8A16、W8A8SC稀疏量化、KV Cache int8、Anti-Outlier离群值处理、Attention量化",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 384,
+            "end": 484,
+            "quote": "核心入口通常是 Python API：`msmodelslim.pytorch.llm_ptq.llm_ptq_tools.Calibrator`，配 `CalibConfig`，量化模式选 W8A8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "1e13f9d4c06d509f2ed1990b2f196b657d9d6a52c5e19c257222136f46464391",
+            "start": 663,
+            "end": 734,
+            "quote": "部署侧用 **MindIE**（推理引擎，配 MindIE Service）或 llm-inference/llm deploy 加载量化权重",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "field": "response",
+            "sha256": "04bb2b359672265ccf85f57d322f77a414e067c769966bca4ce9e7f68cf326ed",
+            "start": 1650,
+            "end": 1727,
+            "quote": "from msmodelslim.pytorch.llm_ptq.llm_ptq_tools import Calibrator, QuantConfig",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5002,
+            "end": 5119,
+            "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 5166,
+            "end": 5233,
+            "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 360,
+            "end": 409,
+            "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1027,
+            "end": 1067,
+            "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 1102,
+            "end": 1267,
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "96fe302d89118be1ea6d639802465a385fe3d3ca3661b80b70d013004a9bc6be",
+            "start": 41,
+            "end": 141,
+            "quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "field": "response",
+            "sha256": "f4000f7288e1fcc4394caeb4e10c6a4f32248cdad90fefab047442a578922205",
+            "start": 74,
+            "end": 198,
+            "quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-7fccb8afa341-predictors.json": "d83014d177d7d4c87af8f22971039a5ddd7e02a28bae991dce8d0fc603309e98",
+          "reviewed/development/case-7fccb8afa341-outcome.json": "8999dc68949919f8cbd570c80356d06cf3d7802b784d00b965002acc27a5d2ca",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_76bf4ed41e0046158836a7cb.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "# msModelSlim 快速入门¶"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76bf4ed41e0046158836a7cb.result",
+                "quote": "🎉 至此，快速入门体验已全部完成。已完成 msModelSlim 一键量化与 vLLM-Ascend 推理部署的完整流程"
+              }
+            ],
+            "reference": "https://msmodelslim.readthedocs.io/zh-cn/latest/zh/quick_start/quantization_quick_start/"
+          },
+          {
+            "event_id": "call_977411b909a549a0a185f217.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "W8A8量化精度调优策略是结合msModelSlim量化工具和精度测试工具precision tool进行精度验证和调优开展"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_977411b909a549a0a185f217.result",
+                "quote": "模型量化后，可基于MindIE、vLLM等进行部署推理。"
+              }
+            ],
+            "reference": "https://modelslim.readthedocs.io/zh-cn/latest/zh/case_studies/w8a8_accuracy_tuning_policy/"
+          },
+          {
+            "event_id": "call_50ece96ecf8a498b95ef698d.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "此量化方式对权重和激活值同时进行量化，将高位浮点数转为8 bit"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_50ece96ecf8a498b95ef698d.result",
+                "quote": "bash examples/models/llama/run_pa.sh {W8A8量化权重路径}"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindie/10RC2/mindiellm/llmdev/mindie_llm0014.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "{\"search\": 3, \"fetch\": 3}"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

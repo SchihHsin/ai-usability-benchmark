@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "构建 INT8 引擎时 builder 执行三步…1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；2. 从直方图构建校准表（每个张量一个尺度值）；3. 根据校准表和网络定义构建 INT8 引擎。",
-      "answer_event_id": "final",
+      "status": "supported",
+      "answer_quote": "构建 INT8 引擎时 builder 执行三步（官方开发指南原文，NVIDIA 博客中文版第 7.3 节）：\n\n1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；\n2. 从直方图构建校准表（每个张量一个尺度值）；\n3. 根据校准表和网络定义构建 INT8 引擎。",
+      "answer_event_id": "run-end",
       "evidence_id": "call_d6a60ecb834448569ceab816.result",
       "evidence_quote": "构建 INT8 引擎时，构建器执行以下步骤：\n\n1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。\n2. 从直方图构建一个校准表，为每个张量提供一个比例值。\n3. 根据校准表和网络定义构建 INT8 引擎。",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题含多个子要求，逐项核对：(1) INT8量化部署方法——答案给出隐式量化(校准器)与显式量化(Q/DQ)两条路线，官方博客7.1.2节及API文档(call_1529bcda33854363b9b8dcbd.result '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.')与TRT11发布说明(call_3d41a11fa91c4785a560d9fd.result 'Weak-typing APIs (`setPrecision`, `setDynamicRange`, the per-precision `BuilderFlag` family) and implicit quantization (`IInt8Calibrator`) have been removed.')均支持该分叉；(2) 校准流程——三步builder流程、校准器选择(Entropy2/MinMax推荐及适用场景)、约500张图经验值、缓存读写与可移植条件、INT8 I/O校准数据须FP32且在[-128.0F,127.0F]，逐字对应官方博客7.3节(call_d6a60ecb834448569ceab816.result '实验表明大约 500 张图像足以校准 ImageNet 分类网络'、'只要校准发生在层融合之前，校准缓存数据就可以在平台之间…移植')；(3) 可执行代码——Python校准器类与build流程基于TRT 10.16.1 API文档示例(call_1529bcda33854363b9b8dcbd.result get_batch/read_calibration_cache/write_calibration_cache示例)；Torch-TensorRT封装对应官方PTQ文档(call_80afebd2f9a04262a4b25358.result)；显式量化Q/DQ路线对应call_0fd7a8496af044ddbd267ba1.result 'Calibration is performed before ONNX export…scales are embedded directly into the Q/DQ nodes.'。答案主动标注trtexec --calib等未核实处，不影响主体要求满足。",
-      "raw_status": "supported"
+      "reason": "原题含多个子要求，逐项核对：(1) INT8量化部署方法——答案给出隐式量化(校准器)与显式量化(Q/DQ)两条路线，官方博客7.1.2节及API文档(call_1529bcda33854363b9b8dcbd.result '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.')与TRT11发布说明(call_3d41a11fa91c4785a560d9fd.result 'Weak-typing APIs (`setPrecision`, `setDynamicRange`, the per-precision `BuilderFlag` family) and implicit quantization (`IInt8Calibrator`) have been removed.')均支持该分叉；(2) 校准流程——三步builder流程、校准器选择(Entropy2/MinMax推荐及适用场景)、约500张图经验值、缓存读写与可移植条件、INT8 I/O校准数据须FP32且在[-128.0F,127.0F]，逐字对应官方博客7.3节(call_d6a60ecb834448569ceab816.result '实验表明大约 500 张图像足以校准 ImageNet 分类网络'、'只要校准发生在层融合之前，校准缓存数据就可以在平台之间…移植')；(3) 可执行代码——Python校准器类与build流程基于TRT 10.16.1 API文档示例(call_1529bcda33854363b9b8dcbd.result get_batch/read_calibration_cache/write_calibration_cache示例)；Torch-TensorRT封装对应官方PTQ文档(call_80afebd2f9a04262a4b25358.result)；显式量化Q/DQ路线对应call_0fd7a8496af044ddbd267ba1.result 'Calibration is performed before ONNX export…scales are embedded directly into the Q/DQ nodes.'。答案主动标注trtexec --calib等未核实处，不影响主体要求满足。"
     }
   ],
   "m9_m10": [
@@ -54,18 +53,7 @@
       ]
     }
   ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "构建 INT8 引擎时 builder 执行三步…1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；2. 从直方图构建校准表（每个张量一个尺度值）；3. 根据校准表和网络定义构建 INT8 引擎。"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -178,6 +166,15 @@
     "raw_file": "assessments/development/case-ec4440709a0b-outcome.json",
     "repairs": [
       {
+        "event_id": "run-end",
+        "original": "构建 INT8 引擎时 builder 执行三步…1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；2. 从直方图构建校准表（每个张量一个尺度值）；3. 根据校准表和网络定义构建 INT8 引擎。",
+        "replacement": "构建 INT8 引擎时 builder 执行三步（官方开发指南原文，NVIDIA 博客中文版第 7.3 节）：\n\n1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；\n2. 从直方图构建校准表（每个张量一个尺度值）；\n3. 根据校准表和网络定义构建 INT8 引擎。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
         "basis": "final alias maps to frozen final answer"
       },
       {
@@ -193,6 +190,8 @@
         "basis": "final alias maps to frozen final answer"
       }
     ],
-    "semantic_validation": false
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
   }
 }

@@ -147,6 +147,3459 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T04:02:09.495901+00:00",
+      "process_sha256": "a98f535d375b79b324de42fc176d2bee20f99b6be413f9c51d5393fc5c02e9e1",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_25df1648.result",
+            "evidence_quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "verification": "source",
+            "reason": "原题要求 TensorRT INT8 量化与校准流程。答案覆盖：(1) 校准原理（builder 三步：FP32 运行记直方图→生成校准表→构建 INT8 engine），与 WebFetch_6 官方章节内容一致；(2) 校准数据要求（约500张、FP32、大 batch、随机分布），同见 WebFetch_6；(3) 校准器实现（继承 IInt8EntropyCalibrator2/IInt8MinMaxCalibrator，实现 get_batch_size/get_batch/read/write_calibration_cache），与 WebFetch_2 官方 API 文档的方法签名和代码示例逐字对应；(4) 构建配置 config.set_flag(trt.BuilderFlag.INT8) 与 config.int8_calibrator，WebFetch_6 有对应 Python 步骤；(5) 校准器选择表（Entropy2/MixMax/Entropy/Legacy），与 WebFetch_6 表格一致；(6) 部署反序列化与推理；(7) 额外给出官方推荐的显式量化路线 B 及弃用说明（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.'，WebFetch_6 'Users are strongly advised to transition to explicit quantization'）。trtexec 命令仅经二手来源印证，答案已如实标注未官方核实，不构成错误。整体流程完整且有官方来源支撑。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.nvidia.com TensorRT 10.x Python API Int8 页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence WebFetch_1_4a8ef62c.result; M2: missing return evidence WebFetch_2_25df1648.result",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶] - [IInt8Calibrator](.../Calibrator.html) - [`CalibrationAlgoType`](...)"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "*class* tensorrt.IInt8EntropyCalibrator2(*self: tensorrt.tensorrt.IInt8EntropyCalibrator2*)[¶]"
+              },
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "# Int8 Calibration In TensorRT"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文给出完整 PTQ 校准流程（三步 builder 流程、C++/Python 步骤、config.setInt8Calibrator、校准数据要求约500张图、batch size 建议、四种校准器选择建议、缓存复用），但原题涉及的硬件 compute capability 要求和 kFp16 flag 具体用法未在取得的正文中说明（抓取结果明确承认缺失）。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: missing relation cannot score >=4",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization."
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内发现至少6条相关独立第三方来源：知乎两篇、CSDN博客、zmurder博客两篇、HeKun-NVIDIA 的中文开发指南仓库（个人翻译仓库，非官方渠道）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC"
+              },
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "关键第三方说法（trtexec 提供 --calib= 校准接口、需生成 cache 文件、命令行需 --int8）有多个独立第三方来源相互印证（知乎两篇、zmurder博客、CSDN），未见与已取得官方资料直接矛盾的关键说法；但部分说法（如具体精度损失程度）仅为个人经验，且未与官方 trtexec 文档直接核对，缺独立官方侧交叉印证档位的全部条件，按4档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：IInt8Calibrator 四个必须方法（与官方签名一致）、EntropyCalibrator2 首选、cache 读写、BuilderFlag.INT8、QAT 路线；与事后核对的官方文档一致。但具体参数细节（校准样本数 500 张、TRT 10.1 起隐式校准弃用、新 API 签名）先验自认不确定且确需外部补充，故为4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_58e6050b.dispatch",
+              "WebFetch_1_4a8ef62c.dispatch",
+              "WebFetch_2_25df1648.dispatch",
+              "WebSearch_3_d2494e5c.dispatch",
+              "WebFetch_4_12c33042.dispatch",
+              "WebSearch_5_495b222b.dispatch",
+              "WebFetch_6_ab34d6d5.dispatch",
+              "WebSearch_7_a6ea8c6d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "答案给出了主要组件的版本依据：Python API 文档版本 10.16.1（WebFetch_1/2 标题均为 'NVIDIA TensorRT Standard Python API Documentation 10.16.1'），隐式校准弃用时间点 TensorRT 10.1（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1'），路线 B 适用 10.1+/11.x。但部署环境的硬件要求（compute capability）明确标注'本轮官方页未取到，未经本轮官方核实'，属于所需部署环境组件未确定，符合档3：部分所需组件有明确版本依据，其余仍未确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "校准器代码与构建配置完整可直接参照（与官方 API 文档示例一致），trtexec 命令行完整。但存在具体缺口：(1) 部署推理步骤仅为骨架，'分配 host/device buffer，enqueueV3/execute_async_v2 推理' 是注释而非可执行代码，需补写 buffer 分配与推理调用；(2) batch_stream（ImageBatchStream）未给出实现，代码中直接使用其 nbytes/batch_size 属性；(3) 答案自述'上述代码未实际运行…仅内容核查'。符合档3：有具体操作方案，但需补充缺失内容才能完整执行。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "insufficient_evidence",
+                "reason": "M2: missing return evidence WebFetch_1_4a8ef62c.result; M2: missing return evidence WebFetch_2_25df1648.result"
+              },
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: missing relation cannot score >=4"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence WebFetch_1_4a8ef62c.result; M2: missing return evidence WebFetch_2_25df1648.result"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing relation cannot score >=4"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M2: missing return evidence WebFetch_1_4a8ef62c.result",
+              "M2: missing return evidence WebFetch_2_25df1648.result",
+              "M4: missing relation cannot score >=4"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 97,
+            "end": 259,
+            "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_4_12c33042.result",
+            "field": "response",
+            "sha256": "d38776f4b751d965836f55889bd674fe1b4eb1c2b973891d8940c262852a6bed",
+            "start": 5,
+            "end": 35,
+            "quote": "# Int8 Calibration In TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 4047,
+            "end": 4125,
+            "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 1553,
+            "end": 1586,
+            "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 11793,
+            "end": 11868,
+            "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1533,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 901,
+            "end": 979,
+            "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1486,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 6584,
+            "end": 6702,
+            "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1214,
+            "end": 1287,
+            "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 1125,
+            "end": 1210,
+            "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 303,
+            "end": 411,
+            "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 567,
+            "end": 655,
+            "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 807,
+            "end": 839,
+            "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1432,
+            "end": 1495,
+            "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 196,
+            "end": 242,
+            "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 944,
+            "end": 1020,
+            "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1001,
+            "end": 1165,
+            "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1850,
+            "end": 1915,
+            "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 827,
+            "end": 909,
+            "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 3558,
+            "end": 3611,
+            "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 5220,
+            "end": 5249,
+            "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 1324,
+            "end": 1440,
+            "quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1284,
+            "end": 1407,
+            "quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_4a8ef62c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_4a8ef62c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_2_25df1648.result",
+              "WebFetch_4_12c33042.result",
+              "WebFetch_6_ab34d6d5.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-48b4a475f4cb-predictors.json": "1a6c5113cb48848b5bde34e136a1770d47f1c1b21ed9583a232684ad7089e96b",
+          "reviewed/development/case-48b4a475f4cb-outcome.json": "ed8986f60eb2215823640393f43c117754274f091341a21f6aa7bbdb9150dc54",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_4a8ef62c.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶] - [IInt8Calibrator](https://docs.nvidia.com/.../Calibrator.html)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "- [IInt8MinMaxCalibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/MinMaxCalibrator.html)"
+              }
+            ],
+            "reference": "仅返回类与方法链接目录，无可识别正文，判为导航框架"
+          },
+          {
+            "event_id": "WebFetch_2_25df1648.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "get_batch(*self: tensorrt.tensorrt.IInt8EntropyCalibrator2*, *names: collections.abc.Sequence[str]*) → list[int][¶]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "Parameters:\n\n**cache** – The calibration cache to write."
+              }
+            ],
+            "reference": "取得全部五个方法的直接正文，但无独立全文完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_4_12c33042.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/04_int8_calibration_in_tensorrt/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "Int8 calibration in TensorRT involves providing a representative set of input data\nto TensorRT as part of the engine building process."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "For more information on how int8 calibration works in TensorRT, see the\n[developer guide]"
+              }
+            ],
+            "reference": "官方仓库 README 正文完整呈现（Introduction 至 Further Reading），但完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-quantized-types.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "结束于 \"Quantization Noise Reduction\" 小节（即页面末尾），未发现中途截断。"
+              }
+            ],
+            "reference": "正文以整理稿形式返回，含大量代码与表格；边界说明为工具自述，不构成独立完整性证明，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "目标：TensorRT 开发者指南 \"Working with Quantized Types\" 章节完整正文。"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T04:05:56.562616+00:00",
+      "process_sha256": "a98f535d375b79b324de42fc176d2bee20f99b6be413f9c51d5393fc5c02e9e1",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_25df1648.result",
+            "evidence_quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "verification": "source",
+            "reason": "原题要求 TensorRT INT8 量化与校准流程。答案覆盖：(1) 校准原理（builder 三步：FP32 运行记直方图→生成校准表→构建 INT8 engine），与 WebFetch_6 官方章节内容一致；(2) 校准数据要求（约500张、FP32、大 batch、随机分布），同见 WebFetch_6；(3) 校准器实现（继承 IInt8EntropyCalibrator2/IInt8MinMaxCalibrator，实现 get_batch_size/get_batch/read/write_calibration_cache），与 WebFetch_2 官方 API 文档的方法签名和代码示例逐字对应；(4) 构建配置 config.set_flag(trt.BuilderFlag.INT8) 与 config.int8_calibrator，WebFetch_6 有对应 Python 步骤；(5) 校准器选择表（Entropy2/MixMax/Entropy/Legacy），与 WebFetch_6 表格一致；(6) 部署反序列化与推理；(7) 额外给出官方推荐的显式量化路线 B 及弃用说明（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.'，WebFetch_6 'Users are strongly advised to transition to explicit quantization'）。trtexec 命令仅经二手来源印证，答案已如实标注未官方核实，不构成错误。整体流程完整且有官方来源支撑。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.nvidia.com TensorRT 10.x Python API Int8 页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.5,
+            "upper": 4.25,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶] - [IInt8Calibrator](.../Calibrator.html) - [`CalibrationAlgoType`](...)"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "*class* tensorrt.IInt8EntropyCalibrator2(*self: tensorrt.tensorrt.IInt8EntropyCalibrator2*)[¶]"
+              },
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "# Int8 Calibration In TensorRT"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文给出完整 PTQ 校准流程（三步 builder 流程、C++/Python 步骤、config.setInt8Calibrator、校准数据要求约500张图、batch size 建议、四种校准器选择建议、缓存复用），但原题涉及的硬件 compute capability 要求和 kFp16 flag 具体用法未在取得的正文中说明（抓取结果明确承认缺失）。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: missing relation cannot score >=4",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization."
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内发现至少6条相关独立第三方来源：知乎两篇、CSDN博客、zmurder博客两篇、HeKun-NVIDIA 的中文开发指南仓库（个人翻译仓库，非官方渠道）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC"
+              },
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "关键第三方说法（trtexec 提供 --calib= 校准接口、需生成 cache 文件、命令行需 --int8）有多个独立第三方来源相互印证（知乎两篇、zmurder博客、CSDN），未见与已取得官方资料直接矛盾的关键说法；但部分说法（如具体精度损失程度）仅为个人经验，且未与官方 trtexec 文档直接核对，缺独立官方侧交叉印证档位的全部条件，按4档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：IInt8Calibrator 四个必须方法（与官方签名一致）、EntropyCalibrator2 首选、cache 读写、BuilderFlag.INT8、QAT 路线；与事后核对的官方文档一致。但具体参数细节（校准样本数 500 张、TRT 10.1 起隐式校准弃用、新 API 签名）先验自认不确定且确需外部补充，故为4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_58e6050b.dispatch",
+              "WebFetch_1_4a8ef62c.dispatch",
+              "WebFetch_2_25df1648.dispatch",
+              "WebSearch_3_d2494e5c.dispatch",
+              "WebFetch_4_12c33042.dispatch",
+              "WebSearch_5_495b222b.dispatch",
+              "WebFetch_6_ab34d6d5.dispatch",
+              "WebSearch_7_a6ea8c6d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "答案给出了主要组件的版本依据：Python API 文档版本 10.16.1（WebFetch_1/2 标题均为 'NVIDIA TensorRT Standard Python API Documentation 10.16.1'），隐式校准弃用时间点 TensorRT 10.1（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1'），路线 B 适用 10.1+/11.x。但部署环境的硬件要求（compute capability）明确标注'本轮官方页未取到，未经本轮官方核实'，属于所需部署环境组件未确定，符合档3：部分所需组件有明确版本依据，其余仍未确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "校准器代码与构建配置完整可直接参照（与官方 API 文档示例一致），trtexec 命令行完整。但存在具体缺口：(1) 部署推理步骤仅为骨架，'分配 host/device buffer，enqueueV3/execute_async_v2 推理' 是注释而非可执行代码，需补写 buffer 分配与推理调用；(2) batch_stream（ImageBatchStream）未给出实现，代码中直接使用其 nbytes/batch_size 属性；(3) 答案自述'上述代码未实际运行…仅内容核查'。符合档3：有具体操作方案，但需补充缺失内容才能完整执行。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: missing relation cannot score >=4"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing relation cannot score >=4"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M4: missing relation cannot score >=4"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 97,
+            "end": 259,
+            "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_4_12c33042.result",
+            "field": "response",
+            "sha256": "d38776f4b751d965836f55889bd674fe1b4eb1c2b973891d8940c262852a6bed",
+            "start": 5,
+            "end": 35,
+            "quote": "# Int8 Calibration In TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 4047,
+            "end": 4125,
+            "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 1553,
+            "end": 1586,
+            "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 11793,
+            "end": 11868,
+            "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1533,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 901,
+            "end": 979,
+            "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1486,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 6584,
+            "end": 6702,
+            "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1214,
+            "end": 1287,
+            "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 1125,
+            "end": 1210,
+            "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 303,
+            "end": 411,
+            "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 567,
+            "end": 655,
+            "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 807,
+            "end": 839,
+            "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1432,
+            "end": 1495,
+            "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 196,
+            "end": 242,
+            "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 944,
+            "end": 1020,
+            "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1001,
+            "end": 1165,
+            "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1850,
+            "end": 1915,
+            "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 827,
+            "end": 909,
+            "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 3558,
+            "end": 3611,
+            "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 5220,
+            "end": 5249,
+            "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 1324,
+            "end": 1440,
+            "quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1284,
+            "end": 1407,
+            "quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_4a8ef62c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_4a8ef62c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_2_25df1648.result",
+              "WebFetch_4_12c33042.result",
+              "WebFetch_6_ab34d6d5.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-48b4a475f4cb-predictors.json": "a09aab2718beb365201afdee5cc61d6f2c9653fe89e96cf4ea2952bc2d4d304f",
+          "reviewed/development/case-48b4a475f4cb-outcome.json": "ed8986f60eb2215823640393f43c117754274f091341a21f6aa7bbdb9150dc54",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_4a8ef62c.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html#int8 \"Permalink to this heading\")\n\n- [IInt8Calibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/Calibrator.html)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "- [IInt8MinMaxCalibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/MinMaxCalibrator.html)"
+              }
+            ],
+            "reference": "仅返回类与方法链接目录，无可识别正文，判为导航框架"
+          },
+          {
+            "event_id": "WebFetch_2_25df1648.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "get_batch(*self: [tensorrt.tensorrt.IInt8EntropyCalibrator2](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2 \"tensorrt.tensorrt.IInt8EntropyCalibrator2\")*, *names: collections.abc.Sequence[str]*) → list[int][¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2.get_batch \"Permalink to this definition\")"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "Parameters:\n\n**cache** – The calibration cache to write."
+              }
+            ],
+            "reference": "取得全部五个方法的直接正文，但无独立全文完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_4_12c33042.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/04_int8_calibration_in_tensorrt/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "Int8 calibration in TensorRT involves providing a representative set of input data\nto TensorRT as part of the engine building process."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "For more information on how int8 calibration works in TensorRT, see the\n[developer guide]"
+              }
+            ],
+            "reference": "官方仓库 README 正文完整呈现（Introduction 至 Further Reading），但完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-quantized-types.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "结束于 \"Quantization Noise Reduction\" 小节（即页面末尾），未发现中途截断。"
+              }
+            ],
+            "reference": "正文以整理稿形式返回，含大量代码与表格；边界说明为工具自述，不构成独立完整性证明，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "目标：TensorRT 开发者指南 \"Working with Quantized Types\" 章节完整正文。"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T04:07:17.092574+00:00",
+      "process_sha256": "a98f535d375b79b324de42fc176d2bee20f99b6be413f9c51d5393fc5c02e9e1",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_25df1648.result",
+            "evidence_quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "verification": "source",
+            "reason": "原题要求 TensorRT INT8 量化与校准流程。答案覆盖：(1) 校准原理（builder 三步：FP32 运行记直方图→生成校准表→构建 INT8 engine），与 WebFetch_6 官方章节内容一致；(2) 校准数据要求（约500张、FP32、大 batch、随机分布），同见 WebFetch_6；(3) 校准器实现（继承 IInt8EntropyCalibrator2/IInt8MinMaxCalibrator，实现 get_batch_size/get_batch/read/write_calibration_cache），与 WebFetch_2 官方 API 文档的方法签名和代码示例逐字对应；(4) 构建配置 config.set_flag(trt.BuilderFlag.INT8) 与 config.int8_calibrator，WebFetch_6 有对应 Python 步骤；(5) 校准器选择表（Entropy2/MixMax/Entropy/Legacy），与 WebFetch_6 表格一致；(6) 部署反序列化与推理；(7) 额外给出官方推荐的显式量化路线 B 及弃用说明（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.'，WebFetch_6 'Users are strongly advised to transition to explicit quantization'）。trtexec 命令仅经二手来源印证，答案已如实标注未官方核实，不构成错误。整体流程完整且有官方来源支撑。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.nvidia.com TensorRT 10.x Python API Int8 页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.5,
+            "upper": 4.25,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶] - [IInt8Calibrator](.../Calibrator.html) - [`CalibrationAlgoType`](...)"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "*class* tensorrt.IInt8EntropyCalibrator2(*self: tensorrt.tensorrt.IInt8EntropyCalibrator2*)[¶]"
+              },
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "# Int8 Calibration In TensorRT"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文给出完整 PTQ 校准流程（三步 builder 流程、C++/Python 步骤、config.setInt8Calibrator、校准数据要求约500张图、batch size 建议、四种校准器选择建议、缓存复用），但原题涉及的硬件 compute capability 要求和 kFp16 flag 具体用法未在取得的正文中说明（抓取结果明确承认缺失）。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "需合并多处官方约束才能确定适用路线：EntropyCalibrator2 页标注 10.1 起弃用并被显式量化取代，同时同页又称其为 preferred/required for DLA；结合 work-quantized-types 的迁移建议（强烈建议改用显式量化/Model Optimizer）才能确定当前版本下隐式校准与显式量化的适用关系。硬件适用矩阵（compute capability）未取得，但非完成版本选择所必需。无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization."
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内发现至少6条相关独立第三方来源：知乎两篇、CSDN博客、zmurder博客两篇、HeKun-NVIDIA 的中文开发指南仓库（个人翻译仓库，非官方渠道）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC"
+              },
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "关键第三方说法（trtexec 提供 --calib= 校准接口、需生成 cache 文件、命令行需 --int8）有多个独立第三方来源相互印证（知乎两篇、zmurder博客、CSDN），未见与已取得官方资料直接矛盾的关键说法；但部分说法（如具体精度损失程度）仅为个人经验，且未与官方 trtexec 文档直接核对，缺独立官方侧交叉印证档位的全部条件，按4档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：IInt8Calibrator 四个必须方法（与官方签名一致）、EntropyCalibrator2 首选、cache 读写、BuilderFlag.INT8、QAT 路线；与事后核对的官方文档一致。但具体参数细节（校准样本数 500 张、TRT 10.1 起隐式校准弃用、新 API 签名）先验自认不确定且确需外部补充，故为4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_58e6050b.dispatch",
+              "WebFetch_1_4a8ef62c.dispatch",
+              "WebFetch_2_25df1648.dispatch",
+              "WebSearch_3_d2494e5c.dispatch",
+              "WebFetch_4_12c33042.dispatch",
+              "WebSearch_5_495b222b.dispatch",
+              "WebFetch_6_ab34d6d5.dispatch",
+              "WebSearch_7_a6ea8c6d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "答案给出了主要组件的版本依据：Python API 文档版本 10.16.1（WebFetch_1/2 标题均为 'NVIDIA TensorRT Standard Python API Documentation 10.16.1'），隐式校准弃用时间点 TensorRT 10.1（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1'），路线 B 适用 10.1+/11.x。但部署环境的硬件要求（compute capability）明确标注'本轮官方页未取到，未经本轮官方核实'，属于所需部署环境组件未确定，符合档3：部分所需组件有明确版本依据，其余仍未确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "校准器代码与构建配置完整可直接参照（与官方 API 文档示例一致），trtexec 命令行完整。但存在具体缺口：(1) 部署推理步骤仅为骨架，'分配 host/device buffer，enqueueV3/execute_async_v2 推理' 是注释而非可执行代码，需补写 buffer 分配与推理调用；(2) batch_stream（ImageBatchStream）未给出实现，代码中直接使用其 nbytes/batch_size 属性；(3) 答案自述'上述代码未实际运行…仅内容核查'。符合档3：有具体操作方案，但需补充缺失内容才能完整执行。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.80486400000001,
+            "upper": 87.22899199999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.8,
+              87.3
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.80486400000001,
+          "upper": 87.22899199999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.8,
+            87.3
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 97,
+            "end": 259,
+            "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_4_12c33042.result",
+            "field": "response",
+            "sha256": "d38776f4b751d965836f55889bd674fe1b4eb1c2b973891d8940c262852a6bed",
+            "start": 5,
+            "end": 35,
+            "quote": "# Int8 Calibration In TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 4047,
+            "end": 4125,
+            "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 1553,
+            "end": 1586,
+            "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 11793,
+            "end": 11868,
+            "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1533,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 901,
+            "end": 979,
+            "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1486,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 6584,
+            "end": 6702,
+            "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1214,
+            "end": 1287,
+            "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 1125,
+            "end": 1210,
+            "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 303,
+            "end": 411,
+            "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 567,
+            "end": 655,
+            "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 807,
+            "end": 839,
+            "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1432,
+            "end": 1495,
+            "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 196,
+            "end": 242,
+            "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 944,
+            "end": 1020,
+            "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1001,
+            "end": 1165,
+            "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1850,
+            "end": 1915,
+            "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 827,
+            "end": 909,
+            "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 3558,
+            "end": 3611,
+            "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 5220,
+            "end": 5249,
+            "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 1324,
+            "end": 1440,
+            "quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1284,
+            "end": 1407,
+            "quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_4a8ef62c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_4a8ef62c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_2_25df1648.result",
+              "WebFetch_4_12c33042.result",
+              "WebFetch_6_ab34d6d5.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-48b4a475f4cb-predictors.json": "622ef74cda3aafd1ccc630aae5dadb79c76a8bba26f6e6e2faec0d994f382e92",
+          "reviewed/development/case-48b4a475f4cb-outcome.json": "ed8986f60eb2215823640393f43c117754274f091341a21f6aa7bbdb9150dc54",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_4a8ef62c.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html#int8 \"Permalink to this heading\")\n\n- [IInt8Calibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/Calibrator.html)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "- [IInt8MinMaxCalibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/MinMaxCalibrator.html)"
+              }
+            ],
+            "reference": "仅返回类与方法链接目录，无可识别正文，判为导航框架"
+          },
+          {
+            "event_id": "WebFetch_2_25df1648.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "get_batch(*self: [tensorrt.tensorrt.IInt8EntropyCalibrator2](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2 \"tensorrt.tensorrt.IInt8EntropyCalibrator2\")*, *names: collections.abc.Sequence[str]*) → list[int][¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2.get_batch \"Permalink to this definition\")"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "Parameters:\n\n**cache** – The calibration cache to write."
+              }
+            ],
+            "reference": "取得全部五个方法的直接正文，但无独立全文完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_4_12c33042.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/04_int8_calibration_in_tensorrt/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "Int8 calibration in TensorRT involves providing a representative set of input data\nto TensorRT as part of the engine building process."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "For more information on how int8 calibration works in TensorRT, see the\n[developer guide]"
+              }
+            ],
+            "reference": "官方仓库 README 正文完整呈现（Introduction 至 Further Reading），但完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-quantized-types.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "结束于 \"Quantization Noise Reduction\" 小节（即页面末尾），未发现中途截断。"
+              }
+            ],
+            "reference": "正文以整理稿形式返回，含大量代码与表格；边界说明为工具自述，不构成独立完整性证明，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "目标：TensorRT 开发者指南 \"Working with Quantized Types\" 章节完整正文。"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 5,
+      "recorded_at": "2026-09-21T04:15:14.730585+00:00",
+      "process_sha256": "a98f535d375b79b324de42fc176d2bee20f99b6be413f9c51d5393fc5c02e9e1",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_25df1648.result",
+            "evidence_quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "verification": "source",
+            "reason": "原题要求 TensorRT INT8 量化与校准流程。答案覆盖：(1) 校准原理（builder 三步：FP32 运行记直方图→生成校准表→构建 INT8 engine），与 WebFetch_6 官方章节内容一致；(2) 校准数据要求（约500张、FP32、大 batch、随机分布），同见 WebFetch_6；(3) 校准器实现（继承 IInt8EntropyCalibrator2/IInt8MinMaxCalibrator，实现 get_batch_size/get_batch/read/write_calibration_cache），与 WebFetch_2 官方 API 文档的方法签名和代码示例逐字对应；(4) 构建配置 config.set_flag(trt.BuilderFlag.INT8) 与 config.int8_calibrator，WebFetch_6 有对应 Python 步骤；(5) 校准器选择表（Entropy2/MixMax/Entropy/Legacy），与 WebFetch_6 表格一致；(6) 部署反序列化与推理；(7) 额外给出官方推荐的显式量化路线 B 及弃用说明（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.'，WebFetch_6 'Users are strongly advised to transition to explicit quantization'）。trtexec 命令仅经二手来源印证，答案已如实标注未官方核实，不构成错误。整体流程完整且有官方来源支撑。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.nvidia.com TensorRT 10.x Python API Int8 页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.5,
+            "upper": 4.25,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶] - [IInt8Calibrator](.../Calibrator.html) - [`CalibrationAlgoType`](...)"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "*class* tensorrt.IInt8EntropyCalibrator2(*self: tensorrt.tensorrt.IInt8EntropyCalibrator2*)[¶]"
+              },
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "# Int8 Calibration In TensorRT"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文给出完整 PTQ 校准流程（三步 builder 流程、C++/Python 步骤、config.setInt8Calibrator、校准数据要求约500张图、batch size 建议、四种校准器选择建议、缓存复用），但原题涉及的硬件 compute capability 要求和 kFp16 flag 具体用法未在取得的正文中说明（抓取结果明确承认缺失）。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "需合并多处官方约束才能确定适用路线：EntropyCalibrator2 页标注 10.1 起弃用并被显式量化取代，同时同页又称其为 preferred/required for DLA；结合 work-quantized-types 的迁移建议（强烈建议改用显式量化/Model Optimizer）才能确定当前版本下隐式校准与显式量化的适用关系。硬件适用矩阵（compute capability）未取得，但非完成版本选择所必需。无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization."
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内发现至少6条相关独立第三方来源：知乎两篇、CSDN博客、zmurder博客两篇、HeKun-NVIDIA 的中文开发指南仓库（个人翻译仓库，非官方渠道）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC"
+              },
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "关键第三方说法（trtexec 提供 --calib= 校准接口、需生成 cache 文件、命令行需 --int8）有多个独立第三方来源相互印证（知乎两篇、zmurder博客、CSDN），未见与已取得官方资料直接矛盾的关键说法；但部分说法（如具体精度损失程度）仅为个人经验，且未与官方 trtexec 文档直接核对，缺独立官方侧交叉印证档位的全部条件，按4档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：IInt8Calibrator 四个必须方法（与官方签名一致）、EntropyCalibrator2 首选、cache 读写、BuilderFlag.INT8、QAT 路线；与事后核对的官方文档一致。但具体参数细节（校准样本数 500 张、TRT 10.1 起隐式校准弃用、新 API 签名）先验自认不确定且确需外部补充，故为4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_58e6050b.dispatch",
+              "WebFetch_1_4a8ef62c.dispatch",
+              "WebFetch_2_25df1648.dispatch",
+              "WebSearch_3_d2494e5c.dispatch",
+              "WebFetch_4_12c33042.dispatch",
+              "WebSearch_5_495b222b.dispatch",
+              "WebFetch_6_ab34d6d5.dispatch",
+              "WebSearch_7_a6ea8c6d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "答案给出了主要组件的版本依据：Python API 文档版本 10.16.1（WebFetch_1/2 标题均为 'NVIDIA TensorRT Standard Python API Documentation 10.16.1'），隐式校准弃用时间点 TensorRT 10.1（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1'），路线 B 适用 10.1+/11.x。但部署环境的硬件要求（compute capability）明确标注'本轮官方页未取到，未经本轮官方核实'，属于所需部署环境组件未确定，符合档3：部分所需组件有明确版本依据，其余仍未确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "校准器代码与构建配置完整可直接参照（与官方 API 文档示例一致），trtexec 命令行完整。但存在具体缺口：(1) 部署推理步骤仅为骨架，'分配 host/device buffer，enqueueV3/execute_async_v2 推理' 是注释而非可执行代码，需补写 buffer 分配与推理调用；(2) batch_stream（ImageBatchStream）未给出实现，代码中直接使用其 nbytes/batch_size 属性；(3) 答案自述'上述代码未实际运行…仅内容核查'。符合档3：有具体操作方案，但需补充缺失内容才能完整执行。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.80486400000001,
+            "upper": 87.22899199999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.8,
+              87.3
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.80486400000001,
+          "upper": 87.22899199999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.8,
+            87.3
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 97,
+            "end": 259,
+            "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_4_12c33042.result",
+            "field": "response",
+            "sha256": "d38776f4b751d965836f55889bd674fe1b4eb1c2b973891d8940c262852a6bed",
+            "start": 5,
+            "end": 35,
+            "quote": "# Int8 Calibration In TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 4047,
+            "end": 4125,
+            "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 1553,
+            "end": 1586,
+            "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 11793,
+            "end": 11868,
+            "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1533,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 901,
+            "end": 979,
+            "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1486,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 6584,
+            "end": 6702,
+            "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1214,
+            "end": 1287,
+            "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 1125,
+            "end": 1210,
+            "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 303,
+            "end": 411,
+            "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 567,
+            "end": 655,
+            "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 807,
+            "end": 839,
+            "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1432,
+            "end": 1495,
+            "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 196,
+            "end": 242,
+            "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 944,
+            "end": 1020,
+            "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1001,
+            "end": 1165,
+            "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1850,
+            "end": 1915,
+            "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 827,
+            "end": 909,
+            "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 3558,
+            "end": 3611,
+            "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 5220,
+            "end": 5249,
+            "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 1324,
+            "end": 1440,
+            "quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1284,
+            "end": 1407,
+            "quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_4a8ef62c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_4a8ef62c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_2_25df1648.result",
+              "WebFetch_4_12c33042.result",
+              "WebFetch_6_ab34d6d5.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-48b4a475f4cb-predictors.json": "e325c666184c9ec4e9333943a51ce3b41e61c58bfc85a526a948b17a5043d41d",
+          "reviewed/development/case-48b4a475f4cb-outcome.json": "59e7b5297c0b5f5460eb4123290b634076b17086bfef7c38f36111bfdcc85f54",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_4a8ef62c.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html#int8 \"Permalink to this heading\")\n\n- [IInt8Calibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/Calibrator.html)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "- [IInt8MinMaxCalibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/MinMaxCalibrator.html)"
+              }
+            ],
+            "reference": "仅返回类与方法链接目录，无可识别正文，判为导航框架"
+          },
+          {
+            "event_id": "WebFetch_2_25df1648.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "get_batch(*self: [tensorrt.tensorrt.IInt8EntropyCalibrator2](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2 \"tensorrt.tensorrt.IInt8EntropyCalibrator2\")*, *names: collections.abc.Sequence[str]*) → list[int][¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2.get_batch \"Permalink to this definition\")"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "Parameters:\n\n**cache** – The calibration cache to write."
+              }
+            ],
+            "reference": "取得全部五个方法的直接正文，但无独立全文完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_4_12c33042.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/04_int8_calibration_in_tensorrt/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "Int8 calibration in TensorRT involves providing a representative set of input data\nto TensorRT as part of the engine building process."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "For more information on how int8 calibration works in TensorRT, see the\n[developer guide]"
+              }
+            ],
+            "reference": "官方仓库 README 正文完整呈现（Introduction 至 Further Reading），但完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-quantized-types.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "结束于 \"Quantization Noise Reduction\" 小节（即页面末尾），未发现中途截断。"
+              }
+            ],
+            "reference": "正文以整理稿形式返回，含大量代码与表格；边界说明为工具自述，不构成独立完整性证明，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "目标：TensorRT 开发者指南 \"Working with Quantized Types\" 章节完整正文。"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 6,
+      "recorded_at": "2026-09-21T04:16:32.642565+00:00",
+      "process_sha256": "a98f535d375b79b324de42fc176d2bee20f99b6be413f9c51d5393fc5c02e9e1",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_25df1648.result",
+            "evidence_quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "verification": "source",
+            "reason": "原题要求 TensorRT INT8 量化与校准流程。答案覆盖：(1) 校准原理（builder 三步：FP32 运行记直方图→生成校准表→构建 INT8 engine），与 WebFetch_6 官方章节内容一致；(2) 校准数据要求（约500张、FP32、大 batch、随机分布），同见 WebFetch_6；(3) 校准器实现（继承 IInt8EntropyCalibrator2/IInt8MinMaxCalibrator，实现 get_batch_size/get_batch/read/write_calibration_cache），与 WebFetch_2 官方 API 文档的方法签名和代码示例逐字对应；(4) 构建配置 config.set_flag(trt.BuilderFlag.INT8) 与 config.int8_calibrator，WebFetch_6 有对应 Python 步骤；(5) 校准器选择表（Entropy2/MixMax/Entropy/Legacy），与 WebFetch_6 表格一致；(6) 部署反序列化与推理；(7) 额外给出官方推荐的显式量化路线 B 及弃用说明（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.'，WebFetch_6 'Users are strongly advised to transition to explicit quantization'）。trtexec 命令仅经二手来源印证，答案已如实标注未官方核实，不构成错误。整体流程完整且有官方来源支撑。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.nvidia.com TensorRT 10.x Python API Int8 页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.5,
+            "upper": 4.25,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶] - [IInt8Calibrator](.../Calibrator.html) - [`CalibrationAlgoType`](...)"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "*class* tensorrt.IInt8EntropyCalibrator2(*self: tensorrt.tensorrt.IInt8EntropyCalibrator2*)[¶]"
+              },
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "# Int8 Calibration In TensorRT"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文给出完整 PTQ 校准流程（三步 builder 流程、C++/Python 步骤、config.setInt8Calibrator、校准数据要求约500张图、batch size 建议、四种校准器选择建议、缓存复用），但原题涉及的硬件 compute capability 要求和 kFp16 flag 具体用法未在取得的正文中说明（抓取结果明确承认缺失）。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）"
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "需合并多处官方约束才能确定适用路线：EntropyCalibrator2 页标注 10.1 起弃用并被显式量化取代，同时同页又称其为 preferred/required for DLA；结合 work-quantized-types 的迁移建议（强烈建议改用显式量化/Model Optimizer）才能确定当前版本下隐式校准与显式量化的适用关系。硬件适用矩阵（compute capability）未取得，但非完成版本选择所必需。无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization."
+              },
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "This is the preferred calibrator. This is the required calibrator for DLA"
+              },
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内发现至少6条相关独立第三方来源：知乎两篇、CSDN博客、zmurder博客两篇、HeKun-NVIDIA 的中文开发指南仓库（个人翻译仓库，非官方渠道）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC"
+              },
+              {
+                "event_id": "WebSearch_0_58e6050b.result",
+                "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "关键第三方说法（trtexec 提供 --calib= 校准接口、需生成 cache 文件、命令行需 --int8）有多个独立第三方来源相互印证（知乎两篇、zmurder博客、CSDN），未见与已取得官方资料直接矛盾的关键说法；但部分说法（如具体精度损失程度）仅为个人经验，且未与官方 trtexec 文档直接核对，缺独立官方侧交叉印证档位的全部条件，按4档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存"
+              },
+              {
+                "event_id": "WebSearch_7_a6ea8c6d.result",
+                "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：IInt8Calibrator 四个必须方法（与官方签名一致）、EntropyCalibrator2 首选、cache 读写、BuilderFlag.INT8、QAT 路线；与事后核对的官方文档一致。但具体参数细节（校准样本数 500 张、TRT 10.1 起隐式校准弃用、新 API 签名）先验自认不确定且确需外部补充，故为4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_58e6050b.dispatch",
+              "WebFetch_1_4a8ef62c.dispatch",
+              "WebFetch_2_25df1648.dispatch",
+              "WebSearch_3_d2494e5c.dispatch",
+              "WebFetch_4_12c33042.dispatch",
+              "WebSearch_5_495b222b.dispatch",
+              "WebFetch_6_ab34d6d5.dispatch",
+              "WebSearch_7_a6ea8c6d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "答案给出了主要组件的版本依据：Python API 文档版本 10.16.1（WebFetch_1/2 标题均为 'NVIDIA TensorRT Standard Python API Documentation 10.16.1'），隐式校准弃用时间点 TensorRT 10.1（WebFetch_2 '[DEPRECATED] Deprecated in TensorRT 10.1'），路线 B 适用 10.1+/11.x。但部署环境的硬件要求（compute capability）明确标注'本轮官方页未取到，未经本轮官方核实'，属于所需部署环境组件未确定，符合档3：部分所需组件有明确版本依据，其余仍未确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "校准器代码与构建配置完整可直接参照（与官方 API 文档示例一致），trtexec 命令行完整。但存在具体缺口：(1) 部署推理步骤仅为骨架，'分配 host/device buffer，enqueueV3/execute_async_v2 推理' 是注释而非可执行代码，需补写 buffer 分配与推理调用；(2) batch_stream（ImageBatchStream）未给出实现，代码中直接使用其 nbytes/batch_size 属性；(3) 答案自述'上述代码未实际运行…仅内容核查'。符合档3：有具体操作方案，但需补充缺失内容才能完整执行。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.80486400000001,
+            "upper": 87.22899199999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.8,
+              87.3
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.80486400000001,
+          "upper": 87.22899199999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.8,
+            87.3
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 97,
+            "end": 259,
+            "quote": "## 1. [Int8 - NVIDIA TensorRT Standard Python API Documentation …](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_4_12c33042.result",
+            "field": "response",
+            "sha256": "d38776f4b751d965836f55889bd674fe1b4eb1c2b973891d8940c262852a6bed",
+            "start": 5,
+            "end": 35,
+            "quote": "# Int8 Calibration In TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 4047,
+            "end": 4125,
+            "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 1553,
+            "end": 1586,
+            "quote": "实验表明 ImageNet 分类网络约 **500 张图像**足够",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 11793,
+            "end": 11868,
+            "quote": "**无任何 compute capability / SM 版本要求**（您的第 3 点），原文该信息位于其他章节（如 Support Matrix）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1533,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA, as it supports per activation tensor scaling.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 901,
+            "end": 979,
+            "quote": "[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1413,
+            "end": 1486,
+            "quote": "This is the preferred calibrator. This is the required calibrator for DLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "field": "response",
+            "sha256": "cb22d37633f7826d4defa89d8357df3da499062db49fd77efe6ca2561e6d73f1",
+            "start": 6584,
+            "end": 6702,
+            "quote": "Users are strongly advised to transition to explicit quantization, typically by utilizing the TensorRT Model Optimizer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1214,
+            "end": 1287,
+            "quote": "## 4. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 1125,
+            "end": 1210,
+            "quote": "## 5. [基于tensorRT的int8量化及校准-quick start - 知乎](https://zhuanlan.zhihu.com/p/657031581)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 303,
+            "end": 411,
+            "quote": "## 2. [【TensoRRT】如何使用trtexec.exe进行INT8量化 - CSDN博客](https://blog.csdn.net/a8039974/article/details/148191616)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 567,
+            "end": 655,
+            "quote": "## 3. [Calibration file - 奔跑的IC](https://zmurder.github.io/TensorRT/Calibration%20file/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 807,
+            "end": 839,
+            "quote": "## 4. [TensorRT INT8量化代码 | 奔跑的IC",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_58e6050b.result",
+            "field": "response",
+            "sha256": "41239aa352e646e936bae05ce07ec2625f87ed4821498cd13a27f8116a6f2dd9",
+            "start": 1432,
+            "end": 1495,
+            "quote": "## 5. [TensorRT-Developer_Guide_in_Chinese/7.TensorRT中的INT8 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 196,
+            "end": 242,
+            "quote": "trtexec 有提供 --calib=接口进行校正，但需要对中间特征进行cache文件保存",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_7_a6ea8c6d.result",
+            "field": "response",
+            "sha256": "f60d4a2e75f1924dbc86c90ff47e89338924d0ab383c424719daecbba530653f",
+            "start": 944,
+            "end": 1020,
+            "quote": "上面指定的 --calib=calibratorfile_test.txt 是需要我们自己生成的，使用我们自己的数据集，在build engine阶 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1001,
+            "end": 1165,
+            "quote": "Python 需实现四个方法：`get_batch_size()`、`get_batch(names)`（返回 device 内存指针列表，可用 pycuda / cuda-python 分配）、`read_calibration_cache(length)`、`write_calibration_cache(cache)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "73a54d08d4683f1ddd11475f2fe9c30a4d57f05fff090771a3ee93a545016eb0",
+            "start": 1850,
+            "end": 1915,
+            "quote": "entropy calibrator2 推荐的校准 batch 数（我记得是约 500 张图 / 若干 batch，具体数字不确）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 827,
+            "end": 909,
+            "quote": "硬件要求（compute capability 数值）本轮未在官方页取到，传统知识为 INT8 Tensor Core 需 sm_61+，**未经本轮官方核实**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 3558,
+            "end": 3611,
+            "quote": "# 分配 host/device buffer，enqueueV3/execute_async_v2 推理",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 5220,
+            "end": 5249,
+            "quote": "上述代码未实际运行（实验限制不执行本地代码），仅内容核查。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81395aab2f332b3b7dbf7290104850c61d2d6dbcdddd4811681a98a2184a9435",
+            "start": 1324,
+            "end": 1440,
+            "quote": "实现校准器（Python）**，继承 `trt.IInt8EntropyCalibrator2`（CNN 推荐，DLA 必需）或 `trt.IInt8MinMaxCalibrator`（NLP/BERT 类推荐），并实现 4 个方法",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_2_25df1648.result",
+            "field": "response",
+            "sha256": "beb1f8ded908891e2136cce301bae476cd858c757d39098cdd3260e9b056f5ec",
+            "start": 1284,
+            "end": 1407,
+            "quote": "class MyCalibrator(trt.IInt8EntropyCalibrator2):\n    def __init__(self):\n        trt.IInt8EntropyCalibrator2.__init__(self)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_4a8ef62c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_4a8ef62c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_2_25df1648.result",
+              "WebFetch_4_12c33042.result",
+              "WebFetch_6_ab34d6d5.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-48b4a475f4cb-predictors.json": "e325c666184c9ec4e9333943a51ce3b41e61c58bfc85a526a948b17a5043d41d",
+          "reviewed/development/case-48b4a475f4cb-outcome.json": "59e7b5297c0b5f5460eb4123290b634076b17086bfef7c38f36111bfdcc85f54",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_4a8ef62c.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "# Int8[¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/pyInt8.html#int8 \"Permalink to this heading\")\n\n- [IInt8Calibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/Calibrator.html)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_4a8ef62c.result",
+                "quote": "- [IInt8MinMaxCalibrator](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/MinMaxCalibrator.html)"
+              }
+            ],
+            "reference": "仅返回类与方法链接目录，无可识别正文，判为导航框架"
+          },
+          {
+            "event_id": "WebFetch_2_25df1648.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "get_batch(*self: [tensorrt.tensorrt.IInt8EntropyCalibrator2](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2 \"tensorrt.tensorrt.IInt8EntropyCalibrator2\")*, *names: collections.abc.Sequence[str]*) → list[int][¶](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/_static/python-api/infer/Int8/EntropyCalibrator2.html#tensorrt.IInt8EntropyCalibrator2.get_batch \"Permalink to this definition\")"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_25df1648.result",
+                "quote": "Parameters:\n\n**cache** – The calibration cache to write."
+              }
+            ],
+            "reference": "取得全部五个方法的直接正文，但无独立全文完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_4_12c33042.result",
+            "url": "https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/04_int8_calibration_in_tensorrt/README.md",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "Int8 calibration in TensorRT involves providing a representative set of input data\nto TensorRT as part of the engine building process."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_12c33042.result",
+                "quote": "For more information on how int8 calibration works in TensorRT, see the\n[developer guide]"
+              }
+            ],
+            "reference": "官方仓库 README 正文完整呈现（Introduction 至 Further Reading），但完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_6_ab34d6d5.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-quantized-types.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "config.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "结束于 \"Quantization Noise Reduction\" 小节（即页面末尾），未发现中途截断。"
+              }
+            ],
+            "reference": "正文以整理稿形式返回，含大量代码与表格；边界说明为工具自述，不构成独立完整性证明，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_6_ab34d6d5.result",
+                "quote": "目标：TensorRT 开发者指南 \"Working with Quantized Types\" 章节完整正文。"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

@@ -1476,6 +1476,2678 @@
           }
         ]
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T03:53:53.253130+00:00",
+      "process_sha256": "a3a29971e3e5bcf81abbc4d756e208be2335e0c4e023d7894b59d443b5a4e43c",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_81ec6f55.result",
+            "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "verification": "source",
+            "reason": "criteria包含两部分：采集命令和分析步骤。采集命令部分：final给出完整可用的nsys profile命令及关键参数（--trace、--capture-range、--cuda-memory-usage、--pytorch=autograd-nvtx），与官方User Guide抓取正文逐项对应（trace默认值cuda,opengl,nvtx,osrt、cudnn不支持Windows、capture-range参数cudaProfilerApi/nvtx/hotkey、cuda-memory-usage警告显著开销、pytorch参数表autograd-nvtx等），PyTorch插桩torch.cuda.profiler.start/stop与nvtx.range_push/pop在PyTorch 2.14官方cuda.html中得到确认。分析步骤部分：nsys stats/analyze及gpu_time_util、gpu_gaps规则在官方User Guide正文中有原文支持；GUI timeline空隙分析、HtoD memcpy对应DataLoader瓶颈、同步API检查属于合理的领域方法论，官方NVTX投影到GPU timeline的叙述也有正文支持。个别项（--gpu-metrics-devices完整语法、--pytorch行为细节）在final中已明确标注未能核实，不构成错误主张。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第一次查询前5条均为第三方来源（ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库），无官方源；第二次查询第1条即为官方文档 docs.nvidia.com User Guide。符合'第二次查询才首次发现相关官方来源'档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]"
+              },
+              {
+                "event_id": "WebSearch_1_4d785b9e.result",
+                "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 4.0,
+            "lower": 4.0,
+            "upper": 4.0,
+            "status": "scored",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "the content is truncated in multiple places"
+              },
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 4,
+            "status": "scored",
+            "reason": "采集命令主语法与--trace/--capture-range/--cuda-memory-usage等参数已取得，PyTorch侧NVTX API（range_push/range_pop/range、torch.cuda.profiler start/stop）已取得；但原题核心的GPU利用率相关参数--gpu-metrics-devices的参数与说明被截断，且官方摘录明确缺少timeline分析/GPU利用率叙述章节，完成分析步骤所需关键内容仍缺失，故记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "nsys [global-options] profile [options] [application] [application-arguments]"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "适用范围为Nsight Systems与采集环境。已明确部分适用关系：--cuda-graph-trace graph模式需CUDA driver 11.7+，PyTorch文档标明2.14版本；但NVIDIA UserGuide摘录无版本号，--gpu-metrics-devices支持条件被截断，Nsight Systems与CUDA/PyTorch的完整版本对应关系缺失，仍缺少完成版本选择所需对应关系，且无已确证冲突，记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "requires CUDA driver version 11.7 or higher, and is the default when available."
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "**no version number appears in this excerpt**"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一搜索预算内去重后相关独立第三方来源≥6条：ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库、知乎两篇、CSDN，共8条（官方NVIDIA/PyTorch域名排除），记5。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ..."
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 3. [【pytorch】profiler tutorials - 知乎]"
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A），但全部仅以搜索结果摘要形式出现，未抓取任何第三方正文，关键操作/结论说法没有可追溯的核对依据，也未做交叉印证；未发现已确证矛盾。记2，上界保留3。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。"
+              },
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已给出完整且基本正确的采集命令与分析步骤：--trace=cuda,nvtx,osrt与官方默认tracer一致，--capture-range=cudaProfilerApi/--capture-range-end=stop与官方参数表一致，torch.cuda.profiler.start/stop与NVTX标注、nsys stats、timeline看gap的分析流程均正确。但个别参数名有误（--gpu-metrics-device，官方为--gpu-metrics-devices）且权限/支持条件约束未给出，具体参数与约束仍需检索补充，记4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "nsys profile -o report --trace=cuda,nvtx,osrt"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "--capture-range=cudaProfilerApi \\\n  --capture-range-end=stop python train.py"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_f9734e83.dispatch",
+              "WebSearch_1_4d785b9e.dispatch",
+              "WebFetch_2_81ec6f55.dispatch",
+              "WebSearch_3_700f1135.dispatch",
+              "WebFetch_4_b5b8e4ac.dispatch",
+              "WebFetch_5_16b8a122.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "所需定版组件为Nsight Systems工具版本与PyTorch版本。PyTorch侧已定到具体版本2.14并经官方文档核实；但Nsight Systems User Guide在线版未标注具体版本号，final明确承认'本次抓取未标注具体版本号'，仅能依据CUDA driver 13.0等内容推断属近期主线，nsys工具本身未定到具体版本。部分组件有明确版本依据、其余未确定，符合档3。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 77.2620288,
+            "lower": 77.2620288,
+            "upper": 77.2620288,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 77.3
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 77.2620288,
+          "lower": 77.2620288,
+          "upper": 77.2620288,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 77.3
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 135,
+            "end": 203,
+            "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_1_4d785b9e.result",
+            "field": "response",
+            "sha256": "c66387a1a7bdf77aecdbcca3e7a842a95ae30d75c44f39891b275845e82188be",
+            "start": 116,
+            "end": 178,
+            "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 340,
+            "end": 383,
+            "quote": "the content is truncated in multiple places",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "field": "response",
+            "sha256": "00d51232178227d61ee00a1e33fc83bdafc5dc0c432f74496548730bd8373b46",
+            "start": 152,
+            "end": 157,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 110,
+            "end": 115,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 3044,
+            "end": 3104,
+            "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 9212,
+            "end": 9342,
+            "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 8436,
+            "end": 8502,
+            "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 7135,
+            "end": 7214,
+            "quote": "requires CUDA driver version 11.7 or higher, and is the default when available.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 287,
+            "end": 332,
+            "quote": "**no version number appears in this excerpt**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 0,
+            "end": 47,
+            "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 1263,
+            "end": 1321,
+            "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 711,
+            "end": 751,
+            "quote": "## 3. [【pytorch】profiler tutorials - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1475,
+            "end": 1530,
+            "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1612,
+            "end": 1678,
+            "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 276,
+            "end": 381,
+            "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 298,
+            "end": 343,
+            "quote": "nsys profile -o report --trace=cuda,nvtx,osrt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 486,
+            "end": 564,
+            "quote": "--capture-range=cudaProfilerApi \\\\\\n  --capture-range-end=stop python train.py",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 626,
+            "end": 697,
+            "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2302,
+            "end": 2411,
+            "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2442,
+            "end": 2475,
+            "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 293,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 340,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-e4f2307e1049-predictors.json": "a68acd0729e7912191fa1c564a3119a912b7ab7eae9ef95fb2395ae63b960e6d",
+          "reviewed/development/case-e4f2307e1049-outcome.json": "18d851c0ffef706593591cd54e5434a5c75042795b28e76c7bdb8ece6f2aacf0",
+          "consolidate_evaluations.py": "99c678cf938aeaf3eaf86c597ae7684134bd42fd65849c9313432d017d2237af",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "# Nsight Systems User Guide — CLI Extraction"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "The excerpt **ends mid-table** at `--cpu-metrics` under \"CLI Start Command Switch Options\""
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html"
+          },
+          {
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "**标题**: torch.profiler — PyTorch 2.14 documentation"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/profiler.html"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "## NVIDIA Tools Extension (NVTX)#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/cuda.html"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "https://docs.pytorch.org/docs/stable/cuda.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 5,
+      "recorded_at": "2026-09-21T04:02:09.339954+00:00",
+      "process_sha256": "a3a29971e3e5bcf81abbc4d756e208be2335e0c4e023d7894b59d443b5a4e43c",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_81ec6f55.result",
+            "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "verification": "source",
+            "reason": "criteria包含两部分：采集命令和分析步骤。采集命令部分：final给出完整可用的nsys profile命令及关键参数（--trace、--capture-range、--cuda-memory-usage、--pytorch=autograd-nvtx），与官方User Guide抓取正文逐项对应（trace默认值cuda,opengl,nvtx,osrt、cudnn不支持Windows、capture-range参数cudaProfilerApi/nvtx/hotkey、cuda-memory-usage警告显著开销、pytorch参数表autograd-nvtx等），PyTorch插桩torch.cuda.profiler.start/stop与nvtx.range_push/pop在PyTorch 2.14官方cuda.html中得到确认。分析步骤部分：nsys stats/analyze及gpu_time_util、gpu_gaps规则在官方User Guide正文中有原文支持；GUI timeline空隙分析、HtoD memcpy对应DataLoader瓶颈、同步API检查属于合理的领域方法论，官方NVTX投影到GPU timeline的叙述也有正文支持。个别项（--gpu-metrics-devices完整语法、--pytorch行为细节）在final中已明确标注未能核实，不构成错误主张。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第一次查询前5条均为第三方来源（ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库），无官方源；第二次查询第1条即为官方文档 docs.nvidia.com User Guide。符合'第二次查询才首次发现相关官方来源'档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]"
+              },
+              {
+                "event_id": "WebSearch_1_4d785b9e.result",
+                "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 4.0,
+            "lower": 4.0,
+            "upper": 4.0,
+            "status": "scored",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "the content is truncated in multiple places"
+              },
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 4,
+            "status": "scored",
+            "reason": "采集命令主语法与--trace/--capture-range/--cuda-memory-usage等参数已取得，PyTorch侧NVTX API（range_push/range_pop/range、torch.cuda.profiler start/stop）已取得；但原题核心的GPU利用率相关参数--gpu-metrics-devices的参数与说明被截断，且官方摘录明确缺少timeline分析/GPU利用率叙述章节，完成分析步骤所需关键内容仍缺失，故记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "nsys [global-options] profile [options] [application] [application-arguments]"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "适用范围为Nsight Systems与采集环境。已明确部分适用关系：--cuda-graph-trace graph模式需CUDA driver 11.7+，PyTorch文档标明2.14版本；但NVIDIA UserGuide摘录无版本号，--gpu-metrics-devices支持条件被截断，Nsight Systems与CUDA/PyTorch的完整版本对应关系缺失，仍缺少完成版本选择所需对应关系，且无已确证冲突，记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "requires CUDA driver version 11.7 or higher, and is the default when available."
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "**no version number appears in this excerpt**"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一搜索预算内去重后相关独立第三方来源≥6条：ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库、知乎两篇、CSDN，共8条（官方NVIDIA/PyTorch域名排除），记5。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ..."
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 3. [【pytorch】profiler tutorials - 知乎]"
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A），但全部仅以搜索结果摘要形式出现，未抓取任何第三方正文，关键操作/结论说法没有可追溯的核对依据，也未做交叉印证；未发现已确证矛盾。记2，上界保留3。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。"
+              },
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已给出完整且基本正确的采集命令与分析步骤：--trace=cuda,nvtx,osrt与官方默认tracer一致，--capture-range=cudaProfilerApi/--capture-range-end=stop与官方参数表一致，torch.cuda.profiler.start/stop与NVTX标注、nsys stats、timeline看gap的分析流程均正确。但个别参数名有误（--gpu-metrics-device，官方为--gpu-metrics-devices）且权限/支持条件约束未给出，具体参数与约束仍需检索补充，记4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "nsys profile -o report --trace=cuda,nvtx,osrt"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "--capture-range=cudaProfilerApi \\\n  --capture-range-end=stop python train.py"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_f9734e83.dispatch",
+              "WebSearch_1_4d785b9e.dispatch",
+              "WebFetch_2_81ec6f55.dispatch",
+              "WebSearch_3_700f1135.dispatch",
+              "WebFetch_4_b5b8e4ac.dispatch",
+              "WebFetch_5_16b8a122.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "所需定版组件为Nsight Systems工具版本与PyTorch版本。PyTorch侧已定到具体版本2.14并经官方文档核实；但Nsight Systems User Guide在线版未标注具体版本号，final明确承认'本次抓取未标注具体版本号'，仅能依据CUDA driver 13.0等内容推断属近期主线，nsys工具本身未定到具体版本。部分组件有明确版本依据、其余未确定，符合档3。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 77.2620288,
+            "lower": 77.2620288,
+            "upper": 77.2620288,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 77.3
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 77.2620288,
+          "lower": 77.2620288,
+          "upper": 77.2620288,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 77.3
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 135,
+            "end": 203,
+            "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_1_4d785b9e.result",
+            "field": "response",
+            "sha256": "c66387a1a7bdf77aecdbcca3e7a842a95ae30d75c44f39891b275845e82188be",
+            "start": 116,
+            "end": 178,
+            "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 340,
+            "end": 383,
+            "quote": "the content is truncated in multiple places",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "field": "response",
+            "sha256": "00d51232178227d61ee00a1e33fc83bdafc5dc0c432f74496548730bd8373b46",
+            "start": 152,
+            "end": 157,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 110,
+            "end": 115,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 3044,
+            "end": 3104,
+            "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 9212,
+            "end": 9342,
+            "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 8436,
+            "end": 8502,
+            "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 7135,
+            "end": 7214,
+            "quote": "requires CUDA driver version 11.7 or higher, and is the default when available.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 287,
+            "end": 332,
+            "quote": "**no version number appears in this excerpt**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 0,
+            "end": 47,
+            "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 1263,
+            "end": 1321,
+            "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 711,
+            "end": 751,
+            "quote": "## 3. [【pytorch】profiler tutorials - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1475,
+            "end": 1530,
+            "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1612,
+            "end": 1678,
+            "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 276,
+            "end": 381,
+            "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 298,
+            "end": 343,
+            "quote": "nsys profile -o report --trace=cuda,nvtx,osrt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 486,
+            "end": 564,
+            "quote": "--capture-range=cudaProfilerApi \\\\\\n  --capture-range-end=stop python train.py",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 626,
+            "end": 697,
+            "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2302,
+            "end": 2411,
+            "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2442,
+            "end": 2475,
+            "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 293,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 340,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-e4f2307e1049-predictors.json": "a68acd0729e7912191fa1c564a3119a912b7ab7eae9ef95fb2395ae63b960e6d",
+          "reviewed/development/case-e4f2307e1049-outcome.json": "18d851c0ffef706593591cd54e5434a5c75042795b28e76c7bdb8ece6f2aacf0",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "# Nsight Systems User Guide — CLI Extraction"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "The excerpt **ends mid-table** at `--cpu-metrics` under \"CLI Start Command Switch Options\""
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html"
+          },
+          {
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "**标题**: torch.profiler — PyTorch 2.14 documentation"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/profiler.html"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "## NVIDIA Tools Extension (NVTX)#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/cuda.html"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "https://docs.pytorch.org/docs/stable/cuda.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 6,
+      "recorded_at": "2026-09-21T04:15:14.576743+00:00",
+      "process_sha256": "a3a29971e3e5bcf81abbc4d756e208be2335e0c4e023d7894b59d443b5a4e43c",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_81ec6f55.result",
+            "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "verification": "source",
+            "reason": "criteria包含两部分：采集命令和分析步骤。采集命令部分：final给出完整可用的nsys profile命令及关键参数（--trace、--capture-range、--cuda-memory-usage、--pytorch=autograd-nvtx），与官方User Guide抓取正文逐项对应（trace默认值cuda,opengl,nvtx,osrt、cudnn不支持Windows、capture-range参数cudaProfilerApi/nvtx/hotkey、cuda-memory-usage警告显著开销、pytorch参数表autograd-nvtx等），PyTorch插桩torch.cuda.profiler.start/stop与nvtx.range_push/pop在PyTorch 2.14官方cuda.html中得到确认。分析步骤部分：nsys stats/analyze及gpu_time_util、gpu_gaps规则在官方User Guide正文中有原文支持；GUI timeline空隙分析、HtoD memcpy对应DataLoader瓶颈、同步API检查属于合理的领域方法论，官方NVTX投影到GPU timeline的叙述也有正文支持。个别项（--gpu-metrics-devices完整语法、--pytorch行为细节）在final中已明确标注未能核实，不构成错误主张。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第一次查询前5条均为第三方来源（ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库），无官方源；第二次查询第1条即为官方文档 docs.nvidia.com User Guide。符合'第二次查询才首次发现相关官方来源'档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]"
+              },
+              {
+                "event_id": "WebSearch_1_4d785b9e.result",
+                "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 4.0,
+            "lower": 4.0,
+            "upper": 4.0,
+            "status": "scored",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "the content is truncated in multiple places"
+              },
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 4,
+            "status": "scored",
+            "reason": "采集命令主语法与--trace/--capture-range/--cuda-memory-usage等参数已取得，PyTorch侧NVTX API（range_push/range_pop/range、torch.cuda.profiler start/stop）已取得；但原题核心的GPU利用率相关参数--gpu-metrics-devices的参数与说明被截断，且官方摘录明确缺少timeline分析/GPU利用率叙述章节，完成分析步骤所需关键内容仍缺失，故记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "nsys [global-options] profile [options] [application] [application-arguments]"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "适用范围为Nsight Systems与采集环境。已明确部分适用关系：--cuda-graph-trace graph模式需CUDA driver 11.7+，PyTorch文档标明2.14版本；但NVIDIA UserGuide摘录无版本号，--gpu-metrics-devices支持条件被截断，Nsight Systems与CUDA/PyTorch的完整版本对应关系缺失，仍缺少完成版本选择所需对应关系，且无已确证冲突，记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "requires CUDA driver version 11.7 or higher, and is the default when available."
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "**no version number appears in this excerpt**"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一搜索预算内去重后相关独立第三方来源≥6条：ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库、知乎两篇、CSDN，共8条（官方NVIDIA/PyTorch域名排除），记5。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ..."
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 3. [【pytorch】profiler tutorials - 知乎]"
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A），但全部仅以搜索结果摘要形式出现，未抓取任何第三方正文，关键操作/结论说法没有可追溯的核对依据，也未做交叉印证；未发现已确证矛盾。记2，上界保留3。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。"
+              },
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已给出完整且基本正确的采集命令与分析步骤：--trace=cuda,nvtx,osrt与官方默认tracer一致，--capture-range=cudaProfilerApi/--capture-range-end=stop与官方参数表一致，torch.cuda.profiler.start/stop与NVTX标注、nsys stats、timeline看gap的分析流程均正确。但个别参数名有误（--gpu-metrics-device，官方为--gpu-metrics-devices）且权限/支持条件约束未给出，具体参数与约束仍需检索补充，记4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "nsys profile -o report --trace=cuda,nvtx,osrt"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "--capture-range=cudaProfilerApi \\\n  --capture-range-end=stop python train.py"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_f9734e83.dispatch",
+              "WebSearch_1_4d785b9e.dispatch",
+              "WebFetch_2_81ec6f55.dispatch",
+              "WebSearch_3_700f1135.dispatch",
+              "WebFetch_4_b5b8e4ac.dispatch",
+              "WebFetch_5_16b8a122.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "所需定版组件为Nsight Systems工具版本与PyTorch版本。PyTorch侧已定到具体版本2.14并经官方文档核实；但Nsight Systems User Guide在线版未标注具体版本号，final明确承认'本次抓取未标注具体版本号'，仅能依据CUDA driver 13.0等内容推断属近期主线，nsys工具本身未定到具体版本。部分组件有明确版本依据、其余未确定，符合档3。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 77.2620288,
+            "lower": 77.2620288,
+            "upper": 77.2620288,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 77.3
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 77.2620288,
+          "lower": 77.2620288,
+          "upper": 77.2620288,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 77.3
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 135,
+            "end": 203,
+            "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_1_4d785b9e.result",
+            "field": "response",
+            "sha256": "c66387a1a7bdf77aecdbcca3e7a842a95ae30d75c44f39891b275845e82188be",
+            "start": 116,
+            "end": 178,
+            "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 340,
+            "end": 383,
+            "quote": "the content is truncated in multiple places",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "field": "response",
+            "sha256": "00d51232178227d61ee00a1e33fc83bdafc5dc0c432f74496548730bd8373b46",
+            "start": 152,
+            "end": 157,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 110,
+            "end": 115,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 3044,
+            "end": 3104,
+            "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 9212,
+            "end": 9342,
+            "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 8436,
+            "end": 8502,
+            "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 7135,
+            "end": 7214,
+            "quote": "requires CUDA driver version 11.7 or higher, and is the default when available.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 287,
+            "end": 332,
+            "quote": "**no version number appears in this excerpt**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 0,
+            "end": 47,
+            "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 1263,
+            "end": 1321,
+            "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 711,
+            "end": 751,
+            "quote": "## 3. [【pytorch】profiler tutorials - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1475,
+            "end": 1530,
+            "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1612,
+            "end": 1678,
+            "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 276,
+            "end": 381,
+            "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 298,
+            "end": 343,
+            "quote": "nsys profile -o report --trace=cuda,nvtx,osrt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 486,
+            "end": 564,
+            "quote": "--capture-range=cudaProfilerApi \\\\\\n  --capture-range-end=stop python train.py",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 626,
+            "end": 697,
+            "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2302,
+            "end": 2411,
+            "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2442,
+            "end": 2475,
+            "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 293,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 340,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-e4f2307e1049-predictors.json": "3d669fd6228c954ae6bc4a7034000946d3f29d1ec52955a817b773342e4eaff8",
+          "reviewed/development/case-e4f2307e1049-outcome.json": "cc6a21226fa10268ff05b04bbbc55d1932c3c92aa21a045fe03906d6d056cddb",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "# Nsight Systems User Guide — CLI Extraction"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "The excerpt **ends mid-table** at `--cpu-metrics` under \"CLI Start Command Switch Options\""
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html"
+          },
+          {
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "**标题**: torch.profiler — PyTorch 2.14 documentation"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/profiler.html"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "## NVIDIA Tools Extension (NVTX)#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/cuda.html"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "https://docs.pytorch.org/docs/stable/cuda.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 7,
+      "recorded_at": "2026-09-21T04:16:32.484208+00:00",
+      "process_sha256": "a3a29971e3e5bcf81abbc4d756e208be2335e0c4e023d7894b59d443b5a4e43c",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_81ec6f55.result",
+            "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "verification": "source",
+            "reason": "criteria包含两部分：采集命令和分析步骤。采集命令部分：final给出完整可用的nsys profile命令及关键参数（--trace、--capture-range、--cuda-memory-usage、--pytorch=autograd-nvtx），与官方User Guide抓取正文逐项对应（trace默认值cuda,opengl,nvtx,osrt、cudnn不支持Windows、capture-range参数cudaProfilerApi/nvtx/hotkey、cuda-memory-usage警告显著开销、pytorch参数表autograd-nvtx等），PyTorch插桩torch.cuda.profiler.start/stop与nvtx.range_push/pop在PyTorch 2.14官方cuda.html中得到确认。分析步骤部分：nsys stats/analyze及gpu_time_util、gpu_gaps规则在官方User Guide正文中有原文支持；GUI timeline空隙分析、HtoD memcpy对应DataLoader瓶颈、同步API检查属于合理的领域方法论，官方NVTX投影到GPU timeline的叙述也有正文支持。个别项（--gpu-metrics-devices完整语法、--pytorch行为细节）在final中已明确标注未能核实，不构成错误主张。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第一次查询前5条均为第三方来源（ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库），无官方源；第二次查询第1条即为官方文档 docs.nvidia.com User Guide。符合'第二次查询才首次发现相关官方来源'档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]"
+              },
+              {
+                "event_id": "WebSearch_1_4d785b9e.result",
+                "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 4.0,
+            "lower": 4.0,
+            "upper": 4.0,
+            "status": "scored",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "the content is truncated in multiple places"
+              },
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "采集命令主语法与--trace/--capture-range/--cuda-memory-usage等参数已取得，PyTorch侧NVTX API（range_push/range_pop/range、torch.cuda.profiler start/stop）已取得；但原题核心的GPU利用率相关参数--gpu-metrics-devices的参数与说明被截断，且官方摘录明确缺少timeline分析/GPU利用率叙述章节，完成分析步骤所需关键内容仍缺失，故记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "nsys [global-options] profile [options] [application] [application-arguments]"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*"
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": [],
+            "candidate_score": 3,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "适用范围为Nsight Systems与采集环境。已明确部分适用关系：--cuda-graph-trace graph模式需CUDA driver 11.7+，PyTorch文档标明2.14版本；但NVIDIA UserGuide摘录无版本号，--gpu-metrics-devices支持条件被截断，Nsight Systems与CUDA/PyTorch的完整版本对应关系缺失，仍缺少完成版本选择所需对应关系，且无已确证冲突，记3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "requires CUDA driver version 11.7 or higher, and is the default when available."
+              },
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "**no version number appears in this excerpt**"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一搜索预算内去重后相关独立第三方来源≥6条：ai-infrastructure.net、segmentfault、jishuzhan、beefed.ai、github个人仓库、知乎两篇、CSDN，共8条（官方NVIDIA/PyTorch域名排除），记5。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ..."
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 3. [【pytorch】profiler tutorials - 知乎]"
+              },
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "存在第三方材料（非N/A），但全部仅以搜索结果摘要形式出现，未抓取任何第三方正文，关键操作/结论说法没有可追溯的核对依据，也未做交叉印证；未发现已确证矛盾。记2，上界保留3。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_3_700f1135.result",
+                "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。"
+              },
+              {
+                "event_id": "WebSearch_0_f9734e83.result",
+                "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": [],
+            "candidate_score": 2,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "检索前回答已给出完整且基本正确的采集命令与分析步骤：--trace=cuda,nvtx,osrt与官方默认tracer一致，--capture-range=cudaProfilerApi/--capture-range-end=stop与官方参数表一致，torch.cuda.profiler.start/stop与NVTX标注、nsys stats、timeline看gap的分析流程均正确。但个别参数名有误（--gpu-metrics-device，官方为--gpu-metrics-devices）且权限/支持条件约束未给出，具体参数与约束仍需检索补充，记4。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "nsys profile -o report --trace=cuda,nvtx,osrt"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "--capture-range=cudaProfilerApi \\\n  --capture-range-end=stop python train.py"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": [],
+            "candidate_score": 4,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_f9734e83.dispatch",
+              "WebSearch_1_4d785b9e.dispatch",
+              "WebFetch_2_81ec6f55.dispatch",
+              "WebSearch_3_700f1135.dispatch",
+              "WebFetch_4_b5b8e4ac.dispatch",
+              "WebFetch_5_16b8a122.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "所需定版组件为Nsight Systems工具版本与PyTorch版本。PyTorch侧已定到具体版本2.14并经官方文档核实；但Nsight Systems User Guide在线版未标注具体版本号，final明确承认'本次抓取未标注具体版本号'，仅能依据CUDA driver 13.0等内容推断属近期主线，nsys工具本身未定到具体版本。部分组件有明确版本依据、其余未确定，符合档3。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+              },
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 77.2620288,
+            "upper": 84.47999999999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              77.2,
+              84.5
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 77.2620288,
+          "upper": 84.47999999999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            77.2,
+            84.5
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 135,
+            "end": 203,
+            "quote": "## 1. [Nsight Profiling Workflow - AI Infrastructure Knowledge Base]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_1_4d785b9e.result",
+            "field": "response",
+            "sha256": "c66387a1a7bdf77aecdbcca3e7a842a95ae30d75c44f39891b275845e82188be",
+            "start": 116,
+            "end": 178,
+            "quote": "## 1. [User Guide — Nsight Systems - NVIDIA Documentation Hub]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 340,
+            "end": 383,
+            "quote": "the content is truncated in multiple places",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "field": "response",
+            "sha256": "00d51232178227d61ee00a1e33fc83bdafc5dc0c432f74496548730bd8373b46",
+            "start": 152,
+            "end": 157,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 110,
+            "end": 115,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 3044,
+            "end": 3104,
+            "quote": "--gpu-metrics-devices` | *(parameters truncated in excerpt)*",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 9212,
+            "end": 9342,
+            "quote": "There is **no dedicated \"profiling DL applications,\" \"timeline analysis,\" or \"GPU utilization\" narrative section** in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 8436,
+            "end": 8502,
+            "quote": "`nvtx.range_push`\n\nPush a range onto a stack of nested range span.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 7135,
+            "end": 7214,
+            "quote": "requires CUDA driver version 11.7 or higher, and is the default when available.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 287,
+            "end": 332,
+            "quote": "**no version number appears in this excerpt**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_5_16b8a122.result",
+            "field": "response",
+            "sha256": "a0eae8d2df88b48c3700994c0a4fa034ce4f4de6c7a4394e96f0f8843e9450be",
+            "start": 0,
+            "end": 47,
+            "quote": "**标题**: torch.cuda — PyTorch 2.14 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 1263,
+            "end": 1321,
+            "quote": "## 5. [infra-tutorials/调试/GPU性能瓶颈定位：Nsight Systemsnsys ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 711,
+            "end": 751,
+            "quote": "## 3. [【pytorch】profiler tutorials - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1475,
+            "end": 1530,
+            "quote": "## 5. [CUDA Profiler nsight systems使用：分析PyTorch性能瓶颈 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_3_700f1135.result",
+            "field": "response",
+            "sha256": "bcde44a3abe0d510cd8586e1bd4199e06ac258965aadb37da1e564d1b2fe8eee",
+            "start": 1612,
+            "end": 1678,
+            "quote": "通过NVIDIA Nsight Systems工具深入剖析PyTorch训练中的系统级性能问题，揭示CPU与GPU协作中的隐藏开销。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_0_f9734e83.result",
+            "field": "response",
+            "sha256": "9053bd767270feda56ea13c2f434fe4af1c5fb30a3c1ba2c4f2425c6c2019078",
+            "start": 276,
+            "end": 381,
+            "quote": "Scope: the profile-driven workflow that finds the bottleneck with Nsight Systems (timeline / system view)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 298,
+            "end": 343,
+            "quote": "nsys profile -o report --trace=cuda,nvtx,osrt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 486,
+            "end": 564,
+            "quote": "--capture-range=cudaProfilerApi \\\\\\n  --capture-range-end=stop python train.py",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "6c736b89ebd1a68c1d583b8b7b601482c3f8317b9b4f02e4256b9bc5fb57c13a",
+            "start": 626,
+            "end": 697,
+            "quote": "还可加 `--trace=cudnn,cublas`、`--gpu-metrics-device=all`（需权限）采集 SM 利用率等指标。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2302,
+            "end": 2411,
+            "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 2442,
+            "end": 2475,
+            "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 293,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "45adebcef481423608cc36739899243898415e24dee9d31f2121503e223d1656",
+            "start": 203,
+            "end": 340,
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "field": "response",
+            "sha256": "cfb35079dd221a07fc254d56e7f3fd055b9184e1540c1071901ba0f8719dff17",
+            "start": 952,
+            "end": 1029,
+            "quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-e4f2307e1049-predictors.json": "3d669fd6228c954ae6bc4a7034000946d3f29d1ec52955a817b773342e4eaff8",
+          "reviewed/development/case-e4f2307e1049-outcome.json": "cc6a21226fa10268ff05b04bbbc55d1932c3c92aa21a045fe03906d6d056cddb",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_81ec6f55.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "# Nsight Systems User Guide — CLI Extraction"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_81ec6f55.result",
+                "quote": "The excerpt **ends mid-table** at `--cpu-metrics` under \"CLI Start Command Switch Options\""
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html"
+          },
+          {
+            "event_id": "WebFetch_4_b5b8e4ac.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "**标题**: torch.profiler — PyTorch 2.14 documentation"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_b5b8e4ac.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/profiler.html"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "## NVIDIA Tools Extension (NVTX)#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/cuda.html"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_16b8a122.result",
+                "quote": "https://docs.pytorch.org/docs/stable/cuda.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

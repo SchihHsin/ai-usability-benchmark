@@ -32,3 +32,12 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - ownership-references/ contains external ownership metadata ONLY, never model support. ReadTheDocs project API verifies ascend.readthedocs.io repository github.com/ascend/docs. Huawei Cloud blog393282 and author profile only self-signed 昇腾CANN; ownership remains unknown. Do not pretend unknown blog is official.
 - Last derived results: 28 units assessed,14 M11 bounded,14 incomplete inputs pending mostly citation/ownership review; do not claim final scores ready. audit_batch.py at76 had no protocol/hash/log issues. source-index at83 ended attempts had253 queries/1265 results; includes retained failed attempts.
 - Latest checkpoint1d371fb pushed ended raw evidence/assessments. Latest code55993bb for completeness normalization; push19395 needs final verification. Paper untouched. Need continue through full156, all assessments/review, final audit/report, commit/push. Not done.
+
+
+## 2026-09-21 12:09 continuation
+
+- DeepSeek collection completed 52/52; GLM26 and Kimi24 valid at snapshot, total102/156. All remaining collection and postassessment processes still running.
+- Invalidated Kimi I-CANN 111015: only prior answer + promise to search, zero dispatches, client mislabeled complete. Preserved process/assessments and instructed Kimi worker to recollect after current queue. completion-guard-search-intent-repair.json records guard hash update; model task/prompt/rubric/budgets unchanged.
+- Root continues assessment snapshots (Kimi session37201; GLM79898; DeepSeek45262 plus worker full52 snapshot).
+- Reviewed quote, repeated-fetch inventory and semantic version corrections remain in reviewed-*-corrections.json. M6 F-CANN GLM=3 from explicit claim-to-official-source review; I-CUDA GLM M4=3 because shared CUDA compatibility does not establish PyTorch/cuDNN ABI compatibility.
+- Protocol and formula unchanged. Paper untouched. No final completeness claim.

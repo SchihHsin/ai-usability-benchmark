@@ -1,0 +1,198 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "msModelSlim（昇腾官方模型压缩工具，开源仓 Ascend/msit 的 msmodelslim 目录），其 llm_ptq（大模型训练后量化）组件提供 W8A8（权重 int8 + 激活 int8）量化能力；推理部署侧用 MindIE（昇腾 LLM 推理引擎，含 MindIE-LLM / ATB 加速库）直接加载量化权重执行 int8 推理。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_5_d7eb56dc.result",
+      "evidence_quote": "使用QuantConfig生成量化配置。根据原始模型、量化配置和校准数据，调用Calibrator接口构建量化校准对象。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题三个子要求均满足且有多源印证：(1)量化工具=msModelSlim/llm_ptq，WebFetch_2官方README确认'大模型量化'组件路径msmodelslim/pytorch/llm_ptq，WebFetch_7确认'您可以使用msModelSlim工具生成量化权重'；(2)W8A8量化流程完整，final给出QuantConfig(a_bit=8,w_bit=8)代码，与WebFetch_5官方样例逐参数一致（dev_type='npu', act_method=3, pr=0.5, mm_tensor=False, disable_level='L0'），校准数据、依赖安装、精度调优均有正文支撑；(3)推理部署用MindIE，WebFetch_7给出量化权重目录结构、'msmodelslim quant --model_path ... --quant_type w8a8'命令及'torchrun --master_port 12350 -m examples.run_pa'推理命令，final引用一致。final明确标注未核实处（MindIE服务化config、CANN 8.1+配套）不构成对已答内容的否定。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "部分组件有明确版本依据：CANN >= 8.0.RC1.alpha001（README原文）、PyTorch 2.1.0+、transformers >=4.29.1、accelerate==1.0.0均有官方来源；但msModelSlim自身版本号、torch_npu版本、MindIE部署侧具体版本（仅知--mindie_format阈值2.1.RC1）未定到具体版本，且final自述'CANN 8.1/8.2 等更新版本的配套关系本次未核实'，属第3档：部分所需组件有明确版本依据，其余仍未确定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "CANN >= 8.0.RC1.alpha001**（README 原文）；注意 README 还写有版本交替期说明：CANN 8.0.RC3 及之前包内自带 msModelSlim，8.0.RC4 之后需单独安装开源仓（该 README 对应 CANN 8.0 时代，CANN 8.1/8.2 等更新版本的配套关系本次未核实，建议以安装时 README 最新版为准）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "操作指导完整：依赖安装pip命令（numpy==1.25.2等）、msModelSlim安装（git clone + bash install.sh）、完整quant.py代码含全部关键参数、命令行一键量化命令、MindIE推理命令均给出，与官方文档一致；仅需替换明确标识的环境参数（{浮点权重路径}、{w8a8量化权重路径}、${ATB_SPEED_HOME_PATH}、设备号）。mindie-service服务化配置final已明确声明未核实并指引用户另查文档，原题主线（量化+推理部署）命令可直接执行，未发现需修正的错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "msmodelslim quant --model_path {浮点权重路径} --save_path {W8A8量化权重路径} --device npu --model_type Qwen2-7B --quant_type w8a8 --trust_remote_code True"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cd ${ATB_SPEED_HOME_PATH}\ntorchrun --master_port 12350 -m examples.run_pa --model_path {w8a8量化权重路径}"
+        }
+      ],
+      "raw_status": "operational_with_env_params"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "msModelSlim（昇腾官方模型压缩工具，开源仓 Ascend/msit 的 msmodelslim 目录），其 llm_ptq（大模型训练后量化）组件提供 W8A8（权重 int8 + 激活 int8）量化能力；推理部署侧用 MindIE（昇腾 LLM 推理引擎，含 MindIE-LLM / ATB 加速库）直接加载量化权重执行 int8 推理。"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "WebFetch_5_d7eb56dc.result",
+          "quote": "使用QuantConfig生成量化配置。根据原始模型、量化配置和校准数据，调用Calibrator接口构建量化校准对象。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "msmodelslim quant --model_path {浮点权重路径} --save_path {W8A8量化权重路径} --device npu --model_type Qwen2-7B --quant_type w8a8 --trust_remote_code True"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-bf18ba9d3bd0",
+  "task_id": "H",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "c69025ec9ae54121bfffd98d4fdd045c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c167570587671a1e78c12a7d1e57d7c3",
+        "conversationRequestId": "c167570587671a1e78c12a7d1e57d7c3",
+        "agent": "cli"
+      },
+      {
+        "messageId": "c69025ec9ae54121bfffd98d4fdd045c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c167570587671a1e78c12a7d1e57d7c3",
+        "conversationRequestId": "c167570587671a1e78c12a7d1e57d7c3",
+        "rawUsage": {
+          "prompt_tokens": 21324,
+          "completion_tokens": 1162,
+          "total_tokens": 22486,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 144,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 21324,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 144,
+          "credit": 4.06,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21324,
+          "outputTokens": 1162,
+          "totalTokens": 22486,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 144
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "857455ef8540a58aa46458301963cd30f719004dac95e57595031ab79ada22a8",
+    "process_sha256": "15555128a4cbf97dd3581c80c3924fd44b52aa716b37258724598e831d49151c",
+    "elapsed_seconds": 56.35,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-5de6b6889ba744dcbed951ae5e965a75",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-bf18ba9d3bd0-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "CANN >= 8.0.RC1.alpha001（README 原文）；注意 README 还写有版本交替期说明：CANN 8.0.RC3 及之前包内自带 msModelSlim，8.0.RC4 之后需单独安装开源仓（该 README 对应 CANN 8.0 时代，CANN 8.1/8.2 等更新版本的配套关系本次未核实，建议以安装时 README 最新版为准）",
+        "replacement": "CANN >= 8.0.RC1.alpha001**（README 原文）；注意 README 还写有版本交替期说明：CANN 8.0.RC3 及之前包内自带 msModelSlim，8.0.RC4 之后需单独安装开源仓（该 README 对应 CANN 8.0 时代，CANN 8.1/8.2 等更新版本的配套关系本次未核实，建议以安装时 README 最新版为准）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

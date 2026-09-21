@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "昇腾上定位 PyTorch 训练瓶颈有两条互补路线：Ascend PyTorch Profiler（torch_npu.profiler）：框架层采集……msprof 命令行工具（随 Ascend-cann-toolkit 安装）：全栈采集，不改代码",
-      "answer_event_id": "final",
+      "status": "supported",
+      "answer_quote": "昇腾上定位 PyTorch 训练瓶颈有两条互补路线：\n\n- **Ascend PyTorch Profiler**（`torch_npu.profiler`）：**框架层**采集，在训练脚本内插桩，采框架侧 + CANN 侧 + device 侧数据并自动解析，产出 `ASCEND_PROFILER_OUTPUT/*.csv` 与 `trace_view.json`，适合定位算子、step 时间、通信、内存。\n- **msprof 命令行工具**（随 `Ascend-cann-toolkit` 安装）：**全栈**采集，不改代码，用 `msprof --application=\"python3 train.py\" ...` 包住训练进程，产出 `PROF_XXX/` 目录，参数更细（`--aic-metrics` 等）。",
+      "answer_event_id": "run-end",
       "evidence_id": "call_00_aJ1Jb9SwujDgHJ0X3QYD7884.result",
       "evidence_quote": "Ascend PyTorch Profiler是大模型在Ascend PyTorch框架下训练过程中提供的一套采集性能数据的API接口，能够采集到框架侧、CANN侧和device侧的原始性能数据，并完成解析。",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求给出 msprof / Ascend PyTorch Profiler 的采集分析代码和步骤。最终答案双路线齐备：(a) Ascend PyTorch Profiler 完整插桩代码（_ExperimentalConfig、profile、schedule、prof.step()）与产物目录结构，逐字来自官方实践案例（call_00_aJ1Jb9SwujDgHJ0X3QYD7884）；(b) msprof 通用命令两种传入方式与 PyTorch 化用例（msprof --output=... python3 train.py），对应 call_00_GTgc92MvxJeAbsMg7nAo9891 的官方正文；(c) 采集 AI 任务运行数据的参数表（--task-time、--aic-metrics 等）对应 call_00_4yvpIeOJlgxKtmeVN4El7102；(d) 分析步骤（step_trace_time.csv→Top 算子→下发vs执行→计算vs搬运→通信→内存）给出可操作流程；(e) 前置环境与版本配套引用官方安装页（call_00_mKsUewhtPeyIy4vPtJyV3316）。答案还诚实标注了未取回的页面与未核实的版本映射，未夸大。解析/导出命令页未抓取属明确披露的缺口，不否定已给内容。",
-      "raw_status": "supported"
+      "reason": "原题要求给出 msprof / Ascend PyTorch Profiler 的采集分析代码和步骤。最终答案双路线齐备：(a) Ascend PyTorch Profiler 完整插桩代码（_ExperimentalConfig、profile、schedule、prof.step()）与产物目录结构，逐字来自官方实践案例（call_00_aJ1Jb9SwujDgHJ0X3QYD7884）；(b) msprof 通用命令两种传入方式与 PyTorch 化用例（msprof --output=... python3 train.py），对应 call_00_GTgc92MvxJeAbsMg7nAo9891 的官方正文；(c) 采集 AI 任务运行数据的参数表（--task-time、--aic-metrics 等）对应 call_00_4yvpIeOJlgxKtmeVN4El7102；(d) 分析步骤（step_trace_time.csv→Top 算子→下发vs执行→计算vs搬运→通信→内存）给出可操作流程；(e) 前置环境与版本配套引用官方安装页（call_00_mKsUewhtPeyIy4vPtJyV3316）。答案还诚实标注了未取回的页面与未核实的版本映射，未夸大。解析/导出命令页未抓取属明确披露的缺口，不否定已给内容。"
     }
   ],
   "m9_m10": [
@@ -23,7 +22,7 @@
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "官方开源文档安装指南给出的配套选项（直接可套用的一组）：**PyTorch 2.3.1 / PyTorch-NPU 2.3.1 / CANN-toolkit 8.0.RC2"
+          "quote": "官方开源文档安装指南给出的配套选项（直接可套用的一组）：**PyTorch 2.3.1 / PyTorch-NPU 2.3.1 / CANN-toolkit 8.0.RC2 / CPU 架构 x86-64 或 aarch64，安装方式 Docker/pip/源码构建**。"
         },
         {
           "event_id": "run-end",
@@ -56,16 +55,6 @@
     }
   ],
   "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "昇腾上定位 PyTorch 训练瓶颈有两条互补路线：Ascend PyTorch Profiler（torch_npu.profiler）：框架层采集……msprof 命令行工具（随 Ascend-cann-toolkit 安装）：全栈采集，不改代码"
-        }
-      ]
-    },
     {
       "metric": "M10",
       "bad_refs": [
@@ -188,12 +177,21 @@
     "raw_file": "assessments/development/case-3d59a3622b50-outcome.json",
     "repairs": [
       {
+        "event_id": "run-end",
+        "original": "昇腾上定位 PyTorch 训练瓶颈有两条互补路线：Ascend PyTorch Profiler（torch_npu.profiler）：框架层采集……msprof 命令行工具（随 Ascend-cann-toolkit 安装）：全栈采集，不改代码",
+        "replacement": "昇腾上定位 PyTorch 训练瓶颈有两条互补路线：\n\n- **Ascend PyTorch Profiler**（`torch_npu.profiler`）：**框架层**采集，在训练脚本内插桩，采框架侧 + CANN 侧 + device 侧数据并自动解析，产出 `ASCEND_PROFILER_OUTPUT/*.csv` 与 `trace_view.json`，适合定位算子、step 时间、通信、内存。\n- **msprof 命令行工具**（随 `Ascend-cann-toolkit` 安装）：**全栈**采集，不改代码，用 `msprof --application=\"python3 train.py\" ...` 包住训练进程，产出 `PROF_XXX/` 目录，参数更细（`--aic-metrics` 等）。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
         "basis": "final alias maps to frozen final answer"
       },
       {
         "event_id": "run-end",
         "original": "官方开源文档安装指南给出的配套选项（直接可套用的一组）：PyTorch 2.3.1 / PyTorch-NPU 2.3.1 / CANN-toolkit 8.0.RC2",
-        "replacement": "官方开源文档安装指南给出的配套选项（直接可套用的一组）：**PyTorch 2.3.1 / PyTorch-NPU 2.3.1 / CANN-toolkit 8.0.RC2",
+        "replacement": "官方开源文档安装指南给出的配套选项（直接可套用的一组）：**PyTorch 2.3.1 / PyTorch-NPU 2.3.1 / CANN-toolkit 8.0.RC2 / CPU 架构 x86-64 或 aarch64，安装方式 Docker/pip/源码构建**。",
         "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
       },
       {
@@ -215,6 +213,8 @@
         "basis": "final alias maps to frozen final answer"
       }
     ],
-    "semantic_validation": false
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
   }
 }

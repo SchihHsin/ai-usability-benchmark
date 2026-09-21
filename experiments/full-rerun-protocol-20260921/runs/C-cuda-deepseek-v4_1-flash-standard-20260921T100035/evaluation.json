@@ -3849,6 +3849,2966 @@
         ],
         "quote_audit": []
       }
+    },
+    {
+      "revision": 7,
+      "recorded_at": "2026-09-21T03:53:53.108923+00:00",
+      "process_sha256": "5603f1a7bf03c1512144f2b03af02c3187db3d87a2ddd99f7c9d35adbeb62d2b",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "evidence_quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "verification": "source",
+            "reason": "答案覆盖原题各子要求：(1)列举官方库并定位——cuBLAS/cuBLASLt管稠密GEMM、cuDNN管卷积、cuSPARSE定位为稀疏库（源事件call_00_NBc5Ap3nVqSAaevs2t8A5542.result原文\"Targets matrices with sparsity ratios between 70%–99.9%\"证实）、cuSPARSELt管结构化稀疏（源事件call_00_gQ13YcVtfK400YRl8w7o4723.result列出cuSPARSELt条目证实）；(2)怎么选——第六节给出按稠密/卷积/稀疏、数据类型与硬件CC的选型流程；(3)怎么调用——给出cublasSgemm/cublasGemmEx代码骨架、cuBLASLt入口、cuDNN现代Graph API与传统路线、cusparseSpMM骨架，均与抓取的官方文档一致（源事件call_00_ycgfGV8xCRWVFWSjcm8y0450.result证实cuDNN卷积API废弃清单与graph API建议，call_00_YqVgnmHh9v3ImQ5RAvlC0164.result证实\"Use the cuDNN frontend to access the cuDNN Graph API\"，call_00_6UhuVGtLMB0tPQz0NihB3374.result证实兼容性表）。答案对未核实处（签名逐条核对、Frontend代码示例）有明确披露，不构成错误。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第5条即出现相关官方来源（docs.nvidia.com/cuda-libraries 索引页），符合第2—5条档。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.857142857142857,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "cuDNN 9.26.0 for CUDA 13.x"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "库定位与选择依据已有完整说明（cuBLAS稠密GEMM入口/精度/算力约束、cuSPARSE稀疏适用范围与格式、cuDNN Graph API推荐），但原题要求‘怎么调用’的关键调用细节缺失：cuBLAS的§2.7 GEMM与§3.4 cublasLtMatmul函数正文未取得；cuDNN卷积入口仅在弃用清单中列出、无签名或Graph API替代示例；Graph API页面正文只覆盖attention融合而非卷积示例。",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "does not detail their signatures or replacement graph-API equivalents"
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用表/规则：cuDNN Support Matrix直接列出cuDNN 9.26.0↔CUDA 13.x/12.x↔驱动↔GPU架构对应；cuBLAS给出算力规则（Tensor Core CC 7.0+、仿真架构表）；cuSPARSE给出适用规则（稀疏度70%–99.9%）与Legacy/Generic双接口；cuDNN新旧接口取舍有明确原文。无需自行合并未说明的约束。",
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions."
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "Tensor cores introduced with Volta (compute capability **7.0+**)."
+              },
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%."
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "统一预算内相关独立第三方来源：DeepWiki cuda-samples（6.1与5.2两版同内容合并计1）、DeepWiki cudnn-frontend（graph-api与api-reference两页，计1–2）、arxiv SpMM论文、知乎库选择文章、CSDN/百度文库/NBKomputer（同一官方support matrix的转载合并计1）。保守计5条，分计cudnn-frontend两页则6条，跨4/5档，保留区间。首次发现：第1次查询第1条（DeepWiki）。官方仓库NVIDIA/cudnn-frontend按渠道分类排除。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。"
+              },
+              {
+                "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+                "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料：其关键说法（cuBLAS/cuDNN/CUTLASS定位、稠密/稀疏分工）与已抓取的官方正文一致，具可追溯核对依据；未发现已确证矛盾；但第三方正文均未抓取，知乎的选择建议等其余说法尚未核验，也无独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "These libraries provide optimized kernels for dense and sparse linear algebra"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确的完整库定位、选择决策表与三库调用代码（入口、精度、算法选择、列主序约束均与事后官方正文核对一致，如cuBLAS列主序、GemmEx/LtMatmul入口）；但原题涉及的具体参数与约束仍需外部补充：自认不确定最新版本配套关系，且其详述的cudnnConvolutionForward算法选择路径在cuDNN 9.0.0已被标记弃用、转向Graph API。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。"
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "column-major storage, 1-based indexing"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_MUiHhTVKch9RD0o2p0pq4027.dispatch",
+              "call_00_gQ13YcVtfK400YRl8w7o4723.dispatch",
+              "call_00_WyiWz6gw94yTejaQkVmu9499.dispatch",
+              "call_00_5lpKsa2pEzmMn5ZfdnUE3131.dispatch",
+              "call_00_Q3OeKKkH4W5JAAVNSVs38588.dispatch",
+              "call_00_ycgfGV8xCRWVFWSjcm8y0450.dispatch",
+              "call_00_NBc5Ap3nVqSAaevs2t8A5542.dispatch",
+              "call_00_KwxPfANIqv6bb8dBCbYN1309.dispatch",
+              "call_00_YqVgnmHh9v3ImQ5RAvlC0164.dispatch",
+              "call_00_WGnoXSHxNQVbktYEJhBQ5366.dispatch",
+              "call_00_6UhuVGtLMB0tPQz0NihB3374.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "最终答案对cuDNN给出具体版本且有官方support matrix直接依据：cuDNN 9.26.0配CUDA 13.4、驱动≥615.71.09、CC列表，配套关系无冲突，达到具体版本锁定。cuBLAS 13.4与cuSPARSE 13.4版本号有文档标题依据，但答案自认\"cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表本次未单独抓取\"，即所选库与设备/工具链的适用关系有一项未定到具体配套，按档为4而非5。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics."
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "supported",
+            "reason": "答案给出了可确定的具体调用方案：cublasSgemm与cublasGemmEx的完整C调用（含头文件、handle、alpha/beta、列主序说明）可直接照抄并替换m/n/k等环境参数；但答案自己声明推荐路线的关键操作缺少可执行内容——cuDNN Frontend Graph API的具体C++代码示例未取得，且cudnnConvolutionForward/cusparseSpMM的逐参数签名\"部分来自既有知识，未逐条在本次抓取中比对\"，需补充/核对后才能执行，属3档（有具体操作方案但需补充缺失内容）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.106112,
+            "upper": 88.07186285714286,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.1,
+              88.1
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.106112,
+          "upper": 88.07186285714286,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.1,
+            88.1
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1386,
+            "end": 1475,
+            "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 1234,
+            "end": 1260,
+            "quote": "cuDNN 9.26.0 for CUDA 13.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 5233,
+            "end": 5302,
+            "quote": "does not detail their signatures or replacement graph-API equivalents",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 2324,
+            "end": 2477,
+            "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 421,
+            "end": 587,
+            "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 4724,
+            "end": 4789,
+            "quote": "Tensor cores introduced with Volta (compute capability **7.0+**).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "field": "response",
+            "sha256": "d012db8e54676c2947c50ba7099c0a2d558f4f878775afeb9a3a78a236f1c46d",
+            "start": 5240,
+            "end": 5321,
+            "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 391,
+            "end": 497,
+            "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 118,
+            "end": 176,
+            "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1261,
+            "end": 1317,
+            "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+            "field": "response",
+            "sha256": "86fce03e7262db23b0de04b91b974bcded2250d4d8180361343267c0e228084b",
+            "start": 832,
+            "end": 953,
+            "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 276,
+            "end": 353,
+            "quote": "These libraries provide optimized kernels for dense and sparse linear algebra",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 935,
+            "end": 1055,
+            "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 1646,
+            "end": 1687,
+            "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 3950,
+            "end": 4095,
+            "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 8607,
+            "end": 8645,
+            "quote": "column-major storage, 1-based indexing",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 2866,
+            "end": 2942,
+            "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 9100,
+            "end": 9241,
+            "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11143,
+            "end": 11226,
+            "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 10793,
+            "end": 10892,
+            "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 3074,
+            "end": 3195,
+            "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11040,
+            "end": 11139,
+            "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 97,
+            "end": 193,
+            "quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 3432,
+            "end": 3494,
+            "quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a860b955bcca-predictors.json": "5d0fca0d8700283ac34d82bd159fa14634636779a1d854ada5503bc4a075913a",
+          "reviewed/development/case-a860b955bcca-outcome.json": "b4a08714ce2910fbb86f082030132db89348338e1a1ce1cb0c4055f236f9b428",
+          "consolidate_evaluations.py": "99c678cf938aeaf3eaf86c597ae7684134bd42fd65849c9313432d017d2237af",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+            "url": "https://docs.nvidia.com/cuda-libraries/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+                "quote": "The cuBLAS Library is an implementation of BLAS (Basic Linear Algebra Subprograms) on NVIDIA CUDA runtime."
+              }
+            ],
+            "boundary_evidence": "无截断或缺页标注，也无独立全文核对依据，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/cuda-libraries/index.html"
+          },
+          {
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "url": "https://docs.nvidia.com/cuda/cublas/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "**Document title:** `1. Introduction — cuBLAS 13.4 documentation`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The provided content covers the front page, Introduction, and Chapter 2 through §2.4.13."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cublas/index.html"
+          },
+          {
+            "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+            "url": "https://docs.nvidia.com/cudnn/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+                "quote": "cuDNN provides highly tuned implementations for standard routines such as forward and backward convolution, attention, matmul, pooling, and normalization."
+              }
+            ],
+            "boundary_evidence": "仅取得落地页简短正文段落，未标注截断，完整性无独立核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cudnn/index.html"
+          },
+          {
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "We recommend users to make API calls through the graph API"
+              }
+            ],
+            "boundary_evidence": "含逐字引文与缺口说明，但无独立全文边界核对，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html"
+          },
+          {
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "url": "https://docs.nvidia.com/cuda/cusparse/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "The cuSPARSE library contains a set of GPU-accelerated basic linear algebra subroutines used for handling sparse matrices"
+              }
+            ],
+            "boundary_evidence": "标明仅覆盖Introduction第1–5章，但属页面内容范围而非抓取截断证据；无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cuda/cusparse/index.html"
+          },
+          {
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "For general information about cuDNN graphs, refer to [Graphs](https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html#graph-api \"(in NVIDIA cuDNN)\") in the *Frontend Developer Guide*. Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines or if you need a [C-only graph API](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/cudnn-graph-library.html#cudnn-graph-library)."
+              }
+            ],
+            "boundary_evidence": "正文含带锚点的逐字内容，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html"
+          },
+          {
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4."
+              }
+            ],
+            "boundary_evidence": "表格与脚注均逐字取得，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 8,
+      "recorded_at": "2026-09-21T04:02:09.140407+00:00",
+      "process_sha256": "5603f1a7bf03c1512144f2b03af02c3187db3d87a2ddd99f7c9d35adbeb62d2b",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "evidence_quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "verification": "source",
+            "reason": "答案覆盖原题各子要求：(1)列举官方库并定位——cuBLAS/cuBLASLt管稠密GEMM、cuDNN管卷积、cuSPARSE定位为稀疏库（源事件call_00_NBc5Ap3nVqSAaevs2t8A5542.result原文\"Targets matrices with sparsity ratios between 70%–99.9%\"证实）、cuSPARSELt管结构化稀疏（源事件call_00_gQ13YcVtfK400YRl8w7o4723.result列出cuSPARSELt条目证实）；(2)怎么选——第六节给出按稠密/卷积/稀疏、数据类型与硬件CC的选型流程；(3)怎么调用——给出cublasSgemm/cublasGemmEx代码骨架、cuBLASLt入口、cuDNN现代Graph API与传统路线、cusparseSpMM骨架，均与抓取的官方文档一致（源事件call_00_ycgfGV8xCRWVFWSjcm8y0450.result证实cuDNN卷积API废弃清单与graph API建议，call_00_YqVgnmHh9v3ImQ5RAvlC0164.result证实\"Use the cuDNN frontend to access the cuDNN Graph API\"，call_00_6UhuVGtLMB0tPQz0NihB3374.result证实兼容性表）。答案对未核实处（签名逐条核对、Frontend代码示例）有明确披露，不构成错误。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第5条即出现相关官方来源（docs.nvidia.com/cuda-libraries 索引页），符合第2—5条档。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.857142857142857,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "cuDNN 9.26.0 for CUDA 13.x"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "库定位与选择依据已有完整说明（cuBLAS稠密GEMM入口/精度/算力约束、cuSPARSE稀疏适用范围与格式、cuDNN Graph API推荐），但原题要求‘怎么调用’的关键调用细节缺失：cuBLAS的§2.7 GEMM与§3.4 cublasLtMatmul函数正文未取得；cuDNN卷积入口仅在弃用清单中列出、无签名或Graph API替代示例；Graph API页面正文只覆盖attention融合而非卷积示例。",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "does not detail their signatures or replacement graph-API equivalents"
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用表/规则：cuDNN Support Matrix直接列出cuDNN 9.26.0↔CUDA 13.x/12.x↔驱动↔GPU架构对应；cuBLAS给出算力规则（Tensor Core CC 7.0+、仿真架构表）；cuSPARSE给出适用规则（稀疏度70%–99.9%）与Legacy/Generic双接口；cuDNN新旧接口取舍有明确原文。无需自行合并未说明的约束。",
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions."
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "Tensor cores introduced with Volta (compute capability **7.0+**)."
+              },
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%."
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "统一预算内相关独立第三方来源：DeepWiki cuda-samples（6.1与5.2两版同内容合并计1）、DeepWiki cudnn-frontend（graph-api与api-reference两页，计1–2）、arxiv SpMM论文、知乎库选择文章、CSDN/百度文库/NBKomputer（同一官方support matrix的转载合并计1）。保守计5条，分计cudnn-frontend两页则6条，跨4/5档，保留区间。首次发现：第1次查询第1条（DeepWiki）。官方仓库NVIDIA/cudnn-frontend按渠道分类排除。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。"
+              },
+              {
+                "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+                "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料：其关键说法（cuBLAS/cuDNN/CUTLASS定位、稠密/稀疏分工）与已抓取的官方正文一致，具可追溯核对依据；未发现已确证矛盾；但第三方正文均未抓取，知乎的选择建议等其余说法尚未核验，也无独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "These libraries provide optimized kernels for dense and sparse linear algebra"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确的完整库定位、选择决策表与三库调用代码（入口、精度、算法选择、列主序约束均与事后官方正文核对一致，如cuBLAS列主序、GemmEx/LtMatmul入口）；但原题涉及的具体参数与约束仍需外部补充：自认不确定最新版本配套关系，且其详述的cudnnConvolutionForward算法选择路径在cuDNN 9.0.0已被标记弃用、转向Graph API。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。"
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "column-major storage, 1-based indexing"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_MUiHhTVKch9RD0o2p0pq4027.dispatch",
+              "call_00_gQ13YcVtfK400YRl8w7o4723.dispatch",
+              "call_00_WyiWz6gw94yTejaQkVmu9499.dispatch",
+              "call_00_5lpKsa2pEzmMn5ZfdnUE3131.dispatch",
+              "call_00_Q3OeKKkH4W5JAAVNSVs38588.dispatch",
+              "call_00_ycgfGV8xCRWVFWSjcm8y0450.dispatch",
+              "call_00_NBc5Ap3nVqSAaevs2t8A5542.dispatch",
+              "call_00_KwxPfANIqv6bb8dBCbYN1309.dispatch",
+              "call_00_YqVgnmHh9v3ImQ5RAvlC0164.dispatch",
+              "call_00_WGnoXSHxNQVbktYEJhBQ5366.dispatch",
+              "call_00_6UhuVGtLMB0tPQz0NihB3374.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "最终答案对cuDNN给出具体版本且有官方support matrix直接依据：cuDNN 9.26.0配CUDA 13.4、驱动≥615.71.09、CC列表，配套关系无冲突，达到具体版本锁定。cuBLAS 13.4与cuSPARSE 13.4版本号有文档标题依据，但答案自认\"cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表本次未单独抓取\"，即所选库与设备/工具链的适用关系有一项未定到具体配套，按档为4而非5。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics."
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "supported",
+            "reason": "答案给出了可确定的具体调用方案：cublasSgemm与cublasGemmEx的完整C调用（含头文件、handle、alpha/beta、列主序说明）可直接照抄并替换m/n/k等环境参数；但答案自己声明推荐路线的关键操作缺少可执行内容——cuDNN Frontend Graph API的具体C++代码示例未取得，且cudnnConvolutionForward/cusparseSpMM的逐参数签名\"部分来自既有知识，未逐条在本次抓取中比对\"，需补充/核对后才能执行，属3档（有具体操作方案但需补充缺失内容）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.106112,
+            "upper": 88.07186285714286,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.1,
+              88.1
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.106112,
+          "upper": 88.07186285714286,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.1,
+            88.1
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1386,
+            "end": 1475,
+            "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 1234,
+            "end": 1260,
+            "quote": "cuDNN 9.26.0 for CUDA 13.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 5233,
+            "end": 5302,
+            "quote": "does not detail their signatures or replacement graph-API equivalents",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 2324,
+            "end": 2477,
+            "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 421,
+            "end": 587,
+            "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 4724,
+            "end": 4789,
+            "quote": "Tensor cores introduced with Volta (compute capability **7.0+**).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "field": "response",
+            "sha256": "d012db8e54676c2947c50ba7099c0a2d558f4f878775afeb9a3a78a236f1c46d",
+            "start": 5240,
+            "end": 5321,
+            "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 391,
+            "end": 497,
+            "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 118,
+            "end": 176,
+            "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1261,
+            "end": 1317,
+            "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+            "field": "response",
+            "sha256": "86fce03e7262db23b0de04b91b974bcded2250d4d8180361343267c0e228084b",
+            "start": 832,
+            "end": 953,
+            "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 276,
+            "end": 353,
+            "quote": "These libraries provide optimized kernels for dense and sparse linear algebra",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 935,
+            "end": 1055,
+            "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 1646,
+            "end": 1687,
+            "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 3950,
+            "end": 4095,
+            "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 8607,
+            "end": 8645,
+            "quote": "column-major storage, 1-based indexing",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 2866,
+            "end": 2942,
+            "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 9100,
+            "end": 9241,
+            "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11143,
+            "end": 11226,
+            "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 10793,
+            "end": 10892,
+            "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 3074,
+            "end": 3195,
+            "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11040,
+            "end": 11139,
+            "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 97,
+            "end": 193,
+            "quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 3432,
+            "end": 3494,
+            "quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a860b955bcca-predictors.json": "5d0fca0d8700283ac34d82bd159fa14634636779a1d854ada5503bc4a075913a",
+          "reviewed/development/case-a860b955bcca-outcome.json": "b4a08714ce2910fbb86f082030132db89348338e1a1ce1cb0c4055f236f9b428",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+            "url": "https://docs.nvidia.com/cuda-libraries/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+                "quote": "The cuBLAS Library is an implementation of BLAS (Basic Linear Algebra Subprograms) on NVIDIA CUDA runtime."
+              }
+            ],
+            "boundary_evidence": "无截断或缺页标注，也无独立全文核对依据，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/cuda-libraries/index.html"
+          },
+          {
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "url": "https://docs.nvidia.com/cuda/cublas/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "**Document title:** `1. Introduction — cuBLAS 13.4 documentation`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The provided content covers the front page, Introduction, and Chapter 2 through §2.4.13."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cublas/index.html"
+          },
+          {
+            "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+            "url": "https://docs.nvidia.com/cudnn/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+                "quote": "cuDNN provides highly tuned implementations for standard routines such as forward and backward convolution, attention, matmul, pooling, and normalization."
+              }
+            ],
+            "boundary_evidence": "仅取得落地页简短正文段落，未标注截断，完整性无独立核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cudnn/index.html"
+          },
+          {
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "We recommend users to make API calls through the graph API"
+              }
+            ],
+            "boundary_evidence": "含逐字引文与缺口说明，但无独立全文边界核对，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html"
+          },
+          {
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "url": "https://docs.nvidia.com/cuda/cusparse/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "The cuSPARSE library contains a set of GPU-accelerated basic linear algebra subroutines used for handling sparse matrices"
+              }
+            ],
+            "boundary_evidence": "标明仅覆盖Introduction第1–5章，但属页面内容范围而非抓取截断证据；无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cuda/cusparse/index.html"
+          },
+          {
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "For general information about cuDNN graphs, refer to [Graphs](https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html#graph-api \"(in NVIDIA cuDNN)\") in the *Frontend Developer Guide*. Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines or if you need a [C-only graph API](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/cudnn-graph-library.html#cudnn-graph-library)."
+              }
+            ],
+            "boundary_evidence": "正文含带锚点的逐字内容，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html"
+          },
+          {
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4."
+              }
+            ],
+            "boundary_evidence": "表格与脚注均逐字取得，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 9,
+      "recorded_at": "2026-09-21T04:15:14.326208+00:00",
+      "process_sha256": "5603f1a7bf03c1512144f2b03af02c3187db3d87a2ddd99f7c9d35adbeb62d2b",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "evidence_quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "verification": "source",
+            "reason": "答案覆盖原题各子要求：(1)列举官方库并定位——cuBLAS/cuBLASLt管稠密GEMM、cuDNN管卷积、cuSPARSE定位为稀疏库（源事件call_00_NBc5Ap3nVqSAaevs2t8A5542.result原文\"Targets matrices with sparsity ratios between 70%–99.9%\"证实）、cuSPARSELt管结构化稀疏（源事件call_00_gQ13YcVtfK400YRl8w7o4723.result列出cuSPARSELt条目证实）；(2)怎么选——第六节给出按稠密/卷积/稀疏、数据类型与硬件CC的选型流程；(3)怎么调用——给出cublasSgemm/cublasGemmEx代码骨架、cuBLASLt入口、cuDNN现代Graph API与传统路线、cusparseSpMM骨架，均与抓取的官方文档一致（源事件call_00_ycgfGV8xCRWVFWSjcm8y0450.result证实cuDNN卷积API废弃清单与graph API建议，call_00_YqVgnmHh9v3ImQ5RAvlC0164.result证实\"Use the cuDNN frontend to access the cuDNN Graph API\"，call_00_6UhuVGtLMB0tPQz0NihB3374.result证实兼容性表）。答案对未核实处（签名逐条核对、Frontend代码示例）有明确披露，不构成错误。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第5条即出现相关官方来源（docs.nvidia.com/cuda-libraries 索引页），符合第2—5条档。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.857142857142857,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "cuDNN 9.26.0 for CUDA 13.x"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "库定位与选择依据已有完整说明（cuBLAS稠密GEMM入口/精度/算力约束、cuSPARSE稀疏适用范围与格式、cuDNN Graph API推荐），但原题要求‘怎么调用’的关键调用细节缺失：cuBLAS的§2.7 GEMM与§3.4 cublasLtMatmul函数正文未取得；cuDNN卷积入口仅在弃用清单中列出、无签名或Graph API替代示例；Graph API页面正文只覆盖attention融合而非卷积示例。",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "does not detail their signatures or replacement graph-API equivalents"
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用表/规则：cuDNN Support Matrix直接列出cuDNN 9.26.0↔CUDA 13.x/12.x↔驱动↔GPU架构对应；cuBLAS给出算力规则（Tensor Core CC 7.0+、仿真架构表）；cuSPARSE给出适用规则（稀疏度70%–99.9%）与Legacy/Generic双接口；cuDNN新旧接口取舍有明确原文。无需自行合并未说明的约束。",
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions."
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "Tensor cores introduced with Volta (compute capability **7.0+**)."
+              },
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%."
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "统一预算内相关独立第三方来源：DeepWiki cuda-samples（6.1与5.2两版同内容合并计1）、DeepWiki cudnn-frontend（graph-api与api-reference两页，计1–2）、arxiv SpMM论文、知乎库选择文章、CSDN/百度文库/NBKomputer（同一官方support matrix的转载合并计1）。保守计5条，分计cudnn-frontend两页则6条，跨4/5档，保留区间。首次发现：第1次查询第1条（DeepWiki）。官方仓库NVIDIA/cudnn-frontend按渠道分类排除。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。"
+              },
+              {
+                "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+                "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料：其关键说法（cuBLAS/cuDNN/CUTLASS定位、稠密/稀疏分工）与已抓取的官方正文一致，具可追溯核对依据；未发现已确证矛盾；但第三方正文均未抓取，知乎的选择建议等其余说法尚未核验，也无独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "These libraries provide optimized kernels for dense and sparse linear algebra"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确的完整库定位、选择决策表与三库调用代码（入口、精度、算法选择、列主序约束均与事后官方正文核对一致，如cuBLAS列主序、GemmEx/LtMatmul入口）；但原题涉及的具体参数与约束仍需外部补充：自认不确定最新版本配套关系，且其详述的cudnnConvolutionForward算法选择路径在cuDNN 9.0.0已被标记弃用、转向Graph API。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。"
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "column-major storage, 1-based indexing"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_MUiHhTVKch9RD0o2p0pq4027.dispatch",
+              "call_00_gQ13YcVtfK400YRl8w7o4723.dispatch",
+              "call_00_WyiWz6gw94yTejaQkVmu9499.dispatch",
+              "call_00_5lpKsa2pEzmMn5ZfdnUE3131.dispatch",
+              "call_00_Q3OeKKkH4W5JAAVNSVs38588.dispatch",
+              "call_00_ycgfGV8xCRWVFWSjcm8y0450.dispatch",
+              "call_00_NBc5Ap3nVqSAaevs2t8A5542.dispatch",
+              "call_00_KwxPfANIqv6bb8dBCbYN1309.dispatch",
+              "call_00_YqVgnmHh9v3ImQ5RAvlC0164.dispatch",
+              "call_00_WGnoXSHxNQVbktYEJhBQ5366.dispatch",
+              "call_00_6UhuVGtLMB0tPQz0NihB3374.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "最终答案对cuDNN给出具体版本且有官方support matrix直接依据：cuDNN 9.26.0配CUDA 13.4、驱动≥615.71.09、CC列表，配套关系无冲突，达到具体版本锁定。cuBLAS 13.4与cuSPARSE 13.4版本号有文档标题依据，但答案自认\"cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表本次未单独抓取\"，即所选库与设备/工具链的适用关系有一项未定到具体配套，按档为4而非5。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics."
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "supported",
+            "reason": "答案给出了可确定的具体调用方案：cublasSgemm与cublasGemmEx的完整C调用（含头文件、handle、alpha/beta、列主序说明）可直接照抄并替换m/n/k等环境参数；但答案自己声明推荐路线的关键操作缺少可执行内容——cuDNN Frontend Graph API的具体C++代码示例未取得，且cudnnConvolutionForward/cusparseSpMM的逐参数签名\"部分来自既有知识，未逐条在本次抓取中比对\"，需补充/核对后才能执行，属3档（有具体操作方案但需补充缺失内容）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.106112,
+            "upper": 88.07186285714286,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.1,
+              88.1
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.106112,
+          "upper": 88.07186285714286,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.1,
+            88.1
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1386,
+            "end": 1475,
+            "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 1234,
+            "end": 1260,
+            "quote": "cuDNN 9.26.0 for CUDA 13.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 5233,
+            "end": 5302,
+            "quote": "does not detail their signatures or replacement graph-API equivalents",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 2324,
+            "end": 2477,
+            "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 421,
+            "end": 587,
+            "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 4724,
+            "end": 4789,
+            "quote": "Tensor cores introduced with Volta (compute capability **7.0+**).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "field": "response",
+            "sha256": "d012db8e54676c2947c50ba7099c0a2d558f4f878775afeb9a3a78a236f1c46d",
+            "start": 5240,
+            "end": 5321,
+            "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 391,
+            "end": 497,
+            "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 118,
+            "end": 176,
+            "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1261,
+            "end": 1317,
+            "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+            "field": "response",
+            "sha256": "86fce03e7262db23b0de04b91b974bcded2250d4d8180361343267c0e228084b",
+            "start": 832,
+            "end": 953,
+            "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 276,
+            "end": 353,
+            "quote": "These libraries provide optimized kernels for dense and sparse linear algebra",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 935,
+            "end": 1055,
+            "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 1646,
+            "end": 1687,
+            "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 3950,
+            "end": 4095,
+            "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 8607,
+            "end": 8645,
+            "quote": "column-major storage, 1-based indexing",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 2866,
+            "end": 2942,
+            "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 9100,
+            "end": 9241,
+            "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11143,
+            "end": 11226,
+            "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 10793,
+            "end": 10892,
+            "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 3074,
+            "end": 3195,
+            "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11040,
+            "end": 11139,
+            "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 97,
+            "end": 193,
+            "quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 3432,
+            "end": 3494,
+            "quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a860b955bcca-predictors.json": "9d353412d43586611478f252f821b9c412143e881f43c8be85c0dda7c93c0f40",
+          "reviewed/development/case-a860b955bcca-outcome.json": "393e0acf62e50fe1c7feed71a983d07de3fd76513fbed0055f8675cb94d40c87",
+          "consolidate_evaluations.py": "916e55c165594299058b785dcd0cdc1dcdd3697b6fbf88154a5ce2c3c696463d",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+            "url": "https://docs.nvidia.com/cuda-libraries/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+                "quote": "The cuBLAS Library is an implementation of BLAS (Basic Linear Algebra Subprograms) on NVIDIA CUDA runtime."
+              }
+            ],
+            "boundary_evidence": "无截断或缺页标注，也无独立全文核对依据，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/cuda-libraries/index.html"
+          },
+          {
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "url": "https://docs.nvidia.com/cuda/cublas/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "**Document title:** `1. Introduction — cuBLAS 13.4 documentation`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The provided content covers the front page, Introduction, and Chapter 2 through §2.4.13."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cublas/index.html"
+          },
+          {
+            "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+            "url": "https://docs.nvidia.com/cudnn/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+                "quote": "cuDNN provides highly tuned implementations for standard routines such as forward and backward convolution, attention, matmul, pooling, and normalization."
+              }
+            ],
+            "boundary_evidence": "仅取得落地页简短正文段落，未标注截断，完整性无独立核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cudnn/index.html"
+          },
+          {
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "We recommend users to make API calls through the graph API"
+              }
+            ],
+            "boundary_evidence": "含逐字引文与缺口说明，但无独立全文边界核对，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html"
+          },
+          {
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "url": "https://docs.nvidia.com/cuda/cusparse/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "The cuSPARSE library contains a set of GPU-accelerated basic linear algebra subroutines used for handling sparse matrices"
+              }
+            ],
+            "boundary_evidence": "标明仅覆盖Introduction第1–5章，但属页面内容范围而非抓取截断证据；无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cuda/cusparse/index.html"
+          },
+          {
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "For general information about cuDNN graphs, refer to [Graphs](https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html#graph-api \"(in NVIDIA cuDNN)\") in the *Frontend Developer Guide*. Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines or if you need a [C-only graph API](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/cudnn-graph-library.html#cudnn-graph-library)."
+              }
+            ],
+            "boundary_evidence": "正文含带锚点的逐字内容，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html"
+          },
+          {
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4."
+              }
+            ],
+            "boundary_evidence": "表格与脚注均逐字取得，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 10,
+      "recorded_at": "2026-09-21T04:16:32.218017+00:00",
+      "process_sha256": "5603f1a7bf03c1512144f2b03af02c3187db3d87a2ddd99f7c9d35adbeb62d2b",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "evidence_quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "verification": "source",
+            "reason": "答案覆盖原题各子要求：(1)列举官方库并定位——cuBLAS/cuBLASLt管稠密GEMM、cuDNN管卷积、cuSPARSE定位为稀疏库（源事件call_00_NBc5Ap3nVqSAaevs2t8A5542.result原文\"Targets matrices with sparsity ratios between 70%–99.9%\"证实）、cuSPARSELt管结构化稀疏（源事件call_00_gQ13YcVtfK400YRl8w7o4723.result列出cuSPARSELt条目证实）；(2)怎么选——第六节给出按稠密/卷积/稀疏、数据类型与硬件CC的选型流程；(3)怎么调用——给出cublasSgemm/cublasGemmEx代码骨架、cuBLASLt入口、cuDNN现代Graph API与传统路线、cusparseSpMM骨架，均与抓取的官方文档一致（源事件call_00_ycgfGV8xCRWVFWSjcm8y0450.result证实cuDNN卷积API废弃清单与graph API建议，call_00_YqVgnmHh9v3ImQ5RAvlC0164.result证实\"Use the cuDNN frontend to access the cuDNN Graph API\"，call_00_6UhuVGtLMB0tPQz0NihB3374.result证实兼容性表）。答案对未核实处（签名逐条核对、Frontend代码示例）有明确披露，不构成错误。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第5条即出现相关官方来源（docs.nvidia.com/cuda-libraries 索引页），符合第2—5条档。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.857142857142857,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "cuDNN 9.26.0 for CUDA 13.x"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "库定位与选择依据已有完整说明（cuBLAS稠密GEMM入口/精度/算力约束、cuSPARSE稀疏适用范围与格式、cuDNN Graph API推荐），但原题要求‘怎么调用’的关键调用细节缺失：cuBLAS的§2.7 GEMM与§3.4 cublasLtMatmul函数正文未取得；cuDNN卷积入口仅在弃用清单中列出、无签名或Graph API替代示例；Graph API页面正文只覆盖attention融合而非卷积示例。",
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "does not detail their signatures or replacement graph-API equivalents"
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用表/规则：cuDNN Support Matrix直接列出cuDNN 9.26.0↔CUDA 13.x/12.x↔驱动↔GPU架构对应；cuBLAS给出算力规则（Tensor Core CC 7.0+、仿真架构表）；cuSPARSE给出适用规则（稀疏度70%–99.9%）与Legacy/Generic双接口；cuDNN新旧接口取舍有明确原文。无需自行合并未说明的约束。",
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions."
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "Tensor cores introduced with Volta (compute capability **7.0+**)."
+              },
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%."
+              },
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "统一预算内相关独立第三方来源：DeepWiki cuda-samples（6.1与5.2两版同内容合并计1）、DeepWiki cudnn-frontend（graph-api与api-reference两页，计1–2）、arxiv SpMM论文、知乎库选择文章、CSDN/百度文库/NBKomputer（同一官方support matrix的转载合并计1）。保守计5条，分计cudnn-frontend两页则6条，跨4/5档，保留区间。首次发现：第1次查询第1条（DeepWiki）。官方仓库NVIDIA/cudnn-frontend按渠道分类排除。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。"
+              },
+              {
+                "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+                "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料：其关键说法（cuBLAS/cuDNN/CUTLASS定位、稠密/稀疏分工）与已抓取的官方正文一致，具可追溯核对依据；未发现已确证矛盾；但第三方正文均未抓取，知乎的选择建议等其余说法尚未核验，也无独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "These libraries provide optimized kernels for dense and sparse linear algebra"
+              },
+              {
+                "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+                "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确的完整库定位、选择决策表与三库调用代码（入口、精度、算法选择、列主序约束均与事后官方正文核对一致，如cuBLAS列主序、GemmEx/LtMatmul入口）；但原题涉及的具体参数与约束仍需外部补充：自认不确定最新版本配套关系，且其详述的cudnnConvolutionForward算法选择路径在cuDNN 9.0.0已被标记弃用、转向Graph API。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。"
+              },
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "column-major storage, 1-based indexing"
+              },
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_MUiHhTVKch9RD0o2p0pq4027.dispatch",
+              "call_00_gQ13YcVtfK400YRl8w7o4723.dispatch",
+              "call_00_WyiWz6gw94yTejaQkVmu9499.dispatch",
+              "call_00_5lpKsa2pEzmMn5ZfdnUE3131.dispatch",
+              "call_00_Q3OeKKkH4W5JAAVNSVs38588.dispatch",
+              "call_00_ycgfGV8xCRWVFWSjcm8y0450.dispatch",
+              "call_00_NBc5Ap3nVqSAaevs2t8A5542.dispatch",
+              "call_00_KwxPfANIqv6bb8dBCbYN1309.dispatch",
+              "call_00_YqVgnmHh9v3ImQ5RAvlC0164.dispatch",
+              "call_00_WGnoXSHxNQVbktYEJhBQ5366.dispatch",
+              "call_00_6UhuVGtLMB0tPQz0NihB3374.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "最终答案对cuDNN给出具体版本且有官方support matrix直接依据：cuDNN 9.26.0配CUDA 13.4、驱动≥615.71.09、CC列表，配套关系无冲突，达到具体版本锁定。cuBLAS 13.4与cuSPARSE 13.4版本号有文档标题依据，但答案自认\"cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表本次未单独抓取\"，即所选库与设备/工具链的适用关系有一项未定到具体配套，按档为4而非5。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics."
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "supported",
+            "reason": "答案给出了可确定的具体调用方案：cublasSgemm与cublasGemmEx的完整C调用（含头文件、handle、alpha/beta、列主序说明）可直接照抄并替换m/n/k等环境参数；但答案自己声明推荐路线的关键操作缺少可执行内容——cuDNN Frontend Graph API的具体C++代码示例未取得，且cudnnConvolutionForward/cusparseSpMM的逐参数签名\"部分来自既有知识，未逐条在本次抓取中比对\"，需补充/核对后才能执行，属3档（有具体操作方案但需补充缺失内容）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 86.106112,
+            "upper": 88.07186285714286,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              86.1,
+              88.1
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 86.106112,
+          "upper": 88.07186285714286,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            86.1,
+            88.1
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1386,
+            "end": 1475,
+            "quote": "## 5. [NVIDIA Developer Documentation](https://docs.nvidia.com/cuda-libraries/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 1234,
+            "end": 1260,
+            "quote": "cuDNN 9.26.0 for CUDA 13.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 10622,
+            "end": 10788,
+            "quote": "The body text for §2.7 (Level-3 GEMM) and §3.4 (`cublasLtMatmul`) is listed in the navigation but the detailed function descriptions were not included in this excerpt",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 5233,
+            "end": 5302,
+            "quote": "does not detail their signatures or replacement graph-API equivalents",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 2324,
+            "end": 2477,
+            "quote": "Mha-Fprop` fusions O=matmul(S=g4(P=matmul(Q,g3(K)),V)) have been added to the runtime fusion engine to serve patterns that are commonly used in attention",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 421,
+            "end": 587,
+            "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 4724,
+            "end": 4789,
+            "quote": "Tensor cores introduced with Volta (compute capability **7.0+**).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "field": "response",
+            "sha256": "d012db8e54676c2947c50ba7099c0a2d558f4f878775afeb9a3a78a236f1c46d",
+            "start": 5240,
+            "end": 5321,
+            "quote": "the library targets matrices with sparsity ratios in the range between 70%-99.9%.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "field": "response",
+            "sha256": "a4bae01f8b280cdce8446a6d080379b39c84b2ee634c12dd98adcebd2adaf98c",
+            "start": 391,
+            "end": 497,
+            "quote": "Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 118,
+            "end": 176,
+            "quote": "## 1. [Linear Algebra with cuBLAS and cuSPARSE - DeepWiki]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 1261,
+            "end": 1317,
+            "quote": "为了更好地利用GPU，NVIDIA提供了多个优化库，其中包括 cuBLAS 、 CUTLASS 和 cuDNN。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_WGnoXSHxNQVbktYEJhBQ5366.result",
+            "field": "response",
+            "sha256": "86fce03e7262db23b0de04b91b974bcded2250d4d8180361343267c0e228084b",
+            "start": 832,
+            "end": 953,
+            "quote": "## 3. [cuDNN Support Matrix - CUDA - cuDNN - CUDA driver ...](https://blog.csdn.net/chengyq116/article/details/103161517)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 276,
+            "end": 353,
+            "quote": "These libraries provide optimized kernels for dense and sparse linear algebra",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_MUiHhTVKch9RD0o2p0pq4027.result",
+            "field": "response",
+            "sha256": "4ceaa580efc8709177914870200169f2611019ee6bc795a333b9f4e6c399d6a0",
+            "start": 935,
+            "end": 1055,
+            "quote": "CUBLAS and CUSPARSE represent two complementary approaches to linear algebra on GPUs: dense matrix operations and sparse",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 1646,
+            "end": 1687,
+            "quote": "稠密矩阵乘首选 cuBLAS；卷积首选 cuDNN；cuSPARSE 只处理稀疏。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "ad9f354cfcecf80ba05790f54a1fd1605d435484706d5549eab399ee75ead6ea",
+            "start": 3950,
+            "end": 4095,
+            "quote": "1. **当前（2026 年）各库最新版本号、CUDA 版本对应关系**——我不确定最新是 CUDA 12.x 还是 13.x，cuDNN 最新是 9.x 还是更高；具体版本配套表（cuDNN ↔ CUDA ↔ 驱动）需查官方 release notes / support matrix。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 8607,
+            "end": 8645,
+            "quote": "column-major storage, 1-based indexing",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "field": "response",
+            "sha256": "8f90ef4ae4c1dc193fb6ad030ba5c4cffb7690bbeed9998271f03a5aae5792a9",
+            "start": 2866,
+            "end": 2942,
+            "quote": "`cudnnConvolutionForward()` — listed under **Deprecated APIs (cuDNN 9.0.0)**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 9100,
+            "end": 9241,
+            "quote": "For best performance, the recommended configuration is **cuDNN 9.26.0 with CUDA 13.4**. This is the configuration used for tuning heuristics.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11143,
+            "end": 11226,
+            "quote": "**cuBLAS 13.4 对应的 CUDA Toolkit / 驱动 / GPU 兼容表**本次未单独抓取（只取得 cuDNN 的 support matrix）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 10793,
+            "end": 10892,
+            "quote": "cuDNN Frontend Graph API 的**具体 C++ 代码示例**（`cudnn_frontend::graph::Graph`、`conv_forward` 的完整签名）本次未取到",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 3074,
+            "end": 3195,
+            "quote": "cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,\n            m, n, k, &alpha,\n            dA, lda, dB, ldb, &beta, dC, ldc);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 11040,
+            "end": 11139,
+            "quote": "上文 `cudnnConvolutionForward` / `cusparseSpMM` / `cublasSgemm`s 的**逐参数签名**部分来自既有知识，未逐条在本次抓取中比对官方函数页。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "49eec61cff4eddf1d437da5b15d4696acebe4fabba3d545c8a8be21e05ab3851",
+            "start": 97,
+            "end": 193,
+            "quote": "稠密矩阵乘 `C=α·op(A)·op(B)+β·C`（GEMM） | **cuBLAS**（cuBLASLt 子 API） | `cublasGemmEx`、`cublasLtMatmul`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "field": "response",
+            "sha256": "600e78183ad45f267bfa75e4536a81840bb3f459ffa1692264bea656c8513b51",
+            "start": 3432,
+            "end": 3494,
+            "quote": "`cublasGemmEx()` | Extended GEMM with explicit types — §2.8.12",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a860b955bcca-predictors.json": "9d353412d43586611478f252f821b9c412143e881f43c8be85c0dda7c93c0f40",
+          "reviewed/development/case-a860b955bcca-outcome.json": "393e0acf62e50fe1c7feed71a983d07de3fd76513fbed0055f8675cb94d40c87",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+            "url": "https://docs.nvidia.com/cuda-libraries/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_gQ13YcVtfK400YRl8w7o4723.result",
+                "quote": "The cuBLAS Library is an implementation of BLAS (Basic Linear Algebra Subprograms) on NVIDIA CUDA runtime."
+              }
+            ],
+            "boundary_evidence": "无截断或缺页标注，也无独立全文核对依据，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/cuda-libraries/index.html"
+          },
+          {
+            "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+            "url": "https://docs.nvidia.com/cuda/cublas/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "**Document title:** `1. Introduction — cuBLAS 13.4 documentation`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_5lpKsa2pEzmMn5ZfdnUE3131.result",
+                "quote": "The provided content covers the front page, Introduction, and Chapter 2 through §2.4.13."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cublas/index.html"
+          },
+          {
+            "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+            "url": "https://docs.nvidia.com/cudnn/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_Q3OeKKkH4W5JAAVNSVs38588.result",
+                "quote": "cuDNN provides highly tuned implementations for standard routines such as forward and backward convolution, attention, matmul, pooling, and normalization."
+              }
+            ],
+            "boundary_evidence": "仅取得落地页简短正文段落，未标注截断，完整性无独立核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cudnn/index.html"
+          },
+          {
+            "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_ycgfGV8xCRWVFWSjcm8y0450.result",
+                "quote": "We recommend users to make API calls through the graph API"
+              }
+            ],
+            "boundary_evidence": "含逐字引文与缺口说明，但无独立全文边界核对，完整性保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html"
+          },
+          {
+            "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+            "url": "https://docs.nvidia.com/cuda/cusparse/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_NBc5Ap3nVqSAaevs2t8A5542.result",
+                "quote": "The cuSPARSE library contains a set of GPU-accelerated basic linear algebra subroutines used for handling sparse matrices"
+              }
+            ],
+            "boundary_evidence": "标明仅覆盖Introduction第1–5章，但属页面内容范围而非抓取截断证据；无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/cuda/cusparse/index.html"
+          },
+          {
+            "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_YqVgnmHh9v3ImQ5RAvlC0164.result",
+                "quote": "For general information about cuDNN graphs, refer to [Graphs](https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html#graph-api \"(in NVIDIA cuDNN)\") in the *Frontend Developer Guide*. Use the cuDNN frontend to access the cuDNN Graph API unless you want to use legacy fixed-function routines or if you need a [C-only graph API](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/cudnn-graph-library.html#cudnn-graph-library)."
+              }
+            ],
+            "boundary_evidence": "正文含带锚点的逐字内容，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/graph-api.html"
+          },
+          {
+            "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_6UhuVGtLMB0tPQz0NihB3374.result",
+                "quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4."
+              }
+            ],
+            "boundary_evidence": "表格与脚注均逐字取得，无截断标注，也无独立完整性核对，保留unknown",
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }
