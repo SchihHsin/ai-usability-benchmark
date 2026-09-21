@@ -1498,6 +1498,705 @@
         ],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T14:59:37.951681+00:00",
+      "process_sha256": "42171cc2e61cc4213cf4c05dab5d80bf1aec8cd320d4cdb1120fbe07b9db469a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "以下回答区分**已由本次检索官方正文核实**的内容与**依赖先验、未能在本次取得官方原文**的内容。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "evidence_quote": "Within a thread block, threads are organized into groups of 32 threads called *warps*. A warp executes the kernel code in a *Single-Instruction Multiple-Threads* (SIMT) paradigm.",
+            "verification": "source",
+            "reason": "单一准则含多个子概念，逐项核对：(1) grid/block/thread：最终答案引 S1 原文并解释层级，来源 call_00_sEYwmyLN4ixH1XLtvtKi5077.result 含 'These threads are organized into blocks... Thread blocks are organized into a *grid*' 及 'All threads of a thread block are executed in a single SM'，官方核实。(2) warp：答案称 warp=32 线程、SIMT、divergence、lane 0-31，与来源 'groups of 32 threads called *warps*'、'Warp lanes are numbered 0 to 31'、'warp divergence' 逐字一致。(3) SM：答案引 'collection of *Streaming Multiprocessors* (SMs)... unified data cache provides the physical resources for *shared memory* and L1 cache'，来源原文存在。(4) 内存三级：global memory 答案引 'the DRAM attached to the GPU is called *global memory*, because it is accessible to all SMs in the GPU'，见 call_00_V3PWY8ezaizlVH8k3vik8950.result；register/shared 见 'Each SM has its own register file and shared memory... The register file stores thread local variables which are usually allocated by the compiler. The shared memory is accessible by all threads within a thread block or cluster.'（call_00_CbAdMvBhUZBkHmLu77WG9064.result），均逐字核实。(5) 硬件映射：block→单 SM 不迁移、一 SM 多 block、1024 上限由 S3（call_00_GQ8qIm035AocxkH2VmGD9386.result: 'Each CUDA block is executed by one streaming multiprocessor (SM) and cannot be migrated to other SMs'、'1024 threads per block limit'）交叉印证；cluster→GPC 见 'all thread blocks in a cluster are executed in a single GPC'。(6) 答案对未取得项（Hardware Multithreading、local memory 细节、bank conflict）明确标注先验/未核实，未冒充官方，符合诚实边界。所有子要求均有官方来源支撑。",
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（NVIDIA CUDA C++ Programming Guide PDF，docs.nvidia.com）",
+            "evidence": [
+              {
+                "event_id": "call_00_HpBXRWSgrFfA2cJy73A65714.result",
+                "quote": "1. [CUDA C++ Programming Guide - NVIDIA Documentation Hub](https://docs.nvidia.com/cuda/archive/13.0.1/pdf/CUDA_C_Programming_Guide.pdf)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 2.75,
+            "upper": 3.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+                "quote": "All threads of a thread block are executed in a single SM."
+              },
+              {
+                "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+                "quote": "[...]\n\n## 1.2.3. GPU Memory#"
+              },
+              {
+                "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+                "quote": "**The requested sections are NOT present in the content provided.**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取回的官方正文覆盖原题主干：grid/block/thread 层级、block 单 SM 执行、warp=32/SIMT/分支发散、SM 组成、寄存器/共享内存/全局内存/L1/L2/常量缓存的定义与归属。但 Hardware Multithreading（warp 调度与延迟隐藏）正文被引用却从未取回，local/texture memory 定义亦未从官方正文取得，属关键参考细节缺失",
+            "evidence": [
+              {
+                "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+                "quote": "Within a thread block, threads are organized into groups of 32 threads called *warps*."
+              },
+              {
+                "event_id": "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+                "quote": "From the perspective of device code, the DRAM attached to the GPU is called *global memory*, because it is accessible to all SMs in the GPU."
+              },
+              {
+                "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+                "quote": "threads from a thread block are assigned to warps in a predictable fashion detailed in Hardware Multithreading."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "not_applicable",
+            "reason": "不要求版本选择",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "任务包 applicability 已冻结：M4、M9、M10 = N/A（不要求版本选择、不要求执行）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "4次搜索中去重后的相关独立第三方来源≥6条：CSDN×4（BFZS1994、byxdaz、shanglianlm、hxj0323）、知乎×4（p/612177967、p/565199964、p/2036930506126792673、p/664647204）、掘金×1（jishuzhan为其转载去重）、个人博客×2（hd9568、jonathanding）、GitHub×1（HuaTsai），共约12条",
+            "evidence": [
+              {
+                "event_id": "call_00_HpBXRWSgrFfA2cJy73A65714.result",
+                "quote": "2. [CUDA 编程模型详解：Grid / Block / Warp / Thread 层级与 ...](https://blog.csdn.net/BFZS1994/article/details/161623494)"
+              },
+              {
+                "event_id": "call_00_0dBfpcHLJUL4TzOvWrKC3595.result",
+                "quote": "## 5. [从0-1学CUDA | Week 3 – 内存层级 （Memory Hierarchy）](https://jishuzhan.net/article/1960142979171135490)"
+              },
+              {
+                "event_id": "call_00_hM3Lty2IKTdyEd9zfp5U1309.result",
+                "quote": "5. [CUDA 编程模型 — 从代码到硬件 | LLM Learning](https://jonathanding.github.io/llm-learning/zh/articles/cuda-programming-model/)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "搜索返回包含第三方材料，但已存记录不足以核验其关键陈述；不应因未抓取正文标为不适用。保留未知，不补零或推定区间。",
+            "evidence": [
+              {
+                "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+                "quote": "# CUDA Refresher: The CUDA Programming Model | NVIDIA Technical Blog"
+              }
+            ],
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答完整覆盖原题全部概念（grid/block/thread/warp/SM/三级内存）及软硬件映射，且经官方正文事后核对关键主张均正确：warp=32、block 整体驻留单 SM、shared memory 片内 block 级、global memory 片外 DRAM 全局可见、寄存器线程私有由编译器分配；先验自我标注的架构数值不确定项（如 255 寄存器、48KB）原题未要求，且均以'典型/常见'限定",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "**整个 block 只在一个 SM 上执行，不可跨 SM 拆分**；一个 SM 可同时驻留多个 block"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "一个 warp = **32 个线程**（warpSize = 32"
+              },
+              {
+                "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+                "quote": "All threads of a thread block are executed in a single SM."
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_HpBXRWSgrFfA2cJy73A65714.dispatch",
+              "call_00_RIZyfZwsA8YWVtMCOcmb5703.dispatch",
+              "call_00_sEYwmyLN4ixH1XLtvtKi5077.dispatch",
+              "call_00_Ij3mmFU5ILoXmeDTgxJK8962.dispatch",
+              "call_00_hM3Lty2IKTdyEd9zfp5U1309.dispatch",
+              "call_00_0dBfpcHLJUL4TzOvWrKC3595.dispatch",
+              "call_00_CbAdMvBhUZBkHmLu77WG9064.dispatch",
+              "call_00_oaZSbF6pliPu4bNBrrz38390.dispatch",
+              "call_00_V3PWY8ezaizlVH8k3vik8950.dispatch",
+              "call_00_GQ8qIm035AocxkH2VmGD9386.dispatch",
+              "call_00_6vYL6vWGBXZIcukGp5r67171.dispatch",
+              "call_00_bjZk9uI2KyHLVnvrcBZC7796.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "not_applicable",
+            "reason": "不要求版本选择",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "本回答为纯概念解释，**未运行**，因此不声称任何可运行验证结果。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "not_applicable",
+            "reason": "纯概念解释，不要求执行",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "未执行任何本地代码；本回答为纯概念解释，**未运行**，因此不声称任何可运行验证结果。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "insufficient_evidence",
+                "reason": "搜索返回包含第三方材料，但已存记录不足以核验其关键陈述；不应因未抓取正文标为不适用。保留未知，不补零或推定区间。"
+              }
+            ],
+            "decisions": [
+              {
+                "metric": "M4",
+                "handling": "neutral adjustment; not a grade 5 observation"
+              }
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "搜索返回包含第三方材料，但已存记录不足以核验其关键陈述；不应因未抓取正文标为不适用。保留未知，不补零或推定区间。"
+            }
+          ],
+          "decisions": [
+            {
+              "metric": "M4",
+              "handling": "neutral adjustment; not a grade 5 observation"
+            }
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_HpBXRWSgrFfA2cJy73A65714.result",
+            "field": "response",
+            "sha256": "86eaae098ffbf39375314d8b7618ff67cfefcdc9bb1895b4268ed32eaef7ad1d",
+            "start": 117,
+            "end": 253,
+            "quote": "1. [CUDA C++ Programming Guide - NVIDIA Documentation Hub](https://docs.nvidia.com/cuda/archive/13.0.1/pdf/CUDA_C_Programming_Guide.pdf)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "field": "response",
+            "sha256": "3c0523867dd1d4e92a3812f728e0702a2b1d2dbfc46561c2ac13cd1b4d9627f4",
+            "start": 4944,
+            "end": 5002,
+            "quote": "All threads of a thread block are executed in a single SM.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+            "field": "response",
+            "sha256": "009543707b99bc5804b8d21ed9342767b8cdd300af146f9b28fa2eb99af49de1",
+            "start": 4128,
+            "end": 4156,
+            "quote": "[...]\n\n## 1.2.3. GPU Memory#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "field": "response",
+            "sha256": "0ba5ef7f58673677a46c2cc8e73c610ee9a277ad0f1f27f7f5e16d3fd2b8d245",
+            "start": 20,
+            "end": 87,
+            "quote": "**The requested sections are NOT present in the content provided.**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "field": "response",
+            "sha256": "3c0523867dd1d4e92a3812f728e0702a2b1d2dbfc46561c2ac13cd1b4d9627f4",
+            "start": 9284,
+            "end": 9370,
+            "quote": "Within a thread block, threads are organized into groups of 32 threads called *warps*.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+            "field": "response",
+            "sha256": "562cac111a9286341fed3e2478b9552942ed031272ffcca04eeb2478072097b8",
+            "start": 2153,
+            "end": 2293,
+            "quote": "From the perspective of device code, the DRAM attached to the GPU is called *global memory*, because it is accessible to all SMs in the GPU.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "field": "response",
+            "sha256": "3c0523867dd1d4e92a3812f728e0702a2b1d2dbfc46561c2ac13cd1b4d9627f4",
+            "start": 9822,
+            "end": 9933,
+            "quote": "threads from a thread block are assigned to warps in a predictable fashion detailed in Hardware Multithreading.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "88b22f90e421d69f89fc7ccaea2f163c5f38b7b27548e1c869314bfa4464fe7e",
+            "start": 399,
+            "end": 451,
+            "quote": "任务包 applicability 已冻结：M4、M9、M10 = N/A（不要求版本选择、不要求执行）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_HpBXRWSgrFfA2cJy73A65714.result",
+            "field": "response",
+            "sha256": "86eaae098ffbf39375314d8b7618ff67cfefcdc9bb1895b4268ed32eaef7ad1d",
+            "start": 478,
+            "end": 589,
+            "quote": "2. [CUDA 编程模型详解：Grid / Block / Warp / Thread 层级与 ...](https://blog.csdn.net/BFZS1994/article/details/161623494)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_0dBfpcHLJUL4TzOvWrKC3595.result",
+            "field": "response",
+            "sha256": "80453725d37cccbc401709e54b913b37985152a3f1b4a80ee522e88a472aff93",
+            "start": 1165,
+            "end": 1268,
+            "quote": "## 5. [从0-1学CUDA | Week 3 – 内存层级 （Memory Hierarchy）](https://jishuzhan.net/article/1960142979171135490)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_hM3Lty2IKTdyEd9zfp5U1309.result",
+            "field": "response",
+            "sha256": "5257736c611b43299beaf8fe8269bbe44096c67f1adb4a3b703449de57bf30e1",
+            "start": 1568,
+            "end": 1687,
+            "quote": "5. [CUDA 编程模型 — 从代码到硬件 | LLM Learning](https://jonathanding.github.io/llm-learning/zh/articles/cuda-programming-model/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "88b22f90e421d69f89fc7ccaea2f163c5f38b7b27548e1c869314bfa4464fe7e",
+            "start": 2118,
+            "end": 2172,
+            "quote": "**整个 block 只在一个 SM 上执行，不可跨 SM 拆分**；一个 SM 可同时驻留多个 block",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "88b22f90e421d69f89fc7ccaea2f163c5f38b7b27548e1c869314bfa4464fe7e",
+            "start": 1201,
+            "end": 1235,
+            "quote": "一个 warp = **32 个线程**（warpSize = 32",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "field": "response",
+            "sha256": "3c0523867dd1d4e92a3812f728e0702a2b1d2dbfc46561c2ac13cd1b4d9627f4",
+            "start": 4944,
+            "end": 5002,
+            "quote": "All threads of a thread block are executed in a single SM.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155a890cfbb6d9d5bf19c16fcaa4c04e172b19da1c7ffa7368baa67a85ca506d",
+            "start": 11931,
+            "end": 11964,
+            "quote": "本回答为纯概念解释，**未运行**，因此不声称任何可运行验证结果。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155a890cfbb6d9d5bf19c16fcaa4c04e172b19da1c7ffa7368baa67a85ca506d",
+            "start": 11921,
+            "end": 11964,
+            "quote": "未执行任何本地代码；本回答为纯概念解释，**未运行**，因此不声称任何可运行验证结果。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "155a890cfbb6d9d5bf19c16fcaa4c04e172b19da1c7ffa7368baa67a85ca506d",
+            "start": 33,
+            "end": 83,
+            "quote": "以下回答区分**已由本次检索官方正文核实**的内容与**依赖先验、未能在本次取得官方原文**的内容。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "field": "response",
+            "sha256": "3c0523867dd1d4e92a3812f728e0702a2b1d2dbfc46561c2ac13cd1b4d9627f4",
+            "start": 9284,
+            "end": 9462,
+            "quote": "Within a thread block, threads are organized into groups of 32 threads called *warps*. A warp executes the kernel code in a *Single-Instruction Multiple-Threads* (SIMT) paradigm.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "alternative_body_event_ids": [
+              "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+              "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+              "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+              "call_00_V3PWY8ezaizlVH8k3vik8950.result",
+              "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+              "call_00_GQ8qIm035AocxkH2VmGD9386.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "alternative_body_event_ids": [],
+            "recovery_status": "no_later_body_observed",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-bef85b2c52d5-predictors.json": "6eb30aa21ed14530f8dd5c861cd576ca06b31254b7c7eb4df5a7f717b8fc7f34",
+          "reviewed/development/case-bef85b2c52d5-outcome.json": "5335a799fd8dd3b3c71efee95091915b35222a45579c1485eb53a5ce53b7feaf",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/index.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "score": 2,
+            "evidence": [
+              {
+                "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+                "quote": "This CUDA Programming Guide is the official, comprehensive resource on the CUDA programming model"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+                "quote": "The guide is broken down into five primary parts:"
+              }
+            ],
+            "note": "仅得指南首页前言与组织结构，请求的 Programming Model / Hardware Implementation 章节正文未在该页返回",
+            "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html"
+          },
+          {
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+                "quote": "These threads are organized into blocks. A block of threads is referred to, perhaps unsurprisingly, as a *thread block*. Thread blocks are organized into a *grid*."
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+          },
+          {
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+                "quote": "This chapter introduces the CUDA programming model at a high level and separate from any language. The terminology and concepts introduced here apply to CUDA in any supported programming language. Later chapters will illustrate these concepts in C++."
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+            "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+          },
+          {
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+                "quote": "When threads are executed by a warp, they are assigned a warp lane. Warp lanes are numbered 0 to 31 and threads from a thread block are assigned to warps in a predictable fashion detailed in Hardware Multithreading."
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+            "event_id": "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+          },
+          {
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_V3PWY8ezaizlVH8k3vik8950.result",
+                "quote": "When threads are executed by a warp, they are assigned a warp lane. Warp lanes are numbered 0 to 31 and threads from a thread block are assigned to warps in a predictable fashion detailed in Hardware Multithreading."
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+            "event_id": "call_00_V3PWY8ezaizlVH8k3vik8950.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+          },
+          {
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+                "quote": "Figure 3 Grid of Thread Blocks. Each arrow represents a thread (the number of arrows is not representative of actual number of threads).#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+                "quote": "A more detailed discussion of SIMT can be found in SIMT Execution Model."
+              }
+            ],
+            "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+            "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+          },
+          {
+            "reference": "https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+                "quote": "Each CUDA block is executed by one streaming multiprocessor (SM) and cannot be migrated to other SMs in GPU"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+                "quote": "Advanced developers can use some of these memories efficiently to optimize the CUDA program."
+              }
+            ],
+            "note": "NVIDIA官方博客正文自标题至Summary连续取得，但完整性无独立核对依据，保留[4,5]",
+            "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+            "url": "https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/"
+          },
+          {
+            "reference": "https://docs.nvidia.com/cuda/archive/12.6.0/cuda-c-programming-guide/index.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+                "quote": "**The requested sections are NOT present in the content provided.**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+                "quote": "| **5.1** | **SIMT Architecture** | ❌ **ABSENT** |"
+              }
+            ],
+            "note": "Pre-requested sections5.1/5.2 absent according to captured tool return. Preserve actual explanatory summary, not target body. Existing M2 grade1 for no target content.",
+            "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "url": "https://docs.nvidia.com/cuda/archive/12.6.0/cuda-c-programming-guide/index.html",
+            "received_representation": "tool_summary_of_missing_target"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+                "quote": "8"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

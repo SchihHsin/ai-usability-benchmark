@@ -1786,6 +1786,831 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T14:38:14.209379+00:00",
+      "process_sha256": "8bb64dd54b86a5903d57d6d47d13eec798373d950d13955d19ba977c74a91454",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "2. **传输与 kernel 必须位于不同的、非默认的流中**。同一流内操作严格按入队顺序串行执行（in-order stream），无法重叠。\n3. **主机内存必须是 pinned（页锁定）内存**。官方原文（Programming Guide §2.5.2.3 Note）：\n\n> \"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work. ... It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"\n\n即：对 pageable 内存调用 `cudaMemcpyAsync` 仍能正确工作，但会退化为同步行为，失去重叠收益。\n\n## 2. 核心 API\n\n```cpp\n// 流的创建/销毁（默认为 blocking stream）\ncudaStream_t stream;\ncudaStreamCreate(&stream);                                  // 基本创建\ncudaStreamCreateWithFlags(&s, cudaStreamNonBlocking);       // 非阻塞流（不与 legacy 默认流互相同步）\ncudaStreamDestroy(stream);                                  // 若流中还有未完成工作，会先完成再销毁\n\n// pinned 内存分配（必须用于异步收发的主机缓冲）\nfloat *h_data;\ncudaMallocHost(&h_data, bytes);   // 释放用 cudaFreeHost()\n// 备选：cudaHostAlloc() 分配；cudaHostRegister() 将已有内存注册为页锁定\n\n// 异步拷贝（对主机非阻塞，第 5 个参数指定流）\ncudaError_t cudaMemcpyAsync(void* dst, const void* src, size_t count,\n                            cudaMemcpyKind kind, cudaStream_t stream = 0);\n// kind: cudaMemcpyHostToDevice / cudaMemcpyDeviceToHost\n// 还有 cudaMemcpy2DAsync() / cudaMemcpy3DAsync() 变体\n\n// kernel 启动到指定流：第 4 个执行配置参数\nkernel<<<grid, block, sharedBytes, stream>>>(args);\n```\n\n## 3. 默认流陷阱（关键约束）\n\n- Legacy 默认流（stream = 0 / NULL stream）是 **blocking stream**：其中操作会与所有其他 blocking 流互相同步。官方示例中，`kernel1<<<...,stream1>>>` 与 `kernel3<<<...,stream2>>>` 之间插入一个默认流的 `kernel2<<<...>>>`，会导致三个 kernel 完全串行。\n- 规避方式（二选一）：\n  - `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`；\n  - 编译时用 `nvcc --default-stream per-thread` 或定义宏 `CUDA_API_PER_THREAD_DEFAULT_STREAM`（CUDA 7 起支持 per-thread default stream，每个主机线程拥有独立默认流，行为等同非阻塞流）。\n\n## 4. 完整可运行模式：分段多流流水线（官方推荐做法）\n\n来自 NVIDIA 官方博客（Mark Harris, 2012），示例仓库 `github.com/parallel-forall/code-samples` → `series/cuda-cpp/overlap-data-transfers/async.cu`。将 N 个元素分为 `nStreams = N/streamSize` 块：\n\n**版本 1：逐块交错（V1，C2050 等双拷贝引擎设备最优，约 1.74× 加速）**\n```cpp\nfor (int i = 0; i < nStreams; ++i) {\n    int offset = i*streamSize;\n    cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes,\n                    cudaMemcpyHostToDevice, stream[i]);\n    kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "evidence_quote": "\"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work. This can inhibit the performance benefits of using asynchronous memory transfers. It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"",
+            "verification": "source",
+            "reason": "原题要求说明 stream/event/pinned memory 三方面如何实现 H2D/D2H 与 kernel 重叠。最终答案逐项覆盖：(1) stream——cudaStreamCreate/WithFlags 用法、默认流陷阱、多流分段流水线两种官方模式（V1 交错/V2 批量）及完整循环代码；(2) event——cudaEventRecord/cudaStreamWaitEvent/cudaEventQuery 跨流依赖与轮询示例；(3) pinned memory——cudaMallocHost 分配及 Programming Guide 原文约束（未 pinned 会退化为同步行为）。三个必要条件（设备并发拷贝能力 asyncEngineCount、非默认流、pinned 内存）均与官方来源一致：call_63f6cab40b034ab59a8f8c78 提供编程指南 §2.5 完整原文（含 pinned 约束、cudaStreamNonBlocking、per-thread 默认流、cudaStreamWaitEvent DAG 用法）；call_cdb1d00751424291a3e1497b 提供官方博客的两种流水线代码与三条件；call_c69b567047e3480384fb529d 确认 asyncEngineCount 为 cudaDeviceProp 当前字段。答案还正确区分了旧字段 deviceOverlap 与当前字段。子要求均满足，无矛盾。",
+            "evidence_refs": [
+              "ev-30",
+              "ev-31"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（NVIDIA官方开发者站中文镜像的重叠传输博文），第3条为同一官方博文英文原版；docs.nvidia.com正式文档在第二次查询第1条出现。",
+            "evidence": [
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "## 1. [如何在 CUDA C/C++ 中实现数据传输的重叠](https://developer.nvidia.cn/blog/how-overlap-data-transfers-cuda-cc/)"
+              },
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "## 3. [How to Overlap Data Transfers in CUDA C/C++ | NVIDIA …](https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/)"
+              },
+              {
+                "event_id": "call_8ac55d485cea4cf9b203a707.result",
+                "quote": "## 1. [CUDA Programming Guide - NVIDIA Documentation Hub](https://docs.nvidia.com/cuda/cuda-programming-guide/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.1666666666666665,
+            "upper": 3.6666666666666665,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_cdb1d00751424291a3e1497b.result",
+                "quote": "**来源**：NVIDIA Technical Blog | 作者：Mark Harris | 发布：2012年12月13日"
+              },
+              {
+                "event_id": "call_24dddb5ebabc432b84168d8d.result",
+                "quote": "The guide is broken down into five primary parts:"
+              },
+              {
+                "event_id": "call_2b3b9ae1aacd410880bd316e.result",
+                "quote": "Page Not Found"
+              },
+              {
+                "event_id": "call_867f281975c34143bb3ddc2f.result",
+                "quote": "该函数的详细说明部分（含完整的参数描述和 pageable memory 行为说明）位于文档被截断的部分"
+              },
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "**未截断**。所提供的页面内容包含完整的第 2.5 章（2.5.1 – 2.5.10，含 Summary 小节）。"
+              },
+              {
+                "event_id": "call_c69b567047e3480384fb529d.result",
+                "quote": "int cudaDeviceProp::asyncEngineCount [inherited]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方编程指南2.5章正文覆盖原题全部所需：stream定义与创建API、cudaMemcpyAsync签名与pinned memory约束（含未pinned退化为同步的原文Note）、event全套用法（Create/Record/Synchronize/Query/StreamWaitEvent跨流依赖）、默认流legacy与per-thread语义、隐式同步约束、多流重叠代码示例与并发条件汇总，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked."
+              },
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "cudaStreamWaitEvent(stream, event)`**：使调用之后加入该流的所有命令**延迟执行直到指定 event 完成"
+              },
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, stream);"
+              },
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "实际并发能力取决于 CUDA 版本与硬件 compute capability"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得部分适用关系：per-thread默认流自CUDA 7起（博客与2.5章均述）、asyncEngineCount字段在v13.3.1 Runtime API存在；但所用的cudaStreamCreate/cudaMemcpyAsync/cudaMallocHost各API自哪个CUDA版本可用，已取得官方资料未说明，完成版本对应仍缺关系，无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "call_cdb1d00751424291a3e1497b.result",
+                "quote": "CUDA 7（2015 年发布）引入了新选项——每个主机线程使用独立的默认流"
+              },
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "### Per-thread Default Stream（§2.5.6.2，CUDA-7 起）"
+              },
+              {
+                "event_id": "call_867f281975c34143bb3ddc2f.result",
+                "quote": "以下信息提取自 CUDA Runtime API v13.3.1 文档"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "统一预算内去重后相关独立第三方来源：hd9568博客、GitHub FlosMume仓库、CSDN文章，共3条（3-4条档=3分）；bearneck中文翻译站是否计为独立相关第三方（官方指南译文）不确定，若计入为4条仍在3-4档；若视作官方内容镜像则3条。区间[3,4]，实际跨档风险低但相关性无法完全确定。",
+            "evidence": [
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "## 2. [CUDA Streams：异步执行、Event 同步与计算传输重叠](https://hd9568.github.io/blog/cuda-streams-events-overlap/)"
+              },
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "## 4. [CUDA Streams & Pinned Memory — Overlap Compute & Transfers](https://github.com/FlosMume/cpp-cuda-streams-and-pinned-mem)"
+              },
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "## 5. [CUDA高性能计算系列06：流 (Stream) 与并发执行_gpu ...](https://blog.csdn.net/weixin_52694742/article/details/156775794)"
+              },
+              {
+                "event_id": "call_8ac55d485cea4cf9b203a707.result",
+                "quote": "## 3. [CUDA 编程指南（中文版）](https://bearneck.github.io/cuda-programming-guide-zh/)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": [],
+            "candidate_score": 3,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "第三方来源仅有搜索结果摘要，未被fetch取得正文；摘要陈述（流异步、Event同步、并发执行）与官方文档一致、无矛盾，但关键操作/约束说法缺少可追溯的第三方核对依据（无法核实正文），故为2；若仅按摘要与官方一致即视为部分可追溯支持，可至3。",
+            "evidence": [
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "理解 CUDA Stream 的异步执行模型，掌握 Event 同步、cudaMemcpyAsync 和 Ping-Pong Buffer 实现计算与数据传 …"
+              },
+              {
+                "event_id": "call_8935db389c624f3688c172de.result",
+                "quote": "本文介绍了如何利用CUDA流(Stream)实现GPU计算与数据传输的并发执行，提升资源利用率。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": [],
+            "candidate_score": 2,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已准确覆盖原题所需的流程、解释、参数与约束：pinned memory前提（经2.5章Note核实）、非默认流要求（经默认流阻塞语义核实）、分段双缓冲与event跨流依赖（经cudaStreamWaitEvent节核实）、asyncEngineCount属性名（经Runtime API结构体页核实）、WDDM限制为常识性正确补充；所列不确定项（flag取值、版本代际）均非原题必需。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "对 pageable 内存调用 `cudaMemcpyAsync` 时，驱动通常会退化成同步拷贝，无法重叠。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "硬件需支持 copy engine（`cudaGetDeviceProperties` 的 `asyncEngineCount > 0`）"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "在 kernel 与拷贝之间用 event（`cudaEventCreate` + `cudaEventRecord` + `cudaStreamWaitEvent`）做跨流依赖。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_8935db389c624f3688c172de.dispatch",
+              "call_cdb1d00751424291a3e1497b.dispatch",
+              "call_24dddb5ebabc432b84168d8d.dispatch",
+              "call_2b3b9ae1aacd410880bd316e.dispatch",
+              "call_867f281975c34143bb3ddc2f.dispatch",
+              "call_8ac55d485cea4cf9b203a707.dispatch",
+              "call_63f6cab40b034ab59a8f8c78.dispatch",
+              "call_c69b567047e3480384fb529d.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "applicable",
+            "reason": "答案将所用接口定版到 CUDA 13.x（依据 v13.3.1 Runtime API 文档），asyncEngineCount 确认为当前 cudaDeviceProp 字段（call_c69b567047e3480384fb529d 佐证），per-thread default stream 定到 CUDA 7（博客来源佐证）。但答案自述部分 API 的历史引入版本未核实，且 'CUDA 13.x' 是范围而非单一具体工具链版本，用户实际所用工具链版本未定，故锁定粒度为有依据的适用范围而非全部具体版本。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "本答案依据的官方文档：CUDA Runtime API **v13.3.1**、CUDA Programming Guide 当前版（2026-09 更新）。所有 API（`cudaStreamCreate`、`cudaStreamCreateWithFlags`、`cudaMemcpyAsync`、`cudaMallocHost`、`cudaEventRecord`、`cudaStreamWaitEvent`、`cudaStreamSynchronize`）均为当前 CUDA 13.x 有效接口。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "未核实处**：`cudaStreamCreate`/`cudaMemcpyAsync` 等最早引入的确切 CUDA 版本号（推断为 2.x 时代，未从本次取得的文档中逐版本核实）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-26",
+              "ev-27"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "The claimed runnable stream examples use undefined/template-only `kernel`, `grid`, `block`, `stream[i]`, buffers and sizes; missing declarations/allocation require content completion.",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "for (int i = 0; i < nStreams; ++i) {\n    int offset = i*streamSize;\n    cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes,\n                    cudaMemcpyHostToDevice, stream[i]);\n    kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "所有代码均未在本机运行（无 GPU 环境，仅内容核查）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-28",
+              "ev-29"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 82.71999999999998,
+            "lower": 82.71999999999998,
+            "upper": 82.71999999999998,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 82.7
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 82.71999999999998,
+          "lower": 82.71999999999998,
+          "upper": 82.71999999999998,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 82.7
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 127,
+            "end": 230,
+            "quote": "## 1. [如何在 CUDA C/C++ 中实现数据传输的重叠](https://developer.nvidia.cn/blog/how-overlap-data-transfers-cuda-cc/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 643,
+            "end": 776,
+            "quote": "## 3. [How to Overlap Data Transfers in CUDA C/C++ | NVIDIA …](https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_8ac55d485cea4cf9b203a707.result",
+            "field": "response",
+            "sha256": "3166db5fd94d22ad845c010a5938ba0c4594ec4b85ded92a820290c3d8016c67",
+            "start": 110,
+            "end": 231,
+            "quote": "## 1. [CUDA Programming Guide - NVIDIA Documentation Hub](https://docs.nvidia.com/cuda/cuda-programming-guide/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_cdb1d00751424291a3e1497b.result",
+            "field": "response",
+            "sha256": "cf4cd6d1480d82eb9c8c31f2432206713bec25a8ddcc4a221fd28172fda5fa32",
+            "start": 57,
+            "end": 119,
+            "quote": "**来源**：NVIDIA Technical Blog | 作者：Mark Harris | 发布：2012年12月13日",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_24dddb5ebabc432b84168d8d.result",
+            "field": "response",
+            "sha256": "5308857db08e563e69e77e598d97f69be83024a5d97800e16b1571f611e6169f",
+            "start": 1701,
+            "end": 1750,
+            "quote": "The guide is broken down into five primary parts:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_2b3b9ae1aacd410880bd316e.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 8,
+            "end": 22,
+            "quote": "Page Not Found",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_867f281975c34143bb3ddc2f.result",
+            "field": "response",
+            "sha256": "c39b69ce46e0109150bcdc8b2240c6a1be9b43467c4e54c73a9bcb1c647c6d56",
+            "start": 104,
+            "end": 156,
+            "quote": "该函数的详细说明部分（含完整的参数描述和 pageable memory 行为说明）位于文档被截断的部分",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 33,
+            "end": 91,
+            "quote": "**未截断**。所提供的页面内容包含完整的第 2.5 章（2.5.1 – 2.5.10，含 Summary 小节）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_c69b567047e3480384fb529d.result",
+            "field": "response",
+            "sha256": "814c5cfcce1c2f5e655fc767ff7359126a3895446add404d34e811ee94e9f1e2",
+            "start": 3313,
+            "end": 3361,
+            "quote": "int cudaDeviceProp::asyncEngineCount [inherited]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 3171,
+            "end": 3301,
+            "quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 8546,
+            "end": 8617,
+            "quote": "cudaStreamWaitEvent(stream, event)`**：使调用之后加入该流的所有命令**延迟执行直到指定 event 完成",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 2958,
+            "end": 3022,
+            "quote": "cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, stream);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 1323,
+            "end": 1362,
+            "quote": "实际并发能力取决于 CUDA 版本与硬件 compute capability",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_cdb1d00751424291a3e1497b.result",
+            "field": "response",
+            "sha256": "cf4cd6d1480d82eb9c8c31f2432206713bec25a8ddcc4a221fd28172fda5fa32",
+            "start": 1238,
+            "end": 1276,
+            "quote": "CUDA 7（2015 年发布）引入了新选项——每个主机线程使用独立的默认流",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 10100,
+            "end": 10148,
+            "quote": "### Per-thread Default Stream（§2.5.6.2，CUDA-7 起）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_867f281975c34143bb3ddc2f.result",
+            "field": "response",
+            "sha256": "c39b69ce46e0109150bcdc8b2240c6a1be9b43467c4e54c73a9bcb1c647c6d56",
+            "start": 35,
+            "end": 70,
+            "quote": "以下信息提取自 CUDA Runtime API v13.3.1 文档",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 371,
+            "end": 472,
+            "quote": "## 2. [CUDA Streams：异步执行、Event 同步与计算传输重叠](https://hd9568.github.io/blog/cuda-streams-events-overlap/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 1312,
+            "end": 1439,
+            "quote": "## 4. [CUDA Streams & Pinned Memory — Overlap Compute & Transfers](https://github.com/FlosMume/cpp-cuda-streams-and-pinned-mem)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 1641,
+            "end": 1752,
+            "quote": "## 5. [CUDA高性能计算系列06：流 (Stream) 与并发执行_gpu ...](https://blog.csdn.net/weixin_52694742/article/details/156775794)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_8ac55d485cea4cf9b203a707.result",
+            "field": "response",
+            "sha256": "3166db5fd94d22ad845c010a5938ba0c4594ec4b85ded92a820290c3d8016c67",
+            "start": 812,
+            "end": 889,
+            "quote": "## 3. [CUDA 编程指南（中文版）](https://bearneck.github.io/cuda-programming-guide-zh/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 487,
+            "end": 567,
+            "quote": "理解 CUDA Stream 的异步执行模型，掌握 Event 同步、cudaMemcpyAsync 和 Ping-Pong Buffer 实现计算与数据传 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_8935db389c624f3688c172de.result",
+            "field": "response",
+            "sha256": "a848c6259e18ada2a4dcfe67dec9a6b2183c5a8113ee30748a81ba7fbc2a31fe",
+            "start": 1766,
+            "end": 1814,
+            "quote": "本文介绍了如何利用CUDA流(Stream)实现GPU计算与数据传输的并发执行，提升资源利用率。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "e2469c0bba09d4afc9f63eac58b6521abec2b03e35344efde8efadeef30a4354",
+            "start": 471,
+            "end": 525,
+            "quote": "对 pageable 内存调用 `cudaMemcpyAsync` 时，驱动通常会退化成同步拷贝，无法重叠。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "e2469c0bba09d4afc9f63eac58b6521abec2b03e35344efde8efadeef30a4354",
+            "start": 1408,
+            "end": 1477,
+            "quote": "硬件需支持 copy engine（`cudaGetDeviceProperties` 的 `asyncEngineCount > 0`）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "e2469c0bba09d4afc9f63eac58b6521abec2b03e35344efde8efadeef30a4354",
+            "start": 807,
+            "end": 897,
+            "quote": "在 kernel 与拷贝之间用 event（`cudaEventCreate` + `cudaEventRecord` + `cudaStreamWaitEvent`）做跨流依赖。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81a7305d8ba32c89185a83530959e55654969b352913d5e2306d83638b9a720a",
+            "start": 5271,
+            "end": 5523,
+            "quote": "本答案依据的官方文档：CUDA Runtime API **v13.3.1**、CUDA Programming Guide 当前版（2026-09 更新）。所有 API（`cudaStreamCreate`、`cudaStreamCreateWithFlags`、`cudaMemcpyAsync`、`cudaMallocHost`、`cudaEventRecord`、`cudaStreamWaitEvent`、`cudaStreamSynchronize`）均为当前 CUDA 13.x 有效接口。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81a7305d8ba32c89185a83530959e55654969b352913d5e2306d83638b9a720a",
+            "start": 5674,
+            "end": 5763,
+            "quote": "未核实处**：`cudaStreamCreate`/`cudaMemcpyAsync` 等最早引入的确切 CUDA 版本号（推断为 2.x 时代，未从本次取得的文档中逐版本核实）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81a7305d8ba32c89185a83530959e55654969b352913d5e2306d83638b9a720a",
+            "start": 2681,
+            "end": 2931,
+            "quote": "for (int i = 0; i < nStreams; ++i) {\n    int offset = i*streamSize;\n    cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes,\n                    cudaMemcpyHostToDevice, stream[i]);\n    kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81a7305d8ba32c89185a83530959e55654969b352913d5e2306d83638b9a720a",
+            "start": 6613,
+            "end": 6641,
+            "quote": "所有代码均未在本机运行（无 GPU 环境，仅内容核查）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "81a7305d8ba32c89185a83530959e55654969b352913d5e2306d83638b9a720a",
+            "start": 491,
+            "end": 2931,
+            "quote": "2. **传输与 kernel 必须位于不同的、非默认的流中**。同一流内操作严格按入队顺序串行执行（in-order stream），无法重叠。\n3. **主机内存必须是 pinned（页锁定）内存**。官方原文（Programming Guide §2.5.2.3 Note）：\n\n> \"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work. ... It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"\n\n即：对 pageable 内存调用 `cudaMemcpyAsync` 仍能正确工作，但会退化为同步行为，失去重叠收益。\n\n## 2. 核心 API\n\n```cpp\n// 流的创建/销毁（默认为 blocking stream）\ncudaStream_t stream;\ncudaStreamCreate(&stream);                                  // 基本创建\ncudaStreamCreateWithFlags(&s, cudaStreamNonBlocking);       // 非阻塞流（不与 legacy 默认流互相同步）\ncudaStreamDestroy(stream);                                  // 若流中还有未完成工作，会先完成再销毁\n\n// pinned 内存分配（必须用于异步收发的主机缓冲）\nfloat *h_data;\ncudaMallocHost(&h_data, bytes);   // 释放用 cudaFreeHost()\n// 备选：cudaHostAlloc() 分配；cudaHostRegister() 将已有内存注册为页锁定\n\n// 异步拷贝（对主机非阻塞，第 5 个参数指定流）\ncudaError_t cudaMemcpyAsync(void* dst, const void* src, size_t count,\n                            cudaMemcpyKind kind, cudaStream_t stream = 0);\n// kind: cudaMemcpyHostToDevice / cudaMemcpyDeviceToHost\n// 还有 cudaMemcpy2DAsync() / cudaMemcpy3DAsync() 变体\n\n// kernel 启动到指定流：第 4 个执行配置参数\nkernel<<<grid, block, sharedBytes, stream>>>(args);\n```\n\n## 3. 默认流陷阱（关键约束）\n\n- Legacy 默认流（stream = 0 / NULL stream）是 **blocking stream**：其中操作会与所有其他 blocking 流互相同步。官方示例中，`kernel1<<<...,stream1>>>` 与 `kernel3<<<...,stream2>>>` 之间插入一个默认流的 `kernel2<<<...>>>`，会导致三个 kernel 完全串行。\n- 规避方式（二选一）：\n  - `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`；\n  - 编译时用 `nvcc --default-stream per-thread` 或定义宏 `CUDA_API_PER_THREAD_DEFAULT_STREAM`（CUDA 7 起支持 per-thread default stream，每个主机线程拥有独立默认流，行为等同非阻塞流）。\n\n## 4. 完整可运行模式：分段多流流水线（官方推荐做法）\n\n来自 NVIDIA 官方博客（Mark Harris, 2012），示例仓库 `github.com/parallel-forall/code-samples` → `series/cuda-cpp/overlap-data-transfers/async.cu`。将 N 个元素分为 `nStreams = N/streamSize` 块：\n\n**版本 1：逐块交错（V1，C2050 等双拷贝引擎设备最优，约 1.74× 加速）**\n```cpp\nfor (int i = 0; i < nStreams; ++i) {\n    int offset = i*streamSize;\n    cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes,\n                    cudaMemcpyHostToDevice, stream[i]);\n    kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "field": "response",
+            "sha256": "88497027cd6ea8c8d08a14c45cf99d114667d138656afe9cb3727b98f236ff8f",
+            "start": 3170,
+            "end": 3697,
+            "quote": "\"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work. This can inhibit the performance benefits of using asynchronous memory transfers. It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_24dddb5ebabc432b84168d8d.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_24dddb5ebabc432b84168d8d.result",
+            "alternative_body_event_ids": [
+              "call_867f281975c34143bb3ddc2f.result",
+              "call_63f6cab40b034ab59a8f8c78.result",
+              "call_c69b567047e3480384fb529d.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_2b3b9ae1aacd410880bd316e.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_2b3b9ae1aacd410880bd316e.result",
+            "alternative_body_event_ids": [
+              "call_867f281975c34143bb3ddc2f.result",
+              "call_63f6cab40b034ab59a8f8c78.result",
+              "call_c69b567047e3480384fb529d.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-23e2959d4d9a-predictors.json": "7a1cbcbf014e0d17d0e39f0bf45c01389fa9355579c8eb9d72cb2c21d13eb75d",
+          "reviewed/development/case-23e2959d4d9a-outcome.json": "4bb7229032c5d15ea200d7875f34273d04e879315a0df5840cdaeaf17f82b395",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_cdb1d00751424291a3e1497b.result",
+            "url": "https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_cdb1d00751424291a3e1497b.result",
+                "quote": "**来源**：NVIDIA Technical Blog | 作者：Mark Harris | 发布：2012年12月13日"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_cdb1d00751424291a3e1497b.result",
+                "quote": "## 五、文中给出的参考链接"
+              }
+            ],
+            "reference": "正文含定义、API、两版示例代码、实测数据与总结，结构完整无截断标注"
+          },
+          {
+            "event_id": "call_24dddb5ebabc432b84168d8d.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#async-and-streams",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_24dddb5ebabc432b84168d8d.result",
+                "quote": "The guide is broken down into five primary parts:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_24dddb5ebabc432b84168d8d.result",
+                "quote": "Parts 1-3 provide a guided learning experience for developers new to CUDA"
+              }
+            ],
+            "reference": "仅得指南组织结构/导航，未取得目标章节正文"
+          },
+          {
+            "event_id": "call_2b3b9ae1aacd410880bd316e.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/03-advanced/concurrent-execution.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_2b3b9ae1aacd410880bd316e.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_2b3b9ae1aacd410880bd316e.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "404错误页，无内容"
+          },
+          {
+            "event_id": "call_867f281975c34143bb3ddc2f.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_867f281975c34143bb3ddc2f.result",
+                "quote": "__host__ __device__ cudaError_t cudaMemcpyAsync ("
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_867f281975c34143bb3ddc2f.result",
+                "quote": "该函数的详细说明部分（含完整的参数描述和 pageable memory 行为说明）位于文档被截断的部分"
+              }
+            ],
+            "reference": "取得函数列表部分正文，详细说明明确标注截断"
+          },
+          {
+            "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/02-basics/asynchronous-execution.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "> \"At the most basic level, a CUDA stream is an abstraction which allows the programmer to express a sequence of operations."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+                "quote": "**未截断**。所提供的页面内容包含完整的第 2.5 章（2.5.1 – 2.5.10，含 Summary 小节）。"
+              }
+            ],
+            "reference": "直接正文含代码与约束，完整性仅有工具自述（含Summary小节），无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "call_c69b567047e3480384fb529d.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_c69b567047e3480384fb529d.result",
+                "quote": "int cudaDeviceProp::asyncEngineCount [inherited]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_c69b567047e3480384fb529d.result",
+                "quote": "int cudaDeviceProp::warpSize [inherited]"
+              }
+            ],
+            "reference": "取得全部字段列表与说明，页面自然收尾（warpSize后结束），但完整性无独立核对依据，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

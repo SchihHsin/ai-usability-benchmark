@@ -1891,6 +1891,1769 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T14:38:14.132371+00:00",
+      "process_sha256": "714a7839509278e3371cde0069c313238ce02ca863e73fd494d4c5b160019dad",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "TensorRT 在 **engine build 阶段**对网络做图优化。第一阶段就是\"layers are fused whenever possible\"。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "evidence_quote": "In the first phase, layers are fused whenever possible.",
+            "verification": "source",
+            "reason": "原题含三个子要求，final 逐项覆盖且均有官方来源支撑。(1) 发生机制：final 称融合发生在 build 阶段、builder 检测受支持模式并合并多层，与 Layer Fusion Catalog 原文 \"TensorRT attempts to perform many different optimizations in a network during the build phase. In the first phase, layers are fused whenever possible\" 及 \"the fusion optimization step detects supported patterns of operations and fuses multiple layers into one layer\" 一致；Conv+ReLU 例子、融合模式表（Conv+GELU 需 FP16/INT8 且 Turing+、DepSepConv 需 INT8 且计算能力≥7.2）均逐字对应同源正文；pointwise 融合命名 fusedPointwiseNode(add1, relu1) 亦见原文。(2) 观察：final 给出 builder kINFO 日志（源文 \"Optimization steps are at the kINFO log level\"）、trtexec --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile（benchmarking 源文有同参数完整命令及 Metadata 多算子对应说明）、IEngineInspector API（engine-tools 源文有相同 C++ 代码与 kDETAILED JSON 示例）、Nsight Systems（User Guide 源文确认 nsys profile -t cuda 与 NVTX）、debug tensors 两种标记方式（engine-tools 源文逐字支持 markUnfusedTensorsAsDebugTensors 与 markDebug 的语义区别）。(3) 控制：final 说明融合 build 时自动、无 runtime API 开启（optimization 源文 \"Fusion happens automatically at build time (there is no runtime API to \\\"turn it on\\\")\"），并列出精度影响、markDebug 打断融合（源文 \"This method can disable some fusion optimizations\"）、setBuilderOptimizationLevel（源文同代码，默认 3）、DISABLE_COMPILATION_CACHE（源文同代码）、cuDNN 侧 g1/g2/virtual 张量/Support Surface 显式控制点（cuDNN Graph API 源文支持，如 \"runtime fusion engines generate the kernel (or kernels) at runtime based on the graph pattern\"、\"All intermediate tensors must be virtual\"、Support Surface 90/80/70 计算能力表）。final 对未核实内容（nsys 报告名拼写、nvcc 不做跨 kernel 融合、CUDA Graphs 定性）已如实标注为自带知识/未核实，未冒充证据。三个子问题均有真实官方正文支撑，判 supported。",
+            "evidence_refs": [
+              "ev-28",
+              "ev-29"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（NVIDIA TensorRT Layer Fusion Catalog），命中前5条内另有多条第三方结果。",
+            "evidence": [
+              {
+                "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+                "quote": "## 1. [Layer Fusion Catalog — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.25,
+            "upper": 3.75,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_14ec29f61128401fa82a7719.result",
+                "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_b1661073ed53494eaa09150a.result",
+                "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "**When authoring your network**\n\n[...]"
+              },
+              {
+                "event_id": "call_35eaff37860c48e0812c2506.result",
+                "quote": "usability of the resulting data.\n\n[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题三部分中：融合发生机制有完整说明（build阶段模式检测+完整融合模式表及约束）；观察手段有具体命令与API（ILogger kINFO、trtexec --profilingVerbosity/--dumpLayerInfo/--dumpProfile 示例命令、IEngineInspector 代码、Nsight CLI）；控制有说明（build时自动、debug tensors markDebug 可禁用部分融合、精度/架构约束、cuDNN支持面）。但 optimization.html 与 Nsight UserGuide 均有[...]截断，Nsight 报告级细节及部分控制分支（如显式禁用特定融合）未完整取得。",
+            "evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "In the first phase, layers are fused whenever possible."
+              },
+              {
+                "event_id": "call_678fae27f32e452db514290a.result",
+                "quote": "The `--profilingVerbosity=detailed` flag enables detailed layer information capturing, `--dumpLayerInfo` flag shows the per-layer information in the log, and `--dumpProfile --separateProfileRun` flags show the per-layer runtime latencies in the log."
+              },
+              {
+                "event_id": "call_6c8511239dbd44028a31cbab.result",
+                "quote": "This method can disable some fusion optimizations that would otherwise remove the debug tensors, thereby preserving them for issue diagnosis at the expense of reduced performance."
+              },
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "Fusion happens automatically at build time (there is no runtime API to “turn it on”), but the patterns the builder is willing to fuse are constrained."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "融合接口的部分适用关系已直接给出（Turing+、INT8/CC≥7.2、cuDNN支持面CC表），但 Conv+GELU 约束引用的 TensorRT 11.0 最低 CUDA 版本关系指向 Support Matrix 未取得，且 trtexec 观察标志的版本适用关系混用 latest 与 10.x.x 路径无明确说明。存在缺失关系，不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "Requires an NVIDIA Turing or later architecture and a supported CUDA toolkit (refer to [Support Matrix](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/support-matrix.html#support-matrix) for the TensorRT 11.0 minimum CUDA version)."
+              },
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "The precision of both convolutions must be INT8, and the device’s computation capability must be 7.2 or later."
+              },
+              {
+                "event_id": "call_edc9ad4701134b9084ae08f1.result",
+                "quote": "| Compute Capability | ≥ 9.0 | ≥ 8.0 (8.0, 8.6, 8.7, 8.9, 9.0) | ≥ 7.0 (7.0, 7.2, 7.5, 8.0, 8.6, 8.7, 8.9, 9.0) |"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "4次查询中去重后相关独立第三方来源约15条（CSDN×6、知乎×3、个人博客×4、GitHub个人仓库×2），远超6条阈值；官方仓库/官方论坛不计入。正文取得不是计数前提。",
+            "evidence": [
+              {
+                "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+                "quote": "## 2. [深入剖析TensorRT层融合机制（C语言实战篇）：从原理到 ...](https://blog.csdn.net/LogicNest/article/details/155522106)"
+              },
+              {
+                "event_id": "call_b79d5c1998fe40fdbfce1168.result",
+                "quote": "## 3. [Part5-2-TensorRT性能优化性能分析工具 | 奔跑的IC](https://zmurder.github.io/TensorRT/"
+              },
+              {
+                "event_id": "call_39a8a008830e403e887dd6a8.result",
+                "quote": "## 1. [一文读懂nsight system与cuda kernel的时间线分析与可视化](https://zhuanlan.zhihu.com/p/691307737)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "第三方材料存在（搜索摘要可见，日期2024-2026较新），未见与官方核对相矛盾的关键说法；但全部fetch均针对官方文档，无任何第三方正文被取得，关键说法缺乏可追溯的第三方核对依据，只能给2；若后续取得第三方正文可能升至3，保留区间。",
+            "evidence": [
+              {
+                "event_id": "call_458fe4e8a2684bd280966d37.result",
+                "quote": "本文详细介绍了如何使用trtexec工具将ONNX模型转换为TensorRT引擎"
+              },
+              {
+                "event_id": "call_39a8a008830e403e887dd6a8.result",
+                "quote": "nsight system 是进行 GPU 性能优化的关键工具。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": [],
+            "candidate_score": 2,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已覆盖原题三部分且经官方文档事后核对基本正确：build阶段融合、卷积+激活合并、精度影响、无运行时融合开关、kINFO日志、trtexec --dumpProfile 均获证实；但具体参数与约束自认不足（确切层组合、trtexec参数拼写、Nsight具体方法、cuDNN runtime fusion状态），且未提 Engine Inspector、debug tensors、--dumpLayerInfo 等关键观察/控制接口，属'完整流程但参数约束需补充'档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "TensorRT 在 build 阶段对计算图做优化，包括横向融合（同一层跨 batch 合并）和纵向融合（卷积+bias+激活/BN 合并成单个 kernel）"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "观察可用 Nsight Systems / `trtexec --dumpProfile` / TensorRT verbose log（`kTRT_LOG_INFO` 层级）"
+              },
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "Optimization steps are at the `kINFO` log level."
+              },
+              {
+                "event_id": "call_458fe4e8a2684bd280966d37.result",
+                "quote": "Add the --dumpProfile flag to trtexec to show per-layer performance profiles"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_7d7cfe57c80c474cbb3c18e6.dispatch",
+              "call_ddeeb5d8f53e4287a688bc34.dispatch",
+              "call_d31f39e19da146a0bc7ca63e.dispatch",
+              "call_b79d5c1998fe40fdbfce1168.dispatch",
+              "call_14ec29f61128401fa82a7719.dispatch",
+              "call_458fe4e8a2684bd280966d37.dispatch",
+              "call_6c8511239dbd44028a31cbab.dispatch",
+              "call_678fae27f32e452db514290a.dispatch",
+              "call_b1661073ed53494eaa09150a.dispatch",
+              "call_39a8a008830e403e887dd6a8.dispatch",
+              "call_35eaff37860c48e0812c2506.dispatch",
+              "call_edc9ad4701134b9084ae08f1.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "status": "insufficient_evidence",
+            "reason": "M9: contradicts predefined applicability",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "cuDNN Graph API（8.0 引入）提供运行时融合"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "按 Support Surface 90/80/70 匹配计算能力（9.0+/8.0+/7.0+）"
+              }
+            ],
+            "lower": null,
+            "upper": null,
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "final 提供完整可照抄的命令与代码：trtexec 命令含全部参数及示例模型名/形状，与官方 benchmarking 文档逐字一致；nsys profile -t cuda、IEngineInspector C++ 代码、markUnfusedTensorsAsDebugTensors/markDebug、setTensorDebugState、setBuilderOptimizationLevel(0)、DISABLE_COMPILATION_CACHE 均为文档原文级别的完整调用；trtexec 路径（NGC 容器 /opt/tensorrt/bin/trtexec）已给出。仅需替换用户环境值（ONNX 文件路径、应用名），无需修正内容错误。次要扣分点：nsys analyze/stats 具体报告名未从官方正文确认（final 已自曝并以 nsys stats --help 为准），但该处 final 已如实声明且给出核实途径，不构成需修正的内容错误，故 4 分而非 5 分（5 分要求所有指导及前提完全无需补写）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "trtexec --onnx=resnet50-v1-12-quantized.onnx --shapes=data:4x3x224x224 \\\n  --stronglyTyped --noDataTransfers --useCudaGraph --useSpinWait \\\n  --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());\nstd::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "nsys profile -t cuda [application]"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "networkDefinition->markUnfusedTensorsAsDebugTensors(); // 不阻止融合，保留调试"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26",
+              "ev-27"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 76.29670399999999,
+            "upper": 78.36927999999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              76.2,
+              78.4
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 76.29670399999999,
+          "upper": 78.36927999999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            76.2,
+            78.4
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [
+              "M9: contradicts predefined applicability"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+            "field": "response",
+            "sha256": "a866a744edcc4d99be4f99ea3bd3164b7c1ed7abbf861bd71612b66664488902",
+            "start": 87,
+            "end": 219,
+            "quote": "## 1. [Layer Fusion Catalog — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_14ec29f61128401fa82a7719.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 24,
+            "end": 97,
+            "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_b1661073ed53494eaa09150a.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 24,
+            "end": 97,
+            "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+            "field": "response",
+            "sha256": "d1451b66672a0cbba68d55615b77610d61a727ea1b7197c6e39547b098522cec",
+            "start": 3417,
+            "end": 3455,
+            "quote": "**When authoring your network**\n\n[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_35eaff37860c48e0812c2506.result",
+            "field": "response",
+            "sha256": "ab3b8303d49d1fa39b3f1cd9394871b9ad5d6d89ec5bba95abd67dc00292733b",
+            "start": 338,
+            "end": 377,
+            "quote": "usability of the resulting data.\n\n[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 751,
+            "end": 806,
+            "quote": "In the first phase, layers are fused whenever possible.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_678fae27f32e452db514290a.result",
+            "field": "response",
+            "sha256": "6be2eb5cee097e9259788be2706fdff41cb8d96c3c1ecbf0237a7d44c1733481",
+            "start": 9237,
+            "end": 9486,
+            "quote": "The `--profilingVerbosity=detailed` flag enables detailed layer information capturing, `--dumpLayerInfo` flag shows the per-layer information in the log, and `--dumpProfile --separateProfileRun` flags show the per-layer runtime latencies in the log.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_6c8511239dbd44028a31cbab.result",
+            "field": "response",
+            "sha256": "7d43978e3654c765f71ebd7cbd089f8682fd9f40acdbaf3b113046c6ebbd7753",
+            "start": 10344,
+            "end": 10523,
+            "quote": "This method can disable some fusion optimizations that would otherwise remove the debug tensors, thereby preserving them for issue diagnosis at the expense of reduced performance.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+            "field": "response",
+            "sha256": "d1451b66672a0cbba68d55615b77610d61a727ea1b7197c6e39547b098522cec",
+            "start": 1747,
+            "end": 1897,
+            "quote": "Fusion happens automatically at build time (there is no runtime API to “turn it on”), but the patterns the builder is willing to fuse are constrained.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 4679,
+            "end": 4932,
+            "quote": "Requires an NVIDIA Turing or later architecture and a supported CUDA toolkit (refer to [Support Matrix](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/support-matrix.html#support-matrix) for the TensorRT 11.0 minimum CUDA version).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 7594,
+            "end": 7704,
+            "quote": "The precision of both convolutions must be INT8, and the device’s computation capability must be 7.2 or later.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_edc9ad4701134b9084ae08f1.result",
+            "field": "response",
+            "sha256": "5004f22e8d6f860dadb13d8ac1ffd0633deae0deacd53366f0a43e08a7ea9d94",
+            "start": 4990,
+            "end": 5103,
+            "quote": "| Compute Capability | ≥ 9.0 | ≥ 8.0 (8.0, 8.6, 8.7, 8.9, 9.0) | ≥ 7.0 (7.0, 7.2, 7.5, 8.0, 8.6, 8.7, 8.9, 9.0) |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+            "field": "response",
+            "sha256": "a866a744edcc4d99be4f99ea3bd3164b7c1ed7abbf861bd71612b66664488902",
+            "start": 453,
+            "end": 554,
+            "quote": "## 2. [深入剖析TensorRT层融合机制（C语言实战篇）：从原理到 ...](https://blog.csdn.net/LogicNest/article/details/155522106)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_b79d5c1998fe40fdbfce1168.result",
+            "field": "response",
+            "sha256": "d3ad5f6d629c387172db20f1dfe2cdea03cb434726243a9d9f1bf93202a852ab",
+            "start": 555,
+            "end": 633,
+            "quote": "## 3. [Part5-2-TensorRT性能优化性能分析工具 | 奔跑的IC](https://zmurder.github.io/TensorRT/",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_39a8a008830e403e887dd6a8.result",
+            "field": "response",
+            "sha256": "c3a19f4063630a2431afb386a499041ca9d26ee5c0f68f06bcfca4028f61a989",
+            "start": 105,
+            "end": 192,
+            "quote": "## 1. [一文读懂nsight system与cuda kernel的时间线分析与可视化](https://zhuanlan.zhihu.com/p/691307737)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_458fe4e8a2684bd280966d37.result",
+            "field": "response",
+            "sha256": "e14add6fcbcdc798b4953fb271fcbfcd61bc40fadff3edd08c02f1bf400c5acf",
+            "start": 1429,
+            "end": 1469,
+            "quote": "本文详细介绍了如何使用trtexec工具将ONNX模型转换为TensorRT引擎",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_39a8a008830e403e887dd6a8.result",
+            "field": "response",
+            "sha256": "c3a19f4063630a2431afb386a499041ca9d26ee5c0f68f06bcfca4028f61a989",
+            "start": 206,
+            "end": 238,
+            "quote": "nsight system 是进行 GPU 性能优化的关键工具。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "20bbff488ab5f2926f258239fc121f70598537415163f02cd2012a5dba2a940a",
+            "start": 260,
+            "end": 341,
+            "quote": "TensorRT 在 build 阶段对计算图做优化，包括横向融合（同一层跨 batch 合并）和纵向融合（卷积+bias+激活/BN 合并成单个 kernel）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "20bbff488ab5f2926f258239fc121f70598537415163f02cd2012a5dba2a940a",
+            "start": 497,
+            "end": 585,
+            "quote": "观察可用 Nsight Systems / `trtexec --dumpProfile` / TensorRT verbose log（`kTRT_LOG_INFO` 层级）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 2010,
+            "end": 2058,
+            "quote": "Optimization steps are at the `kINFO` log level.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_458fe4e8a2684bd280966d37.result",
+            "field": "response",
+            "sha256": "e14add6fcbcdc798b4953fb271fcbfcd61bc40fadff3edd08c02f1bf400c5acf",
+            "start": 1050,
+            "end": 1126,
+            "quote": "Add the --dumpProfile flag to trtexec to show per-layer performance profiles",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 2025,
+            "end": 2055,
+            "quote": "cuDNN Graph API（8.0 引入）提供运行时融合",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 2391,
+            "end": 2440,
+            "quote": "按 Support Surface 90/80/70 匹配计算能力（9.0+/8.0+/7.0+）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 2794,
+            "end": 3016,
+            "quote": "trtexec --onnx=resnet50-v1-12-quantized.onnx --shapes=data:4x3x224x224 \\\n  --stronglyTyped --noDataTransfers --useCudaGraph --useSpinWait \\\n  --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 3605,
+            "end": 3766,
+            "quote": "auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());\nstd::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 4023,
+            "end": 4057,
+            "quote": "nsys profile -t cuda [application]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 4474,
+            "end": 4542,
+            "quote": "networkDefinition->markUnfusedTensorsAsDebugTensors(); // 不阻止融合，保留调试",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 84,
+            "end": 165,
+            "quote": "TensorRT 在 **engine build 阶段**对网络做图优化。第一阶段就是\"layers are fused whenever possible\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 751,
+            "end": 806,
+            "quote": "In the first phase, layers are fused whenever possible.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_14ec29f61128401fa82a7719.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_14ec29f61128401fa82a7719.result",
+            "alternative_body_event_ids": [
+              "call_6c8511239dbd44028a31cbab.result",
+              "call_678fae27f32e452db514290a.result",
+              "call_35eaff37860c48e0812c2506.result",
+              "call_edc9ad4701134b9084ae08f1.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_b1661073ed53494eaa09150a.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_b1661073ed53494eaa09150a.result",
+            "alternative_body_event_ids": [
+              "call_35eaff37860c48e0812c2506.result",
+              "call_edc9ad4701134b9084ae08f1.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-d7a78cbdef79-predictors.json": "eff0bd2f86f7e15098f09d15ecd6e685ed619b35494525e07e4d642919691773",
+          "reviewed/development/case-d7a78cbdef79-outcome.json": "20021852f5804aec1d70932c23d5829c60ff2e9b850236e1fb9a9ed80028edf6",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "# Layer Fusion Catalog[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "Refer to the [Explicit Quantization](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/quantized-types-explicit-quantization.html#explicit-quantization) section for suggestions on optimizing INT8 and FP8 networks"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html"
+          },
+          {
+            "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/optimization.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score_range": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "## Enabling Layer Fusion#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "**When authoring your network**\n\n[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/optimization.html"
+          },
+          {
+            "event_id": "call_14ec29f61128401fa82a7719.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/trtexec/trtexec-diagnosis-guide.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "score_range": [
+              1,
+              1
+            ],
+            "evidence": [
+              {
+                "event_id": "call_14ec29f61128401fa82a7719.result",
+                "quote": "**标题**: Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_14ec29f61128401fa82a7719.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/trtexec/trtexec-diagnosis-guide.html"
+          },
+          {
+            "event_id": "call_6c8511239dbd44028a31cbab.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-tools.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_6c8511239dbd44028a31cbab.result",
+                "quote": "# Engine Tools and Debugging[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_6c8511239dbd44028a31cbab.result",
+                "quote": "For more information, refer to the [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/benchmarking.html#trtexec) section."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-tools.html"
+          },
+          {
+            "event_id": "call_678fae27f32e452db514290a.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/performance/benchmarking.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_678fae27f32e452db514290a.result",
+                "quote": "## Per-Layer Runtime and Layer Information[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_678fae27f32e452db514290a.result",
+                "quote": "Refer to the [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/reference/command-line-programs.html#trtexec) section or run `trtexec --help`"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/performance/benchmarking.html"
+          },
+          {
+            "event_id": "call_b1661073ed53494eaa09150a.result",
+            "url": "https://docs.nvidia.com/nsight-systems/GettingStarted/index.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "score_range": [
+              1,
+              1
+            ],
+            "evidence": [
+              {
+                "event_id": "call_b1661073ed53494eaa09150a.result",
+                "quote": "**标题**: Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_b1661073ed53494eaa09150a.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/GettingStarted/index.html"
+          },
+          {
+            "event_id": "call_35eaff37860c48e0812c2506.result",
+            "url": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score_range": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_35eaff37860c48e0812c2506.result",
+                "quote": "## Profiling from the CLI#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_35eaff37860c48e0812c2506.result",
+                "quote": "usability of the resulting data.\n\n[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html"
+          },
+          {
+            "event_id": "call_edc9ad4701134b9084ae08f1.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_edc9ad4701134b9084ae08f1.result",
+                "quote": "The cuDNN library provides a declarative programming model for describing computation as a graph of operations."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_edc9ad4701134b9084ae08f1.result",
+                "quote": "The document does not discuss CUDA Graphs (cudaGraph) or a \"same execution plan\" requirement"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 5,
+      "recorded_at": "2026-09-21T14:46:21.319560+00:00",
+      "process_sha256": "714a7839509278e3371cde0069c313238ce02ca863e73fd494d4c5b160019dad",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "TensorRT 在 **engine build 阶段**对网络做图优化。第一阶段就是\"layers are fused whenever possible\"。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "evidence_quote": "In the first phase, layers are fused whenever possible.",
+            "verification": "source",
+            "reason": "原题含三个子要求，final 逐项覆盖且均有官方来源支撑。(1) 发生机制：final 称融合发生在 build 阶段、builder 检测受支持模式并合并多层，与 Layer Fusion Catalog 原文 \"TensorRT attempts to perform many different optimizations in a network during the build phase. In the first phase, layers are fused whenever possible\" 及 \"the fusion optimization step detects supported patterns of operations and fuses multiple layers into one layer\" 一致；Conv+ReLU 例子、融合模式表（Conv+GELU 需 FP16/INT8 且 Turing+、DepSepConv 需 INT8 且计算能力≥7.2）均逐字对应同源正文；pointwise 融合命名 fusedPointwiseNode(add1, relu1) 亦见原文。(2) 观察：final 给出 builder kINFO 日志（源文 \"Optimization steps are at the kINFO log level\"）、trtexec --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile（benchmarking 源文有同参数完整命令及 Metadata 多算子对应说明）、IEngineInspector API（engine-tools 源文有相同 C++ 代码与 kDETAILED JSON 示例）、Nsight Systems（User Guide 源文确认 nsys profile -t cuda 与 NVTX）、debug tensors 两种标记方式（engine-tools 源文逐字支持 markUnfusedTensorsAsDebugTensors 与 markDebug 的语义区别）。(3) 控制：final 说明融合 build 时自动、无 runtime API 开启（optimization 源文 \"Fusion happens automatically at build time (there is no runtime API to \\\"turn it on\\\")\"），并列出精度影响、markDebug 打断融合（源文 \"This method can disable some fusion optimizations\"）、setBuilderOptimizationLevel（源文同代码，默认 3）、DISABLE_COMPILATION_CACHE（源文同代码）、cuDNN 侧 g1/g2/virtual 张量/Support Surface 显式控制点（cuDNN Graph API 源文支持，如 \"runtime fusion engines generate the kernel (or kernels) at runtime based on the graph pattern\"、\"All intermediate tensors must be virtual\"、Support Surface 90/80/70 计算能力表）。final 对未核实内容（nsys 报告名拼写、nvcc 不做跨 kernel 融合、CUDA Graphs 定性）已如实标注为自带知识/未核实，未冒充证据。三个子问题均有真实官方正文支撑，判 supported。",
+            "evidence_refs": [
+              "ev-29",
+              "ev-30"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（NVIDIA TensorRT Layer Fusion Catalog），命中前5条内另有多条第三方结果。",
+            "evidence": [
+              {
+                "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+                "quote": "## 1. [Layer Fusion Catalog — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.25,
+            "upper": 3.75,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_14ec29f61128401fa82a7719.result",
+                "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_b1661073ed53494eaa09150a.result",
+                "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "**When authoring your network**\n\n[...]"
+              },
+              {
+                "event_id": "call_35eaff37860c48e0812c2506.result",
+                "quote": "usability of the resulting data.\n\n[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题三部分中：融合发生机制有完整说明（build阶段模式检测+完整融合模式表及约束）；观察手段有具体命令与API（ILogger kINFO、trtexec --profilingVerbosity/--dumpLayerInfo/--dumpProfile 示例命令、IEngineInspector 代码、Nsight CLI）；控制有说明（build时自动、debug tensors markDebug 可禁用部分融合、精度/架构约束、cuDNN支持面）。但 optimization.html 与 Nsight UserGuide 均有[...]截断，Nsight 报告级细节及部分控制分支（如显式禁用特定融合）未完整取得。",
+            "evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "In the first phase, layers are fused whenever possible."
+              },
+              {
+                "event_id": "call_678fae27f32e452db514290a.result",
+                "quote": "The `--profilingVerbosity=detailed` flag enables detailed layer information capturing, `--dumpLayerInfo` flag shows the per-layer information in the log, and `--dumpProfile --separateProfileRun` flags show the per-layer runtime latencies in the log."
+              },
+              {
+                "event_id": "call_6c8511239dbd44028a31cbab.result",
+                "quote": "This method can disable some fusion optimizations that would otherwise remove the debug tensors, thereby preserving them for issue diagnosis at the expense of reduced performance."
+              },
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "Fusion happens automatically at build time (there is no runtime API to “turn it on”), but the patterns the builder is willing to fuse are constrained."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "融合接口的部分适用关系已直接给出（Turing+、INT8/CC≥7.2、cuDNN支持面CC表），但 Conv+GELU 约束引用的 TensorRT 11.0 最低 CUDA 版本关系指向 Support Matrix 未取得，且 trtexec 观察标志的版本适用关系混用 latest 与 10.x.x 路径无明确说明。存在缺失关系，不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "Requires an NVIDIA Turing or later architecture and a supported CUDA toolkit (refer to [Support Matrix](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/support-matrix.html#support-matrix) for the TensorRT 11.0 minimum CUDA version)."
+              },
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "The precision of both convolutions must be INT8, and the device’s computation capability must be 7.2 or later."
+              },
+              {
+                "event_id": "call_edc9ad4701134b9084ae08f1.result",
+                "quote": "| Compute Capability | ≥ 9.0 | ≥ 8.0 (8.0, 8.6, 8.7, 8.9, 9.0) | ≥ 7.0 (7.0, 7.2, 7.5, 8.0, 8.6, 8.7, 8.9, 9.0) |"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "4次查询中去重后相关独立第三方来源约15条（CSDN×6、知乎×3、个人博客×4、GitHub个人仓库×2），远超6条阈值；官方仓库/官方论坛不计入。正文取得不是计数前提。",
+            "evidence": [
+              {
+                "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+                "quote": "## 2. [深入剖析TensorRT层融合机制（C语言实战篇）：从原理到 ...](https://blog.csdn.net/LogicNest/article/details/155522106)"
+              },
+              {
+                "event_id": "call_b79d5c1998fe40fdbfce1168.result",
+                "quote": "## 3. [Part5-2-TensorRT性能优化性能分析工具 | 奔跑的IC](https://zmurder.github.io/TensorRT/"
+              },
+              {
+                "event_id": "call_39a8a008830e403e887dd6a8.result",
+                "quote": "## 1. [一文读懂nsight system与cuda kernel的时间线分析与可视化](https://zhuanlan.zhihu.com/p/691307737)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "第三方材料存在（搜索摘要可见，日期2024-2026较新），未见与官方核对相矛盾的关键说法；但全部fetch均针对官方文档，无任何第三方正文被取得，关键说法缺乏可追溯的第三方核对依据，只能给2；若后续取得第三方正文可能升至3，保留区间。",
+            "evidence": [
+              {
+                "event_id": "call_458fe4e8a2684bd280966d37.result",
+                "quote": "本文详细介绍了如何使用trtexec工具将ONNX模型转换为TensorRT引擎"
+              },
+              {
+                "event_id": "call_39a8a008830e403e887dd6a8.result",
+                "quote": "nsight system 是进行 GPU 性能优化的关键工具。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": [],
+            "candidate_score": 2,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已覆盖原题三部分且经官方文档事后核对基本正确：build阶段融合、卷积+激活合并、精度影响、无运行时融合开关、kINFO日志、trtexec --dumpProfile 均获证实；但具体参数与约束自认不足（确切层组合、trtexec参数拼写、Nsight具体方法、cuDNN runtime fusion状态），且未提 Engine Inspector、debug tensors、--dumpLayerInfo 等关键观察/控制接口，属'完整流程但参数约束需补充'档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "TensorRT 在 build 阶段对计算图做优化，包括横向融合（同一层跨 batch 合并）和纵向融合（卷积+bias+激活/BN 合并成单个 kernel）"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "观察可用 Nsight Systems / `trtexec --dumpProfile` / TensorRT verbose log（`kTRT_LOG_INFO` 层级）"
+              },
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "Optimization steps are at the `kINFO` log level."
+              },
+              {
+                "event_id": "call_458fe4e8a2684bd280966d37.result",
+                "quote": "Add the --dumpProfile flag to trtexec to show per-layer performance profiles"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_7d7cfe57c80c474cbb3c18e6.dispatch",
+              "call_ddeeb5d8f53e4287a688bc34.dispatch",
+              "call_d31f39e19da146a0bc7ca63e.dispatch",
+              "call_b79d5c1998fe40fdbfce1168.dispatch",
+              "call_14ec29f61128401fa82a7719.dispatch",
+              "call_458fe4e8a2684bd280966d37.dispatch",
+              "call_6c8511239dbd44028a31cbab.dispatch",
+              "call_678fae27f32e452db514290a.dispatch",
+              "call_b1661073ed53494eaa09150a.dispatch",
+              "call_39a8a008830e403e887dd6a8.dispatch",
+              "call_35eaff37860c48e0812c2506.dispatch",
+              "call_edc9ad4701134b9084ae08f1.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "status": "scored",
+            "reason": "任务 applicability 明确 M9=true，范围是 TensorRT/CUDA 融合及观察接口。final 只锁定 cuDNN Graph API 8.0 引入和 compute capability 区间，未给所采用 TensorRT/CUDA 路线的全部具体版本配套；部分组件有版本依据、其余未定，建议第3档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "cuDNN Graph API（8.0 引入）提供运行时融合"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "按 Support Surface 90/80/70 匹配计算能力（9.0+/8.0+/7.0+）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "所有命令均为文档内容核查，未实际运行（无执行要求）。"
+              }
+            ],
+            "lower": 3,
+            "upper": 3,
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "final 提供完整可照抄的命令与代码：trtexec 命令含全部参数及示例模型名/形状，与官方 benchmarking 文档逐字一致；nsys profile -t cuda、IEngineInspector C++ 代码、markUnfusedTensorsAsDebugTensors/markDebug、setTensorDebugState、setBuilderOptimizationLevel(0)、DISABLE_COMPILATION_CACHE 均为文档原文级别的完整调用；trtexec 路径（NGC 容器 /opt/tensorrt/bin/trtexec）已给出。仅需替换用户环境值（ONNX 文件路径、应用名），无需修正内容错误。次要扣分点：nsys analyze/stats 具体报告名未从官方正文确认（final 已自曝并以 nsys stats --help 为准），但该处 final 已如实声明且给出核实途径，不构成需修正的内容错误，故 4 分而非 5 分（5 分要求所有指导及前提完全无需补写）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "trtexec --onnx=resnet50-v1-12-quantized.onnx --shapes=data:4x3x224x224 \\\n  --stronglyTyped --noDataTransfers --useCudaGraph --useSpinWait \\\n  --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());\nstd::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON);"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "nsys profile -t cuda [application]"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "networkDefinition->markUnfusedTensorsAsDebugTensors(); // 不阻止融合，保留调试"
+              }
+            ],
+            "evidence_refs": [
+              "ev-25",
+              "ev-26",
+              "ev-27",
+              "ev-28"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 76.29670399999999,
+            "upper": 78.36927999999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              76.2,
+              78.4
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 76.29670399999999,
+          "upper": 78.36927999999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            76.2,
+            78.4
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+            "field": "response",
+            "sha256": "a866a744edcc4d99be4f99ea3bd3164b7c1ed7abbf861bd71612b66664488902",
+            "start": 87,
+            "end": 219,
+            "quote": "## 1. [Layer Fusion Catalog — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_14ec29f61128401fa82a7719.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 24,
+            "end": 97,
+            "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_b1661073ed53494eaa09150a.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 24,
+            "end": 97,
+            "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+            "field": "response",
+            "sha256": "d1451b66672a0cbba68d55615b77610d61a727ea1b7197c6e39547b098522cec",
+            "start": 3417,
+            "end": 3455,
+            "quote": "**When authoring your network**\n\n[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_35eaff37860c48e0812c2506.result",
+            "field": "response",
+            "sha256": "ab3b8303d49d1fa39b3f1cd9394871b9ad5d6d89ec5bba95abd67dc00292733b",
+            "start": 338,
+            "end": 377,
+            "quote": "usability of the resulting data.\n\n[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 751,
+            "end": 806,
+            "quote": "In the first phase, layers are fused whenever possible.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_678fae27f32e452db514290a.result",
+            "field": "response",
+            "sha256": "6be2eb5cee097e9259788be2706fdff41cb8d96c3c1ecbf0237a7d44c1733481",
+            "start": 9237,
+            "end": 9486,
+            "quote": "The `--profilingVerbosity=detailed` flag enables detailed layer information capturing, `--dumpLayerInfo` flag shows the per-layer information in the log, and `--dumpProfile --separateProfileRun` flags show the per-layer runtime latencies in the log.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_6c8511239dbd44028a31cbab.result",
+            "field": "response",
+            "sha256": "7d43978e3654c765f71ebd7cbd089f8682fd9f40acdbaf3b113046c6ebbd7753",
+            "start": 10344,
+            "end": 10523,
+            "quote": "This method can disable some fusion optimizations that would otherwise remove the debug tensors, thereby preserving them for issue diagnosis at the expense of reduced performance.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+            "field": "response",
+            "sha256": "d1451b66672a0cbba68d55615b77610d61a727ea1b7197c6e39547b098522cec",
+            "start": 1747,
+            "end": 1897,
+            "quote": "Fusion happens automatically at build time (there is no runtime API to “turn it on”), but the patterns the builder is willing to fuse are constrained.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 4679,
+            "end": 4932,
+            "quote": "Requires an NVIDIA Turing or later architecture and a supported CUDA toolkit (refer to [Support Matrix](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/support-matrix.html#support-matrix) for the TensorRT 11.0 minimum CUDA version).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 7594,
+            "end": 7704,
+            "quote": "The precision of both convolutions must be INT8, and the device’s computation capability must be 7.2 or later.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_edc9ad4701134b9084ae08f1.result",
+            "field": "response",
+            "sha256": "5004f22e8d6f860dadb13d8ac1ffd0633deae0deacd53366f0a43e08a7ea9d94",
+            "start": 4990,
+            "end": 5103,
+            "quote": "| Compute Capability | ≥ 9.0 | ≥ 8.0 (8.0, 8.6, 8.7, 8.9, 9.0) | ≥ 7.0 (7.0, 7.2, 7.5, 8.0, 8.6, 8.7, 8.9, 9.0) |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_7d7cfe57c80c474cbb3c18e6.result",
+            "field": "response",
+            "sha256": "a866a744edcc4d99be4f99ea3bd3164b7c1ed7abbf861bd71612b66664488902",
+            "start": 453,
+            "end": 554,
+            "quote": "## 2. [深入剖析TensorRT层融合机制（C语言实战篇）：从原理到 ...](https://blog.csdn.net/LogicNest/article/details/155522106)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_b79d5c1998fe40fdbfce1168.result",
+            "field": "response",
+            "sha256": "d3ad5f6d629c387172db20f1dfe2cdea03cb434726243a9d9f1bf93202a852ab",
+            "start": 555,
+            "end": 633,
+            "quote": "## 3. [Part5-2-TensorRT性能优化性能分析工具 | 奔跑的IC](https://zmurder.github.io/TensorRT/",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_39a8a008830e403e887dd6a8.result",
+            "field": "response",
+            "sha256": "c3a19f4063630a2431afb386a499041ca9d26ee5c0f68f06bcfca4028f61a989",
+            "start": 105,
+            "end": 192,
+            "quote": "## 1. [一文读懂nsight system与cuda kernel的时间线分析与可视化](https://zhuanlan.zhihu.com/p/691307737)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_458fe4e8a2684bd280966d37.result",
+            "field": "response",
+            "sha256": "e14add6fcbcdc798b4953fb271fcbfcd61bc40fadff3edd08c02f1bf400c5acf",
+            "start": 1429,
+            "end": 1469,
+            "quote": "本文详细介绍了如何使用trtexec工具将ONNX模型转换为TensorRT引擎",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_39a8a008830e403e887dd6a8.result",
+            "field": "response",
+            "sha256": "c3a19f4063630a2431afb386a499041ca9d26ee5c0f68f06bcfca4028f61a989",
+            "start": 206,
+            "end": 238,
+            "quote": "nsight system 是进行 GPU 性能优化的关键工具。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "20bbff488ab5f2926f258239fc121f70598537415163f02cd2012a5dba2a940a",
+            "start": 260,
+            "end": 341,
+            "quote": "TensorRT 在 build 阶段对计算图做优化，包括横向融合（同一层跨 batch 合并）和纵向融合（卷积+bias+激活/BN 合并成单个 kernel）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "20bbff488ab5f2926f258239fc121f70598537415163f02cd2012a5dba2a940a",
+            "start": 497,
+            "end": 585,
+            "quote": "观察可用 Nsight Systems / `trtexec --dumpProfile` / TensorRT verbose log（`kTRT_LOG_INFO` 层级）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 2010,
+            "end": 2058,
+            "quote": "Optimization steps are at the `kINFO` log level.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_458fe4e8a2684bd280966d37.result",
+            "field": "response",
+            "sha256": "e14add6fcbcdc798b4953fb271fcbfcd61bc40fadff3edd08c02f1bf400c5acf",
+            "start": 1050,
+            "end": 1126,
+            "quote": "Add the --dumpProfile flag to trtexec to show per-layer performance profiles",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 2025,
+            "end": 2055,
+            "quote": "cuDNN Graph API（8.0 引入）提供运行时融合",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 2391,
+            "end": 2440,
+            "quote": "按 Support Surface 90/80/70 匹配计算能力（9.0+/8.0+/7.0+）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 6607,
+            "end": 6633,
+            "quote": "所有命令均为文档内容核查，未实际运行（无执行要求）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 2794,
+            "end": 3016,
+            "quote": "trtexec --onnx=resnet50-v1-12-quantized.onnx --shapes=data:4x3x224x224 \\\n  --stronglyTyped --noDataTransfers --useCudaGraph --useSpinWait \\\n  --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 3605,
+            "end": 3766,
+            "quote": "auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());\nstd::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 4023,
+            "end": 4057,
+            "quote": "nsys profile -t cuda [application]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 4474,
+            "end": 4542,
+            "quote": "networkDefinition->markUnfusedTensorsAsDebugTensors(); // 不阻止融合，保留调试",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "86074ef21756a0c5b98ca2e5e01d3b98499a4d3eefa7a4c275dd9a8c0a82db67",
+            "start": 84,
+            "end": 165,
+            "quote": "TensorRT 在 **engine build 阶段**对网络做图优化。第一阶段就是\"layers are fused whenever possible\"。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "field": "response",
+            "sha256": "68c5f2e90d7790d247d61227d331363a037f4fa85eea53045ec66e8e5ee1cdea",
+            "start": 751,
+            "end": 806,
+            "quote": "In the first phase, layers are fused whenever possible.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_14ec29f61128401fa82a7719.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_14ec29f61128401fa82a7719.result",
+            "alternative_body_event_ids": [
+              "call_6c8511239dbd44028a31cbab.result",
+              "call_678fae27f32e452db514290a.result",
+              "call_35eaff37860c48e0812c2506.result",
+              "call_edc9ad4701134b9084ae08f1.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_b1661073ed53494eaa09150a.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_b1661073ed53494eaa09150a.result",
+            "alternative_body_event_ids": [
+              "call_35eaff37860c48e0812c2506.result",
+              "call_edc9ad4701134b9084ae08f1.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-d7a78cbdef79-predictors.json": "eff0bd2f86f7e15098f09d15ecd6e685ed619b35494525e07e4d642919691773",
+          "reviewed/development/case-d7a78cbdef79-outcome.json": "6c3b58d8f331eb1b5febd4c55fbbd4183b2ef31a12db10d915b10afb30c20206",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "# Layer Fusion Catalog[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_ddeeb5d8f53e4287a688bc34.result",
+                "quote": "Refer to the [Explicit Quantization](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/quantized-types-explicit-quantization.html#explicit-quantization) section for suggestions on optimizing INT8 and FP8 networks"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/fusion-catalog.html"
+          },
+          {
+            "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/optimization.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score_range": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "## Enabling Layer Fusion#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_d31f39e19da146a0bc7ca63e.result",
+                "quote": "**When authoring your network**\n\n[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/optimization.html"
+          },
+          {
+            "event_id": "call_14ec29f61128401fa82a7719.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/trtexec/trtexec-diagnosis-guide.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "score_range": [
+              1,
+              1
+            ],
+            "evidence": [
+              {
+                "event_id": "call_14ec29f61128401fa82a7719.result",
+                "quote": "**标题**: Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_14ec29f61128401fa82a7719.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/trtexec/trtexec-diagnosis-guide.html"
+          },
+          {
+            "event_id": "call_6c8511239dbd44028a31cbab.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-tools.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_6c8511239dbd44028a31cbab.result",
+                "quote": "# Engine Tools and Debugging[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_6c8511239dbd44028a31cbab.result",
+                "quote": "For more information, refer to the [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/benchmarking.html#trtexec) section."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-tools.html"
+          },
+          {
+            "event_id": "call_678fae27f32e452db514290a.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/performance/benchmarking.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_678fae27f32e452db514290a.result",
+                "quote": "## Per-Layer Runtime and Layer Information[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_678fae27f32e452db514290a.result",
+                "quote": "Refer to the [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/reference/command-line-programs.html#trtexec) section or run `trtexec --help`"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/performance/benchmarking.html"
+          },
+          {
+            "event_id": "call_b1661073ed53494eaa09150a.result",
+            "url": "https://docs.nvidia.com/nsight-systems/GettingStarted/index.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "score_range": [
+              1,
+              1
+            ],
+            "evidence": [
+              {
+                "event_id": "call_b1661073ed53494eaa09150a.result",
+                "quote": "**标题**: Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_b1661073ed53494eaa09150a.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/GettingStarted/index.html"
+          },
+          {
+            "event_id": "call_35eaff37860c48e0812c2506.result",
+            "url": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score_range": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_35eaff37860c48e0812c2506.result",
+                "quote": "## Profiling from the CLI#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_35eaff37860c48e0812c2506.result",
+                "quote": "usability of the resulting data.\n\n[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-systems/UserGuide/index.html"
+          },
+          {
+            "event_id": "call_edc9ad4701134b9084ae08f1.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_edc9ad4701134b9084ae08f1.result",
+                "quote": "The cuDNN library provides a declarative programming model for describing computation as a graph of operations."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_edc9ad4701134b9084ae08f1.result",
+                "quote": "The document does not discuss CUDA Graphs (cudaGraph) or a \"same execution plan\" requirement"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/latest/developer/graph-api.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

@@ -1,0 +1,83 @@
+{
+  "schema": "m10-closeout-supplement-20260921-v1",
+  "created_at": "2026-09-21T14:42:06.894527+00:00",
+  "scope": "补审原始DeepSeek R-CUDA outcome与新增有效GLM/Kimi U-CUDA；失败尝试保留但不评分。",
+  "cases": [
+    {
+      "run_id": "R-cuda-deepseek-v4_1-flash-standard-20260921T110856",
+      "task": "R",
+      "ecosystem": "cuda",
+      "model": "deepseek-v4.1-flash",
+      "source": "original outcome final; results row outcome M10 insufficient_evidence",
+      "assessment_status": "completed_and_root_reviewed",
+      "recommended_score": 4,
+      "recommended_status": "retained",
+      "final_quotes": [
+        "CUDA_LAUNCH_BLOCKING=1 python train.py",
+        "torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0,",
+        "scaler.unscale_(optimizer)",
+        "scaler.step(optimizer)"
+      ],
+      "quote_assertions": {
+        "CUDA_LAUNCH_BLOCKING=1 python train.py": true,
+        "torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0,": true,
+        "scaler.unscale_(optimizer)": true,
+        "scaler.step(optimizer)": true
+      },
+      "reason": "核心排查路径含可执行命令、detect_anomaly、梯度裁剪和 AMP unscale→clip→step→update；学习率/数据部分明确为原则性指导，且模型/数据对象需由用户替换。按 M10=4；未运行不作为扣分依据。",
+      "final_score": 4
+    },
+    {
+      "run_id": "U-cuda-glm-5_3-standard-20260921T222641",
+      "task": "U",
+      "ecosystem": "cuda",
+      "model": "glm-5.3",
+      "source": "new collection final; no post-assessment yet",
+      "assessment_status": "completed_and_root_reviewed",
+      "recommended_score": 4,
+      "recommended_status": "retained",
+      "final_quotes": [
+        "ncu --set full -o report ./my_app",
+        "ncu --list-sections",
+        "cudaOccupancyMaxActiveBlocksPerMultiprocessor(&numBlocks, MyKernel, blockSize, 0);",
+        "__shared__ float tile[32][33]"
+      ],
+      "quote_assertions": {
+        "ncu --set full -o report ./my_app": true,
+        "ncu --list-sections": true,
+        "cudaOccupancyMaxActiveBlocksPerMultiprocessor(&numBlocks, MyKernel, blockSize, 0);": true,
+        "__shared__ float tile[32][33]": true
+      },
+      "reason": "采集命令、Memory Workload/SourceCounters、shared-memory padding、occupancy API与调优步骤齐全；`./my_app`/`MyKernel`属于用户程序和 kernel 名称替换。文中未运行披露不影响 M10=4。",
+      "final_score": 4
+    },
+    {
+      "run_id": "U-cuda-kimi-k3-2-standard-20260921T223412",
+      "task": "U",
+      "ecosystem": "cuda",
+      "model": "kimi-k3-2",
+      "source": "new run process; final not present",
+      "assessment_status": "failed_missing_client_result",
+      "recommended_score": null,
+      "recommended_status": "excluded",
+      "final_quotes": [],
+      "quote_assertions": {},
+      "reason": "当前 process.jsonl 尚无 final answer，不能依据原题与 final 评 M10；待后评落地后再核对。"
+    },
+    {
+      "run_id": "U-cuda-kimi-k3-2-standard-20260921T224541",
+      "case": "case-238de6352119",
+      "recommended_score": 3,
+      "recommended_status": "applied_after_root_review",
+      "final_quotes": [
+        "**1 条访存指令 = 1 request（每 warp）→ 访问 N 个 sector（32 字节对齐块）→ N 个 wavefront（每 cycle 1 个）**。"
+      ],
+      "reason": "最终回答将N个sector等同为N个wavefront，错误地把两种计数一一对应，直接影响访存瓶颈解释。实际返回同时写明wavefronts:sectors为1:N，须修正技术解释，超出仅替换应用名/kernel名；按冻结M10=3。不是因未运行或可选occupancy API未核验而扣分。",
+      "source_evidence": {
+        "event_id": "WebFetch_3_d7027969.result",
+        "quote": "Relationships: *requests:sectors is 1:N, wavefronts:sectors 1:N, requests:wavefronts 1:N*."
+      },
+      "final_score": 3
+    }
+  ]
+}

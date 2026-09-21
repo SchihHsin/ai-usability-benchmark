@@ -147,6 +147,859 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T14:52:03.731873+00:00",
+      "process_sha256": "e47c70bc5b26ceed8c2a9e4e617027001e5a25274d3e57bbb1a5d78441f7c237",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "以下流程按\"先定位 → 再分因（梯度爆炸 / 学习率 / 数据 / AMP）\"组织。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+            "evidence_quote": "- **error_if_nonfinite** ([*bool*](https://docs.python.org/3/library/functions.html#bool \"(in Python v3.14)\")*, optional*) – if True, an error is thrown if the total norm of the gradients from `parameters` is `nan`, `inf`, or `-inf`. Default: False",
+            "verification": "source",
+            "reason": "原题要求对GPU训练loss不收敛/NaN给出系统排查（梯度爆炸/学习率/数据）。最终答案逐项覆盖：(1)定位NaN：detect_anomaly/check_nan与CUDA_LAUNCH_BLOCKING，均被官方来源证实（call_00_KtBRSXL9Oz2Ucpejr7fq2699.result含detect_anomaly(check_nan=True)正文，call_00_gCUhby4iVzAQLlRfNsih5389.result含\"CUDA_LAUNCH_BLOCKING If set to 1, makes CUDA calls synchronous\"）；(2)梯度爆炸：clip_grad_norm_签名及error_if_nonfinite=True建议由官方页逐字证实（call_00_T4cN1xeJRsAmvJjUiF2X0611.result），AMP下先unscale_再裁剪由call_00_ZrNVkaMWbgWOta7ZD89b0999.result证实；(3)学习率：warmup/小LR sanity check，答案明确标注为通用实践非官方原文，属有依据但无来源的合理建议；(4)数据：isfinite断言、标签越界、log(0)/0分母检查，同样自标注为通用实践。学习率与数据部分缺官方引文，但答案如实披露且内容技术正确，系统排查框架整体由官方文档支撑，故判supported。",
+            "evidence_refs": [
+              "ev-30",
+              "ev-31"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "前两次查询前5条均为第三方(buglyst/CSDN/runebook)；第三次查询第1条才首次出现官方源docs.pytorch.org",
+            "evidence": [
+              {
+                "event_id": "call_00_6rcb1xUGckgwniGaBDXU3218.result",
+                "quote": "## 1. [PyTorch Loss NaN Gradient Explosion Guide | Buglyst]"
+              },
+              {
+                "event_id": "call_00_6mbQcdMP1oQ3hkVS8QRr9753.result",
+                "quote": "## 5. [训练中 Loss 变 NaN？PyTorch 异常检测模式（detect ...](https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.set_detect_anomaly)"
+              },
+              {
+                "event_id": "call_00_vFJzmMLJatu0NMoW1Ps60256.result",
+                "quote": "## 1. [torch.nn.utils.clip_grad_norm_ — PyTorch 2.14 documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.142857142857143,
+            "upper": 3.857142857142857,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_w0410epyMSpjm8qO1EZZ9346.result",
+                "quote": "# 404\n\n**File not found**"
+              },
+              {
+                "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+                "quote": "torch.nn.utils.clip_grad_norm_(*parameters*, *max_norm*, *norm_type=2.0*, *error_if_nonfinite=False*, *foreach=None*)"
+              },
+              {
+                "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+                "quote": "Context-manager that sets the anomaly detection for the autograd engine on or off."
+              },
+              {
+                "event_id": "call_00_AziAHevDHNvFLo9MzLs26773.result",
+                "quote": "Warning\n\n[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取回官方正文对主流程(NaN定位、梯度裁剪、AMP inf/nan处理、CUDA调试变量)给出完整签名、参数与示例；但原题明确涉及的学习率排查与数据校验两方面官方正文未覆盖，需第三方/先验补充",
+            "evidence": [
+              {
+                "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+                "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error."
+              },
+              {
+                "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+                "quote": "if True, an error is thrown if the total norm of the gradients from `parameters` is `nan`, `inf`, or `-inf`."
+              },
+              {
+                "event_id": "call_00_ZrNVkaMWbgWOta7ZD89b0999.result",
+                "quote": "# If these gradients do not contain infs or NaNs, optimizer.step() is then called,"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "冻结R任务范围是所用梯度与NaN排查接口。已取得PyTorch 2.14的autograd、clip_grad_norm_、AMP和环境变量正文；合并同版本接口及GradScaler迁移约束可确定适用版本。用户本机版本未知不是资料关系缺失，原题未要求所有旧版本兼容表。",
+            "evidence": [
+              {
+                "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+                "quote": "specifically labeled \"**v2.14.0 (stable)**\" in the version selector"
+              },
+              {
+                "event_id": "call_00_AziAHevDHNvFLo9MzLs26773.result",
+                "quote": "`torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` instead."
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "4次查询预算内去重后相关独立第三方来源≥10条(CSDN多篇、知乎、腾讯云、runebook两页、bearneck镜像、buglyst)，首次出现于第1次查询第1条；≥6条",
+            "evidence": [
+              {
+                "event_id": "call_00_6rcb1xUGckgwniGaBDXU3218.result",
+                "quote": "## 1. [PyTorch Loss NaN Gradient Explosion Guide | Buglyst]"
+              },
+              {
+                "event_id": "call_00_vFJzmMLJatu0NMoW1Ps60256.result",
+                "quote": "## 4. [Pytorch梯度截断：torch.nn.utils.clip_grad_norm_ - 知乎](https://zhuanlan.zhihu.com/p/557949443)"
+              },
+              {
+                "event_id": "call_00_7WH6gGThvP3ibeyQCCLJ8722.result",
+                "quote": "## 1. [【Python知识宝库】 os.environ [‘CUDA_LAUNCH_BLOCKING ...](https://cloud.tencent.com/developer/article/2527110)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "关键说法(set_detect_anomaly定位NaN、clip_grad_norm_防梯度爆炸)有多个可追溯的带日期第三方片段支持，并经官方文档事后核对一致；但第三方正文仅尝试抓取一次且失败(buglyst服务暂停)，其余关键说法尚未核验；未发现未解决矛盾",
+            "evidence": [
+              {
+                "event_id": "call_00_6rcb1xUGckgwniGaBDXU3218.result",
+                "quote": "本文详细介绍了如何使用PyTorch的`torch.autograd.set_detect_anomaly (True)`功能快速定位训练过程中的梯度爆炸 …"
+              },
+              {
+                "event_id": "call_00_vFJzmMLJatu0NMoW1Ps60256.result",
+                "quote": "文章介绍了如何使用torch.nn.utils.clip_grad_norm_进行梯度裁剪，以防止梯度爆炸导致训练过程中的loss变为NaN。 …"
+              },
+              {
+                "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+                "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error."
+              },
+              {
+                "event_id": "call_00_QsmJY0ZEjmnJtYrlSFzl5806.result",
+                "quote": "This service has been suspended by its owner."
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出覆盖原题三方面(梯度爆炸/学习率/数据)及AMP、初始化的正确完整流程，经官方文档事后核对关键主张均正确(异常检测仅调试用、GradScaler跳过inf/nan step)；但具体参数与签名(check_nan、error_if_nonfinite、init_scale默认值、torch.amp命名空间)先验自认需补充",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.autograd.set_detect_anomaly(True)`（仅调试，慢）可定位前向/反向产生 NaN 的算子。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.cuda.amp.GradScaler` 会自动跳过 inf/nan step"
+              },
+              {
+                "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+                "quote": "This mode should be enabled only for debugging as the different tests will slow down your program execution."
+              },
+              {
+                "event_id": "call_00_ZrNVkaMWbgWOta7ZD89b0999.result",
+                "quote": "# otherwise, optimizer.step() is skipped."
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "我需要确认这些是\"方法片段\"还是\"完整流程\""
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21",
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_6rcb1xUGckgwniGaBDXU3218.dispatch",
+              "call_00_6mbQcdMP1oQ3hkVS8QRr9753.dispatch",
+              "call_00_vFJzmMLJatu0NMoW1Ps60256.dispatch",
+              "call_00_T4cN1xeJRsAmvJjUiF2X0611.dispatch",
+              "call_00_w0410epyMSpjm8qO1EZZ9346.dispatch",
+              "call_00_DDqpqaG8cRykNK0ujTPE9850.dispatch",
+              "call_00_KtBRSXL9Oz2Ucpejr7fq2699.dispatch",
+              "call_00_AziAHevDHNvFLo9MzLs26773.dispatch",
+              "call_00_7WH6gGThvP3ibeyQCCLJ8722.dispatch",
+              "call_00_gCUhby4iVzAQLlRfNsih5389.dispatch",
+              "call_00_ZrNVkaMWbgWOta7ZD89b0999.dispatch",
+              "call_00_QsmJY0ZEjmnJtYrlSFzl5806.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "答案将所用排查接口（detect_anomaly/set_detect_anomaly、clip_grad_norm_、autocast/GradScaler、CUDA环境变量）全部锚定到有依据的官方文档版本（PyTorch 2.14，v2.14.0 stable），并给出明确的API迁移关系（torch.cuda.amp.GradScaler已deprecated，改用torch.amp.GradScaler(\"cuda\")），配套关系无未解决冲突；但用户本机PyTorch版本未确定，属'有依据的适用范围而非定到用户具体版本'，按档为4。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方文档版本：**PyTorch 2.14（页面标注 v2.14.0 (stable)）**。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "`torch.cuda.amp.GradScaler` / `torch.cpu.amp.GradScaler` 已 **deprecated**，改用 `torch.amp.GradScaler(\"cuda\"/\"cpu\", ...)`。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "核心排查操作给出可直接照抄的完整命令与代码：CUDA_LAUNCH_BLOCKING=1 python train.py、detect_anomaly上下文用法、clip_grad_norm_(model.parameters(), max_norm=1.0, error_if_nonfinite=True)、完整AMP训练循环与unscale_后裁剪流程，前置条件（仅调试时开启检测、unscale_每optimizer每step仅一次）已说明。仅需替换模型/数据加载器等用户环境值即可执行。学习率/数据部分为原则性指导而非完整命令，但主诊断流程操作完整，不构成需修正的错误，按档为4而非5（部分步骤如warmup、hook断言需用户自行补全适配代码）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "loss.backward()\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0,\n                               error_if_nonfinite=True)\noptimizer.step()"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "scaler.unscale_(optimizer)\n\n# Since the gradients of optimizer's assigned params are unscaled, clips as usual:\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-27",
+              "ev-28",
+              "ev-29"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 81.64898011428572,
+            "upper": 82.12338468571429,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              81.6,
+              82.2
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 81.64898011428572,
+          "upper": 82.12338468571429,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            81.6,
+            82.2
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_6rcb1xUGckgwniGaBDXU3218.result",
+            "field": "response",
+            "sha256": "d38f3673bc6480fee273e63ffc6e0b63a48f9cc4b58495b99f5cb525ef1ff0ed",
+            "start": 107,
+            "end": 166,
+            "quote": "## 1. [PyTorch Loss NaN Gradient Explosion Guide | Buglyst]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_6mbQcdMP1oQ3hkVS8QRr9753.result",
+            "field": "response",
+            "sha256": "11742e65be4be994a37e427f6d3043956dc5c835d8dc78bce6fb4a6affbcf3d3",
+            "start": 1155,
+            "end": 1284,
+            "quote": "## 5. [训练中 Loss 变 NaN？PyTorch 异常检测模式（detect ...](https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.set_detect_anomaly)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_vFJzmMLJatu0NMoW1Ps60256.result",
+            "field": "response",
+            "sha256": "4feba8884d2ef923cd6e10d639e7bf60e8f665578263d85ccf53b1bfc06b5a6d",
+            "start": 99,
+            "end": 166,
+            "quote": "## 1. [torch.nn.utils.clip_grad_norm_ — PyTorch 2.14 documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_w0410epyMSpjm8qO1EZZ9346.result",
+            "field": "response",
+            "sha256": "3d1aa5a8c8d77ca47f9926154323533450f9a37d5a5866973a34454cb7d5b225",
+            "start": 39,
+            "end": 64,
+            "quote": "# 404\n\n**File not found**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+            "field": "response",
+            "sha256": "feee08715fd0d0a71a2246d5449708cc6d8704b0dba5edc891f57912754b8a3b",
+            "start": 254,
+            "end": 371,
+            "quote": "torch.nn.utils.clip_grad_norm_(*parameters*, *max_norm*, *norm_type=2.0*, *error_if_nonfinite=False*, *foreach=None*)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+            "field": "response",
+            "sha256": "793a78dbec9094387effd37cd75bd869dcbc0119e23601ba0956b4b6d816672b",
+            "start": 3458,
+            "end": 3540,
+            "quote": "Context-manager that sets the anomaly detection for the autograd engine on or off.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_AziAHevDHNvFLo9MzLs26773.result",
+            "field": "response",
+            "sha256": "6d42773c18542244895bd011d3ffb9e71ffb69a803aa330dbca4421a33fadb6e",
+            "start": 1319,
+            "end": 1333,
+            "quote": "Warning\n\n[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+            "field": "response",
+            "sha256": "793a78dbec9094387effd37cd75bd869dcbc0119e23601ba0956b4b6d816672b",
+            "start": 1091,
+            "end": 1189,
+            "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+            "field": "response",
+            "sha256": "feee08715fd0d0a71a2246d5449708cc6d8704b0dba5edc891f57912754b8a3b",
+            "start": 2095,
+            "end": 2203,
+            "quote": "if True, an error is thrown if the total norm of the gradients from `parameters` is `nan`, `inf`, or `-inf`.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_ZrNVkaMWbgWOta7ZD89b0999.result",
+            "field": "response",
+            "sha256": "c6c800a893faa1fadd48a08997f0d2a1c490a27c1689586e587f8d00b3e4d6e0",
+            "start": 2218,
+            "end": 2300,
+            "quote": "# If these gradients do not contain infs or NaNs, optimizer.step() is then called,",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+            "field": "response",
+            "sha256": "793a78dbec9094387effd37cd75bd869dcbc0119e23601ba0956b4b6d816672b",
+            "start": 122,
+            "end": 189,
+            "quote": "specifically labeled \"**v2.14.0 (stable)**\" in the version selector",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_AziAHevDHNvFLo9MzLs26773.result",
+            "field": "response",
+            "sha256": "6d42773c18542244895bd011d3ffb9e71ffb69a803aa330dbca4421a33fadb6e",
+            "start": 3060,
+            "end": 3171,
+            "quote": "`torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` instead.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_6rcb1xUGckgwniGaBDXU3218.result",
+            "field": "response",
+            "sha256": "d38f3673bc6480fee273e63ffc6e0b63a48f9cc4b58495b99f5cb525ef1ff0ed",
+            "start": 107,
+            "end": 166,
+            "quote": "## 1. [PyTorch Loss NaN Gradient Explosion Guide | Buglyst]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_vFJzmMLJatu0NMoW1Ps60256.result",
+            "field": "response",
+            "sha256": "4feba8884d2ef923cd6e10d639e7bf60e8f665578263d85ccf53b1bfc06b5a6d",
+            "start": 1138,
+            "end": 1233,
+            "quote": "## 4. [Pytorch梯度截断：torch.nn.utils.clip_grad_norm_ - 知乎](https://zhuanlan.zhihu.com/p/557949443)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_7WH6gGThvP3ibeyQCCLJ8722.result",
+            "field": "response",
+            "sha256": "6550efc325fe16f7c29092c7875a44de30e96338767389f8ee554f9495008a38",
+            "start": 107,
+            "end": 218,
+            "quote": "## 1. [【Python知识宝库】 os.environ [‘CUDA_LAUNCH_BLOCKING ...](https://cloud.tencent.com/developer/article/2527110)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_6rcb1xUGckgwniGaBDXU3218.result",
+            "field": "response",
+            "sha256": "d38f3673bc6480fee273e63ffc6e0b63a48f9cc4b58495b99f5cb525ef1ff0ed",
+            "start": 1412,
+            "end": 1491,
+            "quote": "本文详细介绍了如何使用PyTorch的`torch.autograd.set_detect_anomaly (True)`功能快速定位训练过程中的梯度爆炸 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_vFJzmMLJatu0NMoW1Ps60256.result",
+            "field": "response",
+            "sha256": "4feba8884d2ef923cd6e10d639e7bf60e8f665578263d85ccf53b1bfc06b5a6d",
+            "start": 1556,
+            "end": 1629,
+            "quote": "文章介绍了如何使用torch.nn.utils.clip_grad_norm_进行梯度裁剪，以防止梯度爆炸导致训练过程中的loss变为NaN。 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+            "field": "response",
+            "sha256": "793a78dbec9094387effd37cd75bd869dcbc0119e23601ba0956b4b6d816672b",
+            "start": 1091,
+            "end": 1189,
+            "quote": "If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_00_QsmJY0ZEjmnJtYrlSFzl5806.result",
+            "field": "response",
+            "sha256": "9f0ceedcf2a08283afb7cee6ffb2969f2c85b4584f2fcf5987fae31f6ea9cae8",
+            "start": 27,
+            "end": 72,
+            "quote": "This service has been suspended by its owner.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a225b63658962c18cc1f9c42ef23f109e0ce0e35a8e84dde77247045a6329dbb",
+            "start": 342,
+            "end": 408,
+            "quote": "torch.autograd.set_detect_anomaly(True)`（仅调试，慢）可定位前向/反向产生 NaN 的算子。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a225b63658962c18cc1f9c42ef23f109e0ce0e35a8e84dde77247045a6329dbb",
+            "start": 1025,
+            "end": 1070,
+            "quote": "torch.cuda.amp.GradScaler` 会自动跳过 inf/nan step",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+            "field": "response",
+            "sha256": "793a78dbec9094387effd37cd75bd869dcbc0119e23601ba0956b4b6d816672b",
+            "start": 1220,
+            "end": 1328,
+            "quote": "This mode should be enabled only for debugging as the different tests will slow down your program execution.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "call_00_ZrNVkaMWbgWOta7ZD89b0999.result",
+            "field": "response",
+            "sha256": "c6c800a893faa1fadd48a08997f0d2a1c490a27c1689586e587f8d00b3e4d6e0",
+            "start": 2309,
+            "end": 2350,
+            "quote": "# otherwise, optimizer.step() is skipped.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a225b63658962c18cc1f9c42ef23f109e0ce0e35a8e84dde77247045a6329dbb",
+            "start": 1475,
+            "end": 1501,
+            "quote": "我需要确认这些是\\\"方法片段\\\"还是\\\"完整流程\\\"",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2fdca7fe88e2ccc107154f6672cd083f41ab193727209c6567e0c4ec7914f8f",
+            "start": 5929,
+            "end": 5976,
+            "quote": "官方文档版本：**PyTorch 2.14（页面标注 v2.14.0 (stable)）**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2fdca7fe88e2ccc107154f6672cd083f41ab193727209c6567e0c4ec7914f8f",
+            "start": 5989,
+            "end": 6108,
+            "quote": "`torch.cuda.amp.GradScaler` / `torch.cpu.amp.GradScaler` 已 **deprecated**，改用 `torch.amp.GradScaler(\"cuda\"/\"cpu\", ...)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2fdca7fe88e2ccc107154f6672cd083f41ab193727209c6567e0c4ec7914f8f",
+            "start": 1036,
+            "end": 1074,
+            "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2fdca7fe88e2ccc107154f6672cd083f41ab193727209c6567e0c4ec7914f8f",
+            "start": 2342,
+            "end": 2495,
+            "quote": "loss.backward()\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0,\n                               error_if_nonfinite=True)\noptimizer.step()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2fdca7fe88e2ccc107154f6672cd083f41ab193727209c6567e0c4ec7914f8f",
+            "start": 5329,
+            "end": 5500,
+            "quote": "scaler.unscale_(optimizer)\n\n# Since the gradients of optimizer's assigned params are unscaled, clips as usual:\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2fdca7fe88e2ccc107154f6672cd083f41ab193727209c6567e0c4ec7914f8f",
+            "start": 57,
+            "end": 99,
+            "quote": "以下流程按\"先定位 → 再分因（梯度爆炸 / 学习率 / 数据 / AMP）\"组织。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+            "field": "response",
+            "sha256": "feee08715fd0d0a71a2246d5449708cc6d8704b0dba5edc891f57912754b8a3b",
+            "start": 1970,
+            "end": 2218,
+            "quote": "- **error_if_nonfinite** ([*bool*](https://docs.python.org/3/library/functions.html#bool \"(in Python v3.14)\")*, optional*) – if True, an error is thrown if the total norm of the gradients from `parameters` is `nan`, `inf`, or `-inf`. Default: False",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_w0410epyMSpjm8qO1EZZ9346.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_w0410epyMSpjm8qO1EZZ9346.result",
+            "alternative_body_event_ids": [
+              "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+              "call_00_AziAHevDHNvFLo9MzLs26773.result",
+              "call_00_gCUhby4iVzAQLlRfNsih5389.result",
+              "call_00_ZrNVkaMWbgWOta7ZD89b0999.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_DDqpqaG8cRykNK0ujTPE9850.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_DDqpqaG8cRykNK0ujTPE9850.result",
+            "alternative_body_event_ids": [
+              "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+              "call_00_AziAHevDHNvFLo9MzLs26773.result",
+              "call_00_gCUhby4iVzAQLlRfNsih5389.result",
+              "call_00_ZrNVkaMWbgWOta7ZD89b0999.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_QsmJY0ZEjmnJtYrlSFzl5806.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_QsmJY0ZEjmnJtYrlSFzl5806.result",
+            "alternative_body_event_ids": [],
+            "recovery_status": "no_later_body_observed",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-462457829d9f-predictors.json": "f455adccf7ccc3ae92b1fa20446d4d0f45ed3f5c350c1c2a1ae03ac19133c6ba",
+          "reviewed/development/case-462457829d9f-outcome.json": "ef4b6b93497dea83fa2ba7c3f58da419974c6e443ae1f8573c45e055b1fc8001",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+            "reference": "https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+                "quote": "Clip the gradient norm of an iterable of parameters."
+              }
+            ],
+            "boundary_evidence": "正文止于'Return type: Tensor'，无截断标注亦无独立完整核对依据"
+          },
+          {
+            "event_id": "call_00_w0410epyMSpjm8qO1EZZ9346.result",
+            "reference": "https://docs.pytorch.org/docs/stable/generated/torch.autograd.set_detect_anomaly.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "not_applicable",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_w0410epyMSpjm8qO1EZZ9346.result",
+                "quote": "# 404\n\n**File not found**"
+              }
+            ],
+            "boundary_evidence": "GitHub Pages 404，无正文",
+            "note": "与2.14 URL为同一目标文档重试，M2计一次"
+          },
+          {
+            "event_id": "call_00_DDqpqaG8cRykNK0ujTPE9850.result",
+            "reference": "https://docs.pytorch.org/docs/2.14/generated/torch.autograd.set_detect_anomaly.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "not_applicable",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_DDqpqaG8cRykNK0ujTPE9850.result",
+                "quote": "Page not found · GitHub Pages"
+              }
+            ],
+            "boundary_evidence": "404，无正文",
+            "note": "重试仍404，该API页文档最终状态为失败"
+          },
+          {
+            "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+            "reference": "https://docs.pytorch.org/docs/2.14/autograd.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_KtBRSXL9Oz2Ucpejr7fq2699.result",
+                "quote": "Context-manager that enables anomaly detection for the autograd engine."
+              }
+            ],
+            "boundary_evidence": "工具自称'The section ends at the start of the next heading (\"Autograd graph\")'，属自报无独立核对，完整性记unknown"
+          },
+          {
+            "event_id": "call_00_AziAHevDHNvFLo9MzLs26773.result",
+            "reference": "https://docs.pytorch.org/docs/2.14/amp.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_AziAHevDHNvFLo9MzLs26773.result",
+                "quote": "Warning\n\n[...]"
+              }
+            ],
+            "boundary_evidence": "GradScaler签名与参数已取得，但正文多处[...]省略标注"
+          },
+          {
+            "event_id": "call_00_gCUhby4iVzAQLlRfNsih5389.result",
+            "reference": "https://docs.pytorch.org/docs/2.14/cuda_environment_variables.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_gCUhby4iVzAQLlRfNsih5389.result",
+                "quote": "If set to `1`, makes CUDA calls synchronous. This can be useful for debugging."
+              }
+            ],
+            "boundary_evidence": "目标表格自CUDA_LAUNCH_BLOCKING至NVIDIA_TF32_OVERRIDE并含页脚，但导航/版本区有[...]省略，无独立核对，完整性记unknown"
+          },
+          {
+            "event_id": "call_00_ZrNVkaMWbgWOta7ZD89b0999.result",
+            "reference": "https://docs.pytorch.org/docs/2.14/notes/amp_examples.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_ZrNVkaMWbgWOta7ZD89b0999.result",
+                "quote": "[...]\n\n## Autocast and Custom Autograd Functions#"
+              }
+            ],
+            "boundary_evidence": "目标小节(Typical Mixed Precision Training、Gradient clipping)完整取得，但页面含[...]省略标注"
+          },
+          {
+            "event_id": "call_00_QsmJY0ZEjmnJtYrlSFzl5806.result",
+            "reference": "https://buglyst.com/learn/guides/pytorch-grad-nan-debug",
+            "ownership": "third_party",
+            "representation": "none",
+            "completeness": "not_applicable",
+            "score": null,
+            "evidence": [
+              {
+                "event_id": "call_00_QsmJY0ZEjmnJtYrlSFzl5806.result",
+                "quote": "This service has been suspended by its owner."
+              }
+            ],
+            "boundary_evidence": "服务暂停，无正文",
+            "note": "非官方文档，不计入M2官方均值"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

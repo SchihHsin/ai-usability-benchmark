@@ -32,11 +32,11 @@
     },
     {
       "id": "M10",
-      "score": 5,
-      "lower": null,
-      "upper": null,
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
       "status": "scored",
-      "reason": "答案提供端到端可执行方案：完整 TORCH_LIBRARY schema 定义、CUDA kernel 与 TORCH_LIBRARY_IMPL 注册、setuptools/CUDAExtension 的 setup.py 与 pip install 命令、torch.ops.load_library 加载顺序说明、register_fake/register_autograd 的 Python 代码、opcheck 测试代码，并明确前置条件（PyTorch ≥2.4、CUDA 环境、先加载 C++ 库再调用 torch.library API）。命令、参数与前提完整，仅需用户替换路径等环境值即可执行，无需修正内容错误。答案自述未实际编译运行及 CUDAExtension 示例非逐字来自抓取正文，属验证性披露而非可执行性缺口。call_42c5a82700e24df1afdf3e68 佐证 Python register_autograd 亦覆盖。call_32ff5960311941c6be8b7bf9 为搜索页，不用于 M10 评分。",
+      "reason": "C++ Autograd backward returns `{grad, grad, ...}` for `mymuladd`, but correct derivatives require `grad*b` and `grad*a`; this is a substantive correction.",
       "evidence": [
         {
           "event_id": "run-end",
@@ -49,6 +49,18 @@
         {
           "event_id": "run-end",
           "quote": "torch.library.opcheck(torch.ops.myops.mymuladd.default, args)  # 检查注册 API 用法是否正确"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "return {grad, grad, /*c 不可微*/ torch::Tensor()};"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "grad_a = grad * b"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "grad_b = grad * a"
         }
       ]
     }
@@ -182,6 +194,104 @@
       },
       {
         "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "case": "case-14cdb80f1bf3",
+        "kind": "outcome",
+        "path": [
+          "m9_m10",
+          1,
+          "score"
+        ],
+        "original": 5,
+        "replacement": 3,
+        "basis": "User-requested closeout: root checked frozen anchor and exact task evidence; no rubric or formula change."
+      },
+      {
+        "case": "case-14cdb80f1bf3",
+        "kind": "outcome",
+        "path": [
+          "m9_m10",
+          1,
+          "lower"
+        ],
+        "original": null,
+        "replacement": 3,
+        "basis": "User-requested closeout: root checked frozen anchor and exact task evidence; no rubric or formula change."
+      },
+      {
+        "case": "case-14cdb80f1bf3",
+        "kind": "outcome",
+        "path": [
+          "m9_m10",
+          1,
+          "upper"
+        ],
+        "original": null,
+        "replacement": 3,
+        "basis": "User-requested closeout: root checked frozen anchor and exact task evidence; no rubric or formula change."
+      },
+      {
+        "case": "case-14cdb80f1bf3",
+        "kind": "outcome",
+        "path": [
+          "m9_m10",
+          1,
+          "reason"
+        ],
+        "original": "答案提供端到端可执行方案：完整 TORCH_LIBRARY schema 定义、CUDA kernel 与 TORCH_LIBRARY_IMPL 注册、setuptools/CUDAExtension 的 setup.py 与 pip install 命令、torch.ops.load_library 加载顺序说明、register_fake/register_autograd 的 Python 代码、opcheck 测试代码，并明确前置条件（PyTorch ≥2.4、CUDA 环境、先加载 C++ 库再调用 torch.library API）。命令、参数与前提完整，仅需用户替换路径等环境值即可执行，无需修正内容错误。答案自述未实际编译运行及 CUDAExtension 示例非逐字来自抓取正文，属验证性披露而非可执行性缺口。call_42c5a82700e24df1afdf3e68 佐证 Python register_autograd 亦覆盖。call_32ff5960311941c6be8b7bf9 为搜索页，不用于 M10 评分。",
+        "replacement": "C++ Autograd backward returns `{grad, grad, ...}` for `mymuladd`, but correct derivatives require `grad*b` and `grad*a`; this is a substantive correction.",
+        "basis": "User-requested closeout: root checked frozen anchor and exact task evidence; no rubric or formula change."
+      },
+      {
+        "case": "case-14cdb80f1bf3",
+        "kind": "outcome",
+        "path": [
+          "m9_m10",
+          1,
+          "evidence"
+        ],
+        "original": [
+          {
+            "event_id": "run-end",
+            "quote": "# 加载方式（顺序重要：必须先加载 C++ 算子定义，再调用 torch.library 注册 API）\ntorch.ops.load_library(\"myops/_C.so\")"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "setup(\n    name=\"myops\",\n    ext_modules=[\n        cpp_extension.CUDAExtension(\n            name=\"myops._C\",\n            sources=[\"csrc/myops.cpp\", \"csrc/myops_cuda.cu\"]),\n    ],\n    cmdclass={\"build_ext\": cpp_extension.BuildExtension},\n)"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "torch.library.opcheck(torch.ops.myops.mymuladd.default, args)  # 检查注册 API 用法是否正确"
+          }
+        ],
+        "replacement": [
+          {
+            "event_id": "run-end",
+            "quote": "# 加载方式（顺序重要：必须先加载 C++ 算子定义，再调用 torch.library 注册 API）\ntorch.ops.load_library(\"myops/_C.so\")"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "setup(\n    name=\"myops\",\n    ext_modules=[\n        cpp_extension.CUDAExtension(\n            name=\"myops._C\",\n            sources=[\"csrc/myops.cpp\", \"csrc/myops_cuda.cu\"]),\n    ],\n    cmdclass={\"build_ext\": cpp_extension.BuildExtension},\n)"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "torch.library.opcheck(torch.ops.myops.mymuladd.default, args)  # 检查注册 API 用法是否正确"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "return {grad, grad, /*c 不可微*/ torch::Tensor()};"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "grad_a = grad * b"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "grad_b = grad * a"
+          }
+        ],
+        "basis": "User-requested closeout: root checked frozen anchor and exact task evidence; no rubric or formula change."
       }
     ],
     "semantic_validation": false,

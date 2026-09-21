@@ -1671,6 +1671,765 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T14:38:14.673512+00:00",
+      "process_sha256": "cc09c2459d18fe88c608accef86cbbbc63ad50830245d321d9333ab9dfbf4cef",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "由 **host 侧的 Tiling 函数在运行时根据真实 shape 计算**，得到 **TilingData**（结构体），连同 **block_dim**、**TilingKey**（可选）、**workspace size**（可选）一起写入上下文，框架再传给 kernel 侧指导数据切分",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_5_107e4189.result",
+            "evidence_quote": "经过Tiling计算后，获取到TilingData数据结构（切分算法相关参数）、block_dim变量、用于选择不同的kernel实现分支的TilingKey、算子workspace的大小，也就是**Tiling实现的输出**，并将这些输出设置到上下文结构中",
+            "verification": "source",
+            "reason": "原题包含三个子要求，均得到官方来源证实。(1) Tiling 怎么写：答案给出 host 侧 TilingFunc 完整代码（GetInputTensor(0)->GetShapeSize() 获取动态 shape、SetBlockDim、SaveToBuffer 序列化），与 WebFetch_5（CANN商用版7.0.0官方Tiling实现页）逐行一致；非对齐 formerNum/tailLength 等公式也与该来源相同。(2) TilingData 怎么定义：答案的 BEGIN_TILING_DATA_DEF/TILING_DATA_FIELD_DEF/REGISTER_TILING_DATA_CLASS 宏注册方式与 WebFetch_5 完全一致。(3) 怎么传递：答案说明框架将 RawTilingData buffer 作为核函数最后一个入参 GM_ADDR tiling 传入、kernel 侧用 GET_TILING_DATA 解析，核函数参数顺序固定'输入、输出、workspace、tiling'，与 WebFetch_8（CANN商用版8.0.RC1官方kernel侧实现页）原文'注意这里参数的顺序按照\"输入、输出、workspace、tiling\"的顺序排布，开发者不要调整其顺序'及 GET_TILING_DATA 样例一致。答案与来源无冲突。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "首次查询前5条均为第三方CSDN博客，无官方来源；第二次查询第1条为hiascend.com官方文档链接。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_698b3cb1.result",
+                "quote": "## 1. [掌握Ascend C算子开发核心：Tiling概念与动态Shape实现详解](https://blog.csdn.net/weixin_71147864/article/details/154141942)"
+              },
+              {
+                "event_id": "WebSearch_1_ea996edf.result",
+                "quote": "## 1. [Ascend C算子开发指南](https://www.hiascend.com/doc_center/source/zh/CANNCommunityEdition/900beta1/opdevg/Ascendcopdevg/"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 2.75,
+            "upper": 3.25,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_12e5736f.result",
+                "quote": "This URL returned a non-text resource (Content-Type: application/pdf)."
+              },
+              {
+                "event_id": "WebFetch_6_e7106b1e.result",
+                "quote": "**标题**: Host侧Tiling实现-开发流程-单算子API调用-算子调用-Ascend C算子开发-算子开发-CANN商用版8.0.RC2.2开发文档-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "# Tiling实现"
+              },
+              {
+                "event_id": "WebFetch_8_5b968245.result",
+                "quote": "GET_TILING_DATA(tiling_data, tiling);// 获取Tiling参数，详见下文介绍"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文给出Tiling实现完整流程、TilingData宏定义与注册、SaveToBuffer序列化、SetBlockDim/TilingKey/workspace设置、非对齐shape样例及kernel侧GET_TILING_DATA解析，主流程参数齐备；但kernel侧Process的CopyIn/Compute/CopyOut完整循环仅链接引用未在本页展开，属原题涉及分支细节未完整。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());"
+              },
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "REGISTER_TILING_DATA_CLASS(AddCustom, TilingData)"
+              },
+              {
+                "event_id": "WebFetch_8_5b968245.result",
+                "quote": "op.Init(x, y, z, tilingData.totalLength, tilingData.tileNum);"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "取得资料横跨商用版7.0.0、8.0.RC1、8.0.RC2.2与社区版9.0.0-beta1，各页标题含版本号，但无任何页面说明各版本间tiling接口的适用关系或版本选择依据，需自行假设宏在各版本通用。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "CANN商用版7.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_8_5b968245.result",
+                "quote": "CANN商用版8.0.RC1开发文档-昇腾社区"
+              },
+              {
+                "event_id": "WebSearch_1_ea996edf.result",
+                "quote": "## 1. [Ascend C算子开发指南](https://www.hiascend.com/doc_center/source/zh/CANNCommunityEdition/900beta1/opdevg/Ascendcopdevg/CANN%E7%A4%BE%E5%8C%BA%E7%89%88%209.0.0-beta1%20Ascend%20C%E7%AE%97%E5%AD%90%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97%2001.pdf)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索结果中相关独立第三方来源去重后≥6条：CSDN 154141942（devpress为镜像合并）、CSDN 155584224（cann.csdn为镜像合并）、hwcomputing.csdn 695f755a、juejin 7685561、CSDN 134349953、CSDN 153833725、CSDN 166009867、华为云博客439154（cnblogs/segmentfault为转载合并）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_698b3cb1.result",
+                "quote": "## 5. [深度解析Ascend C核心技术：Tiling计算、调试、交付件 ...](https://hwcomputing.csdn.net/695f755a0846ec2c4c5ae2fa.html)"
+              },
+              {
+                "event_id": "WebSearch_1_ea996edf.result",
+                "quote": "## 2. [昇腾 AscendC Tiling 设计实战：TilingFunc/TilingData 完整 ...](https://juejin.cn/post/7685561582915616778)"
+              },
+              {
+                "event_id": "WebSearch_7_f32035ea.result",
+                "quote": "## 2. [CANN ops-nn AddExample 算子全解析：从 y=x1+x2 到 ...](https://blog.csdn.net/gitblog_00330/article/details/166009867)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "仅一条第三方文章正文取得（CSDN 154141942）。其Tiling概念、GET_TILING_DATA宏用法与官方文档一致可追溯，但其aclrtMalloc/aclrtMemcpy传递路径等说法未获独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_ac33c101.result",
+                "quote": "使用**GET_TILING_DATA**宏函数获取tiling结构体"
+              },
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "通过REGISTER_TILING_DATA_CLASS接口，注册TilingData类，和自定义算子相关联。"
+              },
+              {
+                "event_id": "WebFetch_3_ac33c101.result",
+                "quote": "aclrtMemcpy(tilingDevice, tilingSize, tilingHost, tilingSize, ACL_MEMCPY_HOST_TO_DEVICE)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已准确覆盖原题所需：Tiling函数从TilingContext获取shape、BEGIN_TILING_DATA_DEF/REGISTER_TILING_DATA_CLASS定义、GetRawTilingData序列化与SetDataSize、GM_ADDR tiling传参与GET_TILING_DATA解析、32字节对齐约束，均与官方正文核对一致；仅版本适用关系自标不确定，非原题核心要求。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "用 `GET_TILING_DATA(tilingData, tiling)` 解出 TilingData 结构"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "BEGIN_TILING_DATA_DEF(TilingData) TILING_DATA_FIELD_DEF(uint32_t, totalLength);"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "host 侧把字段写入 `TilingContext->GetRawTilingData()->GetData()`（memcpy 或 tiling.set_XXX），`SetDataSize()`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_698b3cb1.dispatch",
+              "WebSearch_1_ea996edf.dispatch",
+              "WebFetch_2_12e5736f.dispatch",
+              "WebFetch_3_ac33c101.dispatch",
+              "WebSearch_4_b3446fd8.dispatch",
+              "WebFetch_5_107e4189.dispatch",
+              "WebFetch_6_e7106b1e.dispatch",
+              "WebSearch_7_f32035ea.dispatch",
+              "WebFetch_8_5b968245.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "答案明确给出所依据的版本：官方 CANN 商用版 7.0.0 与 8.0.RC1 的《Ascend C算子开发指南》，并声明两版本接口（BEGIN_TILING_DATA_DEF/TILING_DATA_FIELD_DEF/REGISTER_TILING_DATA_CLASS/SaveToBuffer/GET_TILING_DATA/TilingContext）完全一致，可视为 CANN 7.x–8.x 通用。所需组件（tiling 注册与解析接口）均给出有依据的适用范围，但结论落在 7.x–8.x 范围而非定到单一具体版本，且 9.0.0-beta1 与 8.0.RC2.2 未核实，属于范围级而非具体版本级锁定，符合4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "以上接口（`BEGIN_TILING_DATA_DEF`/`TILING_DATA_FIELD_DEF`/`REGISTER_TILING_DATA_CLASS`/`SaveToBuffer`/`GET_TILING_DATA`/`TilingContext`）在官方 **CANN 商用版 7.0.0** 与 **8.0.RC1** 文档中完全一致，可视为 CANN 7.x–8.x 通用。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "另检索到 **CANN 社区版 9.0.0-beta1**《Ascend C算子开发指南》PDF（hiascend 官方），但本任务工具不支持抓取 PDF，该版本正文内容未核实。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "The complete Tiling route still requires replacing explicit user operator/file placeholders such as `算子名称_tiling.h`, data types and operator names; this is M10=4.",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "在算子工程 `op_host` 目录下新建 `算子名称_tiling.h`，包含 `register/tilingdata_base.h`，用注册宏定义"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(),\n                        context->GetRawTilingData()->GetCapacity());\n    context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "GET_TILING_DATA(tilingData, tiling);   // 自动按注册的TilingData类型解析"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 75.44,
+            "lower": 75.44,
+            "upper": 75.44,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 75.4
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 75.44,
+          "lower": 75.44,
+          "upper": 75.44,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 75.4
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_698b3cb1.result",
+            "field": "response",
+            "sha256": "6c328e7daf90bd4a1ce8575fbc4d8556d561df65e38f74f67dc641778a4a14a2",
+            "start": 70,
+            "end": 180,
+            "quote": "## 1. [掌握Ascend C算子开发核心：Tiling概念与动态Shape实现详解](https://blog.csdn.net/weixin_71147864/article/details/154141942)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_1_ea996edf.result",
+            "field": "response",
+            "sha256": "a8e27c58e8e4f28a3127ab48618517f996782f9eaa638c05bb1e0fbffc247c7d",
+            "start": 110,
+            "end": 230,
+            "quote": "## 1. [Ascend C算子开发指南](https://www.hiascend.com/doc_center/source/zh/CANNCommunityEdition/900beta1/opdevg/Ascendcopdevg/",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_12e5736f.result",
+            "field": "response",
+            "sha256": "b83b665e6756bc33b6479dbe65b37548d4f0383bf482d3a2d04db5d2e4b8c789",
+            "start": 0,
+            "end": 70,
+            "quote": "This URL returned a non-text resource (Content-Type: application/pdf).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_6_e7106b1e.result",
+            "field": "response",
+            "sha256": "3a31b7181025a5bf67193b353c52035b07f249c37c9a7a88e771a6b97620ba87",
+            "start": 0,
+            "end": 84,
+            "quote": "**标题**: Host侧Tiling实现-开发流程-单算子API调用-算子调用-Ascend C算子开发-算子开发-CANN商用版8.0.RC2.2开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_107e4189.result",
+            "field": "response",
+            "sha256": "0aa8e6d76eaaeae2297b6f2248b8378c930b0404bc2f46bb27172719b6c153a9",
+            "start": 318,
+            "end": 328,
+            "quote": "# Tiling实现",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_8_5b968245.result",
+            "field": "response",
+            "sha256": "3e22591f07304bf09a25b78c65a03c414262b8fe30d5946db1d69169343a68a9",
+            "start": 646,
+            "end": 703,
+            "quote": "GET_TILING_DATA(tiling_data, tiling);// 获取Tiling参数，详见下文介绍",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_5_107e4189.result",
+            "field": "response",
+            "sha256": "0aa8e6d76eaaeae2297b6f2248b8378c930b0404bc2f46bb27172719b6c153a9",
+            "start": 4808,
+            "end": 4912,
+            "quote": "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_5_107e4189.result",
+            "field": "response",
+            "sha256": "0aa8e6d76eaaeae2297b6f2248b8378c930b0404bc2f46bb27172719b6c153a9",
+            "start": 2471,
+            "end": 2520,
+            "quote": "REGISTER_TILING_DATA_CLASS(AddCustom, TilingData)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_8_5b968245.result",
+            "field": "response",
+            "sha256": "3e22591f07304bf09a25b78c65a03c414262b8fe30d5946db1d69169343a68a9",
+            "start": 3528,
+            "end": 3589,
+            "quote": "op.Init(x, y, z, tilingData.totalLength, tilingData.tileNum);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_5_107e4189.result",
+            "field": "response",
+            "sha256": "0aa8e6d76eaaeae2297b6f2248b8378c930b0404bc2f46bb27172719b6c153a9",
+            "start": 55,
+            "end": 76,
+            "quote": "CANN商用版7.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_8_5b968245.result",
+            "field": "response",
+            "sha256": "3e22591f07304bf09a25b78c65a03c414262b8fe30d5946db1d69169343a68a9",
+            "start": 48,
+            "end": 71,
+            "quote": "CANN商用版8.0.RC1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_1_ea996edf.result",
+            "field": "response",
+            "sha256": "a8e27c58e8e4f28a3127ab48618517f996782f9eaa638c05bb1e0fbffc247c7d",
+            "start": 110,
+            "end": 352,
+            "quote": "## 1. [Ascend C算子开发指南](https://www.hiascend.com/doc_center/source/zh/CANNCommunityEdition/900beta1/opdevg/Ascendcopdevg/CANN%E7%A4%BE%E5%8C%BA%E7%89%88%209.0.0-beta1%20Ascend%20C%E7%AE%97%E5%AD%90%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97%2001.pdf)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_698b3cb1.result",
+            "field": "response",
+            "sha256": "6c328e7daf90bd4a1ce8575fbc4d8556d561df65e38f74f67dc641778a4a14a2",
+            "start": 1082,
+            "end": 1186,
+            "quote": "## 5. [深度解析Ascend C核心技术：Tiling计算、调试、交付件 ...](https://hwcomputing.csdn.net/695f755a0846ec2c4c5ae2fa.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_1_ea996edf.result",
+            "field": "response",
+            "sha256": "a8e27c58e8e4f28a3127ab48618517f996782f9eaa638c05bb1e0fbffc247c7d",
+            "start": 665,
+            "end": 768,
+            "quote": "## 2. [昇腾 AscendC Tiling 设计实战：TilingFunc/TilingData 完整 ...](https://juejin.cn/post/7685561582915616778)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_7_f32035ea.result",
+            "field": "response",
+            "sha256": "78632cffffb7a0072f6bf25ecbd6e0025d5740f25dae51ea9425407361c6272d",
+            "start": 515,
+            "end": 630,
+            "quote": "## 2. [CANN ops-nn AddExample 算子全解析：从 y=x1+x2 到 ...](https://blog.csdn.net/gitblog_00330/article/details/166009867)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebFetch_3_ac33c101.result",
+            "field": "response",
+            "sha256": "27b389f7153aa3dcf0a3fef1ce7369417c1e584a1418aeab1e3125c0b7c95afc",
+            "start": 3168,
+            "end": 3203,
+            "quote": "使用**GET_TILING_DATA**宏函数获取tiling结构体",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebFetch_5_107e4189.result",
+            "field": "response",
+            "sha256": "0aa8e6d76eaaeae2297b6f2248b8378c930b0404bc2f46bb27172719b6c153a9",
+            "start": 3954,
+            "end": 4009,
+            "quote": "通过REGISTER_TILING_DATA_CLASS接口，注册TilingData类，和自定义算子相关联。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebFetch_3_ac33c101.result",
+            "field": "response",
+            "sha256": "27b389f7153aa3dcf0a3fef1ce7369417c1e584a1418aeab1e3125c0b7c95afc",
+            "start": 3019,
+            "end": 3107,
+            "quote": "aclrtMemcpy(tilingDevice, tilingSize, tilingHost, tilingSize, ACL_MEMCPY_HOST_TO_DEVICE)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "11e10ec8852014cbfc8ca1663133ac910fd6eb9d770b6580686a03bdd23d129a",
+            "start": 880,
+            "end": 936,
+            "quote": "用 `GET_TILING_DATA(tilingData, tiling)` 解出 TilingData 结构",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "11e10ec8852014cbfc8ca1663133ac910fd6eb9d770b6580686a03bdd23d129a",
+            "start": 1203,
+            "end": 1282,
+            "quote": "BEGIN_TILING_DATA_DEF(TilingData) TILING_DATA_FIELD_DEF(uint32_t, totalLength);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "11e10ec8852014cbfc8ca1663133ac910fd6eb9d770b6580686a03bdd23d129a",
+            "start": 1401,
+            "end": 1500,
+            "quote": "host 侧把字段写入 `TilingContext->GetRawTilingData()->GetData()`（memcpy 或 tiling.set_XXX），`SetDataSize()`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "005c73d75ea8be6d4bcca4dab75c77bdba381f711a400aaff5d8bbe276815bec",
+            "start": 4127,
+            "end": 4323,
+            "quote": "以上接口（`BEGIN_TILING_DATA_DEF`/`TILING_DATA_FIELD_DEF`/`REGISTER_TILING_DATA_CLASS`/`SaveToBuffer`/`GET_TILING_DATA`/`TilingContext`）在官方 **CANN 商用版 7.0.0** 与 **8.0.RC1** 文档中完全一致，可视为 CANN 7.x–8.x 通用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "005c73d75ea8be6d4bcca4dab75c77bdba381f711a400aaff5d8bbe276815bec",
+            "start": 4326,
+            "end": 4415,
+            "quote": "另检索到 **CANN 社区版 9.0.0-beta1**《Ascend C算子开发指南》PDF（hiascend 官方），但本任务工具不支持抓取 PDF，该版本正文内容未核实。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "005c73d75ea8be6d4bcca4dab75c77bdba381f711a400aaff5d8bbe276815bec",
+            "start": 449,
+            "end": 525,
+            "quote": "在算子工程 `op_host` 目录下新建 `算子名称_tiling.h`，包含 `register/tilingdata_base.h`，用注册宏定义",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "005c73d75ea8be6d4bcca4dab75c77bdba381f711a400aaff5d8bbe276815bec",
+            "start": 1780,
+            "end": 1976,
+            "quote": "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(),\n                        context->GetRawTilingData()->GetCapacity());\n    context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "005c73d75ea8be6d4bcca4dab75c77bdba381f711a400aaff5d8bbe276815bec",
+            "start": 3198,
+            "end": 3260,
+            "quote": "GET_TILING_DATA(tilingData, tiling);   // 自动按注册的TilingData类型解析",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "005c73d75ea8be6d4bcca4dab75c77bdba381f711a400aaff5d8bbe276815bec",
+            "start": 217,
+            "end": 366,
+            "quote": "由 **host 侧的 Tiling 函数在运行时根据真实 shape 计算**，得到 **TilingData**（结构体），连同 **block_dim**、**TilingKey**（可选）、**workspace size**（可选）一起写入上下文，框架再传给 kernel 侧指导数据切分",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "WebFetch_5_107e4189.result",
+            "field": "response",
+            "sha256": "0aa8e6d76eaaeae2297b6f2248b8378c930b0404bc2f46bb27172719b6c153a9",
+            "start": 1002,
+            "end": 1131,
+            "quote": "经过Tiling计算后，获取到TilingData数据结构（切分算法相关参数）、block_dim变量、用于选择不同的kernel实现分支的TilingKey、算子workspace的大小，也就是**Tiling实现的输出**，并将这些输出设置到上下文结构中",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_2_12e5736f.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_2_12e5736f.result",
+            "alternative_body_event_ids": [
+              "WebFetch_3_ac33c101.result",
+              "WebFetch_5_107e4189.result",
+              "WebFetch_8_5b968245.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-WebFetch_6_e7106b1e.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_6_e7106b1e.result",
+            "alternative_body_event_ids": [
+              "WebFetch_8_5b968245.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-4711f9714056-predictors.json": "ee68096a16c655216f1f6b52c53718f12fc32b5aa537342ffa996d4fc3299484",
+          "reviewed/development/case-4711f9714056-outcome.json": "765dab135854ed236e4e52b55af14240982410db3c80d084352e9f59aee02336",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_12e5736f.result",
+            "url": "https://www.hiascend.com/doc_center/source/zh/CANNCommunityEdition/900beta1/opdevg/Ascendcopdevg/CANN社区版 9.0.0-beta1 Ascend C算子开发指南 01.pdf",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_12e5736f.result",
+                "quote": "This URL returned a non-text resource (Content-Type: application/pdf)."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_12e5736f.result",
+                "quote": "WebFetch cannot return images, PDFs, archives, audio or video — the bytes are dropped and you will see nothing useful."
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "WebFetch_3_ac33c101.result",
+            "url": "https://blog.csdn.net/weixin_71147864/article/details/154141942",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_ac33c101.result",
+                "quote": "# 掌握Ascend C算子开发核心：Tiling概念与动态Shape实现详解 原创"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_ac33c101.result",
+                "quote": "报名链接：[https://www.hiascend.com/developer/activities/cann20252#cann-camp-2502-intro](https://www.hiascend.com/developer/activities/cann20252#cann-camp-2502-intro"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "WebFetch_5_107e4189.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/700/operatordev/Ascendcopdevg/atlas_ascendc_10_0031.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "# Tiling实现"
+              },
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "REGISTER_TILING_DATA_CLASS(ReduceMaxCustom, ReduceMaxTilingData)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_107e4189.result",
+                "quote": "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());"
+              }
+            ],
+            "reference": "商用版7.0.0 Tiling实现页，正文含多段完整代码但页面起止无独立核对依据"
+          },
+          {
+            "event_id": "WebFetch_6_e7106b1e.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC22/developmentguide/opdevg/Ascendcopdevg/atlas_ascendc_10_0052.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_e7106b1e.result",
+                "quote": "**标题**: Host侧Tiling实现-开发流程-单算子API调用-算子调用-Ascend C算子开发-算子开发-CANN商用版8.0.RC2.2开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_e7106b1e.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "WebFetch_8_5b968245.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC1/developmentguide/opdevg/Ascendcopdevg/atlas_ascendc_10_0028.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_5b968245.result",
+                "quote": "#### 动态shape算子的kernel侧实现"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_8_5b968245.result",
+                "quote": "pipe.InitBuffer(outQueueZ, BUFFER_NUM,\n            (((this->tileLength + alignNum - 1) / alignNum) * alignNum) * sizeof(half));"
+              }
+            ],
+            "reference": "商用版8.0.RC1 kernel侧实现页，正文含完整代码段但页面起止无独立核对依据"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }
