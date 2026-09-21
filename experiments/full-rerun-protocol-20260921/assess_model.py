@@ -18,6 +18,8 @@ if __name__=='__main__':
  ledger=[json.loads(x) for x in (R/('ledger-'+model+'.jsonl')).read_text().splitlines()];runs={ (x['task'],x['ecosystem']):x for x in ledger if x.get('completed')}
  for r in runs.values():
   item=prepare_assessment.parse_run((R/'runs'/r['run_id']/'process.jsonl').resolve(),tasks,p)
+  for source in item['sources']:
+   if source.get('status')=='not_dispatched':source['role']='blocked_request'
   for kind in ['predictors','outcome']:
    existing=list((R/'assessments/development').glob(item['case']+'-'+kind+'*.json'))
    good=[f for f in existing if not json.loads(f.read_text()).get('error')]
