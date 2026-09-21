@@ -147,6 +147,727 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T05:37:49.361711+00:00",
+      "process_sha256": "c9bca843a883b7622389ccd6bcb81010cbb66dacb5aa8f1a5d215dcaef715bd8",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "判读：若 `reserved` 远大于 `allocated`，说明缓存分配器持有大量未复用块（碎片/回收不及时），优先走第 3 节分配器参数；若 `allocated` 本身逼近卡容量，则需减激活（第 4 节）。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "evidence_quote": "大于设定值的内存块在使用过程中不会进行切分，这有助于减少内存碎片。",
+            "verification": "source",
+            "reason": "原题各子要求逐项核对：(1) 排查方法——给出 npu-smi 命令组与 torch_npu 内存统计代码，接口存在性由官方 TorchNPU 6.0.RC3《Memory management API》清单确认（call_00_6tsy338QfeIuEhkv2vuw2304.result：memory_allocated/max_memory_allocated/memory_summary/empty_cache 等）。(2) PYTORCH_NPU_ALLOC_CONF——完整参数表、互斥约束、版本要求与可照抄配置示例均与 Ascend 官方正文一致（evidence 所引来源）。(3) 显存碎片——max_split_size_mb 减碎片、garbage_collection_threshold 主动回收语义有官方直接支撑（evidence_quote）。(4) 梯度检查点——checkpoint/checkpoint_sequential 用法、use_reentrant=False 推荐、preserve_rng_state 机制出自 PyTorch 官方文档（call_00_L3uZM9798nrq853DWCAH4029.result）。答案对未核实项（npu-smi 子命令、gradient_checkpointing_enable、torch.npu.amp）逐一明示并拒绝第三方错误说法，不损害已获官方支撑的核心内容。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为Ascend官方仓库的PYTORCH_NPU_ALLOC_CONF文档，第2条亦为hiascend官方文档。",
+            "evidence": [
+              {
+                "event_id": "call_00_fZZO5OEV2RcgtfweWEN38821.result",
+                "quote": "## 1. [PYTORCH_NPU_ALLOC_CONF.md](https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md)"
+              },
+              {
+                "event_id": "call_00_fZZO5OEV2RcgtfweWEN38821.result",
+                "quote": "## 2. [PYTORCH_NPU_ALLOC_CONF-内存管理-环境变量-参考 ...](https://www.hiascend.com/document/detail/zh/Pytorch/720/comref/Envvariables/Envir_012.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.75,
+            "upper": 4.5,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+                "quote": "## 支持的型号\n\n- <term>Atlas 训练系列产品</term>"
+              },
+              {
+                "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+                "quote": "（beta）torch_npu.npu.memory_summary\n\ntorch.npu.npu.NPUPluggableAllocator"
+              },
+              {
+                "event_id": "call_00_VFx9JSH819MMxHH5qzwm5382.result",
+                "quote": "模型推理时报错如下：\n\n这里为什么说0 bytes total capacity，通过npu-smi info命令查看内存不是0："
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题所需主流程及参数已说明完整：PYTORCH_NPU_ALLOC_CONF全部键值、示例、碎片相关约束（max_split_size_mb/expandable_segments/roundup_power2_divisions）；梯度检查点签名、参数、use_reentrant说明完整。缺口：hiascend内存API页仅列接口名称（指向torch.cuda），排查接口的具体用法与输出解读需另查；报错文本官方逐字形态未在官方正文取得。",
+            "evidence": [
+              {
+                "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+                "quote": "max\\_split\\_size\\_mb:<value\\>，内存块允许切分上限。\n\n    大于设定值的内存块在使用过程中不会进行切分，这有助于减少内存碎片。"
+              },
+              {
+                "event_id": "call_00_L3uZM9798nrq853DWCAH4029.result",
+                "quote": "Activation checkpointing is a technique that **trades compute for memory**（以计算换内存）。"
+              },
+              {
+                "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+                "quote": "Torch_npu提供内存管理相关的部分接口，具体可参考[torch.cuda]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: missing official constraint citations",
+            "evidence": [
+              {
+                "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+                "quote": "expandable\\_segments特性需在Ascend HDK 23.0.0及以上版本上使用。"
+              },
+              {
+                "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+                "quote": "throw\\_on\\_npumalloc\\_oom特性需在TorchNPU 26.2.0及以上版本、PyTorch 2.13.0及以上版本使用。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "预算内相关独立第三方来源去重计数约4条：hwcomputing.csdn调试排障手册、zdyedu运维排查博客、qq_38773993的mindie OOM文（devpress为镜像只计一次）、lpnh.cn CANN错误诊断文。其余为CUDA通用显存文或官方渠道（hiascend论坛排除）。3-4条对应3档。",
+            "evidence": [
+              {
+                "event_id": "call_00_HdqW0FJoIjOmNbiZhwTQ5298.result",
+                "quote": "## 3. [昇腾NPU调试排障手册——从“报错了“到“修好了“的完整流程_人工智能…](https://hwcomputing.csdn.net/6a124934662f9a54cb76a74a.html)"
+              },
+              {
+                "event_id": "call_00_HdqW0FJoIjOmNbiZhwTQ5298.result",
+                "quote": "## 4. [昇腾NPU运维故障排查实战：npu-smi诊断、训练卡死、通信异常处理](https://www.zdyedu.cn/blog/ascend-npu-ops-troubleshooting-guide/)"
+              },
+              {
+                "event_id": "call_00_YzNRTNjW1YdBuWKqdxSO3667.result",
+                "quote": "## 5. [昇腾 NPU 模型推理运行时错误诊断与修复实战：基于 CANN ...](https://lpnh.cn/news/2267614)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方关键说法部分可追溯：empty_cache/memory_allocated等接口名与PYTORCH_NPU_ALLOC_CONF=max_split_size_mb用法均与官方文档一致；但ASCEND_RT_MEMORY_REUSE=1、npuMemSize建议、torch.npu.memory._record_memory_history等关键说法未见官方核对依据，也缺独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_vHNCQWBuazldrwZGnyXY0583.result",
+                "quote": "os.environ['PYTORCH_NPU_ALLOC_CONF'] = 'max_split_size_mb:128'"
+              },
+              {
+                "event_id": "call_00_yiOt1fQylCUs5Q9ojrMJ9733.result",
+                "quote": "频繁OOM但显存未满**显存碎片化设置 `ASCEND_RT_MEMORY_REUSE=1` / 重启进程"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确的完整排查流程与优化手段：npu-smi、torch.npu.memory_summary/empty_cache（经官方API列表核实接口名正确）、PYTORCH_NPU_ALLOC_CONF的max_split_size_mb/garbage_collection_threshold（经官方文档核实正确）、梯度检查点。具体参数全集（expandable_segments、roundup_power2_divisions等键）与版本适用关系自认不确定需补查，对应4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "我较有把握的键是 `max_split_size_mb`（限制可切分的最大块，缓解碎片）和 `garbage_collection_threshold`（触发缓存回收的阈值）"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "用 `torch.npu.memory_summary()`、`torch.npu.memory_allocated()`、`torch.npu.max_memory_allocated()`、`torch.npu.memory_reserved()`、`torch.npu.reset_peak_memory_stats()` 定位峰值来源（注意：这些接口名我并非 100% 确定"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=10",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_fZZO5OEV2RcgtfweWEN38821.dispatch",
+              "call_00_XArn05GKtv98QPQS66HQ4356.dispatch",
+              "call_00_HdqW0FJoIjOmNbiZhwTQ5298.dispatch",
+              "call_00_6tsy338QfeIuEhkv2vuw2304.dispatch",
+              "call_00_YzNRTNjW1YdBuWKqdxSO3667.dispatch",
+              "call_00_y3w4PudpJrpXLU5LGRHD8645.dispatch",
+              "call_00_VFx9JSH819MMxHH5qzwm5382.dispatch",
+              "call_00_yiOt1fQylCUs5Q9ojrMJ9733.dispatch",
+              "call_00_vHNCQWBuazldrwZGnyXY0583.dispatch",
+              "call_00_L3uZM9798nrq853DWCAH4029.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "status": "supported",
+            "reason": "按 applicability 范围（所用 NPU 内存配置和检查点接口）核对最终答案：全部 ALLOC_CONF 参数在第 6 节给出有官方来源的版本适用下界（HDK/TorchNPU/PyTorch/CANN 多档），torch_npu 内存接口锚定官方 TorchNPU 6.0.RC3 API 清单，checkpoint 给出 PyTorch 侧版本依据（2.9 起必须显式传 use_reentrant）；但没有任何组件定到具体版本（均为下界范围），且 checkpoint 昇腾侧适配要求答案自标未核实，属'所有组件给出有依据的适用范围、至少一项未定到具体版本'的 4 分档，不到 5。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "`expandable_segments`：需 Ascend HDK ≥23.0.0；且与 `max_split_size_mb`/`garbage_collection_threshold` 互斥。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "`per_process_memory_fraction`：TorchNPU ≥26.1.0 且 PyTorch ≥2.10.0。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "梯度检查点在昇腾侧的专门版本要求 —— 未找到官方 Ascend 文档单列，本文按 PyTorch 标准接口给出，**Ascend 适配的额外要求未核实**。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "操作指导完整：npu-smi 排查命令（info/-t memory/-t proc/-i 0 -t common）、torch_npu 内存诊断 Python 代码、六条 export PYTORCH_NPU_ALLOC_CONF 官方配置示例（语法键:值,键:值 无空格、互斥约束、各参数版本前提如 HDK≥23.0.0 / TorchNPU≥26.2.0）齐备，无缺参数、无内容错误需修正，答案还甄别并拒绝了第三方错误说法（max_split_size_mb:128 并非关闭 ATB 预分配）。仅需替换明确标识且有说明的用户环境值（设备号 -i 0、checkpoint 示例中的 block_fn/x 等用户模型部分、按症状选择参数组合，答案附 reserved/allocated 判读逻辑），属 4 分档；checkpoint 需用户接入自身模型结构，未达无需补写即可直接执行的 5 分档。未实际运行不影响档位判定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "npu-smi info -t memory       # HBM 已用/总量"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "out = checkpoint(block_fn, x, use_reentrant=False)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "TorchNPU ≥26.2.0 且 PyTorch ≥2.13.0"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22",
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: missing official constraint citations"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing official constraint citations"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M4: missing official constraint citations"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_fZZO5OEV2RcgtfweWEN38821.result",
+            "field": "response",
+            "sha256": "130563d9d38a2d0a1434779f4fdcb125afee7cf356c428e095b26ce47662b40c",
+            "start": 76,
+            "end": 233,
+            "quote": "## 1. [PYTORCH_NPU_ALLOC_CONF.md](https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_fZZO5OEV2RcgtfweWEN38821.result",
+            "field": "response",
+            "sha256": "130563d9d38a2d0a1434779f4fdcb125afee7cf356c428e095b26ce47662b40c",
+            "start": 462,
+            "end": 601,
+            "quote": "## 2. [PYTORCH_NPU_ALLOC_CONF-内存管理-环境变量-参考 ...](https://www.hiascend.com/document/detail/zh/Pytorch/720/comref/Envvariables/Envir_012.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "field": "response",
+            "sha256": "3375c6d75875bc52b2b345a5ccba91b8dd5ecb47f664d743693fcabe4859e6b4",
+            "start": 9589,
+            "end": 9626,
+            "quote": "## 支持的型号\n\n- <term>Atlas 训练系列产品</term>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+            "field": "response",
+            "sha256": "77363a881db6930bd499a95b8d30d17552a5d30dbfc8ca38e73cba824950486d",
+            "start": 1265,
+            "end": 1336,
+            "quote": "（beta）torch_npu.npu.memory_summary\n\ntorch.npu.npu.NPUPluggableAllocator",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_VFx9JSH819MMxHH5qzwm5382.result",
+            "field": "response",
+            "sha256": "a4d48111a79a9b475b16499a403036ddef0434cca7bb2779e4ef50a72ef40250",
+            "start": 287,
+            "end": 352,
+            "quote": "模型推理时报错如下：\n\n这里为什么说0 bytes total capacity，通过npu-smi info命令查看内存不是0：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "field": "response",
+            "sha256": "3375c6d75875bc52b2b345a5ccba91b8dd5ecb47f664d743693fcabe4859e6b4",
+            "start": 686,
+            "end": 765,
+            "quote": "max\\_split\\_size\\_mb:<value\\>，内存块允许切分上限。\n\n    大于设定值的内存块在使用过程中不会进行切分，这有助于减少内存碎片。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_L3uZM9798nrq853DWCAH4029.result",
+            "field": "response",
+            "sha256": "2cbac10ce7dd9650263f31e3bd84902bd692c2e025c8917ade48f3152f399d87",
+            "start": 1158,
+            "end": 1241,
+            "quote": "Activation checkpointing is a technique that **trades compute for memory**（以计算换内存）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+            "field": "response",
+            "sha256": "77363a881db6930bd499a95b8d30d17552a5d30dbfc8ca38e73cba824950486d",
+            "start": 452,
+            "end": 492,
+            "quote": "Torch_npu提供内存管理相关的部分接口，具体可参考[torch.cuda]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "field": "response",
+            "sha256": "3375c6d75875bc52b2b345a5ccba91b8dd5ecb47f664d743693fcabe4859e6b4",
+            "start": 8018,
+            "end": 8068,
+            "quote": "expandable\\_segments特性需在Ascend HDK 23.0.0及以上版本上使用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "field": "response",
+            "sha256": "3375c6d75875bc52b2b345a5ccba91b8dd5ecb47f664d743693fcabe4859e6b4",
+            "start": 9133,
+            "end": 9205,
+            "quote": "throw\\_on\\_npumalloc\\_oom特性需在TorchNPU 26.2.0及以上版本、PyTorch 2.13.0及以上版本使用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_HdqW0FJoIjOmNbiZhwTQ5298.result",
+            "field": "response",
+            "sha256": "556052019b1a91ae786f0d22ef28dadab47d5f3217b4a50a54460fb79ba17987",
+            "start": 711,
+            "end": 815,
+            "quote": "## 3. [昇腾NPU调试排障手册——从“报错了“到“修好了“的完整流程_人工智能…](https://hwcomputing.csdn.net/6a124934662f9a54cb76a74a.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_HdqW0FJoIjOmNbiZhwTQ5298.result",
+            "field": "response",
+            "sha256": "556052019b1a91ae786f0d22ef28dadab47d5f3217b4a50a54460fb79ba17987",
+            "start": 970,
+            "end": 1079,
+            "quote": "## 4. [昇腾NPU运维故障排查实战：npu-smi诊断、训练卡死、通信异常处理](https://www.zdyedu.cn/blog/ascend-npu-ops-troubleshooting-guide/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_YzNRTNjW1YdBuWKqdxSO3667.result",
+            "field": "response",
+            "sha256": "c9a933f3d3180d7b03ea0d411998ea9a7807950d40734fc42c05851ef8e977eb",
+            "start": 1500,
+            "end": 1573,
+            "quote": "## 5. [昇腾 NPU 模型推理运行时错误诊断与修复实战：基于 CANN ...](https://lpnh.cn/news/2267614)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_vHNCQWBuazldrwZGnyXY0583.result",
+            "field": "response",
+            "sha256": "bc6638ab4bac8bdf57499947c9da77e237380ac112c2b5022bcadabd9cdad2d0",
+            "start": 4342,
+            "end": 4404,
+            "quote": "os.environ['PYTORCH_NPU_ALLOC_CONF'] = 'max_split_size_mb:128'",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_yiOt1fQylCUs5Q9ojrMJ9733.result",
+            "field": "response",
+            "sha256": "e9884d83168833ef7d355338f32240fac0ada208d6d7e59100abf42eb439f31e",
+            "start": 6306,
+            "end": 6359,
+            "quote": "频繁OOM但显存未满**显存碎片化设置 `ASCEND_RT_MEMORY_REUSE=1` / 重启进程",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f76134815fbcdc057912b2857e531da876cd38c7bdf23991d497d4333687e4c5",
+            "start": 1130,
+            "end": 1217,
+            "quote": "我较有把握的键是 `max_split_size_mb`（限制可切分的最大块，缓解碎片）和 `garbage_collection_threshold`（触发缓存回收的阈值）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f76134815fbcdc057912b2857e531da876cd38c7bdf23991d497d4333687e4c5",
+            "start": 658,
+            "end": 849,
+            "quote": "用 `torch.npu.memory_summary()`、`torch.npu.memory_allocated()`、`torch.npu.max_memory_allocated()`、`torch.npu.memory_reserved()`、`torch.npu.reset_peak_memory_stats()` 定位峰值来源（注意：这些接口名我并非 100% 确定",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 6668,
+            "end": 6768,
+            "quote": "`expandable_segments`：需 Ascend HDK ≥23.0.0；且与 `max_split_size_mb`/`garbage_collection_threshold` 互斥。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 6898,
+            "end": 6963,
+            "quote": "`per_process_memory_fraction`：TorchNPU ≥26.1.0 且 PyTorch ≥2.10.0。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 7962,
+            "end": 8041,
+            "quote": "梯度检查点在昇腾侧的专门版本要求 —— 未找到官方 Ascend 文档单列，本文按 PyTorch 标准接口给出，**Ascend 适配的额外要求未核实**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 4473,
+            "end": 4556,
+            "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 1537,
+            "end": 1577,
+            "quote": "npu-smi info -t memory       # HBM 已用/总量",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 5448,
+            "end": 5498,
+            "quote": "out = checkpoint(block_fn, x, use_reentrant=False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 4118,
+            "end": 4152,
+            "quote": "TorchNPU ≥26.2.0 且 PyTorch ≥2.13.0",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4c74327b944de2780d0d8eafa8bfba4d9f88996a2a2f89b0f89eee634abdfb3c",
+            "start": 2621,
+            "end": 2728,
+            "quote": "判读：若 `reserved` 远大于 `allocated`，说明缓存分配器持有大量未复用块（碎片/回收不及时），优先走第 3 节分配器参数；若 `allocated` 本身逼近卡容量，则需减激活（第 4 节）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "field": "response",
+            "sha256": "3375c6d75875bc52b2b345a5ccba91b8dd5ecb47f664d743693fcabe4859e6b4",
+            "start": 732,
+            "end": 765,
+            "quote": "大于设定值的内存块在使用过程中不会进行切分，这有助于减少内存碎片。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-b23d45e8c904-predictors.json": "01da6deecf4243c955de0ec4dc502a93914fdc25eec3b6a60b75290f14d665ef",
+          "reviewed/development/case-b23d45e8c904-outcome.json": "6080dfb044c37cad944417107ede4b884786172ad3ed1db72f84c401813cc08f",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+                "quote": "# PYTORCH\\_NPU\\_ALLOC\\_CONF\n\n## 功能描述"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_XArn05GKtv98QPQS66HQ4356.result",
+                "quote": "## 支持的型号\n\n- <term>Atlas 训练系列产品</term>"
+              }
+            ],
+            "reference": "https://github.com/Ascend/pytorch/blob/master/docs/zh/api/environment_variable/memory_management/PYTORCH_NPU_ALLOC_CONF.md"
+          },
+          {
+            "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+                "quote": "**表1** Memory management API"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_6tsy338QfeIuEhkv2vuw2304.result",
+                "quote": "torch.npu.npu.change_current_allocator"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/Pytorch/60RC3/apiref/apilist/ptaoplist_000873.html"
+          },
+          {
+            "event_id": "call_00_VFx9JSH819MMxHH5qzwm5382.result",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_VFx9JSH819MMxHH5qzwm5382.result",
+                "quote": "模型推理时报错如下：\n\n这里为什么说0 bytes total capacity"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_VFx9JSH819MMxHH5qzwm5382.result",
+                "quote": "![t('forum.solved')]……已解决"
+              }
+            ],
+            "reference": "https://www.hiascend.com/dev/forum/thread-0261157187867914417-1-1.html"
+          },
+          {
+            "event_id": "call_00_yiOt1fQylCUs5Q9ojrMJ9733.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_yiOt1fQylCUs5Q9ojrMJ9733.result",
+                "quote": "# 昇腾NPU调试排障手册——从“报错了“到“修好了“的完整流程"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_yiOt1fQylCUs5Q9ojrMJ9733.result",
+                "quote": "**记住**：昇腾的报错信息有时比较晦涩，**不要只看最后一行**"
+              }
+            ],
+            "reference": "https://hwcomputing.csdn.net/6a124934662f9a54cb76a74a.html"
+          },
+          {
+            "event_id": "call_00_vHNCQWBuazldrwZGnyXY0583.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_vHNCQWBuazldrwZGnyXY0583.result",
+                "quote": "## 四、显存溢出（OOM）处理"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_vHNCQWBuazldrwZGnyXY0583.result",
+                "quote": "## 小结"
+              }
+            ],
+            "reference": "https://www.zdyedu.cn/blog/ascend-npu-ops-troubleshooting-guide/"
+          },
+          {
+            "event_id": "call_00_L3uZM9798nrq853DWCAH4029.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_L3uZM9798nrq853DWCAH4029.result",
+                "quote": "## 一、`torch.utils.checkpoint.checkpoint` 函数签名"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_L3uZM9798nrq853DWCAH4029.result",
+                "quote": "**文档元信息**：Created On: Jun 16, 2025 | Last Updated On: Jul 27, 2026。"
+              }
+            ],
+            "reference": "https://pytorch.org/docs/stable/checkpoint.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

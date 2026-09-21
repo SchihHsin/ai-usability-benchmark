@@ -1,0 +1,758 @@
+{
+  "metrics": [
+    {
+      "id": "M1",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "scored",
+      "reason": "首次查询前5条全部为第三方博客（CSDN/百度/腾讯云），无官方来源；第二次查询第1条即为 docs.pytorch.org 官方文档页。",
+      "evidence": [
+        {
+          "event_id": "call_bdf66a7b4f724c80903a0de7.result",
+          "quote": "## 1. [通过设置PYTORCH_CUDA_ALLOC_CONF中的max_split ...](https://blog.csdn.net/weixin_48867081/article/details/132908374)"
+        },
+        {
+          "event_id": "call_e11122a3340f49979a7ec850.result",
+          "quote": "## 1. [CUDA Environment Variables — PyTorch main documentation](http://docs.pytorch.org/docs/main/cuda_environment_variables.html)"
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "score": null,
+      "lower": 4.0,
+      "upper": 4.25,
+      "status": "bounded",
+      "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+      "evidence": [
+        {
+          "event_id": "call_ffb381e6412b47d4b965edaf.result",
+          "quote": "`PYTORCH_ALLOC_CONF`\n\nFor a more in depth explanation of this environment variable, see Memory management. `PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility."
+        },
+        {
+          "event_id": "call_d62fc97f44b24b9193e80406.result",
+          "quote": "`empty_cache`\n\nRelease all unoccupied cached memory currently held by the caching allocator so that those can be used in other GPU application and visible in nvidia-smi."
+        },
+        {
+          "event_id": "call_caf751680a0a445dbaab5289.result",
+          "quote": "Activation checkpointing is a technique that trades compute for memory."
+        },
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "**Truncation status:** ✅ No truncation — the section is complete in the provided content."
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "notes/cuda.html 完整给出 empty_cache 语义、缓存分配器原理、PYTORCH_ALLOC_CONF 全部选项（max_split_size_mb、expandable_segments、garbage_collection_threshold 等）的语法、默认值、backend 限制与 OOM 使用约束；checkpoint.html 给出 use_reentrant 两种实现差异与代码示例；cuda.html 列出 memory_stats/memory_summary/memory_snapshot 等排查接口。原题所需的排查步骤、参数与约束均已说明。",
+      "evidence": [
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "This option should be used as a last resort for a workload that is aborting due to 'out of memory' and showing a large amount of inactive split blocks."
+        },
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "Calling `empty_cache()` releases all **unused** cached memory from PyTorch so that those can be used by other GPU applications."
+        },
+        {
+          "event_id": "call_caf751680a0a445dbaab5289.result",
+          "quote": "There are currently two checkpointing implementations available, determined by the `use_reentrant` parameter. It is recommended that you use `use_reentrant=False`."
+        },
+        {
+          "event_id": "call_d62fc97f44b24b9193e80406.result",
+          "quote": "`memory_snapshot`\n\nReturn a snapshot of the CUDA memory allocator state across all devices."
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "scored",
+      "reason": "已明确部分适用关系（别名关系、cudaMallocAsync 需 CUDA 11.4+、各选项仅在 backend:native 下有效、use_reentrant 未来版本将强制显式传递），但缺少各 alloc 配置项（如 expandable_segments、roundup_power2_divisions）首次可用 的 PyTorch 版本对应关系，无法直接完成版本适用判断。",
+      "evidence": [
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "`cudaMallocAsync` requires CUDA 11.4 or newer."
+        },
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "`max_split_size_mb` is only meaningful with `backend:native`."
+        },
+        {
+          "event_id": "call_caf751680a0a445dbaab5289.result",
+          "quote": "In a future release, we will raise an exception if `use_reentrant` is not passed."
+        },
+        {
+          "event_id": "call_ffb381e6412b47d4b965edaf.result",
+          "quote": "`PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility."
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "统一预算内去重后相关独立第三方来源≥6条：CSDN博客2条、百度开发者、腾讯云社区、知乎专栏（已抓取确认相关）、CSDN问答2条、jishuzhan/juejin（疑转载，按1-2条保守计）；devpress 为 CSDN 132908374 的镜像已去重。",
+      "evidence": [
+        {
+          "event_id": "call_bdf66a7b4f724c80903a0de7.result",
+          "quote": "## 4. [Pytorch 内存分配与 max_split_size_mb-腾讯云开发者社区 ...](https://cloud.tencent.com/developer/article/2400259)"
+        },
+        {
+          "event_id": "call_a4b24aa381ac42a596accfee.result",
+          "quote": "## 5. [【深度排查】别再滥用torch.cuda.empty_cache ()了！记一 ...](https://zhuanlan.zhihu.com/p/1925558794135507555)"
+        },
+        {
+          "event_id": "call_a4b24aa381ac42a596accfee.result",
+          "quote": "## 3. [CUDA内存不足：如何优化PyTorch显存使用？](https://ask.csdn.net/questions/8794703)"
+        }
+      ]
+    },
+    {
+      "id": "M6",
+      "score": null,
+      "lower": 1,
+      "upper": 5,
+      "status": "insufficient_evidence",
+      "reason": "自动引文审计未匹配，原判断保留在 raw_status；知乎文章对关键主张（empty_cache 为同步阻塞、破坏缓存拖慢训练）给出第一手 Profiler 测量数据，与官方文档语义一致（释放未用缓存、不释放已占用、不宜滥用），未见未解决矛盾；但其性能结论缺乏独立来源交叉印证，其余第三方仅见搜索摘要未核验全文。",
+      "evidence": [
+        {
+          "event_id": "call_486f5096feb247c9bf9c6571.result",
+          "quote": "Self CPU time total: 25.505s\n\nSelf CUDA time total: 15.413s"
+        },
+        {
+          "event_id": "call_486f5096feb247c9bf9c6571.result",
+          "quote": "`torch.cuda.empty_cache()`是一个**同步操作**。"
+        },
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "However, the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch."
+        }
+      ],
+      "raw_status": "scored"
+    },
+    {
+      "id": "M7",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "检索前回答已正确覆盖原题三项：reserved/allocated 碎片化诊断思路、PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 语法（与官方 PYTORCH_ALLOC_CONF=<option>:<value> 格式一致）、梯度检查点 use_reentrant=False、empty_cache 只释放未用缓存且不宜在训练循环反复调用——均被后续官方来源核实，无关键错误；原题所需流程、参数与约束齐备。",
+      "evidence": [
+        {
+          "event_id": "client-note-00005",
+          "quote": "`PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128`（旧写法 `max_split_size_mb=128`）缓解碎片导致的 OOM，但它可能降低分配性能。"
+        },
+        {
+          "event_id": "client-note-00005",
+          "quote": "`torch.cuda.empty_cache()` 释放缓存的非活跃块给其他进程/驱动，但对当前进程已分配的显存无效，不宜放在训练循环里反复调用。"
+        },
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`"
+        }
+      ]
+    },
+    {
+      "id": "M8",
+      "score": 2,
+      "lower": 2,
+      "upper": 2,
+      "status": "scored",
+      "reason": "调度器实际dispatch计数 S+F=8",
+      "evidence": []
+    }
+  ],
+  "m2_documents": [
+    {
+      "event_id": "call_ffb381e6412b47d4b965edaf.result",
+      "url": "https://docs.pytorch.org/docs/main/cuda_environment_variables.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "incomplete",
+      "score": 4,
+      "evidence": [
+        {
+          "event_id": "call_ffb381e6412b47d4b965edaf.result",
+          "quote": "`PYTORCH_ALLOC_CONF`\n\nFor a more in depth explanation of this environment variable, see Memory management. `PYTORCH_CUDA_ALLOC_CONF` is its alias"
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_ffb381e6412b47d4b965edaf.result",
+          "quote": "[...]"
+        }
+      ],
+      "reference": "正文表格含多处[...]截断，缺 PYTORCH_CUDA_ALLOC_CONF 完整配置项说明"
+    },
+    {
+      "event_id": "call_d62fc97f44b24b9193e80406.result",
+      "url": "https://docs.pytorch.org/docs/main/cuda.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "incomplete",
+      "score": 4,
+      "evidence": [
+        {
+          "event_id": "call_d62fc97f44b24b9193e80406.result",
+          "quote": "`memory_snapshot`\n\nReturn a snapshot of the CUDA memory allocator state across all devices."
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_d62fc97f44b24b9193e80406.result",
+          "quote": "[...]"
+        }
+      ],
+      "reference": "API 列表正文多处[...]截断，各函数仅一句签名描述"
+    },
+    {
+      "event_id": "call_caf751680a0a445dbaab5289.result",
+      "url": "https://docs.pytorch.org/docs/main/checkpoint.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "incomplete",
+      "score": 4,
+      "evidence": [
+        {
+          "event_id": "call_caf751680a0a445dbaab5289.result",
+          "quote": "torch.utils.checkpoint.checkpoint(*function:Callable\")[[...],_T]*, **args:Any*, *use_reentrant:bool\")|None\")=None*"
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_caf751680a0a445dbaab5289.result",
+          "quote": "[...]"
+        }
+      ],
+      "reference": "取得 checkpoint 完整签名、参数说明与示例，但正文多处[...]截断"
+    },
+    {
+      "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+      "url": "https://docs.pytorch.org/docs/main/notes/cuda.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "unknown",
+      "score": null,
+      "lower": 4,
+      "upper": 5,
+      "evidence": [
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "**Truncation status:** ✅ No truncation — the section is complete in the provided content."
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "The `Memory management` section begins immediately after the *BC note: Using grads on the default stream* subsection"
+        }
+      ],
+      "reference": "起止边界由工具自报，无独立核对依据，完整性保留unknown，档位[4,5]"
+    },
+    {
+      "event_id": "call_486f5096feb247c9bf9c6571.result",
+      "url": "https://zhuanlan.zhihu.com/p/1925558794135507555",
+      "ownership": "third_party",
+      "representation": "body",
+      "completeness": "incomplete",
+      "score": null,
+      "evidence": [
+        {
+          "event_id": "call_486f5096feb247c9bf9c6571.result",
+          "quote": "`torch.cuda.empty_cache()`是一个**同步操作**。"
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_486f5096feb247c9bf9c6571.result",
+          "quote": "<!--THE END-->"
+        }
+      ],
+      "reference": "第三方来源，不参与M2官方均值；正文含注释截断标记"
+    }
+  ],
+  "m4_check": {
+    "required_relations": [
+      "PYTORCH_CUDA_ALLOC_CONF 与 PYTORCH_ALLOC_CONF 的别名/版本关系",
+      "backend:cudaMallocAsync 的 CUDA 版本要求",
+      "max_split_size_mb/roundup_power2_divisions/garbage_collection_threshold 与 backend:native 的适用关系",
+      "expandable_segments 等配置项可用的 PyTorch 版本",
+      "use_reentrant 参数行为随版本的变化"
+    ],
+    "missing_relations": [
+      "各 alloc 配置项（expandable_segments、roundup_power2_divisions 等）首次引入/可用的 PyTorch 版本",
+      "use_reentrant 各版本默认值差异"
+    ],
+    "unresolved_conflicts": [],
+    "determination": "partial",
+    "combination": null,
+    "evidence": [
+      {
+        "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+        "quote": "`cudaMallocAsync` requires CUDA 11.4 or newer."
+      },
+      {
+        "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+        "quote": "`roundup_power2_divisions` is only meaningful with `backend:native`."
+      },
+      {
+        "event_id": "call_caf751680a0a445dbaab5289.result",
+        "quote": "In a future release, we will raise an exception if `use_reentrant` is not passed."
+      }
+    ]
+  },
+  "quote_audit": [
+    {
+      "metric": "M6",
+      "bad_refs": [
+        {
+          "event_id": "call_486f5096feb247c9bf9c6571.result",
+          "quote": "Self CPU time total: 25.505s\n\nSelf CUDA time total: 15.413s"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-bea093a3966b",
+  "task_id": "Q",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "predictors",
+  "raw_assessment": {
+    "metrics": [
+      {
+        "id": "M1",
+        "score": 3,
+        "lower": 3,
+        "upper": 3,
+        "status": "scored",
+        "reason": "首次查询前5条全部为第三方博客（CSDN/百度/腾讯云），无官方来源；第二次查询第1条即为 docs.pytorch.org 官方文档页。",
+        "evidence": [
+          {
+            "event_id": "call_bdf66a7b4f724c80903a0de7.result",
+            "quote": "## 1. [通过设置PYTORCH_CUDA_ALLOC_CONF中的max_split ...](https://blog.csdn.net/weixin_48867081/article/details/132908374)"
+          },
+          {
+            "event_id": "call_e11122a3340f49979a7ec850.result",
+            "quote": "## 1. [CUDA Environment Variables — PyTorch main documentation](http://docs.pytorch.org/docs/main/cuda_environment_variables.html)"
+          }
+        ]
+      },
+      {
+        "id": "M2",
+        "score": null,
+        "lower": 4,
+        "upper": 4.25,
+        "status": "bounded",
+        "reason": "4个官方文档均取得直接正文但前三个存在明显[...]截断标记（各4分）；notes/cuda.html 的 Memory management 节给出起止边界但完整性属工具自报、无独立核对依据，保留[4,5]。逐项等权平均得[4.00,4.25]。",
+        "evidence": [
+          {
+            "event_id": "call_ffb381e6412b47d4b965edaf.result",
+            "quote": "`PYTORCH_ALLOC_CONF`\n\nFor a more in depth explanation of this environment variable, see Memory management. `PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility."
+          },
+          {
+            "event_id": "call_d62fc97f44b24b9193e80406.result",
+            "quote": "`empty_cache`\n\nRelease all unoccupied cached memory currently held by the caching allocator so that those can be used in other GPU application and visible in nvidia-smi."
+          },
+          {
+            "event_id": "call_caf751680a0a445dbaab5289.result",
+            "quote": "Activation checkpointing is a technique that trades compute for memory."
+          },
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "**Truncation status:** ✅ No truncation — the section is complete in the provided content."
+          }
+        ]
+      },
+      {
+        "id": "M3",
+        "score": 5,
+        "lower": 5,
+        "upper": 5,
+        "status": "scored",
+        "reason": "notes/cuda.html 完整给出 empty_cache 语义、缓存分配器原理、PYTORCH_ALLOC_CONF 全部选项（max_split_size_mb、expandable_segments、garbage_collection_threshold 等）的语法、默认值、backend 限制与 OOM 使用约束；checkpoint.html 给出 use_reentrant 两种实现差异与代码示例；cuda.html 列出 memory_stats/memory_summary/memory_snapshot 等排查接口。原题所需的排查步骤、参数与约束均已说明。",
+        "evidence": [
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "This option should be used as a last resort for a workload that is aborting due to 'out of memory' and showing a large amount of inactive split blocks."
+          },
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "Calling `empty_cache()` releases all **unused** cached memory from PyTorch so that those can be used by other GPU applications."
+          },
+          {
+            "event_id": "call_caf751680a0a445dbaab5289.result",
+            "quote": "There are currently two checkpointing implementations available, determined by the `use_reentrant` parameter. It is recommended that you use `use_reentrant=False`."
+          },
+          {
+            "event_id": "call_d62fc97f44b24b9193e80406.result",
+            "quote": "`memory_snapshot`\n\nReturn a snapshot of the CUDA memory allocator state across all devices."
+          }
+        ]
+      },
+      {
+        "id": "M4",
+        "score": 3,
+        "lower": 3,
+        "upper": 3,
+        "status": "scored",
+        "reason": "已明确部分适用关系（别名关系、cudaMallocAsync 需 CUDA 11.4+、各选项仅在 backend:native 下有效、use_reentrant 未来版本将强制显式传递），但缺少各 alloc 配置项（如 expandable_segments、roundup_power2_divisions）首次可用 的 PyTorch 版本对应关系，无法直接完成版本适用判断。",
+        "evidence": [
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "`cudaMallocAsync` requires CUDA 11.4 or newer."
+          },
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "`max_split_size_mb` is only meaningful with `backend:native`."
+          },
+          {
+            "event_id": "call_caf751680a0a445dbaab5289.result",
+            "quote": "In a future release, we will raise an exception if `use_reentrant` is not passed."
+          },
+          {
+            "event_id": "call_ffb381e6412b47d4b965edaf.result",
+            "quote": "`PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility."
+          }
+        ]
+      },
+      {
+        "id": "M5",
+        "score": 5,
+        "lower": 5,
+        "upper": 5,
+        "status": "scored",
+        "reason": "统一预算内去重后相关独立第三方来源≥6条：CSDN博客2条、百度开发者、腾讯云社区、知乎专栏（已抓取确认相关）、CSDN问答2条、jishuzhan/juejin（疑转载，按1-2条保守计）；devpress 为 CSDN 132908374 的镜像已去重。",
+        "evidence": [
+          {
+            "event_id": "call_bdf66a7b4f724c80903a0de7.result",
+            "quote": "## 4. [Pytorch 内存分配与 max_split_size_mb-腾讯云开发者社区 ...](https://cloud.tencent.com/developer/article/2400259)"
+          },
+          {
+            "event_id": "call_a4b24aa381ac42a596accfee.result",
+            "quote": "## 5. [【深度排查】别再滥用torch.cuda.empty_cache ()了！记一 ...](https://zhuanlan.zhihu.com/p/1925558794135507555)"
+          },
+          {
+            "event_id": "call_a4b24aa381ac42a596accfee.result",
+            "quote": "## 3. [CUDA内存不足：如何优化PyTorch显存使用？](https://ask.csdn.net/questions/8794703)"
+          }
+        ]
+      },
+      {
+        "id": "M6",
+        "score": 4,
+        "lower": 4,
+        "upper": 4,
+        "status": "scored",
+        "reason": "知乎文章对关键主张（empty_cache 为同步阻塞、破坏缓存拖慢训练）给出第一手 Profiler 测量数据，与官方文档语义一致（释放未用缓存、不释放已占用、不宜滥用），未见未解决矛盾；但其性能结论缺乏独立来源交叉印证，其余第三方仅见搜索摘要未核验全文。",
+        "evidence": [
+          {
+            "event_id": "call_486f5096feb247c9bf9c6571.result",
+            "quote": "Self CPU time total: 25.505s\n\nSelf CUDA time total: 15.413s"
+          },
+          {
+            "event_id": "call_486f5096feb247c9bf9c6571.result",
+            "quote": "`torch.cuda.empty_cache()`是一个**同步操作**。"
+          },
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "However, the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch."
+          }
+        ]
+      },
+      {
+        "id": "M7",
+        "score": 5,
+        "lower": 5,
+        "upper": 5,
+        "status": "scored",
+        "reason": "检索前回答已正确覆盖原题三项：reserved/allocated 碎片化诊断思路、PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 语法（与官方 PYTORCH_ALLOC_CONF=<option>:<value> 格式一致）、梯度检查点 use_reentrant=False、empty_cache 只释放未用缓存且不宜在训练循环反复调用——均被后续官方来源核实，无关键错误；原题所需流程、参数与约束齐备。",
+        "evidence": [
+          {
+            "event_id": "client-note-00005",
+            "quote": "`PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128`（旧写法 `max_split_size_mb=128`）缓解碎片导致的 OOM，但它可能降低分配性能。"
+          },
+          {
+            "event_id": "client-note-00005",
+            "quote": "`torch.cuda.empty_cache()` 释放缓存的非活跃块给其他进程/驱动，但对当前进程已分配的显存无效，不宜放在训练循环里反复调用。"
+          },
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`"
+          }
+        ]
+      },
+      {
+        "id": "M8",
+        "score": 2,
+        "lower": 2,
+        "upper": 2,
+        "status": "scored",
+        "reason": "S=3 次查询 + F=5 次抓取，C=8，落入 C=7—8 档，反向计分为 2。",
+        "evidence": [
+          {
+            "event_id": "call_bdf66a7b4f724c80903a0de7.result",
+            "quote": "*Found 5 results • Provider: 0 • Search performed on 2026-09-21*"
+          },
+          {
+            "event_id": "call_486f5096feb247c9bf9c6571.result",
+            "quote": "**标题**: 【深度排查】别再滥用torch.cuda.empty_cache()了！记一次它引发的诡异性能血案 - 知乎"
+          }
+        ]
+      }
+    ],
+    "m2_documents": [
+      {
+        "event_id": "call_ffb381e6412b47d4b965edaf.result",
+        "url": "https://docs.pytorch.org/docs/main/cuda_environment_variables.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_ffb381e6412b47d4b965edaf.result",
+            "quote": "`PYTORCH_ALLOC_CONF`\n\nFor a more in depth explanation of this environment variable, see Memory management. `PYTORCH_CUDA_ALLOC_CONF` is its alias"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_ffb381e6412b47d4b965edaf.result",
+            "quote": "[...]"
+          }
+        ],
+        "reference": "正文表格含多处[...]截断，缺 PYTORCH_CUDA_ALLOC_CONF 完整配置项说明"
+      },
+      {
+        "event_id": "call_d62fc97f44b24b9193e80406.result",
+        "url": "https://docs.pytorch.org/docs/main/cuda.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_d62fc97f44b24b9193e80406.result",
+            "quote": "`memory_snapshot`\n\nReturn a snapshot of the CUDA memory allocator state across all devices."
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_d62fc97f44b24b9193e80406.result",
+            "quote": "[...]"
+          }
+        ],
+        "reference": "API 列表正文多处[...]截断，各函数仅一句签名描述"
+      },
+      {
+        "event_id": "call_caf751680a0a445dbaab5289.result",
+        "url": "https://docs.pytorch.org/docs/main/checkpoint.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_caf751680a0a445dbaab5289.result",
+            "quote": "torch.utils.checkpoint.checkpoint(*function:Callable\")[[...],_T]*, **args:Any*, *use_reentrant:bool\")|None\")=None*"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_caf751680a0a445dbaab5289.result",
+            "quote": "[...]"
+          }
+        ],
+        "reference": "取得 checkpoint 完整签名、参数说明与示例，但正文多处[...]截断"
+      },
+      {
+        "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+        "url": "https://docs.pytorch.org/docs/main/notes/cuda.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "unknown",
+        "score": null,
+        "lower": 4,
+        "upper": 5,
+        "evidence": [
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "**Truncation status:** ✅ No truncation — the section is complete in the provided content."
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+            "quote": "The `Memory management` section begins immediately after the *BC note: Using grads on the default stream* subsection"
+          }
+        ],
+        "reference": "起止边界由工具自报，无独立核对依据，完整性保留unknown，档位[4,5]"
+      },
+      {
+        "event_id": "call_486f5096feb247c9bf9c6571.result",
+        "url": "https://zhuanlan.zhihu.com/p/1925558794135507555",
+        "ownership": "third_party",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": null,
+        "evidence": [
+          {
+            "event_id": "call_486f5096feb247c9bf9c6571.result",
+            "quote": "`torch.cuda.empty_cache()`是一个**同步操作**。"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_486f5096feb247c9bf9c6571.result",
+            "quote": "<!--THE END-->"
+          }
+        ],
+        "reference": "第三方来源，不参与M2官方均值；正文含注释截断标记"
+      }
+    ],
+    "m4_check": {
+      "required_relations": [
+        "PYTORCH_CUDA_ALLOC_CONF 与 PYTORCH_ALLOC_CONF 的别名/版本关系",
+        "backend:cudaMallocAsync 的 CUDA 版本要求",
+        "max_split_size_mb/roundup_power2_divisions/garbage_collection_threshold 与 backend:native 的适用关系",
+        "expandable_segments 等配置项可用的 PyTorch 版本",
+        "use_reentrant 参数行为随版本的变化"
+      ],
+      "missing_relations": [
+        "各 alloc 配置项（expandable_segments、roundup_power2_divisions 等）首次引入/可用的 PyTorch 版本",
+        "use_reentrant 各版本默认值差异"
+      ],
+      "unresolved_conflicts": [],
+      "determination": "partial",
+      "combination": null,
+      "evidence": [
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "`cudaMallocAsync` requires CUDA 11.4 or newer."
+        },
+        {
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "`roundup_power2_divisions` is only meaningful with `backend:native`."
+        },
+        {
+          "event_id": "call_caf751680a0a445dbaab5289.result",
+          "quote": "In a future release, we will raise an exception if `use_reentrant` is not passed."
+        }
+      ]
+    }
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "e1e3ffa7baa84a03ac39a67c6e8f96cd",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "ce5a196050fed19e255795773f985c94",
+        "conversationRequestId": "ce5a196050fed19e255795773f985c94",
+        "agent": "cli"
+      },
+      {
+        "messageId": "e1e3ffa7baa84a03ac39a67c6e8f96cd",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "ce5a196050fed19e255795773f985c94",
+        "conversationRequestId": "ce5a196050fed19e255795773f985c94",
+        "rawUsage": {
+          "prompt_tokens": 25947,
+          "completion_tokens": 6327,
+          "total_tokens": 32274,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 3048,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 22939,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 3048,
+          "credit": 7.33,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 25947,
+          "outputTokens": 6327,
+          "totalTokens": 32274,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 3048
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "08b18d4ca5e47d4c1809064d7abe8b1e29f0f28b17e5c4d2a093c3dd63bf930c",
+    "process_sha256": "fb0cf3e4c6b23f14b52bc86e60fe0ab41a46dbc0484a580e105b5661182cf407",
+    "elapsed_seconds": 77.33,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-bd4e45c7c2cc4f6e828f6381fd4532be",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

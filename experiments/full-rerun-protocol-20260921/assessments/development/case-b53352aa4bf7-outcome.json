@@ -1,0 +1,230 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "判断碎片特征：`npu-smi info` 显示剩余显存充足但仍报 OOM，且报错栈中出现大量非活动切分内存块——这正是 `max_split_size_mb` 的目标场景",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_56b2449a9b6b4dcdbe720610.result",
+      "evidence_quote": "此选项主要应用于当模型由于oom（Out of Memory，内存不足）而中断并显示存在大量非活动的切分内存块场景的优化",
+      "verification": "source",
+      "reason": "原题含三个子方面，逐项核对：(1) 排查——答案给出 npu-smi info、torch.npu.memory_* 接口、OOM_SNAPSHOT_ENABLE 与 msprof 路线；OOM_SNAPSHOT_ENABLE 的取值、生效条件（仅'NPU out of memory. Tried to allocate...'形态、仅 PyTorch 内存机制）与 TorchNPU 6.0.0 官方正文（call_ca59a0957ee04827b7824201.result）一致，msprof 命令与输出文件说明与第三方正文（call_fe64aba5c9224ca69ea4cd9b.result）一致且答案如实标注参数名跨版本未核实。(2) PYTORCH_NPU_ALLOC_CONF——参数表、配置示例与使用约束（max_split_size_mb/garbage_collection_threshold 非默认时 expandable_segments 必须 False、page_size 需 HDK 25.0.RC1+/CANN 8.1.RC1+ 等）与官方 TorchNPU 7.0.0 正文（call_56b2449a9b6b4dcdbe720610.result）及 master 文档（call_4aef64cb865a4212804c2e6d.result）逐条吻合。(3) 梯度检查点与碎片——给出 torch.utils.checkpoint(use_reentrant=False) 与 model.gradient_checkpointing_enable()，属技术正确的通用路线；NPU 专用官方支持声明未取得，但答案明确承认未核实而非编造，符合'有证据的不适用/不确定解释视为满足'的约定。未发现与来源矛盾的内容。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "部分所需组件有明确版本依据：expandable_segments 需 HDK≥23.0.0、page_size 需 HDK≥25.0.RC1 且 CANN≥商发8.1.RC1、large_segment_size_mb 需 TorchNPU≥26.1.0/PyTorch≥2.11.0 等均来自官方正文，有据可查；但梯度检查点接口的 NPU 版本条件答案自认'未能核实'，且整体 TorchNPU/CANN/HDK 配套矩阵（release note）未取得，无法定到具体版本组合，对应档3。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "`expandable_segments` 需要 **Ascend HDK 23.0.0 及以上**驱动"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "torch.utils.checkpoint` 为 PyTorch 原生接口，随所用 PyTorch 版本；NPU 专用版本条件未能核实"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "具体到某个现场应选哪一组版本号，需按实际 TorchNPU/CANN/HDK 配套矩阵核对（官方配套表在昇腾社区 release note，本轮未取得）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "主路径操作可直接执行：npu-smi info、export OOM_SNAPSHOT_ENABLE=1、官方原文给出的 PYTORCH_NPU_ALLOC_CONF 各配置示例均为完整命令行，前置版本约束（HDK/CANN 门槛、参数互斥规则）明确，仅需按现场替换路径等环境值。扣1分原因：msprof 命令参数名（--memory=on 等）来自第三方博客且作者本人标注跨版本可能差异，_record_memory_history 在昇腾官方文档的用法未核实，这两条次要路径需现场修正/核实后才能保证执行，不满足'无需补写或修正'的5分标准。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "msprof --application=\"python train.py\" \\\n       --output=/home/user/profiling_output \\\n       --ai-core=on \\\n       --memory=on"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "注意该文作者提示不同 CANN 版本参数名和字段名可能有差异（未核实）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-b53352aa4bf7",
+  "task_id": "Q",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "判断碎片特征：`npu-smi info` 显示剩余显存充足但仍报 OOM，且报错栈中出现大量非活动切分内存块——这正是 `max_split_size_mb` 的目标场景",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_56b2449a9b6b4dcdbe720610.result",
+        "evidence_quote": "此选项主要应用于当模型由于oom（Out of Memory，内存不足）而中断并显示存在大量非活动的切分内存块场景的优化",
+        "verification": "source",
+        "reason": "原题含三个子方面，逐项核对：(1) 排查——答案给出 npu-smi info、torch.npu.memory_* 接口、OOM_SNAPSHOT_ENABLE 与 msprof 路线；OOM_SNAPSHOT_ENABLE 的取值、生效条件（仅'NPU out of memory. Tried to allocate...'形态、仅 PyTorch 内存机制）与 TorchNPU 6.0.0 官方正文（call_ca59a0957ee04827b7824201.result）一致，msprof 命令与输出文件说明与第三方正文（call_fe64aba5c9224ca69ea4cd9b.result）一致且答案如实标注参数名跨版本未核实。(2) PYTORCH_NPU_ALLOC_CONF——参数表、配置示例与使用约束（max_split_size_mb/garbage_collection_threshold 非默认时 expandable_segments 必须 False、page_size 需 HDK 25.0.RC1+/CANN 8.1.RC1+ 等）与官方 TorchNPU 7.0.0 正文（call_56b2449a9b6b4dcdbe720610.result）及 master 文档（call_4aef64cb865a4212804c2e6d.result）逐条吻合。(3) 梯度检查点与碎片——给出 torch.utils.checkpoint(use_reentrant=False) 与 model.gradient_checkpointing_enable()，属技术正确的通用路线；NPU 专用官方支持声明未取得，但答案明确承认未核实而非编造，符合'有证据的不适用/不确定解释视为满足'的约定。未发现与来源矛盾的内容。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "部分所需组件有明确版本依据：expandable_segments 需 HDK≥23.0.0、page_size 需 HDK≥25.0.RC1 且 CANN≥商发8.1.RC1、large_segment_size_mb 需 TorchNPU≥26.1.0/PyTorch≥2.11.0 等均来自官方正文，有据可查；但梯度检查点接口的 NPU 版本条件答案自认'未能核实'，且整体 TorchNPU/CANN/HDK 配套矩阵（release note）未取得，无法定到具体版本组合，对应档3。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "`expandable_segments` 需要 **Ascend HDK 23.0.0 及以上**驱动"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "torch.utils.checkpoint` 为 PyTorch 原生接口，随所用 PyTorch 版本；NPU 专用版本条件未能核实"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "具体到某个现场应选哪一组版本号，需按实际 TorchNPU/CANN/HDK 配套矩阵核对（官方配套表在昇腾社区 release note，本轮未取得）"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "主路径操作可直接执行：npu-smi info、export OOM_SNAPSHOT_ENABLE=1、官方原文给出的 PYTORCH_NPU_ALLOC_CONF 各配置示例均为完整命令行，前置版本约束（HDK/CANN 门槛、参数互斥规则）明确，仅需按现场替换路径等环境值。扣1分原因：msprof 命令参数名（--memory=on 等）来自第三方博客且作者本人标注跨版本可能差异，_record_memory_history 在昇腾官方文档的用法未核实，这两条次要路径需现场修正/核实后才能保证执行，不满足'无需补写或修正'的5分标准。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "msprof --application=\"python train.py\" \\\n       --output=/home/user/profiling_output \\\n       --ai-core=on \\\n       --memory=on"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "注意该文作者提示不同 CANN 版本参数名和字段名可能有差异（未核实）"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "d87628551c9141a78290d9087e807410",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "4b69f643481b1f603414ee6e4baf446f",
+        "conversationRequestId": "4b69f643481b1f603414ee6e4baf446f",
+        "agent": "cli"
+      },
+      {
+        "messageId": "d87628551c9141a78290d9087e807410",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "4b69f643481b1f603414ee6e4baf446f",
+        "conversationRequestId": "4b69f643481b1f603414ee6e4baf446f",
+        "rawUsage": {
+          "prompt_tokens": 25754,
+          "completion_tokens": 3305,
+          "total_tokens": 29059,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2164,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 25754,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2164,
+          "credit": 5.97,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 25754,
+          "outputTokens": 3305,
+          "totalTokens": 29059,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2164
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "f942171029a1c44a74ad01049122ea95157f6b2355016ef2d05d83e45425d96b",
+    "process_sha256": "4aa1f074d858ae1c5fcd9742847a7cc17fca3986b0571bbcb2b1a6985124eeb5",
+    "elapsed_seconds": 62.77,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-fffbb9220d56470bb4a503cac005e0c9",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

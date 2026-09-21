@@ -1,0 +1,175 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "若 `reserved` 远大于 `allocated`，且 `memory_summary()` 中有大量 **inactive split blocks**，说明是碎片化问题 → 用 `max_split_size_mb`（见下）。若 `allocated` 本身就接近卡容量 → 需要真正减少占用（梯度检查点、减 batch、AMP 等）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_3_a877736d.result",
+      "evidence_quote": "max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+      "verification": "source",
+      "reason": "原题三个子要求均有官方逐字依据支撑：(1) 排查——memory_allocated/memory_reserved/memory_summary 的监控 API 及 empty_cache 语义见 WebFetch_3_a877736d.result（'You can use memory_allocated() ... use memory_reserved() ...'），OOM 快照定位（_record_memory_history/_dump_snapshot、pytorch.org/memory_viz、NCCL 不可见）见 WebFetch_6_64792e12.result；(2) max_split_size_mb——WebFetch_3 原文逐字给出 'prevents the native allocator from splitting blocks larger than this size'、'only meaningful with backend:native'、'last resort'，与答案一致；(3) 梯度检查点——WebFetch_5_e1afcdd5.result 原文 'It is recommended that you use use_reentrant=False.'、reentrant 需至少一个输入和输出 requires_grad=True 等均与答案一致；(4) empty_cache——WebFetch_3 原文 'releases all **unused** cached memory ... it can not increase the amount of GPU memory available for PyTorch' 与答案'不能解决训练中的 OOM'一致。答案中标注为无法核实的项（HF gradient_checkpointing_enable、20-30% 减速经验值）已如实声明为旁证/经验值，不构成错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "assessed_partial_version_lock",
+      "reason": "答案对所用接口给出部分有依据的版本约束：cudaMallocAsync 后端官方明确要求 CUDA ≥ 11.4（有 WebFetch_3 原文支撑），并说明所引文档为 main 分支 v2.15.0 unstable；但答案自述 '各配置项引入的具体最低稳定版本号未逐项核实'，主要路径（native 后端 + max_split_size_mb / checkpoint / empty_cache）未定到具体 PyTorch 版本。属于第3档：部分所需组件有明确版本依据，其余仍未确定。原题为排查/优化 how-to，未强制要求定版，此为锁定粒度评价而非技术错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "所抓官方页为 main 分支（v2.15.0 unstable）文档；各配置项引入的**具体最低稳定版本号**未逐项核实（`cudaMallocAsync` 后端官方明确要求 CUDA ≥ 11.4）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed_complete_with_placeholders",
+      "reason": "答案给出可直接执行的完整命令：环境变量设置、empty_cache 调用、checkpoint(my_forward_fn, x, use_reentrant=False) 与装饰器形式、_record_memory_history()/_dump_snapshot 快照流程，参数与前置条件（native 后端限制、preserve_rng_state 含义、不要在训练循环每步调 empty_cache）均已说明。需替换的仅为明确标识的用户环境项（my_forward_fn、x、run_your_code()），无需修正内容错误。答案自述 '所有代码未实际运行（未运行）'，按约定不作为 4/5 分界依据，仅内容核查。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "out = checkpoint(my_forward_fn, x, use_reentrant=False)"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "torch.cuda.memory._record_memory_history()\nrun_your_code()  # 跑训练，直到 OOM 附近\ntorch.cuda.memory._dump_snapshot(\"my_snapshot.pickle\")"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-fda4166800fb",
+  "task_id": "Q",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "c285e8b9547341108a493f7bf762f196",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "90350ffb0bfe05525e0bbf8b9ed8af96",
+        "conversationRequestId": "90350ffb0bfe05525e0bbf8b9ed8af96",
+        "agent": "cli"
+      },
+      {
+        "messageId": "c285e8b9547341108a493f7bf762f196",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "90350ffb0bfe05525e0bbf8b9ed8af96",
+        "conversationRequestId": "90350ffb0bfe05525e0bbf8b9ed8af96",
+        "rawUsage": {
+          "prompt_tokens": 21727,
+          "completion_tokens": 3550,
+          "total_tokens": 25277,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2536,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 20206
+          },
+          "prompt_cache_hit_tokens": 20206,
+          "prompt_cache_miss_tokens": 1521,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2536,
+          "credit": 3.04,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21727,
+          "outputTokens": 3550,
+          "totalTokens": 25277,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 20206
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2536
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "ee364cd5f792f2c6c145fb07ed5470f01cead7ff4a483c86b81182832f9578a3",
+    "process_sha256": "56800fc3919dfceda28826ebaffad0b1a661fb622f9082c8ecf5d6b0a8ea36ee",
+    "elapsed_seconds": 50.85,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-90ab34007e014e29b01111e41cf74e54",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-fda4166800fb-outcome.json",
+    "repairs": [
+      {
+        "event_id": "WebFetch_3_a877736d.result",
+        "original": "max_split_size_mb prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+        "replacement": "max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

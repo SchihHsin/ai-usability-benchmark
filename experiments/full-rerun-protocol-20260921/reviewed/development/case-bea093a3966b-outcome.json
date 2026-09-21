@@ -1,0 +1,209 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "max_split_size_mb`：阻止 native 分配器拆分超过该大小（MB）的块，可减少碎片，让临界负载不 OOM。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_e7ea5b7d46d04d5bad503a56.result",
+      "evidence_quote": "max_split_size_mb prevents the native allocator from splitting blocks greater than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题含四个子要求，逐一核对：(1) 排查方法——答案给出 memory_summary/memory_stats/memory_snapshot/memory_allocated/memory_reserved/list_gpu_processes 等 API 及 reserved 与 allocated 的区分，均与 torch.cuda 官方页（call_d62fc97f44b24b9193e80406.result）的 Memory management 条目一致；(2) max_split_size_mb——答案的语义描述、last resort 警告、语法 max_split_size_mb:128 及 garbage_collection_threshold/expandable_segments/backend 选项均与 CUDA semantics 官方正文（call_e7ea5b7d46d04d5bad503a56.result）逐字对应，且 backend:cudaMallocAsync 下被忽略的限制亦有原文依据；(3) 梯度检查点——use_reentrant=False 建议、'trades compute for memory'、checkpoint_sequential 用法与官方 checkpoint 页（call_caf751680a0a445dbaab5289.result）一致；(4) empty_cache——答案所引英文原文 'releases all unused cached memory...can not increase the amount of GPU memory available for PyTorch' 在官方正文（call_e7ea5b7d46d04d5bad503a56.result）中逐字存在；社区滥用性能证据与知乎源（call_486f5096feb247c9bf9c6571.result）一致，且答案明确标注 NCCL 机制部分为作者推理未核实。未发现与来源矛盾的内容。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 2,
+      "lower": null,
+      "upper": null,
+      "status": "部分组件有版本依据，关键定版未确定",
+      "reason": "适用范围为所用CUDA内存配置和检查点接口。答案仅对 cudaMallocAsync 给出有依据的版本约束（CUDA ≥ 11.4，与官方正文一致），并对 use_reentrant 显式传递给出'未来版本将报错'的状态说明；但各配置项（max_split_size_mb、expandable_segments 等）适用的 PyTorch 具体版本未确定，答案自认'各选项最早引入的 PyTorch 版本号...为训练先验，未在本次抓取的官方页中逐字核实'，且 PYTORCH_ALLOC_CONF 更名的起始版本亦未核实。属'提到版本但关键定版未确定'档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "backend:cudaMallocAsync`：改用 CUDA 内建异步分配器（要求 CUDA ≥ 11.4）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "PYTORCH_CUDA_ALLOC_CONF` 各选项最早引入的 PyTorch 版本号（如 `max_split_size_mb` 约出自 1.10、`expandable_segments` 约出自 2.1）为训练先验，未在本次抓取的官方页中逐字核实"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "操作指导完整，仅需替换用户环境参数",
+      "reason": "答案给出完整可执行的 export 命令（含多选项组合语法）、可直接调用的 torch.cuda 诊断 API 列表、语法正确的 checkpoint/checkpoint_sequential 代码（含必要的 use_reentrant=False），并写明各操作的前提条件（max_split_size_mb 仅在 backend:native 下有意义、empty_cache 不进训练循环、expandable_segments 实验性）。所需替换仅为用户模型/输入张量/block 等环境值，无内容错误需修正。答案自述'仅做了内容核查，未在本机 GPU 环境实际运行验证'，按约定不影响档位。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128,garbage_collection_threshold:0.8"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "out = cp.checkpoint(block, x, use_reentrant=False)"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "max_split_size_mb`、`roundup_power2_divisions`、`garbage_collection_threshold` 只在 `backend:native` 下有意义，在 cudaMallocAsync 下被忽略"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_e7ea5b7d46d04d5bad503a56.result",
+          "quote": "max_split_size_mb prevents the native allocator from splitting blocks greater than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory."
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-bea093a3966b",
+  "task_id": "Q",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "8bae3b0451154996bbd08f91dc68ba38",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7d38273ea8418202e12d406803a51295",
+        "conversationRequestId": "7d38273ea8418202e12d406803a51295",
+        "agent": "cli"
+      },
+      {
+        "messageId": "8bae3b0451154996bbd08f91dc68ba38",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7d38273ea8418202e12d406803a51295",
+        "conversationRequestId": "7d38273ea8418202e12d406803a51295",
+        "rawUsage": {
+          "prompt_tokens": 25150,
+          "completion_tokens": 2679,
+          "total_tokens": 27829,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1613,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 22142,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1613,
+          "credit": 5.16,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 25150,
+          "outputTokens": 2679,
+          "totalTokens": 27829,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1613
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "1a1a34eeddffb7688d6c2a46f824f144466f1f5448d58f928eb8ad218cb6ed96",
+    "process_sha256": "fb0cf3e4c6b23f14b52bc86e60fe0ab41a46dbc0484a580e105b5661182cf407",
+    "elapsed_seconds": 43.78,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-7a7bb134a1364f4bafe78f693771d193",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-bea093a3966b-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "max_split_size_mb：阻止 native 分配器拆分超过该大小（MB）的块，可减少碎片，让临界负载不 OOM。",
+        "replacement": "max_split_size_mb`：阻止 native 分配器拆分超过该大小（MB）的块，可减少碎片，让临界负载不 OOM。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "backend:cudaMallocAsync：改用 CUDA 内建异步分配器（要求 CUDA ≥ 11.4）",
+        "replacement": "backend:cudaMallocAsync`：改用 CUDA 内建异步分配器（要求 CUDA ≥ 11.4）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "PYTORCH_CUDA_ALLOC_CONF 各选项最早引入的 PyTorch 版本号（如 max_split_size_mb 约出自 1.10、expandable_segments 约出自 2.1）为训练先验，未在本次抓取的官方页中逐字核实",
+        "replacement": "PYTORCH_CUDA_ALLOC_CONF` 各选项最早引入的 PyTorch 版本号（如 `max_split_size_mb` 约出自 1.10、`expandable_segments` 约出自 2.1）为训练先验，未在本次抓取的官方页中逐字核实",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "max_split_size_mb、roundup_power2_divisions、garbage_collection_threshold 只在 backend:native 下有意义，在 cudaMallocAsync 下被忽略",
+        "replacement": "max_split_size_mb`、`roundup_power2_divisions`、`garbage_collection_threshold` 只在 `backend:native` 下有意义，在 cudaMallocAsync 下被忽略",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}
