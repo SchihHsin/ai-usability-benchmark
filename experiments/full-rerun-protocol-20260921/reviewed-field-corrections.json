@@ -2739,5 +2739,717 @@
       ]
     },
     "basis": "Root inspected final environment placeholders and original rationale; enforce frozen M10 grade4, no rule changes."
+  },
+  {
+    "case": "case-ba15159270eb",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      1
+    ],
+    "original": {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "两条路线均给出可直接执行的完整方案。AMP 路线：完整可复制的导入、GradScaler 定义与训练循环代码，含 scaler.scale/step/update 调用顺序，与官方样例一致。apex 路线：完整安装命令链（git clone、build.sh --python=3.7、pip3 install --upgrade apex-0.1+ascend-{version}.whl），前置条件明确（torch 已装、setuptools<=65.7.0、Python 3.7–3.10），{version} 为明确标注并附说明（version为python版本和cpu架构）的用户环境参数；使用示例含 opt_level、scale_loss 上下文、融合优化器用法；loss scale 调优给出静态取值（128/256/512/1024/2048）与梯度裁剪的完整代码顺序（apex 退出上下文后裁剪；AMP 先 unscale_ 再裁剪再 step）。适用前提（Atlas 9000 需开启、A2/A3 自选、迁移完成后训练前适配）也已说明，无需补写或修正即可执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "git clone -b master https://gitee.com/ascend/apex.git\ncd apex/\n# 前置：torch已安装，setuptools<=65.7.0（推荐65.7.0），Python 3.7–3.10\nbash scripts/build.sh --python=3.7"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "with amp.autocast():                      # 开启混合精度\n    outputs = model(inputs)\n    loss = criterion(outputs, labels).to(device)\noptimizer.zero_grad()\nscaler.scale(loss).backward()             # loss缩放并反向传播\nscaler.step(optimizer)                     # 更新参数（自动unscale）\nscaler.update()"
+        }
+      ]
+    },
+    "replacement": {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "操作指导仍需替换已标识的用户环境值（apex-0.1+ascend-{version}.whl），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "pip3 install --upgrade apex-0.1+ascend-{version}.whl"
+        }
+      ]
+    },
+    "basis": "Root inspected explicit final environment placeholder; enforce existing M10 grade4. No rubric/threshold changes."
+  },
+  {
+    "case": "case-881e96bdb2c0",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      1
+    ],
+    "original": {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案给出完整可照抄的命令与代码：pip install mindstudio-probe、PrecisionDebugger 完整调用序列（start/stop/step 及位置约束）、config.json 完整示例、msprobe overflow_check/compare/merge_result 完整命令行及参数（-i 需指到 step 层级、-tp/-gp 语义、-da）、ptdbg_ascend 配置与精度预检命令、export OVERFLOW_DEBUG_MODE_ENABLE=1。前置条件明确（seed_all 固化随机性、关闭 shuffle、stop 必须调用否则落盘不全）。仅需替换的均为明确路径/dump目录等环境值，无需修正内容错误。答案已声明所有命令未实际运行，仅为内容核查，不影响档位判定。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "msprobe compare -tp /target_dump/step0 -gp /golden_dump/step0 -o ./output -da"
+        },
+        {
+          "event_id": "final",
+          "quote": "debugger.stop()            # 必须调用，否则落盘不全"
+        },
+        {
+          "event_id": "final",
+          "quote": "所有命令均未实际运行验证，仅为官方文档内容转述。"
+        }
+      ]
+    },
+    "replacement": {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "操作指导仍需替换已标识的用户环境值（msprobe overflow_check -i /xxx/dump/step0），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output"
+        }
+      ]
+    },
+    "basis": "Root inspected explicit final environment placeholder; enforce existing M10 grade4. No rubric/threshold changes."
+  },
+  {
+    "case": "case-25de75c19955",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      1
+    ],
+    "original": {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "答案给出完整可照抄的命令链：环境准备（source set_env.sh）、编译（build.sh --mssanitizer 或 CMake --cce-enable-sanitizer -g）、运行（mssanitizer -t memcheck ./<test_program> 等具体命令与参数）、结果解读与修复建议。前置条件明确（-g、避免 -O2/-O3、aclnn 需 aclInit acl.json、Triton 环境变量），需替换处（soc=ascend910b、<operator_name>、<test_program>）均为明确标识的用户环境参数且有说明，无需修正内容即可执行。答案已声明未实测，仅内容核查，按约定不影响 4/5 档判定。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "mssanitizer -t memcheck --leak-check=yes --check-device-heap=yes ./<test_program>"
+        },
+        {
+          "event_id": "final",
+          "quote": "必须带调试信息：编译加 -g，避免 -O2/-O3，建议 -O0（否则日志文件名显示 <unknown>:0）。"
+        }
+      ]
+    },
+    "replacement": {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "操作指导仍需替换已标识的用户环境值（mssanitizer -t memcheck ./<test_program>），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "mssanitizer -t memcheck ./<test_program>"
+        }
+      ]
+    },
+    "basis": "Root inspected explicit final environment placeholder; enforce existing M10 grade4. No rubric/threshold changes."
+  },
+  {
+    "case": "case-98655d8063b6",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "metrics",
+      3
+    ],
+    "original": {
+      "id": "M4",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "需自行合并官方约束才能确定适用关系：2.28.9存档提供了算法-版本对应表和各变量since版本，但当前2.31.2的env页截断未取得ALGO/PROTO章节，需将版本表、since标注与NVLS硬件要求合并推断。官方已给出各参数的版本适用信息，无未消解冲突。",
+      "evidence": [
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "Set to a positive integer value up to 64 (32 prior to 2.25). Default value is undefined."
+        },
+        {
+          "event_id": "call_e3d55f5c2fd642c0baee483b.result",
+          "quote": "NCCL_ALGO | ❌ Missing | No"
+        },
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "The `NCCL_PROTO` variable defines which protocol(s) NCCL will be allowed to use."
+        }
+      ]
+    },
+    "replacement": {
+      "id": "M4",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "scored",
+      "reason": "已明确部分适用关系，但记录中的必要对应关系仍缺失：当前版本2.31.2的NCCL_ALGO/NCCL_PROTO章节未取得（env.html两次抓取均截断），版本适用关系仅由2.28.9存档页佐证。依原第3档，未取得的信息不能称为已合并确定。",
+      "evidence": [
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "Set to a positive integer value up to 64 (32 prior to 2.25). Default value is undefined."
+        },
+        {
+          "event_id": "call_e3d55f5c2fd642c0baee483b.result",
+          "quote": "NCCL_ALGO | ❌ Missing | No"
+        },
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "The `NCCL_PROTO` variable defines which protocol(s) NCCL will be allowed to use."
+        }
+      ]
+    },
+    "basis": "Root checked explicit missing relations against frozen M4 grade3/4 boundary; apply original grade3, not a rule change."
+  },
+  {
+    "case": "case-98655d8063b6",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m4_check"
+    ],
+    "original": {
+      "required_relations": [
+        "NCCL_ALGO各取值与NCCL版本的对应关系（原题核心参数）",
+        "NCCL_PROTO取值与版本/平台支持关系",
+        "NCCL_NVLS_ENABLE与硬件架构（NVLink4/Hopper）及版本约束",
+        "NCCL_MIN/MAX_CTAS等调优参数的版本引入与取值上限"
+      ],
+      "missing_relations": [
+        "当前版本2.31.2的NCCL_ALGO/NCCL_PROTO章节未取得（env.html两次抓取均截断），版本适用关系仅由2.28.9存档页佐证"
+      ],
+      "unresolved_conflicts": [],
+      "determination": "combined",
+      "combination": "2.28.9存档页提供算法-版本表（如PAT 2.23+、NVLS 2.17+）与各变量since标注，结合NVLS硬件约束说明可推断适用关系；但当前2.31.2版本的对应章节缺失，需跨存档合并且未获直接适用表，故为合并推断而非直接套用。",
+      "evidence": [
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "Version Algorithm 2.5+ Ring 2.5+ Tree 2.5 to 2.13 Collnet 2.14+ CollnetChain 2.14+ CollnetDirect 2.17+ NVLS 2.18+ NVLSTree 2.23+ PAT"
+        },
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "NVLink SHARP is available in third-generation NVSwitch systems (NVLink4) with Hopper and later GPU architectures"
+        },
+        {
+          "event_id": "call_e3d55f5c2fd642c0baee483b.result",
+          "quote": "NCCL_ALGO | ❌ Missing | No"
+        }
+      ]
+    },
+    "replacement": {
+      "required_relations": [
+        "NCCL_ALGO各取值与NCCL版本的对应关系（原题核心参数）",
+        "NCCL_PROTO取值与版本/平台支持关系",
+        "NCCL_NVLS_ENABLE与硬件架构（NVLink4/Hopper）及版本约束",
+        "NCCL_MIN/MAX_CTAS等调优参数的版本引入与取值上限"
+      ],
+      "missing_relations": [
+        "当前版本2.31.2的NCCL_ALGO/NCCL_PROTO章节未取得（env.html两次抓取均截断），版本适用关系仅由2.28.9存档页佐证"
+      ],
+      "unresolved_conflicts": [],
+      "determination": "partial",
+      "combination": "部分关系已明确；所列缺失关系尚待取得，当前材料不足以完成确定。",
+      "evidence": [
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "Version Algorithm 2.5+ Ring 2.5+ Tree 2.5 to 2.13 Collnet 2.14+ CollnetChain 2.14+ CollnetDirect 2.17+ NVLS 2.18+ NVLSTree 2.23+ PAT"
+        },
+        {
+          "event_id": "call_ff74529dc3c048a4bba4ac8e.result",
+          "quote": "NVLink SHARP is available in third-generation NVSwitch systems (NVLink4) with Hopper and later GPU architectures"
+        },
+        {
+          "event_id": "call_e3d55f5c2fd642c0baee483b.result",
+          "quote": "NCCL_ALGO | ❌ Missing | No"
+        }
+      ]
+    },
+    "basis": "Root checked explicit missing relations against frozen M4 grade3/4 boundary; apply original grade3, not a rule change."
+  },
+  {
+    "case": "case-4474d14d9e5a",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "metrics",
+      3
+    ],
+    "original": {
+      "id": "M4",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "官方指南（v13.4.2）直接记载所用stream/event/异步拷贝接口的当前用法，并给出per-thread默认流自CUDA-7起、并发能力依赖CUDA版本与compute capability等版本关系；这些约束合并可确定接口适用性，但缺少具体compute capability阈值对照表（正文称详见附录，未取得）。",
+      "evidence": [
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Version: v13.4.2 (shown in header) | Last updated: Sep 10, 2026"
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Starting in CUDA-7, each host thread can have its own independent default stream instead of the shared legacy default stream."
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "the actual ability to carry out various operations concurrently will depend on the version of CUDA and the compute capability of the hardware being used."
+        }
+      ]
+    },
+    "replacement": {
+      "id": "M4",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "scored",
+      "reason": "已明确部分适用关系，但记录中的必要对应关系仍缺失：具体compute capability阈值与copy/compute重叠的对照表（正文称详见Compute Capabilities附录，本轮未取得）。依原第3档，未取得的信息不能称为已合并确定。",
+      "evidence": [
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Version: v13.4.2 (shown in header) | Last updated: Sep 10, 2026"
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Starting in CUDA-7, each host thread can have its own independent default stream instead of the shared legacy default stream."
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "the actual ability to carry out various operations concurrently will depend on the version of CUDA and the compute capability of the hardware being used."
+        }
+      ]
+    },
+    "basis": "Root checked explicit missing relations against frozen M4 grade3/4 boundary; apply original grade3, not a rule change."
+  },
+  {
+    "case": "case-4474d14d9e5a",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m4_check"
+    ],
+    "original": {
+      "required_relations": [
+        "CUDA stream/event/cudaMemcpyAsync等runtime接口在当前CUDA Toolkit版本(v13.4.2)下的适用性",
+        "per-thread default stream的版本起点",
+        "并发copy/compute对CUDA版本与compute capability的依赖"
+      ],
+      "missing_relations": [
+        "具体compute capability阈值与copy/compute重叠的对照表（正文称详见Compute Capabilities附录，本轮未取得）"
+      ],
+      "unresolved_conflicts": [],
+      "determination": "combined",
+      "evidence": [
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Version: v13.4.2 (shown in header) | Last updated: Sep 10, 2026"
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Starting in CUDA-7, each host thread can have its own independent default stream"
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "the actual ability to carry out various operations concurrently will depend on the version of CUDA and the compute capability of the hardware being used."
+        }
+      ]
+    },
+    "replacement": {
+      "required_relations": [
+        "CUDA stream/event/cudaMemcpyAsync等runtime接口在当前CUDA Toolkit版本(v13.4.2)下的适用性",
+        "per-thread default stream的版本起点",
+        "并发copy/compute对CUDA版本与compute capability的依赖"
+      ],
+      "missing_relations": [
+        "具体compute capability阈值与copy/compute重叠的对照表（正文称详见Compute Capabilities附录，本轮未取得）"
+      ],
+      "unresolved_conflicts": [],
+      "determination": "partial",
+      "evidence": [
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Version: v13.4.2 (shown in header) | Last updated: Sep 10, 2026"
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "Starting in CUDA-7, each host thread can have its own independent default stream"
+        },
+        {
+          "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+          "quote": "the actual ability to carry out various operations concurrently will depend on the version of CUDA and the compute capability of the hardware being used."
+        }
+      ],
+      "combination": "部分关系已明确；所列缺失关系尚待取得，当前材料不足以完成确定。"
+    },
+    "basis": "Root checked explicit missing relations against frozen M4 grade3/4 boundary; apply original grade3, not a rule change."
+  },
+  {
+    "case": "case-3a1abf2a0271",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "metrics",
+      5,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_00_90tgCp79Nw8ydkT5HLGX3251.result",
+        "quote": "[W] [TRT] Using an engine plan file across different models of devices is not recommended and is likely to affect ..."
+      },
+      {
+        "event_id": "call_00_90tgCp79Nw8ydkT5HLGX3251.result",
+        "quote": "在尝试使用torch2trt将resnet18模型转换为TensorRT优化模型时，遇到了警告：不推荐在不同GPU模型间使用相同的 ..."
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "call_00_xfvcTfjsQh04Q0MmNIoH9884.result",
+        "quote": "2023年8月31日 · [W] [TRT] Using an engine plan file across different models of devices is not recommended and is likely to affect …"
+      },
+      {
+        "event_id": "call_00_xfvcTfjsQh04Q0MmNIoH9884.result",
+        "quote": "2024年7月12日 · 在尝试使用torch2trt将resnet18模型转换为TensorRT优化模型时，遇到了警告：不推荐在不同GPU模型间使用相同的 …"
+      }
+    ],
+    "basis": "Root located third-party snippets in search; assessor referenced official guide by mistake. Correct exact source association; no score change."
+  },
+  {
+    "case": "case-bef85b2c52d5",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents"
+    ],
+    "original": [
+      {
+        "event_ids": [
+          "call_00_RIZyfZwsA8YWVtMCOcmb5703.result"
+        ],
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/index.html",
+        "ownership": "official",
+        "representation": "frame",
+        "completeness": "incomplete",
+        "score": 2,
+        "evidence": [
+          {
+            "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "quote": "This CUDA Programming Guide is the official, comprehensive resource on the CUDA programming model"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "quote": "The guide is broken down into five primary parts:"
+          }
+        ],
+        "note": "仅得指南首页前言与组织结构，请求的 Programming Model / Hardware Implementation 章节正文未在该页返回"
+      },
+      {
+        "event_ids": [
+          "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+          "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+          "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+          "call_00_V3PWY8ezaizlVH8k3vik8950.result",
+          "call_00_6vYL6vWGBXZIcukGp5r67171.result"
+        ],
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "quote": "These threads are organized into blocks. A block of threads is referred to, perhaps unsurprisingly, as a *thread block*. Thread blocks are organized into a *grid*."
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+            "quote": "In SIMT, all threads in the warp are executing the same kernel code, but each thread may follow different branches through the code.\n\n[...]"
+          },
+          {
+            "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+            "quote": "A more detailed discussion of SIMT can be found in SIMT Execution Model."
+          }
+        ],
+        "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失"
+      },
+      {
+        "event_ids": [
+          "call_00_GQ8qIm035AocxkH2VmGD9386.result"
+        ],
+        "reference": "https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "unknown",
+        "score_range": [
+          4,
+          5
+        ],
+        "evidence": [
+          {
+            "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+            "quote": "Each CUDA block is executed by one streaming multiprocessor (SM) and cannot be migrated to other SMs in GPU"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+            "quote": "Advanced developers can use some of these memories efficiently to optimize the CUDA program."
+          }
+        ],
+        "note": "NVIDIA官方博客正文自标题至Summary连续取得，但完整性无独立核对依据，保留[4,5]"
+      },
+      {
+        "event_ids": [
+          "call_00_bjZk9uI2KyHLVnvrcBZC7796.result"
+        ],
+        "reference": "https://docs.nvidia.com/cuda/archive/12.6.0/cuda-c-programming-guide/index.html",
+        "ownership": "official",
+        "representation": "summary",
+        "completeness": "incomplete",
+        "score": 3,
+        "evidence": [
+          {
+            "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "quote": "The content covers only Chapters 1–3 (with a few introductory notes):"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "quote": "| **5.1** | **SIMT Architecture** | ❌ **ABSENT** |"
+          }
+        ],
+        "note": "返回为工具分析性摘要而非逐字正文，且请求的 5.1/5.2 节明确缺失"
+      }
+    ],
+    "replacement": [
+      {
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/index.html",
+        "ownership": "official",
+        "representation": "frame",
+        "completeness": "incomplete",
+        "score": 2,
+        "evidence": [
+          {
+            "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "quote": "This CUDA Programming Guide is the official, comprehensive resource on the CUDA programming model"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+            "quote": "The guide is broken down into five primary parts:"
+          }
+        ],
+        "note": "仅得指南首页前言与组织结构，请求的 Programming Model / Hardware Implementation 章节正文未在该页返回",
+        "event_id": "call_00_RIZyfZwsA8YWVtMCOcmb5703.result",
+        "url": "https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html"
+      },
+      {
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+            "quote": "These threads are organized into blocks. A block of threads is referred to, perhaps unsurprisingly, as a *thread block*. Thread blocks are organized into a *grid*."
+          }
+        ],
+        "boundary_evidence": [],
+        "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+        "event_id": "call_00_sEYwmyLN4ixH1XLtvtKi5077.result",
+        "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+      },
+      {
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+            "quote": "This chapter introduces the CUDA programming model at a high level and separate from any language. The terminology and concepts introduced here apply to CUDA in any supported programming language. Later chapters will illustrate these concepts in C++."
+          }
+        ],
+        "boundary_evidence": [],
+        "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+        "event_id": "call_00_CbAdMvBhUZBkHmLu77WG9064.result",
+        "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+      },
+      {
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+            "quote": "When threads are executed by a warp, they are assigned a warp lane. Warp lanes are numbered 0 to 31 and threads from a thread block are assigned to warps in a predictable fashion detailed in Hardware Multithreading."
+          }
+        ],
+        "boundary_evidence": [],
+        "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+        "event_id": "call_00_oaZSbF6pliPu4bNBrrz38390.result",
+        "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+      },
+      {
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_00_V3PWY8ezaizlVH8k3vik8950.result",
+            "quote": "When threads are executed by a warp, they are assigned a warp lane. Warp lanes are numbered 0 to 31 and threads from a thread block are assigned to warps in a predictable fashion detailed in Hardware Multithreading."
+          }
+        ],
+        "boundary_evidence": [],
+        "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+        "event_id": "call_00_V3PWY8ezaizlVH8k3vik8950.result",
+        "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+      },
+      {
+        "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "incomplete",
+        "score": 4,
+        "evidence": [
+          {
+            "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+            "quote": "Figure 3 Grid of Thread Blocks. Each arrow represents a thread (the number of arrows is not representative of actual number of threads).#"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+            "quote": "A more detailed discussion of SIMT can be found in SIMT Execution Model."
+          }
+        ],
+        "note": "5次抓取同一URL（重试合并，以最后一次状态为准）；返回含[...]省略标记，且定向请求的 Hardware Multithreading 节在所有返回中均缺失",
+        "event_id": "call_00_6vYL6vWGBXZIcukGp5r67171.result",
+        "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html"
+      },
+      {
+        "reference": "https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/",
+        "ownership": "official",
+        "representation": "body",
+        "completeness": "unknown",
+        "score_range": [
+          4,
+          5
+        ],
+        "evidence": [
+          {
+            "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+            "quote": "Each CUDA block is executed by one streaming multiprocessor (SM) and cannot be migrated to other SMs in GPU"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+            "quote": "Advanced developers can use some of these memories efficiently to optimize the CUDA program."
+          }
+        ],
+        "note": "NVIDIA官方博客正文自标题至Summary连续取得，但完整性无独立核对依据，保留[4,5]",
+        "event_id": "call_00_GQ8qIm035AocxkH2VmGD9386.result",
+        "url": "https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/"
+      },
+      {
+        "reference": "https://docs.nvidia.com/cuda/archive/12.6.0/cuda-c-programming-guide/index.html",
+        "ownership": "official",
+        "representation": "none",
+        "completeness": "incomplete",
+        "score": 1,
+        "evidence": [
+          {
+            "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "quote": "**The requested sections are NOT present in the content provided.**"
+          }
+        ],
+        "boundary_evidence": [
+          {
+            "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+            "quote": "| **5.1** | **SIMT Architecture** | ❌ **ABSENT** |"
+          }
+        ],
+        "note": "Pre-requested sections5.1/5.2 absent according to captured tool return. Preserve actual explanatory summary, not target body. Existing M2 grade1 for no target content.",
+        "event_id": "call_00_bjZk9uI2KyHLVnvrcBZC7796.result",
+        "url": "https://docs.nvidia.com/cuda/archive/12.6.0/cuda-c-programming-guide/index.html",
+        "received_representation": "tool_summary_of_missing_target"
+      }
+    ],
+    "basis": "Root inspected all8 recorded official fetches; expand grouped event_ids into actual one-row-per-dispatch inventory, exact same-return quotes; same-URL retries still aggregate once. Explicit absent requested archive sections receive no body credit."
+  },
+  {
+    "case": "case-3df1e4e8c0a6",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      0,
+      "evidence",
+      0
+    ],
+    "original": {
+      "event_id": "call_fe130544d2b44c86b3532dd8.result",
+      "quote": "命令与参数依据：CANN 8.5.0.alpha002 与 8.0.0.alpha002 商用/社区版官方文档（mssanitizer --tool=memcheck 自 CANN 8.x 起可用）"
+    },
+    "replacement": {
+      "event_id": "run-end",
+      "quote": "- 命令与参数依据：CANN **8.5.0.alpha002** 与 **8.0.0.alpha002** 商用/社区版官方文档（`mssanitizer --tool=memcheck` 自 CANN 8.x 起可用）。"
+    },
+    "basis": "Root verified exact final answer line; raw assessor pointed final paraphrase at budget-denied tool event. No score change."
+  },
+  {
+    "case": "case-3df1e4e8c0a6",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      1,
+      "evidence",
+      2
+    ],
+    "original": {
+      "event_id": "call_fe130544d2b44c86b3532dd8.result",
+      "quote": "若部署报 ASCEND_CUSTOM_OPP_PATH 含多路径冒号的错误，先 unset ASCEND_CUSTOM_OPP_PATH。"
+    },
+    "replacement": {
+      "event_id": "run-end",
+      "quote": "（若部署报 `ASCEND_CUSTOM_OPP_PATH` 含多路径冒号的错误，先 `unset ASCEND_CUSTOM_OPP_PATH`。）"
+    },
+    "basis": "Root verified exact final answer line; raw assessor pointed final paraphrase at budget-denied tool event. No score change."
   }
 ]

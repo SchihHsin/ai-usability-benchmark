@@ -147,6 +147,1342 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T07:08:50.711680+00:00",
+      "process_sha256": "44ba0f7a01eee349052d0434639c1fae419f3f5697b889dc3c5ef142007bdbdd",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "mssanitizer --tool=memcheck <你的程序>",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_1f4852d3.result",
+            "evidence_quote": "执行如下命令可显式指定内存检测，默认会开启非法读写、多核踩踏、非对齐访问和非法释放的检测功能：mssanitizer --tool=memcheck application",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题为单一综合要求：用昇腾工具定位算子内存越界/踩内存。最终答案覆盖各子要求：(1)工具选择——明确 msSanitizer 的 memcheck 子功能针对越界/踩内存，官方源确认 '内存检测是针对用户程序运行时的一种异常检测'（WebFetch_1）；(2)核心命令——mssanitizer --tool=memcheck 及 --leak-check/--check-unused-memory 等参数与官方文档逐字一致（WebFetch_1）；(3)分场景流程——Ascend C 内核调用符（bash run.sh -r npu -v <soc_version> 后拉起 ./add_npu）、单算子 API/PyTorch（CMakeLists 增加 npu_op_kernel_options(ascendc_kernels ALL OPTIONS -sanitizer)）、Triton（TRITON_ENABLE_SANITIZER=1、TRITON_ALWAYS_COMPILE=1）、CANN 栈泄漏定界（--check-device-heap/--check-cann-heap），均与官方 GitHub 仓库文档一致（WebFetch_5）；(4)定位到代码行——报告解析（illegal read、多核踩 WARNING、非对齐）及'不加 -sanitizer 编译选项则无调用栈'的关键前提，官方源有对应原文 '不添加编译选项的情况下，异常报告将不会出现以下调用栈信息'（WebFetch_1）；(5)PyTorch 内存池干扰及 PYTORCH_NO_NPU_MEMORY_CACHING=1、sanitizerReportMalloc/sanitizerReportFree 手动上报，官方源确认。无执行硬件不作为否定依据；内容与来源核对一致。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-21"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为昇腾官方(hiascend.com) CANN msSanitizer 文档",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "1. [工具概述-CANN8.0.0.alpha002-昇腾社区 - hiascend.com]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.0,
+            "upper": 3.5,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "# 内存检测\n\n内存检测是针对用户程序运行时的一种异常检测"
+              },
+              {
+                "event_id": "WebFetch_2_ee0767d9.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              },
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "# 基础案例\n\n<br>\n\n## 1. 检测内核调用符方式的Ascend C算子"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文覆盖主流程：启用命令(mssanitizer --tool=memcheck)、编译选项(-sanitizer)、异常报告解读与代码行定位、多场景(内核调用符/API/PyTorch/Triton/CANN软件栈)命令；但使用前提(安装指南、环境配置)与支持版本/硬件约束仅以链接引用，概述页正文未取得",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "mssanitizer --tool=memcheck application"
+              },
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "npu_op_kernel_options(ascendc_kernels ALL OPTIONS -sanitizer)"
+              },
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "参考《[MindStudio Sanitizer 安装指南](../install_guide/mssanitizer_install_guide.md)》完成相关环境变量的配置。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: missing official constraint citations",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "工具概述-CANN8.0.0.alpha002-昇腾社区"
+              },
+              {
+                "event_id": "WebSearch_3_7130d93e.result",
+                "quote": "工具概述-CANN商用版8.1.RC1-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_2_ee0767d9.result",
+                "quote": "**标题**: 工具概述-异常检测（msSanitizer）-算子开发工具-开发工具-CANN8.5.0.alpha002开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "去重后相关独立第三方来源3条(gitcode SHMEM 博文、CSDN gitblog_00722、CSDN jieph01)，官方仓库 Ascend/mssanitizer 与昇腾官方文档按渠道分类排除，cann-learning-hub 归属未确认不计入；3-4条均为档3",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "CANN SHMEM 调测工具使用指南：msprof、mssanitizer 内存检测与 …"
+              },
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "CANN学习中心：msSanitizer异常检测工具深度解析-CSDN博客"
+              },
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "msprobe/msdebug 全家桶：昇腾精度比对、溢出检测、msSanitizer 内 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方仅以搜索摘要形式取得，其核心说法(msSanitizer 提供 memcheck 内存检测)与官方正文一致，有可追溯依据；但第三方正文未抓取，其余关键说法未核验，无已确证矛盾",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "本文以 CANN SHMEM（昇腾多机多卡内存通信库）仓库中的官方调测文档为主体"
+              },
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "运行msSanitizer工具时，默认启用内存检测功能（**memcheck**）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索前先验正确识别 msSanitizer 为昇腾内存异常检测工具并给出方法片段(-g 调试信息、日志、msnpureport)，且对不确定处明确标注；但确切命令、环境变量与版本支持均需外部资料(事后核对：实际命令 mssanitizer --tool=memcheck、编译选项 -sanitizer，先验未给出)",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "msSanitizer 的确切命令名、环境变量名、启用参数（如 `MSSANITIZER_OPTIONS` 的具体字段）"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "msSanitizer**：CANN 提供的内存异常检测工具（类似于 AddressSanitizer 之于 CPU）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_e74872d5.dispatch",
+              "WebFetch_1_1f4852d3.dispatch",
+              "WebFetch_2_ee0767d9.dispatch",
+              "WebSearch_3_7130d93e.dispatch",
+              "WebFetch_4_1056541c.dispatch",
+              "WebFetch_5_5a320c6e.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "最终答案给出有依据的版本存在信息：官方文档存在 CANN 8.0.0.alpha002、8.5.0.alpha002、商用版 8.1.RC1 及 MindStudio 26.1.0，且'各版本文档中命令一致'（搜索结果确实命中 8.0.0.alpha002 与 8.1.RC1 概述页、8.5.0.alpha002 正文），GitHub 官方仓库也核实存在。但答案自述'未核实处：msSanitizer 首次引入的具体 CANN 最低版本、安装包确切路径'，即工具与用户环境的最低适用版本未确定，属'部分组件有明确版本依据，其余仍未确定'。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方文档存在以下版本：CANN 社区版 8.0.0.alpha002、8.5.0.alpha002、CANN 商用版 8.1.RC1，以及 MindStudio 26.1.0 文档"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "未核实处**：msSanitizer 首次引入的具体 CANN 最低版本、安装包确切路径"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "操作指导基本完整可直接照抄：核心命令、分场景构建/重编译步骤、环境变量、报告解读均具体且与官方源一致；占位符（<你的程序>、<soc_version>、add_npu 等示例名）均为明确标识且有说明的用户环境参数，属4分口径。未给5分的原因：前置条件中'安装指南'的环境变量配置内容答案自述未能取回（'该页面本次未能取回正文，仅得到导航框架'），用户需另行查阅该外部文档才能完成首次部署。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "mssanitizer --tool=memcheck --check-device-heap=yes --leak-check=yes ./add_npu"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "文档称需参考\"安装指南\"配置环境变量，该页面本次未能取回正文，仅得到导航框架"
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: missing official constraint citations"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: missing official constraint citations"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M4: missing official constraint citations"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 65,
+            "end": 113,
+            "quote": "1. [工具概述-CANN8.0.0.alpha002-昇腾社区 - hiascend.com]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 312,
+            "end": 341,
+            "quote": "# 内存检测\n\n内存检测是针对用户程序运行时的一种异常检测",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_ee0767d9.result",
+            "field": "response",
+            "sha256": "00e4067deed27aecddaa291ea595602f4a3a3e6774329e8282c174207d395e10",
+            "start": 72,
+            "end": 91,
+            "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "field": "response",
+            "sha256": "80ac1487f3620720ac53442a2ef44a46b74c92eca0caec03085e0a16d018e3b9",
+            "start": 5,
+            "end": 45,
+            "quote": "# 基础案例\n\n<br>\n\n## 1. 检测内核调用符方式的Ascend C算子",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 2617,
+            "end": 2656,
+            "quote": "mssanitizer --tool=memcheck application",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "field": "response",
+            "sha256": "80ac1487f3620720ac53442a2ef44a46b74c92eca0caec03085e0a16d018e3b9",
+            "start": 2734,
+            "end": 2795,
+            "quote": "npu_op_kernel_options(ascendc_kernels ALL OPTIONS -sanitizer)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "field": "response",
+            "sha256": "80ac1487f3620720ac53442a2ef44a46b74c92eca0caec03085e0a16d018e3b9",
+            "start": 64,
+            "end": 154,
+            "quote": "参考《[MindStudio Sanitizer 安装指南](../install_guide/mssanitizer_install_guide.md)》完成相关环境变量的配置。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 69,
+            "end": 97,
+            "quote": "工具概述-CANN8.0.0.alpha002-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebSearch_3_7130d93e.result",
+            "field": "response",
+            "sha256": "e2543eb1ad4129758f6f8c99a888e458fea6513df363a9da745975e9de4ef4fd",
+            "start": 858,
+            "end": 882,
+            "quote": "工具概述-CANN商用版8.1.RC1-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_ee0767d9.result",
+            "field": "response",
+            "sha256": "00e4067deed27aecddaa291ea595602f4a3a3e6774329e8282c174207d395e10",
+            "start": 0,
+            "end": 70,
+            "quote": "**标题**: 工具概述-异常检测（msSanitizer）-算子开发工具-开发工具-CANN8.5.0.alpha002开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 820,
+            "end": 866,
+            "quote": "CANN SHMEM 调测工具使用指南：msprof、mssanitizer 内存检测与 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 1087,
+            "end": 1124,
+            "quote": "CANN学习中心：msSanitizer异常检测工具深度解析-CSDN博客",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 1352,
+            "end": 1399,
+            "quote": "msprobe/msdebug 全家桶：昇腾精度比对、溢出检测、msSanitizer 内 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 933,
+            "end": 973,
+            "quote": "本文以 CANN SHMEM（昇腾多机多卡内存通信库）仓库中的官方调测文档为主体",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 2252,
+            "end": 2294,
+            "quote": "运行msSanitizer工具时，默认启用内存检测功能（**memcheck**）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "af3dbd342eaf3e7a9d1ec1a7fccd1f73b51ecd8d608e31aa7cc04e0400bfab81",
+            "start": 1080,
+            "end": 1140,
+            "quote": "msSanitizer 的确切命令名、环境变量名、启用参数（如 `MSSANITIZER_OPTIONS` 的具体字段）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "af3dbd342eaf3e7a9d1ec1a7fccd1f73b51ecd8d608e31aa7cc04e0400bfab81",
+            "start": 301,
+            "end": 360,
+            "quote": "msSanitizer**：CANN 提供的内存异常检测工具（类似于 AddressSanitizer 之于 CPU）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 3052,
+            "end": 3142,
+            "quote": "官方文档存在以下版本：CANN 社区版 8.0.0.alpha002、8.5.0.alpha002、CANN 商用版 8.1.RC1，以及 MindStudio 26.1.0 文档",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 3301,
+            "end": 3345,
+            "quote": "未核实处**：msSanitizer 首次引入的具体 CANN 最低版本、安装包确切路径",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 3346,
+            "end": 3384,
+            "quote": "文档称需参考\"安装指南\"配置环境变量，该页面本次未能取回正文，仅得到导航框架",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 597,
+            "end": 631,
+            "quote": "mssanitizer --tool=memcheck <你的程序>",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_2_ee0767d9.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_2_ee0767d9.result",
+            "alternative_body_event_ids": [
+              "WebFetch_5_5a320c6e.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-WebFetch_4_1056541c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_4_1056541c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_5_5a320c6e.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-ac2eb7060110-predictors.json": "5313798571bbbb78ffa1538bfb11f6ac3ef53eecae55583e805b90e0a6bbb6fd",
+          "reviewed/development/case-ac2eb7060110-outcome.json": "57ca1c997abfa611cea8b36cce45caa3383a87375130f6ea633d8dc3f49be392",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_band": [
+              4,
+              5
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/devaids/optool/atlasopdev_16_0042.html",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "mssanitizer --tool=memcheck --leak-check=yes application"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "====== SUMMARY: 1100byte(s) unused memory in 2 allocation(s)"
+              }
+            ],
+            "note": "直接正文含异常类型表、启用命令与报告解析；完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_2_ee0767d9.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "not_applicable",
+            "score_band": [
+              2,
+              2
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/devaids/optool/atlasopdev_16_0039.html",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_ee0767d9.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "仅返回标题与页面评级标签，无可识别正文；工具概述正文未取得不代表官网缺少版本说明"
+          },
+          {
+            "event_id": "WebFetch_4_1056541c.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "not_applicable",
+            "score_band": [
+              2,
+              2
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindstudio/2610/msOT/Operatordevelopmenttools/docs/zh/best_practices/mssanitizer_basic_cases.md",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_1056541c.result",
+                "quote": "**标题**: 基础案例-异常检测 msSanitizer-算子开发工具-算子开发工具-MindStudio26.1.0开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "同一基础案例文档的 hiascend 路线仅返回框架；作为早期障碍独立留存，该文档最终内容状态由 WebFetch_5 决定"
+          },
+          {
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_band": [
+              4,
+              5
+            ],
+            "reference": "https://raw.githubusercontent.com/Ascend/mssanitizer/master/docs/zh/best_practices/mssanitizer_basic_cases.md",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "mssanitizer --tool=memcheck ./add_npu   # 内存检测需指定 --tool=memcheck"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "====== SUMMARY: 32768 byte(s) leaked in 1 allocation(s)"
+              }
+            ],
+            "note": "Ascend 官方组织仓库原文，正文含完整章节1-5；完整性无独立核对依据，保留[4,5]"
+          }
+        ],
+        "quote_audit": [
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "evidence_quote",
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "执行如下命令可显式指定内存检测，默认会开启非法读写、多核踩踏、非对齐访问和非法释放的检测功能：mssanitizer --tool=memcheck application"
+              }
+            ]
+          },
+          {
+            "metric": "M10",
+            "bad_refs": [
+              {
+                "event_id": "run-end",
+                "quote": "mssanitizer --tool=memcheck --check-device-heap=yes --leak-check=yes ./add_npu"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T07:17:21.355373+00:00",
+      "process_sha256": "44ba0f7a01eee349052d0434639c1fae419f3f5697b889dc3c5ef142007bdbdd",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "mssanitizer --tool=memcheck <你的程序>",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_1f4852d3.result",
+            "evidence_quote": "执行如下命令可显式指定内存检测，默认会开启非法读写、多核踩踏、非对齐访问和非法释放的检测功能：\n  \n  ```\n  mssanitizer --tool=memcheck application",
+            "verification": "source",
+            "reason": "原题为单一综合要求：用昇腾工具定位算子内存越界/踩内存。最终答案覆盖各子要求：(1)工具选择——明确 msSanitizer 的 memcheck 子功能针对越界/踩内存，官方源确认 '内存检测是针对用户程序运行时的一种异常检测'（WebFetch_1）；(2)核心命令——mssanitizer --tool=memcheck 及 --leak-check/--check-unused-memory 等参数与官方文档逐字一致（WebFetch_1）；(3)分场景流程——Ascend C 内核调用符（bash run.sh -r npu -v <soc_version> 后拉起 ./add_npu）、单算子 API/PyTorch（CMakeLists 增加 npu_op_kernel_options(ascendc_kernels ALL OPTIONS -sanitizer)）、Triton（TRITON_ENABLE_SANITIZER=1、TRITON_ALWAYS_COMPILE=1）、CANN 栈泄漏定界（--check-device-heap/--check-cann-heap），均与官方 GitHub 仓库文档一致（WebFetch_5）；(4)定位到代码行——报告解析（illegal read、多核踩 WARNING、非对齐）及'不加 -sanitizer 编译选项则无调用栈'的关键前提，官方源有对应原文 '不添加编译选项的情况下，异常报告将不会出现以下调用栈信息'（WebFetch_1）；(5)PyTorch 内存池干扰及 PYTORCH_NO_NPU_MEMORY_CACHING=1、sanitizerReportMalloc/sanitizerReportFree 手动上报，官方源确认。无执行硬件不作为否定依据；内容与来源核对一致。",
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为昇腾官方(hiascend.com) CANN msSanitizer 文档",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "1. [工具概述-CANN8.0.0.alpha002-昇腾社区 - hiascend.com]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.0,
+            "upper": 3.5,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "# 内存检测\n\n内存检测是针对用户程序运行时的一种异常检测"
+              },
+              {
+                "event_id": "WebFetch_2_ee0767d9.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              },
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "# 基础案例\n\n<br>\n\n## 1. 检测内核调用符方式的Ascend C算子"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文覆盖主流程：启用命令(mssanitizer --tool=memcheck)、编译选项(-sanitizer)、异常报告解读与代码行定位、多场景(内核调用符/API/PyTorch/Triton/CANN软件栈)命令；但使用前提(安装指南、环境配置)与支持版本/硬件约束仅以链接引用，概述页正文未取得",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "mssanitizer --tool=memcheck application"
+              },
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "npu_op_kernel_options(ascendc_kernels ALL OPTIONS -sanitizer)"
+              },
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "参考《[MindStudio Sanitizer 安装指南](../install_guide/mssanitizer_install_guide.md)》完成相关环境变量的配置。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "可见社区版8.0.0.alpha002、8.5.0.alpha002与商用版8.1.RC1均含 msSanitizer，属部分适用关系已明确；但工具概述页(含支持版本与使用前提)仅返回框架无正文，完成工具与目标环境版本选择所需的对应关系仍缺失，未见冲突",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "工具概述-CANN8.0.0.alpha002-昇腾社区"
+              },
+              {
+                "event_id": "WebSearch_3_7130d93e.result",
+                "quote": "工具概述-CANN商用版8.1.RC1-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_2_ee0767d9.result",
+                "quote": "**标题**: 工具概述-异常检测（msSanitizer）-算子开发工具-开发工具-CANN8.5.0.alpha002开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "去重后相关独立第三方来源3条(gitcode SHMEM 博文、CSDN gitblog_00722、CSDN jieph01)，官方仓库 Ascend/mssanitizer 与昇腾官方文档按渠道分类排除，cann-learning-hub 归属未确认不计入；3-4条均为档3",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "CANN SHMEM 调测工具使用指南：msprof、mssanitizer 内存检测与 …"
+              },
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "CANN学习中心：msSanitizer异常检测工具深度解析-CSDN博客"
+              },
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "msprobe/msdebug 全家桶：昇腾精度比对、溢出检测、msSanitizer 内 …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方仅以搜索摘要形式取得，其核心说法(msSanitizer 提供 memcheck 内存检测)与官方正文一致，有可追溯依据；但第三方正文未抓取，其余关键说法未核验，无已确证矛盾",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_e74872d5.result",
+                "quote": "本文以 CANN SHMEM（昇腾多机多卡内存通信库）仓库中的官方调测文档为主体"
+              },
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "运行msSanitizer工具时，默认启用内存检测功能（**memcheck**）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索前先验正确识别 msSanitizer 为昇腾内存异常检测工具并给出方法片段(-g 调试信息、日志、msnpureport)，且对不确定处明确标注；但确切命令、环境变量与版本支持均需外部资料(事后核对：实际命令 mssanitizer --tool=memcheck、编译选项 -sanitizer，先验未给出)",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "msSanitizer 的确切命令名、环境变量名、启用参数（如 `MSSANITIZER_OPTIONS` 的具体字段）"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "msSanitizer**：CANN 提供的内存异常检测工具（类似于 AddressSanitizer 之于 CPU）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_e74872d5.dispatch",
+              "WebFetch_1_1f4852d3.dispatch",
+              "WebFetch_2_ee0767d9.dispatch",
+              "WebSearch_3_7130d93e.dispatch",
+              "WebFetch_4_1056541c.dispatch",
+              "WebFetch_5_5a320c6e.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "最终答案给出有依据的版本存在信息：官方文档存在 CANN 8.0.0.alpha002、8.5.0.alpha002、商用版 8.1.RC1 及 MindStudio 26.1.0，且'各版本文档中命令一致'（搜索结果确实命中 8.0.0.alpha002 与 8.1.RC1 概述页、8.5.0.alpha002 正文），GitHub 官方仓库也核实存在。但答案自述'未核实处：msSanitizer 首次引入的具体 CANN 最低版本、安装包确切路径'，即工具与用户环境的最低适用版本未确定，属'部分组件有明确版本依据，其余仍未确定'。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方文档存在以下版本：CANN 社区版 8.0.0.alpha002、8.5.0.alpha002、CANN 商用版 8.1.RC1，以及 MindStudio 26.1.0 文档"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "未核实处**：msSanitizer 首次引入的具体 CANN 最低版本、安装包确切路径"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "操作指导基本完整可直接照抄：核心命令、分场景构建/重编译步骤、环境变量、报告解读均具体且与官方源一致；占位符（<你的程序>、<soc_version>、add_npu 等示例名）均为明确标识且有说明的用户环境参数，属4分口径。未给5分的原因：前置条件中'安装指南'的环境变量配置内容答案自述未能取回（'该页面本次未能取回正文，仅得到导航框架'），用户需另行查阅该外部文档才能完成首次部署。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "mssanitizer --check-device-heap=yes --leak-check=yes ./add_npu"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "文档称需参考\"安装指南\"配置环境变量，该页面本次未能取回正文，仅得到导航框架"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 73.23402239999999,
+            "upper": 74.96417279999997,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              73.2,
+              75.0
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 73.23402239999999,
+          "upper": 74.96417279999997,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            73.2,
+            75.0
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 65,
+            "end": 113,
+            "quote": "1. [工具概述-CANN8.0.0.alpha002-昇腾社区 - hiascend.com]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 312,
+            "end": 341,
+            "quote": "# 内存检测\n\n内存检测是针对用户程序运行时的一种异常检测",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_ee0767d9.result",
+            "field": "response",
+            "sha256": "00e4067deed27aecddaa291ea595602f4a3a3e6774329e8282c174207d395e10",
+            "start": 72,
+            "end": 91,
+            "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "field": "response",
+            "sha256": "80ac1487f3620720ac53442a2ef44a46b74c92eca0caec03085e0a16d018e3b9",
+            "start": 5,
+            "end": 45,
+            "quote": "# 基础案例\n\n<br>\n\n## 1. 检测内核调用符方式的Ascend C算子",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 2617,
+            "end": 2656,
+            "quote": "mssanitizer --tool=memcheck application",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "field": "response",
+            "sha256": "80ac1487f3620720ac53442a2ef44a46b74c92eca0caec03085e0a16d018e3b9",
+            "start": 2734,
+            "end": 2795,
+            "quote": "npu_op_kernel_options(ascendc_kernels ALL OPTIONS -sanitizer)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "field": "response",
+            "sha256": "80ac1487f3620720ac53442a2ef44a46b74c92eca0caec03085e0a16d018e3b9",
+            "start": 64,
+            "end": 154,
+            "quote": "参考《[MindStudio Sanitizer 安装指南](../install_guide/mssanitizer_install_guide.md)》完成相关环境变量的配置。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 69,
+            "end": 97,
+            "quote": "工具概述-CANN8.0.0.alpha002-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebSearch_3_7130d93e.result",
+            "field": "response",
+            "sha256": "e2543eb1ad4129758f6f8c99a888e458fea6513df363a9da745975e9de4ef4fd",
+            "start": 858,
+            "end": 882,
+            "quote": "工具概述-CANN商用版8.1.RC1-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_ee0767d9.result",
+            "field": "response",
+            "sha256": "00e4067deed27aecddaa291ea595602f4a3a3e6774329e8282c174207d395e10",
+            "start": 0,
+            "end": 70,
+            "quote": "**标题**: 工具概述-异常检测（msSanitizer）-算子开发工具-开发工具-CANN8.5.0.alpha002开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 820,
+            "end": 866,
+            "quote": "CANN SHMEM 调测工具使用指南：msprof、mssanitizer 内存检测与 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 1087,
+            "end": 1124,
+            "quote": "CANN学习中心：msSanitizer异常检测工具深度解析-CSDN博客",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 1352,
+            "end": 1399,
+            "quote": "msprobe/msdebug 全家桶：昇腾精度比对、溢出检测、msSanitizer 内 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_e74872d5.result",
+            "field": "response",
+            "sha256": "fa53558cb831d86c2abd1f6ce74cb2f90a160c642f9f58385cf65c6e66fa04b0",
+            "start": 933,
+            "end": 973,
+            "quote": "本文以 CANN SHMEM（昇腾多机多卡内存通信库）仓库中的官方调测文档为主体",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 2252,
+            "end": 2294,
+            "quote": "运行msSanitizer工具时，默认启用内存检测功能（**memcheck**）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "af3dbd342eaf3e7a9d1ec1a7fccd1f73b51ecd8d608e31aa7cc04e0400bfab81",
+            "start": 1080,
+            "end": 1140,
+            "quote": "msSanitizer 的确切命令名、环境变量名、启用参数（如 `MSSANITIZER_OPTIONS` 的具体字段）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "af3dbd342eaf3e7a9d1ec1a7fccd1f73b51ecd8d608e31aa7cc04e0400bfab81",
+            "start": 301,
+            "end": 360,
+            "quote": "msSanitizer**：CANN 提供的内存异常检测工具（类似于 AddressSanitizer 之于 CPU）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 3052,
+            "end": 3142,
+            "quote": "官方文档存在以下版本：CANN 社区版 8.0.0.alpha002、8.5.0.alpha002、CANN 商用版 8.1.RC1，以及 MindStudio 26.1.0 文档",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 3301,
+            "end": 3345,
+            "quote": "未核实处**：msSanitizer 首次引入的具体 CANN 最低版本、安装包确切路径",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 813,
+            "end": 875,
+            "quote": "mssanitizer --check-device-heap=yes --leak-check=yes ./add_npu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 3346,
+            "end": 3384,
+            "quote": "文档称需参考\"安装指南\"配置环境变量，该页面本次未能取回正文，仅得到导航框架",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "2a475806e3c7562fa9fd982e65eed87e5b4e7d614d54b6aa4f33c06d86a6d1b5",
+            "start": 597,
+            "end": 631,
+            "quote": "mssanitizer --tool=memcheck <你的程序>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "field": "response",
+            "sha256": "267142d4275a1fd71cf90b261bc9894c9fc8b1f9295dea15e7e0e842f7cb7cf9",
+            "start": 2558,
+            "end": 2656,
+            "quote": "执行如下命令可显式指定内存检测，默认会开启非法读写、多核踩踏、非对齐访问和非法释放的检测功能：\n  \n  ```\n  mssanitizer --tool=memcheck application",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_2_ee0767d9.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_2_ee0767d9.result",
+            "alternative_body_event_ids": [
+              "WebFetch_5_5a320c6e.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-WebFetch_4_1056541c.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_4_1056541c.result",
+            "alternative_body_event_ids": [
+              "WebFetch_5_5a320c6e.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-ac2eb7060110-predictors.json": "4b2aaa9aa41e27d5ccf60cabb34cd6917de90e170c0a7381b1b7b1b4d5e76ec3",
+          "reviewed/development/case-ac2eb7060110-outcome.json": "57b340ded4b6030ad124aaff2d79a2ee52eebdc43d4751251afaf658c7bf16e8",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_1f4852d3.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_band": [
+              4,
+              5
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/devaids/optool/atlasopdev_16_0042.html",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "mssanitizer --tool=memcheck --leak-check=yes application"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_1f4852d3.result",
+                "quote": "====== SUMMARY: 1100byte(s) unused memory in 2 allocation(s)"
+              }
+            ],
+            "note": "直接正文含异常类型表、启用命令与报告解析；完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_2_ee0767d9.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "not_applicable",
+            "score_band": [
+              2,
+              2
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/devaids/optool/atlasopdev_16_0039.html",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_ee0767d9.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "仅返回标题与页面评级标签，无可识别正文；工具概述正文未取得不代表官网缺少版本说明"
+          },
+          {
+            "event_id": "WebFetch_4_1056541c.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "not_applicable",
+            "score_band": [
+              2,
+              2
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindstudio/2610/msOT/Operatordevelopmenttools/docs/zh/best_practices/mssanitizer_basic_cases.md",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_1056541c.result",
+                "quote": "**标题**: 基础案例-异常检测 msSanitizer-算子开发工具-算子开发工具-MindStudio26.1.0开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [],
+            "note": "同一基础案例文档的 hiascend 路线仅返回框架；作为早期障碍独立留存，该文档最终内容状态由 WebFetch_5 决定"
+          },
+          {
+            "event_id": "WebFetch_5_5a320c6e.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_band": [
+              4,
+              5
+            ],
+            "reference": "https://raw.githubusercontent.com/Ascend/mssanitizer/master/docs/zh/best_practices/mssanitizer_basic_cases.md",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "mssanitizer --tool=memcheck ./add_npu   # 内存检测需指定 --tool=memcheck"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_5a320c6e.result",
+                "quote": "====== SUMMARY: 32768 byte(s) leaked in 1 allocation(s)"
+              }
+            ],
+            "note": "Ascend 官方组织仓库原文，正文含完整章节1-5；完整性无独立核对依据，保留[4,5]"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

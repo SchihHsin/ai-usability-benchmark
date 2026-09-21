@@ -1,0 +1,467 @@
+{
+  "metrics": [
+    {
+      "id": "M1",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "首次查询第1条即为相关官方来源（NVIDIA官方Hopper Compatibility Guide，docs.nvidia.com），第2条为同指南官方HTML版，符合第5档'首次查询第1条即为相关官方来源'，仅1次查询即命中。",
+      "evidence": [
+        {
+          "event_id": "call_2d2b3e1b672b48ff8ba41e68.result",
+          "quote": "## 1. [Hopper Compatibility Guide - NVIDIA Documentation Hub](https://docs.nvidia.com/cuda/pdf/Hopper_Compatibility_Guide.pdf)"
+        },
+        {
+          "event_id": "call_2d2b3e1b672b48ff8ba41e68.result",
+          "quote": "## 2. [1. Hopper Architecture Compatibility — Hopper Compatibility …](https://docs.nvidia.com/cuda/hopper-compatibility-guide/index.html)"
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "score": null,
+      "lower": 3.25,
+      "upper": 3.75,
+      "status": "bounded",
+      "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+      "evidence": [
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "A cubin generated for a certain compute capability is supported to run on any GPU with the same major revision and same or higher minor revision of compute capability."
+        },
+        {
+          "event_id": "call_e763e06d12a84e8483079251.result",
+          "quote": "This page no longer exists. It is a non-supported format."
+        },
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "By default, TensorRT engines are only compatible with the type of device where they were built."
+        },
+        {
+          "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+          "quote": "CUDA cuBLAS\n\n13.0.0.19\n\n[...]"
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "原题三项核心要求在取得的官方正文中均完整说明：(a)重编译——CUDA 11.8生成sm_90原生cubin，附完整nvcc -gencode命令示例、-arch=sm_XX展开语义及单目标限制说明；(b)PTX兼容——前向兼容规则、加载时JIT行为、建议内嵌PTX、sm_90a/compute_90a不前向/后向兼容；(c)TensorRT engine——默认仅兼容构建设备类型、反序列化时compute capability硬校验失败即拒绝、kAMPERE_PLUS(CC≥8.0)/kSAME_COMPUTE_CAPABILITY例外及性能代价。另有CUDA 13.0移除Volta编译约束与CUDA_FORCE_PTX_JIT=1验证步骤，无需另查补齐。",
+      "evidence": [
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "With versions 11.8 of the CUDA Toolkit, `nvcc` can generate cubin native to the Hopper architecture (compute capability 9.0)."
+        },
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "Unlike cubin, PTX is forward-compatible."
+        },
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "PTX code compiled to target architecture conditional features using `sm_90a` or `compute_90a` only runs on devices with compute capability 9.0 and is not backward or forward compatible."
+        },
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "TensorRT also records the compute capability (major and minor versions) in the plan and checks it against the GPU on which the plan is being loaded. If they do not match, the plan will fail to deserialize."
+        },
+        {
+          "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+          "quote": "Offline compilation and library support for these architectures have been removed in CUDA Toolkit 13.0 major version release."
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "适用范围（目标架构、编译目标、PTX和TensorRT engine兼容）内全部版本适用关系均由官方直接规则给出，可直接套用：CUDA 11.8→sm_90原生编译目标（附现成nvcc命令）；CUDA 12.x及以前→Volta编译支持、13.0起移除；PTX→跨架构前向兼容（sm_90a例外，仅CC 9.0）；TensorRT engine→默认绑定构建设备类型与构建版本，kAMPERE_PLUS放宽为CC≥8.0、kSAME_COMPUTE_CAPABILITY同CC适用。无缺失关系、无未消解冲突，determination=direct（详见m4_check）。",
+      "evidence": [
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "With versions 11.8 of the CUDA Toolkit, `nvcc` can generate cubin native to the Hopper architecture (compute capability 9.0)."
+        },
+        {
+          "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+          "quote": "The use of CUDA Toolkits through the 12.x series to build applications for these architectures will continue to be supported, but newer toolkits will be unable to target these architectures."
+        },
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "PTX code compiled to target architecture conditional features using `sm_90a` or `compute_90a` only runs on devices with compute capability 9.0 and is not backward or forward compatible."
+        },
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "By default, TensorRT engines are only compatible with the type of device where they were built."
+        },
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "with `HardwareCompatibilityLevel::kAMPERE_PLUS`, the check will ensure that the compute capability is **greater than or equal to 8.0** rather than checking for an exact match."
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "统一预算内相关独立第三方来源8条（≥6）：cnblogs计算能力说明、CSDN架构编译参数、wenku.csdn架构/CUDA版本对照、raybyte TRT引擎跨架构不兼容分析、CSDN TRT跨平台部署、oldpan TRT FAQ、Tom's Hardware CUDA移除Volta报道、gamegpu同一文章两URL去重计1。首次发现于第1次查询第3条。",
+      "evidence": [
+        {
+          "event_id": "call_2d2b3e1b672b48ff8ba41e68.result",
+          "quote": "## 3. [NVIDIA GPU 计算能力（ compute capability，SM version ...](https://www.cnblogs.com/DHclly/p/18838133)"
+        },
+        {
+          "event_id": "call_2d2b3e1b672b48ff8ba41e68.result",
+          "quote": "## 4. [【接单外包笔记】各种NVIDIA架构对应的编译参数](https://blog.csdn.net/a370413564/article/details/135552918)"
+        },
+        {
+          "event_id": "call_1d37d31f699046c784ce00ad.result",
+          "quote": "## 2. [TensorRT引擎文件跨显卡架构不兼容？从CUDA capability与 ...](https://raybyte.cn/post/2026/7/26/34f7bf39)"
+        },
+        {
+          "event_id": "call_1d37d31f699046c784ce00ad.result",
+          "quote": "## 5. [TensorRT常见问题 - 部署不内卷 - 老潘的AI社区](https://ai.oldpan.me/t/topic/142)"
+        },
+        {
+          "event_id": "call_47aa7102cf3247379836a23d.result",
+          "quote": "## 3. [Nvidia to drop CUDA support for Maxwell, Pascal, …](https://www.tomshardware.com/pc-components/gpus/nvidia-to-drop-cuda-support-for-maxwell-pascal-and-volta-gpus-with-the-next-major-toolkit-release)"
+        }
+      ]
+    },
+    {
+      "id": "M6",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "第三方关键说法均有可追溯依据并获独立来源交叉印证，未见未解决矛盾：TRT引擎跨架构不兼容——raybyte、CSDN、oldpan三个独立第三方与官方逐字规则一致；NVIDIA移除Maxwell/Pascal/Volta支持——Tom's Hardware与gamegpu报道与CUDA 13.0官方release notes一致。评价基于搜索摘要级陈述（未fetch第三方正文），摘要中可见的关键说法全部得到官方正文核对支持。",
+      "evidence": [
+        {
+          "event_id": "call_1d37d31f699046c784ce00ad.result",
+          "quote": "本文深度解析TensorRT引擎文件跨显卡架构不兼容的根本原因，包括CUDA Capability与设备特性码的核心概念。"
+        },
+        {
+          "event_id": "call_1d37d31f699046c784ce00ad.result",
+          "quote": "每个 ICudaEngine 对象在实例化时都绑定到特定的 GPU"
+        },
+        {
+          "event_id": "call_47aa7102cf3247379836a23d.result",
+          "quote": "The official release notes for Nvidia's CUDA 12.9 Toolkit explicitly indicate that the next"
+        },
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "By default, TensorRT engines are only compatible with the type of device where they were built."
+        },
+        {
+          "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+          "quote": "Offline compilation and library support for these architectures have been removed in CUDA Toolkit 13.0 major version release."
+        }
+      ]
+    },
+    {
+      "id": "M7",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "检索前回答对原题三项核心主题给出正确且带参数的完整流程（sm_90重编译并-gencode嵌入PTX、PTX前向兼容与JIT开销、TRT engine跨架构不能复用须在目标架构重建），关键主张经官方文档事后核对无误（PTX前向兼容、engine设备绑定、CUDA 13.0移除Volta均与官方一致）；但先验明确标注多项原题涉及的具体约束不确定——CUDA移除Volta的确切版本、sm_90a适用范围、TensorRT对Hopper的最低版本要求——仍需外部资料补充，符合第4档（完整正确流程，具体参数/约束需补充）。",
+      "evidence": [
+        {
+          "event_id": "client-note-00005",
+          "quote": "从 Volta(sm_70) 迁到 Hopper(sm_90) 必须为 `sm_90` 重新编译，或用 `-gencode arch=compute_70,code=[sm_70,compute_70]` 同时嵌入 PTX"
+        },
+        {
+          "event_id": "client-note-00005",
+          "quote": "PTX 前向兼容——`compute_70` 的 PTX 可由驱动 JIT 编译在 Hopper 上跑，但首次加载有 JIT 开销、性能可能不是最优；且依赖目标机驱动足够新。"
+        },
+        {
+          "event_id": "client-note-00005",
+          "quote": "跨架构（Volta→Hopper）不能复用，须在目标 GPU 上用对应 TRT 版本重建 engine；plan/builder 序列化文件同理。"
+        },
+        {
+          "event_id": "client-note-00005",
+          "quote": "sm_90a 用于 Hopper 特有指令（如 wgmma/TMA），不确定细节——**需核实**"
+        },
+        {
+          "event_id": "client-note-00005",
+          "quote": "主要不确定处：CUDA 移除 Volta 支持的确切版本；sm_90a 的适用范围；TensorRT 对 Hopper 的最低版本要求"
+        }
+      ]
+    },
+    {
+      "id": "M8",
+      "score": 2,
+      "lower": 2,
+      "upper": 2,
+      "status": "scored",
+      "reason": "调度器实际dispatch计数 S+F=7",
+      "evidence": []
+    }
+  ],
+  "m2_documents": [
+    {
+      "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+      "url": "https://docs.nvidia.com/cuda/hopper-compatibility-guide/index.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "unknown",
+      "score_range": [
+        4,
+        5
+      ],
+      "evidence": [
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "A cubin generated for a certain compute capability is supported to run on any GPU with the same major revision and same or higher minor revision of compute capability."
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+          "quote": "nvcc -gencode=arch=compute_60,code=sm_90 ..."
+        }
+      ],
+      "reference": "NVIDIA Hopper Compatibility Guide（docs.nvidia.com/cuda/hopper-compatibility-guide/index.html）；直接正文含1.1–1.4.3完整小节与nvcc示例，无截断标记，但无全文起止的独立核对依据（未二次抓取或对照PDF），完整性记unknown"
+    },
+    {
+      "event_id": "call_e763e06d12a84e8483079251.result",
+      "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/faq.html",
+      "ownership": "official",
+      "representation": "none",
+      "completeness": "not_applicable",
+      "score": 1,
+      "evidence": [
+        {
+          "event_id": "call_e763e06d12a84e8483079251.result",
+          "quote": "This page no longer exists. It is a non-supported format."
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_e763e06d12a84e8483079251.result",
+          "quote": "Page Not Found"
+        }
+      ],
+      "reference": "NVIDIA TensorRT FAQ（docs.nvidia.com/deeplearning/tensorrt/latest/faq.html）；目标页已下线返回错误页，未取得可识别正文，M2档1"
+    },
+    {
+      "event_id": "call_75272348eaa44abbb834389c.result",
+      "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-compatibility.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "unknown",
+      "score_range": [
+        4,
+        5
+      ],
+      "evidence": [
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "By default, TensorRT engines are only compatible with the type of device where they were built."
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "Below is the complete extraction with exact wording of all rules and all code commands preserved."
+        },
+        {
+          "event_id": "call_75272348eaa44abbb834389c.result",
+          "quote": "Summary: When Engines Must Be Rebuilt (derived from the rules)"
+        }
+      ],
+      "reference": "NVIDIA TensorRT Engine Compatibility（docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-compatibility.html）；返回含逐字兼容规则与C++/Python代码（正文证据），另含工具加工的导出小结表；复合返回按正文证据判定为body，工具自称完整提取不构成独立完整性依据，完整性unknown"
+    },
+    {
+      "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+      "url": "https://docs.nvidia.com/cuda/archive/13.0.0/cuda-toolkit-release-notes/index.html",
+      "ownership": "official",
+      "representation": "body",
+      "completeness": "incomplete",
+      "score": 4,
+      "evidence": [
+        {
+          "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+          "quote": "Architecture support for Maxwell, Pascal, and Volta is considered feature-complete."
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+          "quote": "CUDA cuBLAS\n\n13.0.0.19\n\n[...]"
+        }
+      ],
+      "reference": "CUDA Toolkit 13.0 Release Notes（docs.nvidia.com/cuda/archive/13.0.0/cuda-toolkit-release-notes/index.html）；直接正文但多处出现[...]省略标记（组件表、2.3.1、库章节均有），可核对正文边界存在缺失，M2档4"
+    }
+  ],
+  "m4_check": {
+    "required_relations": [
+      "CUDA Toolkit ≥11.8 ↔ 原生sm_90/compute_90编译目标",
+      "CUDA Toolkit ≤12.x ↔ Volta(sm_70)编译支持（13.0起移除）",
+      "PTX ↔ 跨compute capability前向兼容（sm_90a/compute_90a例外，仅CC 9.0）",
+      "TensorRT engine ↔ GPU架构/compute capability（默认仅构建设备类型；kAMPERE_PLUS CC≥8.0、kSAME_COMPUTE_CAPABILITY同类CC例外）",
+      "TensorRT engine ↔ TensorRT版本（默认仅构建版本；启用VERSION_COMPATIBLE后前向兼容）"
+    ],
+    "missing_relations": [],
+    "unresolved_conflicts": [],
+    "determination": "direct",
+    "combination": null,
+    "evidence": [
+      {
+        "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+        "quote": "With versions 11.8 of the CUDA Toolkit, `nvcc` can generate cubin native to the Hopper architecture (compute capability 9.0)."
+      },
+      {
+        "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+        "quote": "Unlike cubin, PTX is forward-compatible."
+      },
+      {
+        "event_id": "call_0db0b682ff0a4a9f860a1b97.result",
+        "quote": "PTX code compiled to target architecture conditional features using `sm_90a` or `compute_90a` only runs on devices with compute capability 9.0 and is not backward or forward compatible."
+      },
+      {
+        "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+        "quote": "The use of CUDA Toolkits through the 12.x series to build applications for these architectures will continue to be supported, but newer toolkits will be unable to target these architectures."
+      },
+      {
+        "event_id": "call_3ecaaab6c09141edb8dc9abd.result",
+        "quote": "CUDA 13.0 supports all NVIDIA architectures from Turing through Grace Blackwell."
+      },
+      {
+        "event_id": "call_75272348eaa44abbb834389c.result",
+        "quote": "By default, TensorRT engines are only compatible with the type of device where they were built."
+      },
+      {
+        "event_id": "call_75272348eaa44abbb834389c.result",
+        "quote": "By default, TensorRT engines are compatible only with the version of TensorRT used to build them."
+      },
+      {
+        "event_id": "call_75272348eaa44abbb834389c.result",
+        "quote": "with `HardwareCompatibilityLevel::kAMPERE_PLUS`, the check will ensure that the compute capability is **greater than or equal to 8.0** rather than checking for an exact match."
+      }
+    ]
+  },
+  "not_dispatched_documents": [],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a6a6dc1ce498",
+  "task_id": "Y",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "predictors",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "96375465e7ec46e39e2a7a6ba98963db",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "65b2a6a38da69dd0909b52f1c28db3bf",
+        "conversationRequestId": "65b2a6a38da69dd0909b52f1c28db3bf",
+        "agent": "cli"
+      },
+      {
+        "messageId": "96375465e7ec46e39e2a7a6ba98963db",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "65b2a6a38da69dd0909b52f1c28db3bf",
+        "conversationRequestId": "65b2a6a38da69dd0909b52f1c28db3bf",
+        "rawUsage": {
+          "prompt_tokens": 19812,
+          "completion_tokens": 45627,
+          "total_tokens": 65439,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 40896,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 18821
+          },
+          "prompt_cache_hit_tokens": 18821,
+          "prompt_cache_miss_tokens": 991,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 40896,
+          "credit": 26.46,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19812,
+          "outputTokens": 45627,
+          "totalTokens": 65439,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 18821
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 40896
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "d3c44e293cd40dc06e03a06a5b7d0711a3ee92d0d7428c7e98a75f5d4db2c805",
+    "process_sha256": "58c6e41f9b8eaf49fae02dc708e15758deb3981f0e475c281edc7c3ea70b9187",
+    "elapsed_seconds": 598.84,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-cc18e1baf3db48e682726fe2c829e4f2",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a6a6dc1ce498-predictors.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

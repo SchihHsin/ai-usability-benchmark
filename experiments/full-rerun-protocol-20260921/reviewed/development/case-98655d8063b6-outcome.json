@@ -1,0 +1,190 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "1. `nvidia-smi topo -m` / `topo -p2p n` 确认 NVLink 拓扑健康；\n2. `NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,TUNING,ENV` 看算法选择与告警；\n3. `nvbandwidth`/`nvloom`/`ib_write_bw` 确认裸带宽达标（区分硬件问题 vs 配置问题）；\n4. `all_reduce_perf` 基线 → 逐项试 `NCCL_ALGO`（Ring/Tree/NVLS/PAT）、`NCCL_PROTO`（LL/LL128/Simple）、`NCCL_MIN_CTAS/MAX_CTAS`、`NCCL_IB_QPS_PER_CONNECTION`；\n5. 核查 NUMA 亲和性与 NIC 选择（`NCCL_IB_HCA`、`NCCL_SOCKET_IFNAME`）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_ff74529dc3c048a4bba4ac8e.result",
+      "evidence_quote": "The `NCCL_ALGO` variable defines which algorithms NCCL will use.",
+      "verification": "source",
+      "reason": "原题五个子要求均被覆盖且有来源支撑：(1) NCCL_ALGO——答案给出取值表、^排除、2.24+按函数语法，与 call_ff74529dc3c048a4bba4ac8e.result（NCCL 2.28.9 env 文档）逐字一致（'Comma-separated list of algorithms (not case sensitive)'、版本表 Ring/Tree/Collnet/NVLS/NVLSTree/PAT、'NCCL_ALGO=allreduce:^tree' 示例）；(2) NCCL_PROTO——LL/LL128/Simple、默认等价 'LL,LL128,Simple'、官方警告 'Users are discouraged from setting this variable... enabling LL128 on platforms that don't support it can lead to data corruption.' 同见该来源；(3) 拓扑感知——nvidia-smi topo -m/-p2p n、NUMA 亲和性 'each rank should generally use CPU cores and host memory close to its GPU and, for multi-node jobs, its NIC.'、NCCL_P2P_LEVEL 取值 LOC/NVL/PIX/PXB/PHB/SYS，与 call_0602b56ca27542fd88a54161.result 及 call_9156b9dc341b412580f4d1ef.result 逐字一致；(4) NVLink/NVLS——NCCL_NVLS_ENABLE 0/1/2 默认2、'third-generation NVSwitch systems (NVLink4) with Hopper and later GPU architectures'、NCCL_PXN_DISABLE，与 call_ff74529dc3c048a4bba4ac8e.result 一致；(5) NCCL_DEBUG 诊断——VERSION/WARN/INFO/TRACE、NCCL_DEBUG_SUBSYS 子系统列表与默认 'INIT,BOOTSTRAP,ENV'、亲和性检查示例，与 call_9156b9dc341b412580f4d1ef.result（2.31.2 env 页）一致。答案还如实标注未核实项（nccl-tests 用法、2.28.9 与 2.31.2 差异、NVLS 驱动版本），不构成错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "各调优参数的版本门槛均有官方依据（NVLS 2.17+、PAT 2.23+、按函数语法 2.24+、CTA 上限64 需 2.25+、PXN 2.12+，见 2.28.9 官方文档），但答案未锁定用户环境的具体 NCCL 版本，且自述 2.28.9 与 2.31.2 间参数变化未逐字比对、NVLS 驱动版本要求未确认，部分组件版本关系仍未确定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "关键版本门槛：NVLS 需 2.17+ 且第三代 NVSwitch（NVLink4）+ Hopper 及以后 GPU；PAT 需 2.23+；NCCL_ALGO 按函数语法需 2.24+；NCCL_MIN_CTAS/MAX_CTAS 需 2.17+，上限 64 需 2.25+；NCCL_PXN_DISABLE 需 2.12+。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "2.28.9 与 2.31.2 间若这些变量有变化，未逐字比对；nccl-tests 的具体命令参数未从官方源核实；NVLS 对驱动版本的具体要求未在官方文档中给出明确数值。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "诊断与调优命令完整可执行：nvidia-smi topo、NCCL_DEBUG 环境变量导出、nvbandwidth 编译运行（cmake -DMULTINODE=1 && make）、带完整参数的 mpirun nccl-tests 对比示例，仅需替换 <nproc>/<n> 等明确标识的环境参数；nccl-tests 用法答案已注明为通用写法（未从官方核实），属小保留但不需修正即可运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "mpirun -np 8 -x NCCL_ALGO=Ring  -x NCCL_PROTO=Simple ./build/all_reduce_perf -b 8 -e 1G -f 2 -g 1"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cmake -DMULTINODE=1 . && make\nsrun/mpirun -n <nproc> ./nvbandwidth -p multinode"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-98655d8063b6",
+  "task_id": "W",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "7d38bdd2156949b9b650ed9f36d44401",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "d3a08d009444c04de3ff8548b48e2986",
+        "conversationRequestId": "d3a08d009444c04de3ff8548b48e2986",
+        "agent": "cli"
+      },
+      {
+        "messageId": "7d38bdd2156949b9b650ed9f36d44401",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "d3a08d009444c04de3ff8548b48e2986",
+        "conversationRequestId": "d3a08d009444c04de3ff8548b48e2986",
+        "rawUsage": {
+          "prompt_tokens": 19996,
+          "completion_tokens": 4866,
+          "total_tokens": 24862,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 3515,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 19996,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 3515,
+          "credit": 5.92,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19996,
+          "outputTokens": 4866,
+          "totalTokens": 24862,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 3515
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "e9c77fdd45c62bc047e40c79035adfebedb2466a6c17d26316cf2ff8ec24501b",
+    "process_sha256": "cdc4ac629c4e7a76b24b7e259f3e98148a7c7bb11da3e95c998d4f63952f56c7",
+    "elapsed_seconds": 76.19,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-9cee7cfaa0b64f9988860cdb379dcf0d",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-98655d8063b6-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "1. `nvidia-smi topo -m` / `topo -p2p n` 确认 NVLink 拓扑健康；2. `NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,TUNING,ENV` 看算法选择与告警；3. `nvbandwidth`/`nvloom`/`ib_write_bw` 确认裸带宽达标；4. `all_reduce_perf` 基线 → 逐项试 `NCCL_ALGO`（Ring/Tree/NVLS/PAT）、`NCCL_PROTO`（LL/LL128/Simple）、`NCCL_MIN_CTAS/MAX_CTAS`、`NCCL_IB_QPS_PER_CONNECTION`；5. 核查 NUMA 亲和性与 NIC 选择",
+        "replacement": "1. `nvidia-smi topo -m` / `topo -p2p n` 确认 NVLink 拓扑健康；\n2. `NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,TUNING,ENV` 看算法选择与告警；\n3. `nvbandwidth`/`nvloom`/`ib_write_bw` 确认裸带宽达标（区分硬件问题 vs 配置问题）；\n4. `all_reduce_perf` 基线 → 逐项试 `NCCL_ALGO`（Ring/Tree/NVLS/PAT）、`NCCL_PROTO`（LL/LL128/Simple）、`NCCL_MIN_CTAS/MAX_CTAS`、`NCCL_IB_QPS_PER_CONNECTION`；\n5. 核查 NUMA 亲和性与 NIC 选择（`NCCL_IB_HCA`、`NCCL_SOCKET_IFNAME`）。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

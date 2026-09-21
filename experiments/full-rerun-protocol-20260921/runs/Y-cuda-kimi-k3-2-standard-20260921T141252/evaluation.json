@@ -147,6 +147,665 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T07:08:50.752269+00:00",
+      "process_sha256": "d5eb958dfffd1595ef6db04acac94357ed889bf59647b1845c72e2489a06df97",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "所以只含 sm_70 cubin 的二进制不能在 Hopper 上运行，必须重编译",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_c09c39f3.result",
+            "evidence_quote": "a cubin generated with compute capability 8.x is *not* supported to run on a GPU with compute capability 9.0",
+            "verification": "source",
+            "reason": "原题三个子要求均被最终答案覆盖且有官方来源支撑。(1) 重编译-arch/sm_xx：答案给出 nvcc -arch=sm_90 与多架构 -gencode 完整命令，cubin 不跨 major 版本的规则由 Hopper Compatibility Guide 逐字证实（evidence_quote），工具链定版 CUDA 11.8 亦同源：\"With versions 11.8 of the CUDA Toolkit, nvcc can generate cubin native to the Hopper architecture\"。(2) PTX 兼容：答案的前向兼容结论同源可证：\"PTX is supported to run on any GPU with compute capability higher than the compute capability assumed for generation of that PTX\"；CUDA_FORCE_PTX_JIT=1 验证流程与官方 1.3.1 节一致（含 unset 提醒）。(3) TensorRT engine 不跨架构复用：WebFetch_3_c0efd86c.result 逐字证实 \"By default, TensorRT engines are only compatible with the type of device where they were built\"，且 compute capability 校验、kAMPERE_PLUS/kSAME_COMPUTE_CAPABILITY、VERSION_COMPATIBLE 等放宽选项均与该来源一致。附加要点（CUDA 13.0 起 cuFFT/cuSPARSE 移除 Maxwell/Pascal/Volta）由 WebFetch_5_aa54e6ef.result 证实：\"Removed support for Maxwell, Pascal, and Volta GPUs, corresponding to compute capabilities earlier than Turing.\"。答案对未核实点（CUDA 12.x 弃用时间线、kSAME_COMPUTE_CAPABILITY 引入版本、驱动版本表）如实标注，未发现与来源矛盾的内容。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为相关官方来源（docs.nvidia.com Hopper兼容性指南）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_4f7bc243.result",
+                "quote": "## 2. [1. Hopper Architecture Compatibility — Hopper Compatibility …](https://docs.nvidia.com/cuda/hopper-compatibility-guide/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.6666666666666665,
+            "upper": 4.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "### 1.4.3. Independent Thread Scheduling Compatibility"
+              },
+              {
+                "event_id": "WebFetch_3_c0efd86c.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_5_aa54e6ef.result",
+                "quote": "# Deprecated / Dropped GPU Architecture Support — Extraction from CUDA 13.4 Update 1 Release Notes"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "重编译-gencode/-arch展开、PTX前向兼容与JIT机制、TensorRT engine跨架构限制及兼容级别均给出完整解释、命令与代码；但sm_90首次引入的工具链版本、CUDA 12.x架构废弃时间线等分支细节未在所获正文说明完整。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "-arch=sm_XX` expands to the following:"
+              },
+              {
+                "event_id": "WebFetch_3_c0efd86c.result",
+                "quote": "By default, TensorRT engines are only compatible with the type of device where they were built."
+              },
+              {
+                "event_id": "WebFetch_5_aa54e6ef.result",
+                "quote": "sm_90 introduction version — NOT stated."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用规则：11.7及更早工具链需PTX即可兼容Hopper，11.8可原生生成sm_90 cubin；PTX前向兼容、sm_90a不兼容；TensorRT默认不跨设备、可选AMPERE_PLUS等兼容级别。直接套用即可确定版本选择，无缺失关系或冲突。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "CUDA applications built using CUDA Toolkit versions 2.1 through 11.7 are compatible with Hopper GPUs as long as they are built to include PTX versions of their kernels."
+              },
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "With versions 11.8 of the CUDA Toolkit, `nvcc` can generate cubin native to the Hopper architecture (compute capability 9.0)."
+              },
+              {
+                "event_id": "WebFetch_3_c0efd86c.result",
+                "quote": "with `HardwareCompatibilityLevel::kAMPERE_PLUS`, the check will ensure that the compute capability is greater than or equal to 8.0"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内去重后相关独立第三方来源≥6条：arnon.dk、知乎、CSDN(FL1623863129)、CSDN(u010087338)、raybyte.cn、老潘社区、cnblogs、CSDN(weixin_43667077)、CSDN(shejizuopin)；官方TensorRT仓库issue按渠道分类排除。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_4f7bc243.result",
+                "quote": "[Matching CUDA arch and CUDA gencode for various NVIDIA …](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)"
+              },
+              {
+                "event_id": "WebSearch_2_e812b264.result",
+                "quote": "[TensorRT引擎文件跨显卡架构不兼容？从CUDA capability与 ...](https://raybyte.cn/post/2026/7/26/34f7bf39)"
+              },
+              {
+                "event_id": "WebSearch_4_e0133d91.result",
+                "quote": "[NVIDIA GPU 计算能力（ compute capability，SM version ...](https://www.cnblogs.com/DHclly/p/18838133)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "第三方关键说法（arch/gencode对应、TensorRT engine不可跨架构）均有可追溯依据且与官方文档一致，多来源相互印证arch映射；但各来源作者权威性与新鲜度未逐条独立核验，缺少系统性交叉印证记录。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_4f7bc243.result",
+                "quote": "the arch flag (‘-arch‘) specifies the name of the NVIDIA GPU architecture that the CUDA files will be compiled for"
+              },
+              {
+                "event_id": "WebSearch_2_e812b264.result",
+                "quote": "\"Serialized engines are not portable across platforms (means Linux and Windows.) or TensorRT versions.\" (from …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确的完整流程：sm_70/sm_90重编译、PTX前向兼容与JIT、TensorRT engine绑定及version/hardware compatibility、驱动与框架注意点，与后续官方来源核对一致；但具体版本约束存在需补充的不精确处（称CUDA 11不支持sm_90需CUDA 12.x，而官方为11.8即支持sm_90）。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "PTX 是前向兼容的——用 `compute_70` 生成的 PTX 可以被更新架构的驱动 JIT 编译到 sm_90",
+                "quote": "PTX 是前向兼容的——用 `compute_70` 生成的 PTX 可以被更新架构的驱动 JIT 编译到 sm_90"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "如 CUDA 11 不支持 sm_90，需要 CUDA 12.x",
+                "quote": "如 CUDA 11 不支持 sm_90，需要 CUDA 12.x"
+              },
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "CUDA applications built using CUDA Toolkit 11.8 are compatible with Hopper architecture as long as they are built to include kernels in native cubin (compute capability 9.0)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_4f7bc243.dispatch",
+              "WebFetch_1_c09c39f3.dispatch",
+              "WebSearch_2_e812b264.dispatch",
+              "WebFetch_3_c0efd86c.dispatch",
+              "WebSearch_4_e0133d91.dispatch",
+              "WebFetch_5_aa54e6ef.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "status": "supported",
+            "reason": "目标架构定到具体版本（sm_90/CC 9.0，sm_70=Volta），编译目标定到 compute_90/sm_90，工具链定到 CUDA Toolkit 11.8（首次支持 sm_90 原生 cubin，有官方引文），PTX 前向兼容关系明确（compute_70 PTX 可在 CC 9.0 JIT）。但答案自认 kSAME_COMPUTE_CAPABILITY 引入的 TensorRT 版本号、驱动最低版本官方表格未核实，CUDA 12.x 弃用时间线未取得，即 TensorRT/驱动组件只给出有依据的适用范围而未全部定到具体版本，符合第 4 档；不满足第 5 档（存在自认未核实的版本点）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "编译 sm_90 原生 cubin | CUDA Toolkit ≥ 11.8"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**未核实处**：CUDA 12.x 各版本弃用架构的精确时间线（release notes 页未含）；`kSAME_COMPUTE_CAPABILITY` 引入的具体 TensorRT 版本号；驱动最低版本号的官方表格未抓取。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "nvcc 编译命令完整可执行（含 -O2、输出与源文件，仅 mykernel.cu/mykernel.o 等文件名需替换，且多架构 gencode 示例逐字来自官方指南），CUDA_FORCE_PTX_JIT 验证步骤含前置条件（安装最新驱动）、执行与收尾（unset）。TensorRT 部分为配置片段（config/builder/network 等上下文对象需用户已有构建代码），驱动要求为定性描述（\"CUDA 12.x 需 R525+\" 自认未核实），故需替换明确标识的环境参数并少量补上下文，评 4 分而非 5 分；无需修正内容错误。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "/usr/local/cuda/bin/nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_80,code=sm_80 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -gencode=arch=compute_90,code=compute_90 \\\n  -O2 -o mykernel.o -c mykernel.cu"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "验证已有二进制是否含可用 PTX：安装最新驱动后设 `CUDA_FORCE_PTX_JIT=1` 运行；能跑说明含 PTX、无需重编译即可上 Hopper，失败则必须重编译（测完记得 unset）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS   # CC>=8.0 通用"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 93.96224000000001,
+            "upper": 94.12608,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              93.9,
+              94.2
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 93.96224000000001,
+          "upper": 94.12608,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            93.9,
+            94.2
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_4f7bc243.result",
+            "field": "response",
+            "sha256": "a1c9d3963574011bba620166c39b048a445b5844d9111af20db6881449d2b264",
+            "start": 614,
+            "end": 751,
+            "quote": "## 2. [1. Hopper Architecture Compatibility — Hopper Compatibility …](https://docs.nvidia.com/cuda/hopper-compatibility-guide/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "field": "response",
+            "sha256": "aceb7634a3d4536cf2bce0f55f4a25dde61a40c45934a18d43a460fd173eb5ae",
+            "start": 11551,
+            "end": 11605,
+            "quote": "### 1.4.3. Independent Thread Scheduling Compatibility",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_3_c0efd86c.result",
+            "field": "response",
+            "sha256": "836ab2024dba8f834269cedb7883f472efa1ca2b785828fb1f9daec454d0feec",
+            "start": 5337,
+            "end": 5342,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_5_aa54e6ef.result",
+            "field": "response",
+            "sha256": "9c49e6c437df9d93584272f3f13febad059f8bf4b8f5c9bea0f330a57c71b2ab",
+            "start": 0,
+            "end": 98,
+            "quote": "# Deprecated / Dropped GPU Architecture Support — Extraction from CUDA 13.4 Update 1 Release Notes",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "field": "response",
+            "sha256": "aceb7634a3d4536cf2bce0f55f4a25dde61a40c45934a18d43a460fd173eb5ae",
+            "start": 8126,
+            "end": 8164,
+            "quote": "-arch=sm_XX` expands to the following:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_3_c0efd86c.result",
+            "field": "response",
+            "sha256": "836ab2024dba8f834269cedb7883f472efa1ca2b785828fb1f9daec454d0feec",
+            "start": 5372,
+            "end": 5467,
+            "quote": "By default, TensorRT engines are only compatible with the type of device where they were built.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_5_aa54e6ef.result",
+            "field": "response",
+            "sha256": "9c49e6c437df9d93584272f3f13febad059f8bf4b8f5c9bea0f330a57c71b2ab",
+            "start": 3012,
+            "end": 3052,
+            "quote": "sm_90 introduction version — NOT stated.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "field": "response",
+            "sha256": "aceb7634a3d4536cf2bce0f55f4a25dde61a40c45934a18d43a460fd173eb5ae",
+            "start": 3921,
+            "end": 4089,
+            "quote": "CUDA applications built using CUDA Toolkit versions 2.1 through 11.7 are compatible with Hopper GPUs as long as they are built to include PTX versions of their kernels.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "field": "response",
+            "sha256": "aceb7634a3d4536cf2bce0f55f4a25dde61a40c45934a18d43a460fd173eb5ae",
+            "start": 9746,
+            "end": 9871,
+            "quote": "With versions 11.8 of the CUDA Toolkit, `nvcc` can generate cubin native to the Hopper architecture (compute capability 9.0).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_3_c0efd86c.result",
+            "field": "response",
+            "sha256": "836ab2024dba8f834269cedb7883f472efa1ca2b785828fb1f9daec454d0feec",
+            "start": 8400,
+            "end": 8530,
+            "quote": "with `HardwareCompatibilityLevel::kAMPERE_PLUS`, the check will ensure that the compute capability is greater than or equal to 8.0",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_0_4f7bc243.result",
+            "field": "response",
+            "sha256": "a1c9d3963574011bba620166c39b048a445b5844d9111af20db6881449d2b264",
+            "start": 121,
+            "end": 266,
+            "quote": "[Matching CUDA arch and CUDA gencode for various NVIDIA …](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_2_e812b264.result",
+            "field": "response",
+            "sha256": "16f1687993fc4eb438c987a20d9bc0fc5986f28a3c49463804a249dd3015236a",
+            "start": 138,
+            "end": 226,
+            "quote": "[TensorRT引擎文件跨显卡架构不兼容？从CUDA capability与 ...](https://raybyte.cn/post/2026/7/26/34f7bf39)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_4_e0133d91.result",
+            "field": "response",
+            "sha256": "48d287ba2e09f32f58ecb071e8996f9f5b211d503a403e298903444ba41e730e",
+            "start": 500,
+            "end": 595,
+            "quote": "[NVIDIA GPU 计算能力（ compute capability，SM version ...](https://www.cnblogs.com/DHclly/p/18838133)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_4f7bc243.result",
+            "field": "response",
+            "sha256": "a1c9d3963574011bba620166c39b048a445b5844d9111af20db6881449d2b264",
+            "start": 379,
+            "end": 493,
+            "quote": "the arch flag (‘-arch‘) specifies the name of the NVIDIA GPU architecture that the CUDA files will be compiled for",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_2_e812b264.result",
+            "field": "response",
+            "sha256": "16f1687993fc4eb438c987a20d9bc0fc5986f28a3c49463804a249dd3015236a",
+            "start": 1245,
+            "end": 1356,
+            "quote": "\"Serialized engines are not portable across platforms (means Linux and Windows.) or TensorRT versions.\" (from …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "e201d7bd1c073270f1c2c6922f5aba2885fbb1ba848d17c56065c6fbb1b6ccc1",
+            "start": 694,
+            "end": 753,
+            "quote": "PTX 是前向兼容的——用 `compute_70` 生成的 PTX 可以被更新架构的驱动 JIT 编译到 sm_90",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "e201d7bd1c073270f1c2c6922f5aba2885fbb1ba848d17c56065c6fbb1b6ccc1",
+            "start": 575,
+            "end": 607,
+            "quote": "如 CUDA 11 不支持 sm_90，需要 CUDA 12.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "field": "response",
+            "sha256": "aceb7634a3d4536cf2bce0f55f4a25dde61a40c45934a18d43a460fd173eb5ae",
+            "start": 4973,
+            "end": 5146,
+            "quote": "CUDA applications built using CUDA Toolkit 11.8 are compatible with Hopper architecture as long as they are built to include kernels in native cubin (compute capability 9.0)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "1877bed8a023dc0502b9b031007985550b203bc7e79eba46572e636917b75019",
+            "start": 3944,
+            "end": 3983,
+            "quote": "编译 sm_90 原生 cubin | CUDA Toolkit ≥ 11.8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "1877bed8a023dc0502b9b031007985550b203bc7e79eba46572e636917b75019",
+            "start": 4463,
+            "end": 4577,
+            "quote": "**未核实处**：CUDA 12.x 各版本弃用架构的精确时间线（release notes 页未含）；`kSAME_COMPUTE_CAPABILITY` 引入的具体 TensorRT 版本号；驱动最低版本号的官方表格未抓取。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "1877bed8a023dc0502b9b031007985550b203bc7e79eba46572e636917b75019",
+            "start": 629,
+            "end": 855,
+            "quote": "/usr/local/cuda/bin/nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_80,code=sm_80 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -gencode=arch=compute_90,code=compute_90 \\\n  -O2 -o mykernel.o -c mykernel.cu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "1877bed8a023dc0502b9b031007985550b203bc7e79eba46572e636917b75019",
+            "start": 1711,
+            "end": 1810,
+            "quote": "验证已有二进制是否含可用 PTX：安装最新驱动后设 `CUDA_FORCE_PTX_JIT=1` 运行；能跑说明含 PTX、无需重编译即可上 Hopper，失败则必须重编译（测完记得 unset）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "1877bed8a023dc0502b9b031007985550b203bc7e79eba46572e636917b75019",
+            "start": 2397,
+            "end": 2492,
+            "quote": "config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS   # CC>=8.0 通用",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "1877bed8a023dc0502b9b031007985550b203bc7e79eba46572e636917b75019",
+            "start": 491,
+            "end": 532,
+            "quote": "所以只含 sm_70 cubin 的二进制不能在 Hopper 上运行，必须重编译",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "field": "response",
+            "sha256": "aceb7634a3d4536cf2bce0f55f4a25dde61a40c45934a18d43a460fd173eb5ae",
+            "start": 1387,
+            "end": 1495,
+            "quote": "a cubin generated with compute capability 8.x is *not* supported to run on a GPU with compute capability 9.0",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-da10971d909e-predictors.json": "c3a62ef241ef555f7ed97d8609c7a5297070e70b838d801b8dd4b3abe3afbbb1",
+          "reviewed/development/case-da10971d909e-outcome.json": "5286b13adc5714976df30a00e87515575ddf0bf172c3d299e97e7b451b800445",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_c09c39f3.result",
+            "url": "https://docs.nvidia.com/cuda/hopper-compatibility-guide/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "This application note, Hopper Architecture Compatibility Guide for CUDA Applications, is intended to help developers"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_c09c39f3.result",
+                "quote": "nvcc -gencode=arch=compute_60,code=sm_90 ..."
+              }
+            ],
+            "reference": "正文含1.1–1.4.3连续章节，但无独立起止核对依据，完整性保留unknown，档位[4,5]"
+          },
+          {
+            "event_id": "WebFetch_3_c0efd86c.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/engine-compatibility.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_c0efd86c.result",
+                "quote": "# Engine Compatibility#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_c0efd86c.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "直接正文但含明显截断标记，判4"
+          },
+          {
+            "event_id": "WebFetch_5_aa54e6ef.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_aa54e6ef.result",
+                "quote": "This document contains **limited** architecture deprecation information."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_aa54e6ef.result",
+                "quote": "Content boundary:** The provided text ends at §4.1 \"Notice\" and appears to be the complete page"
+              }
+            ],
+            "reference": "返回为提取式摘要并自述缺口（未说明sm_90引入版本、CUDA 12.x废弃），判3"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_aa54e6ef.result",
+                "quote": "Extract the section about deprecated and dropped GPU architectures"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

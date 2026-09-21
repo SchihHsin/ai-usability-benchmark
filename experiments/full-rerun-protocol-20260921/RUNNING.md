@@ -122,3 +122,10 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Phase report276 completed,21 pending,1 exhausted (DeepSeekR-CUDA predictors both900s timeouts/no saved output). S-CANN GLM recovered schema: main requirement plus redundant version subrequirement sharing same id/status; second preserved as supplementary note, not double counted. All raw judgments retained.
 - S-CANN GLM M10 enforced4 (explicit user-environment substitutions) under frozen anchor. T-CANN GLM missing official dispatch inventory restored from exact title/widget return. T-CUDA DeepSeek target chapter absent/other Architecture Overview returned: preserve original assessor1 with received-body-of-different-page metadata, no fabricated target body.
 - Root exact-quote corrections continue; rejected Kimi proposal now explicitly tagged rejected_do_not_apply. No paper/installed-skill edits. Frozen29 hashes unchanged and31 focused tests pass. Latest pushc45f140 verified.
+
+
+## 2026-09-21 17:34 continuation
+
+- Collection closed:155/156 valid (GLM51, DeepSeek52, Kimi52). U-CUDA GLM exhausted two technical attempts; no third attempt. All collected runs ended.
+- Assessment308 phases complete, one GLM Z-CUDA predictor in progress (root session99058), one DeepSeek R-CUDA predictor exhausted two900s attempts. Final GLM Z-CANN assessed.
+- Restored exact final/source Markdown quotations for final X/Z cases; raw assessor outputs retained. Ownership unknowns remain unresolved.31 focused tests pass. No changes to paper, installed skill, frozen rules or coefficients.

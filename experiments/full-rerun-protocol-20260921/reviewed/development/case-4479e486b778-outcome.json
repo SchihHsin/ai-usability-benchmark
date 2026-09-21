@@ -1,0 +1,168 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "迁移 310→910（或任意不同型号）时，旧 .om 不能直接用，须按上面方法查得目标芯片的准确 SoC 名后重转。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_cd53b8d231ce4558906b5a5b.result",
+      "evidence_quote": "模型转换阶段不依赖昇腾AI处理器，但是转换时使用的--soc_version取值，必须为转换后模型运行阶段所使用的昇腾AI处理器型号。",
+      "verification": "source",
+      "reason": "原题三个子要求均被覆盖：(1) soc_version 重新 ATC 转 .om——最终答案明确 .om 与芯片型号绑定、须用目标芯片 soc_version 重转，并给出官方取值方法（npu-smi info 取 Chip Name，A3 系列用 -t board 取 ChipName_NPUName），官方 CANN 8.1.RC1 ATC 参数文档正文（call_cd53b8d231ce4558906b5a5b.result）逐字支持该规则及兼容性说明（运行环境 CANN 不低于转换环境、兼容 4 个版本周期）；(2) 算子支持差异——答案给出排查顺序（E10002 报错、--op_precision_mode、自定义算子插件），官方算子清单简介页（call_de58d358cf1c47c4b375d187.result）证明清单按 CANN 版本区分且分 CANN 算子/AI 框架算子两部分，CSDN Ascend C 迁移文（call_2e8d80eb170f4840a94bc3fc.result）支持 kernel 宏分支、DataCopy 32B 对齐、dtype 能力差异，逐算子差异表未取回但答案已如实标注'未能取回，需自行核对'，属有依据的不完整声明而非错误；(3) 精度/性能重测——答案给出 --debug_dir + npudiff 逐层比对、混合精度舍入差异须重测、目标芯片重跑基准、驱动固件配套检查（npu-smi info -v / -t board、dcmi -8005），分别有 CSDN ATC 文（call_c959488b833949dba74d838c.result 的 npudiff/--debug_dir/E10002 排查）和知乎 npu-smi 文（call_04fea1cc191940b3b0340d7a.result）支撑；ais_bench 用法未核实亦已明示。三方面均有真实来源引文支持，判定 supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "本题目标芯片由用户环境决定，答案无法预锁定某一具体型号，但已给出可落到具体版本的完整定版方法与依据：soc_version 通过官方规则确定（npu-smi info 取 Chip Name 拼为 Ascend<Chip Name>，A3 系列为 ChipName_NPUName，附 910B4→Ascend910B4 实例），CANN 版本配套给出明确适用关系（运行环境不低于转换环境、om 向上兼容 4 个版本周期，引自官方 8.1.RC1 正文）。算子支持方面仅给出按 CANN 版本查算子清单的范围而非锁定到具体版本清单（各芯片逐算子差异表未取回），故按粒度评 4 而非 5。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "非 Atlas A3 系列：在目标服务器执行 `npu-smi info`，取 `Chip Name`，实际配置值为 `Ascend<Chip Name>`（去掉空格），例如 Chip Name 为 `910B4` → `--soc_version=Ascend910B4`。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "运行环境 CANN 版本须不低于转换环境；低版本 CANN 转出的 om 支持在高版本 CANN 环境运行，兼容 4 个版本周期。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案含可直接照抄执行的操作清单：npu-smi info / -m / -t board 查芯片型号（含 A3 与非 A3 分支及 id、chip_id 获取方法），完整 atc 命令行含 --model、--framework=5、--output、--soc_version、--input_shape、--precision_mode 各参数，以及精度比对（--debug_dir + npudiff）和驱动固件检查（-v / -t board）步骤。仅需替换的参数为用户环境值（模型路径、芯片型号、设备号），且有说明如何获取；未核实项（ais_bench 具体命令、逐算子差异表）已明确标注为待自查，不构成需修正的内容错误，故评 4。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "atc --model=model.onnx --framework=5 --output=model_910 \\\n    --soc_version=Ascend910B4 --input_shape=\"input:1,3,224,224\""
+        },
+        {
+          "event_id": "run-end",
+          "quote": "npu-smi info -t board -i 0 -c 0    # A3 系列取 Chip Name + NPU Name"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-4479e486b778",
+  "task_id": "Y",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "7b5704f5fbde4fc0a2a42eb92a089b8c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "144f4b292428c78cf3363d860572efa4",
+        "conversationRequestId": "144f4b292428c78cf3363d860572efa4",
+        "agent": "cli"
+      },
+      {
+        "messageId": "7b5704f5fbde4fc0a2a42eb92a089b8c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "144f4b292428c78cf3363d860572efa4",
+        "conversationRequestId": "144f4b292428c78cf3363d860572efa4",
+        "rawUsage": {
+          "prompt_tokens": 21532,
+          "completion_tokens": 2755,
+          "total_tokens": 24287,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1489,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 18524,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1489,
+          "credit": 4.63,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21532,
+          "outputTokens": 2755,
+          "totalTokens": 24287,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1489
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "94058bdb9acc1caf0ab2330465c028116c0929ef2072f4a772c4b7323a0a6bb4",
+    "process_sha256": "a9a0f16795b7434a8bc56e7538d447c87dc420e393df84522b18f69c4d29b2ed",
+    "elapsed_seconds": 62.75,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-ef05165c4d0d48ba807a75b4ee1c2624",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-4479e486b778-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

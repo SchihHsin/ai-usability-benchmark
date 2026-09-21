@@ -1,0 +1,191 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "重编译：`-gencode=arch=compute_90,code=sm_90` + `-gencode=arch=compute_90,code=compute_90`（或 `-arch=sm_90`，它已自动展开含 PTX）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_7xqKDteQo2dCGcRvOTOU5963.result",
+      "evidence_quote": "NVIDIA GPUs are not binary compatible between major compute capability versions. That is, cubin code compiled for compute capability 8.6 will not load on GPUs of compute capability 9.0.",
+      "verification": "source",
+      "reason": "原题三个子要求均被最终答案覆盖且有官方来源支撑：(1) 重编译 -arch/sm_xx：答案给出 -arch=sm_90/-gencode 具体写法及展开语义，来源 nvcc 文档（call_00_qSzoIS9bljFEz3ycLVhU7592.result：\"nvcc --gpu-architecture=sm_100 is equivalent to nvcc --gpu-architecture=compute_100 --gpu-code=sm_100,compute_100\"）及 Hopper 指南（call_00_BEX9B6prtDWZ75bJkL7Z9699.result：\"-arch=sm_XX expands to the following: -gencode=arch=compute_XX,code=sm_XX\"），且 cubin 跨 major 不兼容（本条 evidence_quote）证明必须重编译；(2) PTX 兼容：答案说明 PTX 向前兼容、反向不成立，来源 call_00_7xqKDteQo2dCGcRvOTOU5963.result：\"that PTX can be JIT compiled at application runtime for any compute capability equal or higher\"，及 call_00_BEX9B6prtDWZ75bJkL7Z9699.result：\"Unlike cubin, PTX is forward-compatible\"；(3) TensorRT engine 不跨架构复用：答案给出 CC 不匹配则反序列化失败，来源 call_00_90tgCp79Nw8ydkT5HLGX3251.result：\"TensorRT also records the compute capability (major and minor versions) in the plan and checks it against the GPU on which the plan is being loaded. If they do not match, the plan will fail to deserialize.\" 答案还额外覆盖 sm_90a、CUDA 11.8、ITS 等迁移注意点，均附原文引文。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "部分所需组件已定到具体版本，其余为有依据的范围",
+      "reason": "所需定版组件：目标架构已锁定（Hopper=sm_90/compute_90，有 Hopper 指南依据）；编译目标锁定（-gencode=arch=compute_90,code=sm_90+compute_90）；CUDA Toolkit 给出具体版本依据（11.8 起原生 sm_90，来源 call_00_BEX9B6prtDWZ75bJkL7Z9699.result）。但 TensorRT 相关仅给出 API 行为与兼容级别，未定到具体 TensorRT 版本，答案自述\"TensorRT 各 HardwareCompatibilityLevel 的具体最低 TensorRT 版本号未逐字确认\"，故至少一项未定到具体版本，符合第4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "检查 CUDA Toolkit ≥ 11.8（原生 sm_90 cubin）；否则只能靠 PTX JIT 且需高版本驱动。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "TensorRT 各 `HardwareCompatibilityLevel` 的具体最低 TensorRT 版本号未逐字确认（正文未给出版本号）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "操作指导完整，仅需替换明确标识的环境参数",
+      "reason": "答案给出完整可照抄的 nvcc 命令行（-gencode 多目标写法、-arch=sm_90 展开）、CUDA_FORCE_PTX_JIT=1 验证步骤及其前置条件（安装最新驱动、测后 unset）、TensorRT hardware compatibility 的 C++/Python 完整配置代码，及适用前提（CUDA≥11.8、kAMPERE_PLUS 仅 ≥8.0 不含 Volta、DriveOS/JetPack 不支持）。仅需替换 mykernel.cu 等用户环境值即可执行；答案明确声明为文档内容核对而非实测复现，未虚称运行通过。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "# 安装最新驱动，然后：\n  CUDA_FORCE_PTX_JIT=1 ./your_app"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "实际未编译、未在 GPU 上运行任何命令，均为**文档内容核对**，非实测复现。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-3a1abf2a0271",
+  "task_id": "Y",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "b640f7fd0b7041409eb528fe666830f1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "e9a043fc4aa296cbb3a8ba21241b4bba",
+        "conversationRequestId": "e9a043fc4aa296cbb3a8ba21241b4bba",
+        "agent": "cli"
+      },
+      {
+        "messageId": "b640f7fd0b7041409eb528fe666830f1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "e9a043fc4aa296cbb3a8ba21241b4bba",
+        "conversationRequestId": "e9a043fc4aa296cbb3a8ba21241b4bba",
+        "rawUsage": {
+          "prompt_tokens": 22543,
+          "completion_tokens": 2550,
+          "total_tokens": 25093,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1388,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 22543,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1388,
+          "credit": 5.03,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 22543,
+          "outputTokens": 2550,
+          "totalTokens": 25093,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1388
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "91221aacb6e2707497daaadc27fcf70b35ac61d591c537dfc9d1ea577c725cba",
+    "process_sha256": "766176091659c686d8003625d61ce395b9a30dc0fb443fc59dbf8643b58ab161",
+    "elapsed_seconds": 79.55,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-f7f853377d2a4cb0bd18e8b85fa57317",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-3a1abf2a0271-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

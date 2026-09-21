@@ -1055,6 +1055,884 @@
         ],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T06:53:40.017460+00:00",
+      "process_sha256": "c30f630f076a3e9b829667650bb86616e6a676b6b1216e4a32ea031ebe1d7cbb",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "看现象分流**：loss 变 NaN/Inf → 走溢出检测；loss 数值正常但不收敛/与 GPU 有偏差 → 走精度比对（dump & compare）找首个差异算子",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "evidence_quote": "整网首个溢出节点分析（overflow_check）可以对PyTorch的dump数据进行分析，在多卡场景下，检测到每张卡中产生inf/nan的节点。",
+            "verification": "source",
+            "reason": "原题为排查类问题，内部含三方面子要求，均满足：(1) loss scale 排查——答案给出官方案例（loss scale 递减到 0、Log 算子 NZ 补 0 溢出、FixedLossScaleManager enable_overflow_check 开关），有 call_1974bfe7efe14c43a0e6d692.result 原文支撑（\"loss scale一直递减到0，说明一直有溢出存在，分析溢出数据，发现Log算子持续溢出\"），并给出 OVERFLOW_DEBUG_MODE_ENABLE 环境变量，有 call_45e45ea847294ba0b2b7d2a3.result 支撑（\"可以通过设置环境变量export OVERFLOW_DEBUG_MODE_ENABLE=1\"）。(2) 溢出检测——给出 msprobe overflow_check 与 ptdbg_ascend 两条路线，命令与判定逻辑（\"输入正常而输出存在异常时认为从此节点开始产生了溢出\"）与 call_d9ab6a86ca7f4e1fbe9727fd.result 官方文档一致。(3) 算子精度比对——双侧 dump、msprobe compare -tp/-gp、-da 首差异识别及阈值（Cosine>0.99、MaxAbsErr<0.001）均与 call_5655afc729244a9498b0ed44.result 官方比对文档一致。未核实项（GradScaler 默认参数等）已在答案中如实标注，不影响已支撑内容。",
+            "evidence_refs": [
+              "ev-30",
+              "ev-31"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询即在第4条出现官方来源（hiascend.com 开发者博客），属第2—5条命中；后续第2次查询第1条即为msprobe官方readthedocs文档。",
+            "evidence": [
+              {
+                "event_id": "call_637a8597a6204918a139e9d9.result",
+                "quote": "## 4. [CANN精度调试工具详解](https://www.hiascend.com/developer/blog/details/02152211175104217059)"
+              },
+              {
+                "event_id": "call_0c18ef3b00e74b7e9048da84.result",
+                "quote": "## 1. [整网首个溢出节点分析 — MindStudio Probe 1.0 文档](https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/overflow_check/overflow_check_instruct.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.4285714285714284,
+            "upper": 4.142857142857143,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_104bbccddfd34d5385c9c05a.result",
+                "quote": "加载中"
+              },
+              {
+                "event_id": "call_ebc06221ba7646a0ad072953.result",
+                "quote": "文档评分"
+              },
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+              },
+              {
+                "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+                "quote": "from ptdbg_ascend import PrecisionDebugger"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "溢出检测与精度比对主流程的命令、参数、前提已完整取得（dump采集、overflow_check、compare参数表、误差指标、判定规则）；但原题明确涉及的loss scale分支在PyTorch/torch_npu侧的官方细节未取得（hiascend博客仅返回框架，caselibrary为TensorFlow场景），且config.json完整字段说明在独立页面未抓取。",
+            "evidence": [
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+              },
+              {
+                "event_id": "call_5655afc729244a9498b0ed44.result",
+                "quote": "msprobe compare -tp <target_path> -gp <golden_path> [options]"
+              },
+              {
+                "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+                "quote": "本页仅提供以下示例；**task、level、summary_mode、rank、step、seed 等所有字段的完整定义在《config.json介绍》独立页面**，本页未展开。"
+              },
+              {
+                "event_id": "call_1974bfe7efe14c43a0e6d692.result",
+                "quote": "问题来源产品大类产品子类关键字官方模型训练TensorFlowNPU Loss Scale优化器"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得的官方资料含明确版本标签（MindStudio Probe 1.0/latest、CANN商用版7.0.0、MindStudio 26.0.0）和个别适用约束（ptdbg_ascend功能需cann包配套、msprobe不支持PyTorch2.7+ dynamo），即部分适用关系已明确；但msprobe与MindStudio/CANN版本对应、以及旧ptdbg_ascend与新msprobe两代工具的选择关系未取得，存在缺失关系故不能给4/5；无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "**标题**: 整网首个溢出节点分析 — MindStudio Probe 1.0 文档"
+              },
+              {
+                "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+                "quote": "此功能需要cann包配套支持，不支持版本执行报错EZ3003。"
+              },
+              {
+                "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+                "quote": "仅支持PyTorch框架，暂不支持PyTorch2.7及以上版本的dynamo场景。"
+              },
+              {
+                "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+                "quote": "**标题**: 溢出检测场景-精度比对工具说明-精度调测-PyTorch 网络模型迁移和训练-模型开发（PyTorch）-CANN商用版7.0.0开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "统一预算内相关独立第三方来源5条：CSDN jieph01、CSDN weixin_28833069、CSDN lady_mumu、知乎GradScaler专栏、CSDN LearnPlex；juejin与jishuzhan为jieph01同文转载只计一次。首次发现于第1次查询第1条。",
+            "evidence": [
+              {
+                "event_id": "call_637a8597a6204918a139e9d9.result",
+                "quote": "## 1. [msprobe/msdebug 全家桶：昇腾精度比对、溢出检测 ...](https://blog.csdn.net/jieph01/article/details/164471339)"
+              },
+              {
+                "event_id": "call_637a8597a6204918a139e9d9.result",
+                "quote": "## 3. [昇腾NPU模型迁移调试工具链：精度比对、溢出检测与性能 ...](https://blog.csdn.net/weixin_28833069/article/details/164776792)"
+              },
+              {
+                "event_id": "call_7bb5fd836355411f87a84b20.result",
+                "quote": "## 2. [PyTorch 动态 Loss Scale 状态机实操：深入剖析梯度下溢自适应恢复 …](https://blog.csdn.net/lady_mumu/article/details/164631097)"
+              },
+              {
+                "event_id": "call_7bb5fd836355411f87a84b20.result",
+                "quote": "## 4. [PyTorch的GradScaler - 知乎 - 知乎专栏](https://zhuanlan.zhihu.com/p/2020212840615653898)"
+              },
+              {
+                "event_id": "call_7bb5fd836355411f87a84b20.result",
+                "quote": "## 5. [如何正确使用GradScaler？一文讲透PyTorch梯度缩放核心技术](https://blog.csdn.net/LearnPlex/article/details/154908918)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "唯一实际抓取的第三方（CSDN jieph01）部分关键说法有可追溯依据：overflow_check与seed_all用法与官方readthedocs一致；但其compare用法（compare.json含npu_path/bench_path/stack_path）经官方文档核对属早期独立比对工具的旧接口，该矛盾已被官方说明消解为版本差异，其余说法无独立第三方交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_bc921bcc86914d4a87620736.result",
+                "quote": "compare.json 只需三个路径：`npu_path`、`bench_path`、`stack_path`"
+              },
+              {
+                "event_id": "call_5655afc729244a9498b0ed44.result",
+                "quote": "这些字段属于 Ascend 早期独立比对工具的用法，不在本文档中"
+              },
+              {
+                "event_id": "call_bc921bcc86914d4a87620736.result",
+                "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output"
+              },
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21",
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索前答案给出正确的三层排查方法论与工具方向（msprobe dump/compare、溢出检测、MindStudio），经事后核对msprobe及overflow_check确实存在且思路正确；但具体命令、参数、env变量、版本对应均自标不确定，关键细节需外部资料补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "通常按三层排查：混合精度策略与 loss scale 配置差异 → 溢出（overflow）检测与定位 → 算子级精度比对（dump 数据与 GPU 逐层对比）。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "(a) msprobe 最新版本的准确命令与参数（dump、compare 子命令）；(b) torch_npu 溢出检测的确切 API/env"
+              },
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "整网首个溢出节点分析（overflow_check）可以对PyTorch的dump数据进行分析"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_637a8597a6204918a139e9d9.dispatch",
+              "call_104bbccddfd34d5385c9c05a.dispatch",
+              "call_bc921bcc86914d4a87620736.dispatch",
+              "call_0c18ef3b00e74b7e9048da84.dispatch",
+              "call_d9ab6a86ca7f4e1fbe9727fd.dispatch",
+              "call_ebc06221ba7646a0ad072953.dispatch",
+              "call_b8a9fa8e7c78490f92ddf79f.dispatch",
+              "call_7bb5fd836355411f87a84b20.dispatch",
+              "call_45e45ea847294ba0b2b7d2a3.dispatch",
+              "call_1974bfe7efe14c43a0e6d692.dispatch",
+              "call_84ada0faab1f4cd9aa0b00d6.dispatch",
+              "call_5655afc729244a9498b0ed44.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "主要工具组件已定到具体版本且有依据：msprobe/MindStudio Probe 1.0（readthedocs latest 页面标题为 \"MindStudio Probe 1.0 文档\"）、ptdbg_ascend 对应 CANN 商用版 7.0.0、MindStudio 26.0.0。但 CANN 包对 OVERFLOW_DEBUG_MODE_ENABLE 的配套支持版本未定到具体版本（答案自述\"不支持的版本会报 EZ3003\"，未给出起止版本），且 torch_npu GradScaler 默认参数未核实，故按档为\"有依据的适用范围但至少一项未定到具体版本\"。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "msprobe / MindStudio Probe 1.0**（readthedocs latest，2026-09 更新）：PyTorch 场景；不支持 PyTorch 2.7+ 的 dynamo 场景"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "此功能需 CANN 包配套支持，不支持的版本会报 EZ3003。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "操作指导仍需替换已标识的用户环境值（msprobe overflow_check -i /xxx/dump/step0），依冻结M10第4档，不能按无需替换的第5档。保留原操作内容与未实际运行说明。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output"
+              }
+            ],
+            "evidence_refs": [
+              "ev-29"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 71.51053385142856,
+            "upper": 73.05016173714286,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              71.5,
+              73.1
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 71.51053385142856,
+          "upper": 73.05016173714286,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            71.5,
+            73.1
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_637a8597a6204918a139e9d9.result",
+            "field": "response",
+            "sha256": "b5f79edca93c269f1125062bc63c89a5aaa8ec3a0b8ae80db01025166e65d980",
+            "start": 794,
+            "end": 884,
+            "quote": "## 4. [CANN精度调试工具详解](https://www.hiascend.com/developer/blog/details/02152211175104217059)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_0c18ef3b00e74b7e9048da84.result",
+            "field": "response",
+            "sha256": "1f036655af1ffee61a18010636617dafbb372eccf90e56380edecdccd5ecdad1",
+            "start": 75,
+            "end": 222,
+            "quote": "## 1. [整网首个溢出节点分析 — MindStudio Probe 1.0 文档](https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/overflow_check/overflow_check_instruct.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_104bbccddfd34d5385c9c05a.result",
+            "field": "response",
+            "sha256": "da8312570387edb7c3aebd342f8ce86714c9aa4dea44e8055f61625d7e700c8d",
+            "start": 842,
+            "end": 845,
+            "quote": "加载中",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_ebc06221ba7646a0ad072953.result",
+            "field": "response",
+            "sha256": "59d4ebe5a6129a8b66355ce16d0d5e96d641955e42ed0cd9d9573e5a087625d9",
+            "start": 84,
+            "end": 88,
+            "quote": "文档评分",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 1201,
+            "end": 1256,
+            "quote": "msprobe overflow_check -i <input_path> -o <output_path>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+            "field": "response",
+            "sha256": "d1c14bab5719827709c484cbfa9f57d7287c4a25520947499364852e690027c7",
+            "start": 610,
+            "end": 652,
+            "quote": "from ptdbg_ascend import PrecisionDebugger",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 1201,
+            "end": 1256,
+            "quote": "msprobe overflow_check -i <input_path> -o <output_path>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_5655afc729244a9498b0ed44.result",
+            "field": "response",
+            "sha256": "8439ab6d1ccb7786df781d3bd14e07fd02dcf9258376ecc7d5fa687a62663680",
+            "start": 1695,
+            "end": 1756,
+            "quote": "msprobe compare -tp <target_path> -gp <golden_path> [options]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+            "field": "response",
+            "sha256": "89c8f2b5d6783981c8e09b3e2b036e56a02a6adcec42d8e00d453e82df09b5fe",
+            "start": 1727,
+            "end": 1817,
+            "quote": "本页仅提供以下示例；**task、level、summary_mode、rank、step、seed 等所有字段的完整定义在《config.json介绍》独立页面**，本页未展开。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_1974bfe7efe14c43a0e6d692.result",
+            "field": "response",
+            "sha256": "8e980bf2b179a63a90f199e6c9570127df3d2af0fec2f4782ded2929f3c63d53",
+            "start": 96,
+            "end": 144,
+            "quote": "问题来源产品大类产品子类关键字官方模型训练TensorFlowNPU Loss Scale优化器",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 0,
+            "end": 44,
+            "quote": "**标题**: 整网首个溢出节点分析 — MindStudio Probe 1.0 文档",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+            "field": "response",
+            "sha256": "d1c14bab5719827709c484cbfa9f57d7287c4a25520947499364852e690027c7",
+            "start": 4356,
+            "end": 4387,
+            "quote": "此功能需要cann包配套支持，不支持版本执行报错EZ3003。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+            "field": "response",
+            "sha256": "89c8f2b5d6783981c8e09b3e2b036e56a02a6adcec42d8e00d453e82df09b5fe",
+            "start": 604,
+            "end": 646,
+            "quote": "仅支持PyTorch框架，暂不支持PyTorch2.7及以上版本的dynamo场景。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+            "field": "response",
+            "sha256": "d1c14bab5719827709c484cbfa9f57d7287c4a25520947499364852e690027c7",
+            "start": 0,
+            "end": 82,
+            "quote": "**标题**: 溢出检测场景-精度比对工具说明-精度调测-PyTorch 网络模型迁移和训练-模型开发（PyTorch）-CANN商用版7.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_637a8597a6204918a139e9d9.result",
+            "field": "response",
+            "sha256": "b5f79edca93c269f1125062bc63c89a5aaa8ec3a0b8ae80db01025166e65d980",
+            "start": 64,
+            "end": 164,
+            "quote": "## 1. [msprobe/msdebug 全家桶：昇腾精度比对、溢出检测 ...](https://blog.csdn.net/jieph01/article/details/164471339)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_637a8597a6204918a139e9d9.result",
+            "field": "response",
+            "sha256": "b5f79edca93c269f1125062bc63c89a5aaa8ec3a0b8ae80db01025166e65d980",
+            "start": 537,
+            "end": 641,
+            "quote": "## 3. [昇腾NPU模型迁移调试工具链：精度比对、溢出检测与性能 ...](https://blog.csdn.net/weixin_28833069/article/details/164776792)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_7bb5fd836355411f87a84b20.result",
+            "field": "response",
+            "sha256": "93232956919b8fd444d38f17e8d8755c2e973e531047997ad69795f1ce2972ac",
+            "start": 361,
+            "end": 471,
+            "quote": "## 2. [PyTorch 动态 Loss Scale 状态机实操：深入剖析梯度下溢自适应恢复 …](https://blog.csdn.net/lady_mumu/article/details/164631097)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_7bb5fd836355411f87a84b20.result",
+            "field": "response",
+            "sha256": "93232956919b8fd444d38f17e8d8755c2e973e531047997ad69795f1ce2972ac",
+            "start": 986,
+            "end": 1074,
+            "quote": "## 4. [PyTorch的GradScaler - 知乎 - 知乎专栏](https://zhuanlan.zhihu.com/p/2020212840615653898)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_7bb5fd836355411f87a84b20.result",
+            "field": "response",
+            "sha256": "93232956919b8fd444d38f17e8d8755c2e973e531047997ad69795f1ce2972ac",
+            "start": 1230,
+            "end": 1333,
+            "quote": "## 5. [如何正确使用GradScaler？一文讲透PyTorch梯度缩放核心技术](https://blog.csdn.net/LearnPlex/article/details/154908918)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_bc921bcc86914d4a87620736.result",
+            "field": "response",
+            "sha256": "74e869a299d3c1e05cb16b901f4ceee09ca6e4e5bc80bc9a93c8257ce73f66b2",
+            "start": 1004,
+            "end": 1060,
+            "quote": "compare.json 只需三个路径：`npu_path`、`bench_path`、`stack_path`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_5655afc729244a9498b0ed44.result",
+            "field": "response",
+            "sha256": "8439ab6d1ccb7786df781d3bd14e07fd02dcf9258376ecc7d5fa687a62663680",
+            "start": 155,
+            "end": 187,
+            "quote": "这些字段属于 Ascend 早期独立比对工具的用法，不在本文档中",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_bc921bcc86914d4a87620736.result",
+            "field": "response",
+            "sha256": "74e869a299d3c1e05cb16b901f4ceee09ca6e4e5bc80bc9a93c8257ce73f66b2",
+            "start": 1122,
+            "end": 1175,
+            "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 1201,
+            "end": 1256,
+            "quote": "msprobe overflow_check -i <input_path> -o <output_path>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "408fe7207b93edc3b1497c09a3fafd8cf3c631de42a2b7bd7f85b92a48349a84",
+            "start": 294,
+            "end": 375,
+            "quote": "通常按三层排查：混合精度策略与 loss scale 配置差异 → 溢出（overflow）检测与定位 → 算子级精度比对（dump 数据与 GPU 逐层对比）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "408fe7207b93edc3b1497c09a3fafd8cf3c631de42a2b7bd7f85b92a48349a84",
+            "start": 1674,
+            "end": 1746,
+            "quote": "(a) msprobe 最新版本的准确命令与参数（dump、compare 子命令）；(b) torch_npu 溢出检测的确切 API/env",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 443,
+            "end": 490,
+            "quote": "整网首个溢出节点分析（overflow_check）可以对PyTorch的dump数据进行分析",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "9ec8d9e6d62aea66488612b9a5c1928143ce06dae9fcdc671c2365107d560552",
+            "start": 5520,
+            "end": 5623,
+            "quote": "msprobe / MindStudio Probe 1.0**（readthedocs latest，2026-09 更新）：PyTorch 场景；不支持 PyTorch 2.7+ 的 dynamo 场景",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "9ec8d9e6d62aea66488612b9a5c1928143ce06dae9fcdc671c2365107d560552",
+            "start": 1424,
+            "end": 1456,
+            "quote": "此功能需 CANN 包配套支持，不支持的版本会报 EZ3003。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "9ec8d9e6d62aea66488612b9a5c1928143ce06dae9fcdc671c2365107d560552",
+            "start": 2528,
+            "end": 2581,
+            "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "9ec8d9e6d62aea66488612b9a5c1928143ce06dae9fcdc671c2365107d560552",
+            "start": 112,
+            "end": 197,
+            "quote": "看现象分流**：loss 变 NaN/Inf → 走溢出检测；loss 数值正常但不收敛/与 GPU 有偏差 → 走精度比对（dump & compare）找首个差异算子",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 443,
+            "end": 518,
+            "quote": "整网首个溢出节点分析（overflow_check）可以对PyTorch的dump数据进行分析，在多卡场景下，检测到每张卡中产生inf/nan的节点。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_104bbccddfd34d5385c9c05a.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_104bbccddfd34d5385c9c05a.result",
+            "alternative_body_event_ids": [
+              "call_bc921bcc86914d4a87620736.result",
+              "call_d9ab6a86ca7f4e1fbe9727fd.result",
+              "call_b8a9fa8e7c78490f92ddf79f.result",
+              "call_45e45ea847294ba0b2b7d2a3.result",
+              "call_1974bfe7efe14c43a0e6d692.result",
+              "call_5655afc729244a9498b0ed44.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_ebc06221ba7646a0ad072953.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_ebc06221ba7646a0ad072953.result",
+            "alternative_body_event_ids": [
+              "call_b8a9fa8e7c78490f92ddf79f.result",
+              "call_45e45ea847294ba0b2b7d2a3.result",
+              "call_1974bfe7efe14c43a0e6d692.result",
+              "call_5655afc729244a9498b0ed44.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-881e96bdb2c0-predictors.json": "d0a78c3728aeef2e28635f3f841a4f4ee8d30e5b5fbaa1ee7dd89eb2fa32256b",
+          "reviewed/development/case-881e96bdb2c0-outcome.json": "4fa7f3b9f1ad19632e809836fcc642fa8939491da8877dbf73f5fd432a425345",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_104bbccddfd34d5385c9c05a.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_104bbccddfd34d5385c9c05a.result",
+                "quote": "**标题**: CANN精度调试工具"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_104bbccddfd34d5385c9c05a.result",
+                "quote": "加载中"
+              }
+            ],
+            "reference": "https://www.hiascend.com/developer/blog/details/02152211175104217059"
+          },
+          {
+            "event_id": "call_bc921bcc86914d4a87620736.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_bc921bcc86914d4a87620736.result",
+                "quote": "msprobe compare -i compare.json -o ./compare_output"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_bc921bcc86914d4a87620736.result",
+                "quote": "[](https://blog.csdn.net/jieph01/article/details/164471339)"
+              }
+            ],
+            "reference": "https://blog.csdn.net/jieph01/article/details/164471339"
+          },
+          {
+            "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_d9ab6a86ca7f4e1fbe9727fd.result",
+                "quote": "对于计算节点，按照dump的顺序排序。"
+              }
+            ],
+            "reference": "https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/overflow_check/overflow_check_instruct.html"
+          },
+          {
+            "event_id": "call_ebc06221ba7646a0ad072953.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_ebc06221ba7646a0ad072953.result",
+                "quote": "**标题**: 溢出检测与解析-MindSpore训练场景-功能介绍-精度调试 msProbe-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_ebc06221ba7646a0ad072953.result",
+                "quote": "文档评分"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindstudio/2600/msTT_msIT/msProbe/docs/zh/overflow_check/mindspore_overflow_check_instruct.md"
+          },
+          {
+            "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+                "quote": "from msprobe.pytorch import PrecisionDebugger, seed_all"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_b8a9fa8e7c78490f92ddf79f.result",
+                "quote": "本页仅提供以下示例；**task、level、summary_mode、rank、step、seed 等所有字段的完整定义在《config.json介绍》独立页面**，本页未展开。"
+              }
+            ],
+            "reference": "https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/dump/pytorch_data_dump_instruct.html"
+          },
+          {
+            "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+                "quote": "from ptdbg_ascend import PrecisionDebugger"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_45e45ea847294ba0b2b7d2a3.result",
+                "quote": "此功能需要cann包配套支持，不支持版本执行报错EZ3003。"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/canncommercial/700/modeldevpt/ptmigr/AImpug_000040.html"
+          },
+          {
+            "event_id": "call_1974bfe7efe14c43a0e6d692.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_1974bfe7efe14c43a0e6d692.result",
+                "quote": "使用NPU Loss Scale优化器后，训练不收敛"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_1974bfe7efe14c43a0e6d692.result",
+                "quote": "可能部分网络中饱和或溢出操作导致溢出对收敛影响有限。"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/caselibrary/detail/topic_0000001343670349"
+          },
+          {
+            "event_id": "call_5655afc729244a9498b0ed44.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_5655afc729244a9498b0ed44.result",
+                "quote": "msprobe compare -tp <target_path> -gp <golden_path> [options]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_5655afc729244a9498b0ed44.result",
+                "quote": "（原网页表格被展平抓取，勾选与列的精确对应存在一定歧义，请以官方渲染表格为准。）"
+              }
+            ],
+            "reference": "https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/accuracy_compare/pytorch_accuracy_compare_instruct.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "search: 4, fetch: 8"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

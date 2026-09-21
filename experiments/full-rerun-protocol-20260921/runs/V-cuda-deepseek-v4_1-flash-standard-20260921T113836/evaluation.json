@@ -1502,6 +1502,665 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T07:08:49.878676+00:00",
+      "process_sha256": "a3bad31444d26d4a42b1fe6b2f917e7b2c377c51b77f3914895f94b092c9abef",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "1. **必须用 pinned（page-locked）host memory** 才能真异步：\n   > \"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work... It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"\n\n   即：用 pageable `malloc` 时 `cudaMemcpyAsync` **退化为同步**，不会重叠。\n\n2. **不同 stream 才可能重叠**；默认流（NULL/stream 0）是 blocking stream，会与其他 blocking stream 互相串行化：\n   > \"kernel2 will wait for kernel1 to complete, and kernel3 will wait for kernel2 to complete, even if in principle all three kernels could execute concurrently.\"\n\n   用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "evidence_quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked.",
+            "verification": "source",
+            "reason": "最终答案完整覆盖了原题的三个子要求：(1) stream：给出完整多流代码，用 cudaStreamCreateWithFlags(stream, cudaStreamNonBlocking) 创建非默认流，官方指南2.5.6明确non-blocking flag；(2) event：用 cudaEventRecord/cudaStreamSynchronize/cudaEventElapsedTime 进行同步和计时，代码中 per-stream events + timing events 完整，官方指南2.5.3提供API签名；(3) pinned memory：明确 cudaMallocHost 为硬前提，官方指南2.5.2.3原文支持'host buffers must be pinned and page-locked'。此外还给出编译命令、硬件前提（compute capability ≥1.1 concurrent copy+execute、≥2.0 overlap、≥3.5 Hyper-Q）、double buffering 提示（cudaStreamWaitEvent），并附完整可编译代码。所有关键点均有官方来源逐字引文支撑。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（CUDA Programming Guide异步执行章节）。",
+            "evidence": [
+              {
+                "event_id": "call_00_bscIjrPijXKpsEYNdR2x5030.result",
+                "quote": "1. [2.5. Asynchronous Execution — CUDA Programming Guide](https://docs.nvidia.com/cuda/cuda-programming-guide/02-basics/asynchronous-execution.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "Body content starts at:** heading \"2.5. Asynchronous Execution\""
+              },
+              {
+                "event_id": "call_00_Z0rETYdC3YE96pHqUBhh5617.result",
+                "quote": "发布时间: 2012年 12月 13日 # 如何在 CUDA C/C++ 中实现数据传输的重叠 作者：Mark Harris"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方正文覆盖原题全部所需：stream创建/销毁、cudaMemcpyAsync签名与pinned约束、event计时与流间同步、默认流语义、多流重叠代码示例与硬件约束说明，无需另查即可补齐。",
+            "evidence": [
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked."
+              },
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);"
+              },
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "cudaEventRecord(start, stream);          // record the start event"
+              },
+              {
+                "event_id": "call_00_Z0rETYdC3YE96pHqUBhh5617.result",
+                "quote": "for (int i = 0; i < nStreams; ++i) {\n  int offset = i * streamSize;\n  cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes, cudaMemcpyHostToDevice, stream[i]);"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已明确部分适用关系，但记录中的必要对应关系仍缺失：具体compute capability阈值与copy/compute重叠的对照表（正文称详见Compute Capabilities附录，本轮未取得）。依原第3档，未取得的信息不能称为已合并确定。",
+            "evidence": [
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "Version:** **v13.4.2** (shown in header) | Last updated: Sep 10, 2026"
+              },
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "Starting in CUDA-7**, each host thread can have its own independent default stream instead of the shared legacy default stream."
+              },
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "the actual ability to carry out various operations concurrently will depend on the version of CUDA and the compute capability of the hardware being used."
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内两次查询共发现至少6条相关独立第三方来源（博客、知乎×2、readthedocs教程、CSDN、博客园），去重计数满足最高档。",
+            "evidence": [
+              {
+                "event_id": "call_00_bscIjrPijXKpsEYNdR2x5030.result",
+                "quote": "2. [CUDA Streams：异步执行、Event 同步与计算传输重叠](https://hd9568.github.io/blog/cuda-streams-events-overlap/)"
+              },
+              {
+                "event_id": "call_00_bscIjrPijXKpsEYNdR2x5030.result",
+                "quote": "4. [Asynchronous CUDA Calls — Introduction to CUDA …](https://intro-to-cuda.readthedocs.io/en/latest/tutorial/asynchronous.html)"
+              },
+              {
+                "event_id": "call_00_QDCv04uhfJJbbss0IeYp4888.result",
+                "quote": "4. [How to Overlap Data Transfers in CUDA C/C++ - CSDN博客](https://blog.csdn.net/chenxiuli0810/article/details/90900244)"
+              },
+              {
+                "event_id": "call_00_QDCv04uhfJJbbss0IeYp4888.result",
+                "quote": "5. [如何在cuda c/c++中实现数据传输的重叠 - Wangtn - 博客园](https://www.cnblogs.com/wangtianning1223/p/15716456.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "实际取得正文的第三方来源为intro-to-cuda.readthedocs.io教程，其关键说法（stream用法、cudaMemcpyAsync异步、同步API）均可追溯并与官方文档一致，未见矛盾；但仅有这一条第三方正文，缺少独立第三方来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+                "quote": "By using CUDA streams, we can overlap memory transfers and kernel execution, leading to better GPU utilization."
+              },
+              {
+                "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+                "quote": "Use `cudaMemcpyAsync()` for asynchronous memory copies."
+              },
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "Unlike `cudaMemcpy()`, which blocks until complete, this returns immediately."
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已准确覆盖原题所需的流程、API、参数与约束：pinned内存为真正异步的前提、non-blocking stream、事件计时与流间同步、分块double-buffering流水线及关键flags；与事后核对的官方文档一致，未发现关键错误。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "它只在 **page-locked（pinned）host memory** 上才真正异步；若 host 侧是普通 pageable memory，驱动会退化为同步分块拷贝（staging），无法与 kernel 重叠。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "用两个或多个 stream 交替 chunk（double buffering），使 stream A 做 D2H 时 stream B 做 H2D/计算。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "non-blocking stream 标志：`cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`。"
+              },
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "the host buffers must be pinned and page-locked"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=5",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_bscIjrPijXKpsEYNdR2x5030.dispatch",
+              "call_00_CQC4sQ5gtBFc13ecrHl70139.dispatch",
+              "call_00_QDCv04uhfJJbbss0IeYp4888.dispatch",
+              "call_00_Z0rETYdC3YE96pHqUBhh5617.dispatch",
+              "call_01_JBrQ1KBg0W11emBmNW1Q6602.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "答案给出了所用接口的版本适用范围：per-thread default stream 自CUDA-7起（官方指南2.5.6.2确认），硬件前提为compute capability ≥1.1/≥2.0/≥3.5（官方博客确认），文档版本v13.4.2。但核心API（cudaMemcpyAsync/cudaStreamCreate/cudaMallocHost）未锁定到具体CUDA toolkit版本，答案未指定'需要CUDA X.Y'，仅给出适用范围。部分组件（per-thread default stream, 硬件前提）有明确版本依据，但整体未定到具体CUDA版本。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "per-thread default stream | **CUDA-7 起**（官方指南 2.5.6.2 与官方博客）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "compute capability ≥ 1.1 支持 concurrent copy+execute；≥ 2.0 起可重叠 copy/compute；**3.5（K20，Hyper-Q）**起无需定制发射顺序"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "答案提供了完整可编译的overlap.cu代码（含所有include、CHECK宏、kernel定义、pinned分配、多流创建、异步拷贝、同步、验证、清理）和nvcc编译命令。仅需替换明确标识的环境参数：-arch=sm_80 需换成用户GPU的compute capability（答案明确注释'把 sm_80 换成你 GPU 的 compute capability'）。代码结构完整、无伪代码、无缺失步骤，同步和错误检查齐全。达到4分：仅需替换明确标识且有说明的用户环境参数即可执行。答案诚实声明代码未实际运行，但不影响内容完整性评分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "nvcc -O3 -arch=sm_80 overlap.cu -o overlap   # 把 sm_80 换成你 GPU 的 compute capability"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "CHECK(cudaStreamCreateWithFlags(&stream[i], cudaStreamNonBlocking));"
+              }
+            ],
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 84.47999999999999,
+            "lower": 84.47999999999999,
+            "upper": 84.47999999999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 84.5
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 84.47999999999999,
+          "lower": 84.47999999999999,
+          "upper": 84.47999999999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 84.5
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_bscIjrPijXKpsEYNdR2x5030.result",
+            "field": "response",
+            "sha256": "9518eaddc813b3a08a34ccc26f9c5d5428a5f6ae47983c286aabca218aa08bda",
+            "start": 101,
+            "end": 249,
+            "quote": "1. [2.5. Asynchronous Execution — CUDA Programming Guide](https://docs.nvidia.com/cuda/cuda-programming-guide/02-basics/asynchronous-execution.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 208,
+            "end": 271,
+            "quote": "Body content starts at:** heading \"2.5. Asynchronous Execution\"",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 4112,
+            "end": 4242,
+            "quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 15803,
+            "end": 15861,
+            "quote": "cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 7061,
+            "end": 7127,
+            "quote": "cudaEventRecord(start, stream);          // record the start event",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_Z0rETYdC3YE96pHqUBhh5617.result",
+            "field": "response",
+            "sha256": "79d578f69f919094d8b1a25e6bdcd4241b9072bc2a116ba846c888981ef7ce72",
+            "start": 4194,
+            "end": 4354,
+            "quote": "for (int i = 0; i < nStreams; ++i) {\n  int offset = i * streamSize;\n  cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes, cudaMemcpyHostToDevice, stream[i]);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 136,
+            "end": 205,
+            "quote": "Version:** **v13.4.2** (shown in header) | Last updated: Sep 10, 2026",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 17293,
+            "end": 17420,
+            "quote": "Starting in CUDA-7**, each host thread can have its own independent default stream instead of the shared legacy default stream.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 1534,
+            "end": 1687,
+            "quote": "the actual ability to carry out various operations concurrently will depend on the version of CUDA and the compute capability of the hardware being used.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_bscIjrPijXKpsEYNdR2x5030.result",
+            "field": "response",
+            "sha256": "9518eaddc813b3a08a34ccc26f9c5d5428a5f6ae47983c286aabca218aa08bda",
+            "start": 480,
+            "end": 578,
+            "quote": "2. [CUDA Streams：异步执行、Event 同步与计算传输重叠](https://hd9568.github.io/blog/cuda-streams-events-overlap/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_bscIjrPijXKpsEYNdR2x5030.result",
+            "field": "response",
+            "sha256": "9518eaddc813b3a08a34ccc26f9c5d5428a5f6ae47983c286aabca218aa08bda",
+            "start": 1011,
+            "end": 1139,
+            "quote": "4. [Asynchronous CUDA Calls — Introduction to CUDA …](https://intro-to-cuda.readthedocs.io/en/latest/tutorial/asynchronous.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_QDCv04uhfJJbbss0IeYp4888.result",
+            "field": "response",
+            "sha256": "87edc9ce5756fe82dd4f9f2576f46e3c56f6cc33ca408524609bdefa10830610",
+            "start": 1011,
+            "end": 1130,
+            "quote": "4. [How to Overlap Data Transfers in CUDA C/C++ - CSDN博客](https://blog.csdn.net/chenxiuli0810/article/details/90900244)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_QDCv04uhfJJbbss0IeYp4888.result",
+            "field": "response",
+            "sha256": "87edc9ce5756fe82dd4f9f2576f46e3c56f6cc33ca408524609bdefa10830610",
+            "start": 1343,
+            "end": 1444,
+            "quote": "5. [如何在cuda c/c++中实现数据传输的重叠 - Wangtn - 博客园](https://www.cnblogs.com/wangtianning1223/p/15716456.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+            "field": "response",
+            "sha256": "0a58f12abb23be68bc5297d97d2a765123ed8cd010f9318886f79c2ed64aeffd",
+            "start": 620,
+            "end": 731,
+            "quote": "By using CUDA streams, we can overlap memory transfers and kernel execution, leading to better GPU utilization.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+            "field": "response",
+            "sha256": "0a58f12abb23be68bc5297d97d2a765123ed8cd010f9318886f79c2ed64aeffd",
+            "start": 3250,
+            "end": 3305,
+            "quote": "Use `cudaMemcpyAsync()` for asynchronous memory copies.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 3933,
+            "end": 4010,
+            "quote": "Unlike `cudaMemcpy()`, which blocks until complete, this returns immediately.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a782647e602396b0ee4cab824caa7b1f8128420c6299349e7cdf5ad76593422c",
+            "start": 536,
+            "end": 646,
+            "quote": "它只在 **page-locked（pinned）host memory** 上才真正异步；若 host 侧是普通 pageable memory，驱动会退化为同步分块拷贝（staging），无法与 kernel 重叠。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a782647e602396b0ee4cab824caa7b1f8128420c6299349e7cdf5ad76593422c",
+            "start": 1251,
+            "end": 1329,
+            "quote": "用两个或多个 stream 交替 chunk（double buffering），使 stream A 做 D2H 时 stream B 做 H2D/计算。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "a782647e602396b0ee4cab824caa7b1f8128420c6299349e7cdf5ad76593422c",
+            "start": 1734,
+            "end": 1812,
+            "quote": "non-blocking stream 标志：`cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 4194,
+            "end": 4241,
+            "quote": "the host buffers must be pinned and page-locked",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "804c69fad505ee8d5d451e2bd69c406589e0502879161960255150fc7562d26b",
+            "start": 6650,
+            "end": 6710,
+            "quote": "per-thread default stream | **CUDA-7 起**（官方指南 2.5.6.2 与官方博客）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "804c69fad505ee8d5d451e2bd69c406589e0502879161960255150fc7562d26b",
+            "start": 6739,
+            "end": 6844,
+            "quote": "compute capability ≥ 1.1 支持 concurrent copy+execute；≥ 2.0 起可重叠 copy/compute；**3.5（K20，Hyper-Q）**起无需定制发射顺序",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "804c69fad505ee8d5d451e2bd69c406589e0502879161960255150fc7562d26b",
+            "start": 5620,
+            "end": 5703,
+            "quote": "nvcc -O3 -arch=sm_80 overlap.cu -o overlap   # 把 sm_80 换成你 GPU 的 compute capability",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "804c69fad505ee8d5d451e2bd69c406589e0502879161960255150fc7562d26b",
+            "start": 3692,
+            "end": 3760,
+            "quote": "CHECK(cudaStreamCreateWithFlags(&stream[i], cudaStreamNonBlocking));",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "804c69fad505ee8d5d451e2bd69c406589e0502879161960255150fc7562d26b",
+            "start": 573,
+            "end": 1457,
+            "quote": "1. **必须用 pinned（page-locked）host memory** 才能真异步：\n   > \"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work... It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"\n\n   即：用 pageable `malloc` 时 `cudaMemcpyAsync` **退化为同步**，不会重叠。\n\n2. **不同 stream 才可能重叠**；默认流（NULL/stream 0）是 blocking stream，会与其他 blocking stream 互相串行化：\n   > \"kernel2 will wait for kernel1 to complete, and kernel3 will wait for kernel2 to complete, even if in principle all three kernels could execute concurrently.\"\n\n   用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "field": "response",
+            "sha256": "290a79fe4c893a0f80d5c33e61a3446943f1a4921d80390e0b698f948dda3e87",
+            "start": 4112,
+            "end": 4242,
+            "quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-4474d14d9e5a-predictors.json": "7a75769fbf86e0c96143bea8d22ed7e03fd4a593930c4718d01fbb7be63c4cb0",
+          "reviewed/development/case-4474d14d9e5a-outcome.json": "d98bd7fca1da4a4971c01d21bcb877ac0340bc9e05f542315b526c2919aae911",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "## 2.5.1. What is Asynchronous Concurrent Execution?"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+                "quote": "Body content ends at:** \"2.5.10. Summary of Asynchronous Execution\" (before the page footer/navigation)"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cuda-programming-guide/02-basics/asynchronous-execution.html"
+          },
+          {
+            "event_id": "call_00_Z0rETYdC3YE96pHqUBhh5617.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_Z0rETYdC3YE96pHqUBhh5617.result",
+                "quote": "# 如何在 CUDA C/C++ 中实现数据传输的重叠\n\n作者：[Mark Harris](https://developer.nvidia.cn/blog/author/mark-harris/ \"Posts by Mark Harris\")"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_Z0rETYdC3YE96pHqUBhh5617.result",
+                "quote": "这篇文章和 [上一个](https://developer.nvidia.com/blog/parallelforall/how-optimize-data-transfers-cuda-cc/ \"How to Optimize Data Transfers in CUDA C/C++\") 讨论了如何优化主机和设备之间的数据传输。"
+              }
+            ],
+            "reference": "https://developer.nvidia.cn/blog/how-overlap-data-transfers-cuda-cc/"
+          },
+          {
+            "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+                "quote": "# Asynchronous CUDA Calls["
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_01_JBrQ1KBg0W11emBmNW1Q6602.result",
+                "quote": "4. Cleanup of streams and device memory is necessary to avoid resource leaks."
+              }
+            ],
+            "reference": "https://intro-to-cuda.readthedocs.io/en/latest/tutorial/asynchronous.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

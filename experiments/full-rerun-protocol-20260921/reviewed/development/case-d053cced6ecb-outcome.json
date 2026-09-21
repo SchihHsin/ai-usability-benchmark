@@ -1,0 +1,108 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "`NCCL_ALGO`（since 2.5）：\n> \"Comma-separated list of algorithms (not case sensitive) among: **Tree, Ring, Collnet (up to 2.13), CollnetDirect (2.14+) and CollnetChain (2.14+). NVLS (2.17+)** is the algorithm used to enable NVLink SHARP offload. To specify algorithms to exclude (instead of include), start the list with ^. The default is `Tree,Ring,CollnetDirect,CollnetChain,NVLS,NVLSTree`.\"",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_6_575bac26.result",
+      "evidence_quote": "Comma-separated list of algorithms (not case sensitive) among: Tree, Ring, Collnet (up to 2.13), CollnetDirect (2.14+) and CollnetChain (2.14+). NVLS (2.17+) is the algorithm used to enable NVLink SHARP offload.",
+      "verification": "source",
+      "reason": "原题五个子要求均被最终答案覆盖且有来源支撑：(1) NCCL_ALGO/NCCL_PROTO — 最终答案引文与 WebFetch_6（2.21.5 官方归档 env.html）逐字一致，含默认值、^排除语法、LL128 数据损坏警告及'不建议生产强制设置'的官方警示（WebFetch_2 亦含该警示原文）；(2) NCCL_DEBUG 诊断 — 取值 VERSION|WARN|INFO|TRACE 与 WebFetch_1/6 一致，NCCL_DEBUG_SUBSYS 子系统清单与默认 INIT,BOOTSTRAP,ENV 与 WebFetch_1（2.31.2）一致；(3) 拓扑感知 — NCCL_P2P_LEVEL 各档 LOC|NVL|PIX|PXB|PHB|SYS、NCCL_TOPO_FILE/NCCL_TOPO_DUMP_FILE 与 WebFetch_1 一致；(4) NVLink — NCCL_NVLS_ENABLE 依赖三代 NVSwitch(NVLink4)+Hopper 与 WebFetch_6 一致，默认值 2 与 WebFetch_1/2 间接引文一致，nvidia-smi topo -m/-p2p、nvbandwidth/nvloom、IOMMU/ACS、nvidia-peermem 与 WebFetch_4/5 一致；(5) 调优流程 — NCCL_MIN_CTAS/MAX_CTAS、NCCL_CHUNK_SIZE、NCCL_IB_QPS_PER_CONNECTION、NCCL_CROSS_NIC、CPU 亲和性与 WebFetch_4 逐字对应。答案明确标注了未核实项（nccl-tests 命令参数、2.31.2 env.html ALGO/PROTO 节截断改用 2.21.5 归档），未虚构证据，属有依据的条件范围而非错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "原题需要的定版组件为所用 NCCL 调优参数的版本适用关系。最终答案对每个参数均给出有官方依据的适用范围：NCCL_ALGO/NCCL_PROTO since 2.5、NCCL_P2P_LEVEL since 2.3.4、NCCL_TOPO_FILE since 2.6、NCCL_NVLS_ENABLE since 2.17（NVLink4+Hopper）、CollnetDirect/Chain 2.14+、NVLS 2.17+、NCCL_DEBUG_FILE since 2.2.12，且各范围均与来源引文一致。但未定到用户环境的具体 NCCL 版本（答案自述引用 2.31.2/2.21.5 两版文档且 2.31.2 的 ALGO/PROTO 节未直接取得，默认值可能有变化），也未锁定网络环境组件版本，故至少一项未定到具体版本，符合 4 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "`NCCL_NVLS_ENABLE`（since 2.17）：NVLink SHARP，仅三代 NVSwitch（NVLink4）+ Hopper 及更新架构支持；默认 2（不支持时自动禁用）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "2.31.2 版 env.html 的 NCCL_ALGO/NCCL_PROTO 节因工具截断未能直接取得，相关引文来自 2.21.5 归档版，新版本默认值可能有变化"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "答案给出可直接照抄的完整命令与前置条件：NCCL_DEBUG=INFO + NCCL_DEBUG_SUBSYS + NCCL_DEBUG_FILE 启动日志、nvidia-smi topo -m/-p2p n/-p2p p、nvidia-imex-ctl -H -N、cat /proc/cmdline 与 dmesg 检查 IOMMU、sudo lspci -vvv | grep ACSCtl、lsmod | grep nvidia-peermem、sudo modprobe nvidia-peermem，均为官方文档原文命令。需替换的仅是明确标识的用户环境参数（./my_app、-g <ngpus>），且答案对 nccl-tests 命令参数已明确标注未核实属社区标准用法。整体无需修正错误即可执行，仅替换环境值，符合 4 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "NCCL_DEBUG=INFO \\\nNCCL_DEBUG_SUBSYS=INIT,GRAPH,ENV,TUNING \\\nNCCL_DEBUG_FILE=/tmp/nccl.%h.%p.log \\\n./my_app"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "nvidia-smi topo -m            # 节点内拓扑矩阵\nnvidia-smi topo -p2p n        # GPU 间 NVLink P2P 是否 OK"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-d053cced6ecb",
+  "task_id": "W",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "prompt_sha256": "02640271cab06c32dffe0b02842eb1fc7182b15f391e8d746a86c9b7500ef0fe",
+    "process_sha256": "53b4b6bcd1db1e8869351fd325b93e0dc144450d1708c838f5705048bc6c2443",
+    "elapsed_seconds": 71.37,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-bf4ee5349092428993567d43a877a4d5",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": ""
+  },
+  "review": {
+    "raw_file": "assessments/development/case-d053cced6ecb-outcome-shape-recovered.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "`NCCL_ALGO`（since 2.5）：> \"Comma-separated list of algorithms (not case sensitive) among: **Tree, Ring, Collnet (up to 2.13), CollnetDirect (2.14+) and CollnetChain (2.14+). NVLS (2.17+)** is the algorithm used to enable NVLink SHARP offload.",
+        "replacement": "`NCCL_ALGO`（since 2.5）：\n> \"Comma-separated list of algorithms (not case sensitive) among: **Tree, Ring, Collnet (up to 2.13), CollnetDirect (2.14+) and CollnetChain (2.14+). NVLS (2.17+)** is the algorithm used to enable NVLink SHARP offload. To specify algorithms to exclude (instead of include), start the list with ^. The default is `Tree,Ring,CollnetDirect,CollnetChain,NVLS,NVLSTree`.\"",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

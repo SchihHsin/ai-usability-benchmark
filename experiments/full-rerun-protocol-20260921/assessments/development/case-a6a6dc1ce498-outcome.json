@@ -1,0 +1,230 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "若现有二进制**只含 cubin**，必须为 `sm_90` 重新编译；若**已包含 PTX**（如用 `compute_70` 目标编译），则可在 Hopper 上由驱动 JIT 后直接运行，无需重编译",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_0db0b682ff0a4a9f860a1b97.result",
+      "evidence_quote": "Application binaries that include PTX version of kernels, should work as-is on the Hopper GPUs. In such cases, rebuilding the application is not required. However application binaries which do not include PTX (only include cubins), need to be rebuilt to run on the Hopper GPUs.",
+      "verification": "source",
+      "reason": "原题三个子要求均被最终答案覆盖且有一手官方证据：①重编译 -arch/sm_xx：答案给出完整 nvcc -gencode 多架构命令、-arch=sm_XX 简写语义与 CUDA 11.8+ 才能生成 sm_90 cubin 的约束，与 Hopper Compatibility Guide 原文（call_0db0b682ff0a4a9f860a1b97.result：'With versions 11.8 of the CUDA Toolkit, nvcc can generate cubin native to the Hopper architecture (compute capability 9.0)' 及 Mac/Linux gencode 示例）一致；②PTX 兼容：答案的 cubin 不跨大版本、PTX 前向兼容、sm_90a 不前向兼容均被同源证实（'PTX code generated for compute capability 8.x is supported to run on compute capability 8.x or any higher revision…including compute capability 9.0'；'a cubin generated with compute capability 8.x is not supported to run on a GPU with compute capability 9.0'；'using sm_90a or compute_90a … are not forward or backward compatible'），CUDA_FORCE_PTX_JIT 验证法亦为原文；③TensorRT engine 不跨架构：答案的 CC 硬校验与 kAMPERE_PLUS/kSAME_COMPUTE_CAPABILITY 说明与官方 engine-compatibility 页一致（call_75272348eaa44abbb834389c.result：'TensorRT also records the compute capability (major and minor versions) in the plan and checks it against the GPU on which the plan is being loaded. If they do not match, the plan will fail to deserialize.'；'hardware compatibility is not supported on NVIDIA DriveOS or NVIDIA JetPack'）；另附 CUDA 13.0 移除 Volta 编译支持（call_3ecaaab6c09141edb8dc9abd.result：'Offline compilation and library support for these architectures have been removed in CUDA Toolkit 13.0 major version release'）补充迁移注意事项，超出但不违背原题。未发现与来源矛盾的主张；答案中标注为通用实践（CMake CUDA_ARCHITECTURES）处已自陈未核实，不作为证据使用。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "适用范围内组件定版情况：目标架构已定到具体值（sm_70→sm_90，sm_90a 特例说明）；CUDA 工具链给出有依据的适用范围但未定到单一具体版本（Hopper 需 11.8+，纯 Hopper 可用 12.x 或 13.x，需兼顾 Volta 则限 12.x——是有依据的范围而非一个版本）；TensorRT 未指定具体版本，而是给出'用部署版本 TensorRT 在目标 GPU 上重建'的规则性结论（题目本身不要求定某个 TRT 版本）。所有组件均有官方依据且无冲突，但至少一项（工具链）停留在适用范围未锁到具体版本，符合第4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "Hopper 原生 cubin 需要 **CUDA Toolkit 11.8+**（11.7 及以前 nvcc 最高只能生成 8.x cubin）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "若源机/CI 还需同时出 Volta 版本，只能停留在 CUDA 12.x；纯 Hopper 目标可用 CUDA 12.x（11.8+）或 13.x"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "Volta→Hopper 的 TensorRT 部署，**应在目标 Hopper GPU 上用部署版本的 TensorRT 重建 engine**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "操作指导完整且前提明确：给出可照抄的完整 nvcc 多架构命令（含全部 -gencode 参数、-O2、-c、输出文件）、-arch=sm_XX 简写的确切展开语义、CUDA_FORCE_PTX_JIT 验证三步（set→运行→unset）、TensorRT Python 配置行 config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS，以及前置条件（CUDA 11.8+ 生成 sm_90、CUDA 13.x 需 r580+ 驱动、先装最新驱动）。仅文件名/应用名（mykernel.cu、./your_app）属于用户自有文件替换，无内容错误或缺步骤需修正，达到第5档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "/usr/local/cuda/bin/nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_75,code=sm_75 \\\n  -gencode=arch=compute_80,code=sm_80 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -gencode=arch=compute_90,code=compute_90 \\\n  -O2 -o mykernel.o -c mykernel.cu"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "export CUDA_FORCE_PTX_JIT=1   # 强制 JIT，若程序能跑说明含 PTX、Hopper 兼容\n./your_app\nunset CUDA_FORCE_PTX_JIT"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "**驱动**：CUDA 13.x 需 r580+ 驱动；目标机先升级到最新驱动（官方迁移建议第一步即安装最新 driver）。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a6a6dc1ce498",
+  "task_id": "Y",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "若现有二进制**只含 cubin**，必须为 `sm_90` 重新编译；若**已包含 PTX**（如用 `compute_70` 目标编译），则可在 Hopper 上由驱动 JIT 后直接运行，无需重编译",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_0db0b682ff0a4a9f860a1b97.result",
+        "evidence_quote": "Application binaries that include PTX version of kernels, should work as-is on the Hopper GPUs. In such cases, rebuilding the application is not required. However application binaries which do not include PTX (only include cubins), need to be rebuilt to run on the Hopper GPUs.",
+        "verification": "source",
+        "reason": "原题三个子要求均被最终答案覆盖且有一手官方证据：①重编译 -arch/sm_xx：答案给出完整 nvcc -gencode 多架构命令、-arch=sm_XX 简写语义与 CUDA 11.8+ 才能生成 sm_90 cubin 的约束，与 Hopper Compatibility Guide 原文（call_0db0b682ff0a4a9f860a1b97.result：'With versions 11.8 of the CUDA Toolkit, nvcc can generate cubin native to the Hopper architecture (compute capability 9.0)' 及 Mac/Linux gencode 示例）一致；②PTX 兼容：答案的 cubin 不跨大版本、PTX 前向兼容、sm_90a 不前向兼容均被同源证实（'PTX code generated for compute capability 8.x is supported to run on compute capability 8.x or any higher revision…including compute capability 9.0'；'a cubin generated with compute capability 8.x is not supported to run on a GPU with compute capability 9.0'；'using sm_90a or compute_90a … are not forward or backward compatible'），CUDA_FORCE_PTX_JIT 验证法亦为原文；③TensorRT engine 不跨架构：答案的 CC 硬校验与 kAMPERE_PLUS/kSAME_COMPUTE_CAPABILITY 说明与官方 engine-compatibility 页一致（call_75272348eaa44abbb834389c.result：'TensorRT also records the compute capability (major and minor versions) in the plan and checks it against the GPU on which the plan is being loaded. If they do not match, the plan will fail to deserialize.'；'hardware compatibility is not supported on NVIDIA DriveOS or NVIDIA JetPack'）；另附 CUDA 13.0 移除 Volta 编译支持（call_3ecaaab6c09141edb8dc9abd.result：'Offline compilation and library support for these architectures have been removed in CUDA Toolkit 13.0 major version release'）补充迁移注意事项，超出但不违背原题。未发现与来源矛盾的主张；答案中标注为通用实践（CMake CUDA_ARCHITECTURES）处已自陈未核实，不作为证据使用。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "适用范围内组件定版情况：目标架构已定到具体值（sm_70→sm_90，sm_90a 特例说明）；CUDA 工具链给出有依据的适用范围但未定到单一具体版本（Hopper 需 11.8+，纯 Hopper 可用 12.x 或 13.x，需兼顾 Volta 则限 12.x——是有依据的范围而非一个版本）；TensorRT 未指定具体版本，而是给出'用部署版本 TensorRT 在目标 GPU 上重建'的规则性结论（题目本身不要求定某个 TRT 版本）。所有组件均有官方依据且无冲突，但至少一项（工具链）停留在适用范围未锁到具体版本，符合第4档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "Hopper 原生 cubin 需要 **CUDA Toolkit 11.8+**（11.7 及以前 nvcc 最高只能生成 8.x cubin）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "若源机/CI 还需同时出 Volta 版本，只能停留在 CUDA 12.x；纯 Hopper 目标可用 CUDA 12.x（11.8+）或 13.x"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "Volta→Hopper 的 TensorRT 部署，**应在目标 Hopper GPU 上用部署版本的 TensorRT 重建 engine**"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "操作指导完整且前提明确：给出可照抄的完整 nvcc 多架构命令（含全部 -gencode 参数、-O2、-c、输出文件）、-arch=sm_XX 简写的确切展开语义、CUDA_FORCE_PTX_JIT 验证三步（set→运行→unset）、TensorRT Python 配置行 config.hardware_compatibility_level = trt.HardwareCompatibilityLevel.AMPERE_PLUS，以及前置条件（CUDA 11.8+ 生成 sm_90、CUDA 13.x 需 r580+ 驱动、先装最新驱动）。仅文件名/应用名（mykernel.cu、./your_app）属于用户自有文件替换，无内容错误或缺步骤需修正，达到第5档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "/usr/local/cuda/bin/nvcc \\\n  -gencode=arch=compute_70,code=sm_70 \\\n  -gencode=arch=compute_75,code=sm_75 \\\n  -gencode=arch=compute_80,code=sm_80 \\\n  -gencode=arch=compute_90,code=sm_90 \\\n  -gencode=arch=compute_90,code=compute_90 \\\n  -O2 -o mykernel.o -c mykernel.cu"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "export CUDA_FORCE_PTX_JIT=1   # 强制 JIT，若程序能跑说明含 PTX、Hopper 兼容\n./your_app\nunset CUDA_FORCE_PTX_JIT"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "**驱动**：CUDA 13.x 需 r580+ 驱动；目标机先升级到最新驱动（官方迁移建议第一步即安装最新 driver）。"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "65a86c6dccb54fd3b163b38e35f2a1f0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "ce069e99fea454be043eaa6902a985f0",
+        "conversationRequestId": "ce069e99fea454be043eaa6902a985f0",
+        "agent": "cli"
+      },
+      {
+        "messageId": "65a86c6dccb54fd3b163b38e35f2a1f0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "ce069e99fea454be043eaa6902a985f0",
+        "conversationRequestId": "ce069e99fea454be043eaa6902a985f0",
+        "rawUsage": {
+          "prompt_tokens": 19159,
+          "completion_tokens": 2577,
+          "total_tokens": 21736,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1101,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 16151,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1101,
+          "credit": 4.15,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19159,
+          "outputTokens": 2577,
+          "totalTokens": 21736,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1101
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "2d36d523f5d982800940793c24a1bfe134e897398ad63d3a3cc4078a183ad381",
+    "process_sha256": "58c6e41f9b8eaf49fae02dc708e15758deb3981f0e475c281edc7c3ea70b9187",
+    "elapsed_seconds": 55.68,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-00f2e9092b1d427da1a01f0e3bae2fa4",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}
