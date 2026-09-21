@@ -7,7 +7,9 @@ from review_normalization import completeness
 from quote_alignment import align as align_markdown
 R=Path(__file__).resolve().parent
 p=json.loads((R/'protocol.json').read_text());tasks=json.loads((R/'tasks.json').read_text())['tasks'];audit=[]
+selected_runs={i['run_name'] for i in json.loads((R/'assessment-input/development.json').read_text())}
 for run in (R/'runs').iterdir():
+ if run.name not in selected_runs:continue
  if not (run/'evaluation.json').exists():continue
  lines=(run/'process.jsonl').read_text().splitlines()
  if not lines or json.loads(lines[-1]).get('type')!='run_end':continue

@@ -138,3 +138,11 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - M11:27 point results,105 evidence-bounded results,22 incomplete-input results,2 without complete assessment. Bounds are not confidence intervals or calibrated probabilities. No imputation.
 - Independent arithmetic verified132 computable cases without differences;29 frozen hashes unchanged;31 focused tests passed. Results and paired-summary include exclusions and original evidence links.
 - Collection and post-assessment retry allowances are exhausted only for the two documented cells above; no third retries. Paper and installed Skill untouched.
+
+
+## 2026-09-21 targeted closeout authorization
+
+- User authorizes at most two additional technical attempts per named cell: GLM U-CUDA collection, Kimi U-CUDA collection, DeepSeek R-CUDA predictors. First valid result wins; no full rerun.
+- Kimi U-CUDA133844 invalidated: only prior plus unexecuted search intent; zero dispatch/no independent final. Raw run and assessments retained but excluded from selection and derived summaries.
+- Frozen completion_guard retained byte-identical; explicit completion_guard_closeout overlay fixes missed intent variant. Selection now applies guard and retains first valid ledger record. All29 frozen hashes unchanged.
+- Full M10 anchor-consistency audit and I-version/source-ownership evidence review underway; no new rubric/formula/coefficient changes.

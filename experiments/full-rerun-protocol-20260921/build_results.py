@@ -1,4 +1,4 @@
-from completion_guard import invalid_ids
+from completion_guard_closeout import invalid_ids, errors as completion_errors
 """Generate a provenance-linked report without inventing unassessed scores."""
 from pathlib import Path
 from collections import Counter
@@ -16,7 +16,7 @@ for model in p['models']:
  ledger=[json.loads(l) for l in (R/f'ledger-{model}.jsonl').read_text().splitlines()]
  selected={}
  for x in ledger:
-  if x.get('completed') and x['run_id'] not in invalid_ids():selected[(x['task'],x['ecosystem'])]=x
+  if x.get('completed') and x['run_id'] not in invalid_ids() and not completion_errors(R/'runs'/x['run_id']):selected.setdefault((x['task'],x['ecosystem']),x)
  for task in p['development']:
   for eco in p['ecosystems']:
    x=selected.get((task,eco));row={'task':task,'ecosystem':eco,'model':model,'paired_analysis':task!='G','collected':bool(x)}
@@ -33,7 +33,7 @@ for model in p['models']:
     row['collection_failure']=exhausted[(model,task,eco)]
    rows.append(row)
  for x in ledger:
-  if not x.get('completed'):attempts.append(x)
+  if not x.get('completed') or x['run_id'] in invalid_ids():attempts.append({**x,'invalidated':x['run_id'] in invalid_ids()})
 summary={'generated':datetime.datetime.now().isoformat(timespec='seconds'),'expected':156,'collected':sum(x['collected'] for x in rows),'assessed':sum(x.get('assessed',False) for x in rows),'gate_passed':sum(x.get('gate_passed',False) for x in rows),'quote_audit_clean':sum(x.get('assessed',False) and x.get('quote_issues')==0 for x in rows),'m11_states':dict(Counter((x.get('overall') or {}).get('status','not_assessed') for x in rows))}
 summary['assessment_phase_states']=phase_report['summary']
 summary['collection_exhausted']=sum(x.get('collection_status')=='technical_attempts_exhausted' for x in rows)

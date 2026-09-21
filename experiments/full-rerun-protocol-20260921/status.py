@@ -1,4 +1,4 @@
-from completion_guard import invalid_ids
+from completion_guard_closeout import invalid_ids, errors as completion_errors
 """Read-only live inventory; write a small derived progress report."""
 from pathlib import Path
 import json,html,datetime
@@ -9,7 +9,7 @@ for m in p['models']:
  if ledger.exists():
   for line in ledger.read_text().splitlines():
    r=json.loads(line)
-   if r['run_id'] in invalid_ids():r['completed']=False
+   if r['run_id'] in invalid_ids() or (r.get('completed') and completion_errors(R/'runs'/r['run_id'])):r['completed']=False
    latest[(r['task'],r['ecosystem'])]=r
  complete=sum(r.get('completed',False) for r in latest.values());fail=sum(not r.get('completed',False) for r in latest.values())
  rows.append({'model':m,'completed':complete,'expected':52,'technical_attention':fail})

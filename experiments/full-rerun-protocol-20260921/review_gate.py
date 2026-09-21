@@ -15,7 +15,8 @@ def check(value,item,kind):
         if key not in byid:continue
         scope=item['applicability'][key];m=byid[key]
         if not scope['applicable']:m.update(score=None,lower=None,upper=None,status='not_applicable',reason=scope['scope'])
-        elif m.get('status')=='not_applicable':errors.append(key+': contradicts predefined applicability')
+        elif str(m.get('status','')).strip().lower().replace(' ','_') in ('not_applicable','n/a','na','not-applicable'):
+            errors.append(key+': contradicts predefined applicability')
     if kind=='outcome':
         for m in metrics:
             if m.get('score') is not None and not cited(m.get('evidence',[]),True):errors.append(m['id']+': missing/invalid final answer citation')

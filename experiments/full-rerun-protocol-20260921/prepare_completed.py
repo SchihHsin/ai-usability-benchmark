@@ -1,4 +1,4 @@
-from completion_guard import invalid_ids
+from completion_guard_closeout import invalid_ids, errors as completion_errors
 """Prepare assessments only for controller-verified successful logical units."""
 from pathlib import Path
 import json,hashlib
@@ -10,7 +10,7 @@ for model in p['models']:
  if not ledger.exists():continue
  for line in ledger.read_text().splitlines():
   row=json.loads(line);attempts.append(row)
-  if row.get('completed') and row['run_id'] not in invalid_ids():selected[(row['task'],row['ecosystem'])]=row
+  if row.get('completed') and row['run_id'] not in invalid_ids() and not completion_errors(R/'runs'/row['run_id']):selected.setdefault((row['task'],row['ecosystem']),row)
  for r in selected.values():
   item=prepare_assessment.parse_run((R/'runs'/r['run_id']/'process.jsonl').resolve(),tasks,p)
   items.append(item)
