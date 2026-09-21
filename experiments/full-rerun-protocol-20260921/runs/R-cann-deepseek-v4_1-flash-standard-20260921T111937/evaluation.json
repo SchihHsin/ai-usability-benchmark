@@ -952,6 +952,810 @@
         ],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T06:33:59.653259+00:00",
+      "process_sha256": "c951f1bc23c9770ab08146ad8d8920a0e4c50683bf6e46bd292339ef4f66fcef",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "**数值溢出型**（loss 变 NaN/Inf、跑飞）→ 溢出检测（msProbe `overflow_check`）。\n- **算子精度型**（loss 能降但与 GPU 对不齐、掉点）→ 逐层数据采集 + 精度比对（msProbe `dump` + `compare`）。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+            "evidence_quote": "当dynamic参数设置为False时，支持使用固定值的Loss Scale，并且可以通过init_scale参数设置Loss Scale取值",
+            "verification": "source",
+            "reason": "原题要求覆盖 loss scale / 溢出检测 / 算子精度三条排查主线，最终答案逐项给出可操作内容且与官方来源一致：(1) loss scale——给出 amp.GradScaler 的 dynamic/init_scale 参数、静态 loss scale 配置及梯度裁剪 unscale 流程，与 hiascend TorchNPU 6.0.0 官方正文（call_00_996CAgpxRVJNp9fpuZNC0912.result、call_00_dVipZfPvLRTzrPvdqnw40477.result）逐字吻合；(2) 溢出检测——给出 msprobe overflow_check -i/-o 命令、step 层级输入约束、异常判定规则，来源 call_00_Q1rK5ftwA7XIZE0srp5D2656.result 原文一致；(3) 算子精度——给出 msprobe compare -tp/-gp/-da 命令、Cosine/EucDist/MaxAbsErr 阈值与 error 判定条件，来源 call_00_rYtgCssmXlHofAX7GhNM8421.result 原文一致。三方面均有真实官方来源支撑，未发现与来源矛盾之处。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第5条即出现相关官方来源（hiascend.com 官方博客），属第2—5条命中档。",
+            "evidence": [
+              {
+                "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+                "quote": "5. [CANN精度调试工具详解](https://www.hiascend.com/developer/blog/details/02152211175104217059)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.5,
+            "upper": 4.125,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+                "quote": "**标题**: CANN精度调试工具详解\n\n[昇腾社区首页](https://www.hiascend.com/zh)"
+              },
+              {
+                "event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+                "quote": "**标题**: 溢出检测与解析-MindSpore训练场景-功能介绍-精度调试 msProbe-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分"
+              },
+              {
+                "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+                "quote": "**⚠️ 内容截断说明**: 文档正文在\"附录 → 自定义映射文件（cell_mapping）\"部分结束"
+              },
+              {
+                "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+                "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题三大子项均有官方主流程与参数：loss scale（GradScaler dynamic/init_scale 参数、静态loss scale、梯度裁剪代码）、溢出检测（overflow_check 命令、参数表、输出JSON结构）、算子精度比对（compare 命令、参数表、指标公式、error/warning判定规则）。但 dump 采集配置（config.json 的 level/task 完整规格）、msprobe 安装要求等分支细节仅以链接引用未取回，且 compare 文档自述截断，故不满5档。",
+            "evidence": [
+              {
+                "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+                "quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)"
+              },
+              {
+                "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+                "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output"
+              },
+              {
+                "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+                "quote": "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "官方页面各自标明版本（TorchNPU6.0.0、MindStudio26.0.0、MindStudio 81RC1、msProbe 1.0），且 TorchNPU 6.0.0 明确了 amp.GradScaler 的 dynamic/init_scale 参数在该版本的适用性，但 msprobe/msProbe 1.0 与 CANN/torch_npu 具体版本的配套对应关系未取得，完成版本锁定仍缺关系。",
+            "evidence": [
+              {
+                "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+                "quote": "适配简介-（可选）混合精度适配-关键特性适配-模型迁移-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+                "quote": "msProbe 使用指南[](https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/README.html#msprobe \"Link to this heading\")\n\nMindStudio Probe（msProbe）针对昇腾 AI 处理器提供全场景精度调试能力"
+              },
+              {
+                "event_id": "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+                "quote": "精度调试 | MindStudio 81RC1 文档 | 昇思MindSpore社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "三轮搜索中去重后相关独立第三方来源（CSDN×6、掘金、知乎、raybyte）≥6条，其中掘金与hwcomputing.csdn同题同日疑似镜像只计一次后仍超过6条。",
+            "evidence": [
+              {
+                "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+                "quote": "1. [昇腾模型迁移调试：msprobe/msdebug精度比对与溢出检测 ...](https://blog.csdn.net/weixin_27734811/article/details/165403202)"
+              },
+              {
+                "event_id": "call_00_IcDA6KKsJzYg1mBYIbv08271.result",
+                "quote": "5. [PyTorch的GradScaler - 知乎](https://zhuanlan.zhihu.com/p/2020212840615653898)"
+              },
+              {
+                "event_id": "call_00_xruSCSu2bJmJOlPB4WZs4352.result",
+                "quote": "5. [昇腾模型调试工具链实战：精度比对、溢出检测与性能调优指南](https://blog.csdn.net/weixin_33521678/article/details/165403199)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "存在第三方来源（CSDN/掘金/知乎等出现在搜索结果中，故非 not_applicable），但全部8次抓取均为官方页面，无任何第三方正文被取回，仅有搜索摘要片段，无法核验作者身份、日期有效性与多源一致性。",
+            "evidence": [
+              {
+                "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+                "quote": "2026年9月14日 · 昇腾AI处理器为此提供了msprobe/msdebug工具链：通过精度比对对比NPU与CPU参考实现的逐层张量输出"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "检索前回答给出了正确的排查框架与方法片段：区分loss不收敛与精度对不齐、GradScaler动态loss scale、msprobe工具存在性及overflow/compare功能、逐层比对思路——均被后续官方来源证实（msprobe确实提供溢出检测与精度比对）。但关键细节（确切命令、参数格式、环境变量名、CANN版本对应）先验自认不确定且确实缺失，属'能给出正确方法或解释片段，关键细节需外部补充'档。'NPU_ERR'环境变量等具体主张未获官方来源印证。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "昇腾有专门的精度工具 **msprobe**（MindStudio Probe，旧称 msaccucmp / precision_tool），提供 `overflow` 检测和精度比对（compare）两大子功能"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处（需检索核实）**\n- msprobe 的确切命令、子命令名（`overflow`、`compare`、`dump`）与参数格式。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_REwh4BoMyhb14ZoNmxh61116.dispatch",
+              "call_00_M3H10BtOmynGkCwbgQ3X7152.dispatch",
+              "call_00_xruSCSu2bJmJOlPB4WZs4352.dispatch",
+              "call_00_vyJD3LJBI5d909pgPIMD7606.dispatch",
+              "call_00_fbN2ePXQgH6EjkL5Hn9i4900.dispatch",
+              "call_00_rNZAxFnzXHEQdIlLFeTr7572.dispatch",
+              "call_00_Q1rK5ftwA7XIZE0srp5D2656.dispatch",
+              "call_00_rYtgCssmXlHofAX7GhNM8421.dispatch",
+              "call_00_IcDA6KKsJzYg1mBYIbv08271.dispatch",
+              "call_00_996CAgpxRVJNp9fpuZNC0912.dispatch",
+              "call_00_dVipZfPvLRTzrPvdqnw40477.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "部分所需组件有明确版本依据：msProbe 工具文档（MindStudio Probe 1.0）、TorchNPU 6.0.0、MindStudio 81RC1/26.0.0 均在最终答案中给出；但 CANN 版本未取得，soc_version 及 CANN↔TorchNPU↔PyTorch 配套版本表未取回，且多套版本号之间的适用关系未确认，属于关键定版信息缺失，对应第3档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "CANN 版本未在已取回正文中给出；`soc_version`、CANN↔TorchNPU↔PyTorch 配套版本表本轮未取回（msProbe 安装指南章节未抓取）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msProbe 工具文档版本：**MindStudio Probe 1.0**（readthedocs）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "答案给出了完整可抄写的核心命令（overflow_check、compare、merge_result 及 GradScaler 代码），参数与前置条件基本齐全；但整条流水线存在需补充的缺失内容：msProbe 安装命令未给出、dump 环节 config.json 完整字段示例未取回（overflow_check 与 compare 均依赖 dump 数据）、MindSpore 场景溢出检测完整命令正文未取回，须补充这些内容才能端到端照抄执行，对应第3档（3分须指出具体缺口，答案已在\"未能核实处\"自行列出）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "数据 dump 的 `config.json` 完整字段示例（未抓取 `pytorch_data_dump_instruct`）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "msProbe 安装命令与 CANN/工具版本配套关系（`msprobe_install_guide` 未抓取）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "insufficient_evidence",
+                "reason": "存在第三方来源（CSDN/掘金/知乎等出现在搜索结果中，故非 not_applicable），但全部8次抓取均为官方页面，无任何第三方正文被取回，仅有搜索摘要片段，无法核验作者身份、日期有效性与多源一致性。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "存在第三方来源（CSDN/掘金/知乎等出现在搜索结果中，故非 not_applicable），但全部8次抓取均为官方页面，无任何第三方正文被取回，仅有搜索摘要片段，无法核验作者身份、日期有效性与多源一致性。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+            "field": "response",
+            "sha256": "edd4cf6c70bb82042313a37d0b7f98a39830b80b63f46bc8fcf3d21e2d57e2db",
+            "start": 1078,
+            "end": 1165,
+            "quote": "5. [CANN精度调试工具详解](https://www.hiascend.com/developer/blog/details/02152211175104217059)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+            "field": "response",
+            "sha256": "da8312570387edb7c3aebd342f8ce86714c9aa4dea44e8055f61625d7e700c8d",
+            "start": 0,
+            "end": 59,
+            "quote": "**标题**: CANN精度调试工具详解\n\n[昇腾社区首页](https://www.hiascend.com/zh)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+            "field": "response",
+            "sha256": "59d4ebe5a6129a8b66355ce16d0d5e96d641955e42ed0cd9d9573e5a087625d9",
+            "start": 0,
+            "end": 88,
+            "quote": "**标题**: 溢出检测与解析-MindSpore训练场景-功能介绍-精度调试 msProbe-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+            "field": "response",
+            "sha256": "f827857fe3dbbec1532b485803dfd06465913a17dda367c6e7cfee44c3e6fdd0",
+            "start": 293,
+            "end": 345,
+            "quote": "**⚠️ 内容截断说明**: 文档正文在\"附录 → 自定义映射文件（cell_mapping）\"部分结束",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 1201,
+            "end": 1256,
+            "quote": "msprobe overflow_check -i <input_path> -o <output_path>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+            "field": "response",
+            "sha256": "5bc58935e572b1c422e9d9cf25ef521d5e0e13cc20d7535903beb2583a124888",
+            "start": 2182,
+            "end": 2243,
+            "quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+            "field": "response",
+            "sha256": "63dfe12c82f3224d6d09c0ee0a21ae5ab741bc8a1b66b7dae2d0a7b2a5ad2250",
+            "start": 1426,
+            "end": 1479,
+            "quote": "msprobe overflow_check -i /xxx/dump/step0 -o ./output",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+            "field": "response",
+            "sha256": "f827857fe3dbbec1532b485803dfd06465913a17dda367c6e7cfee44c3e6fdd0",
+            "start": 2523,
+            "end": 2604,
+            "quote": "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+            "field": "response",
+            "sha256": "5bc58935e572b1c422e9d9cf25ef521d5e0e13cc20d7535903beb2583a124888",
+            "start": 8,
+            "end": 77,
+            "quote": "适配简介-（可选）混合精度适配-关键特性适配-模型迁移-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+            "field": "response",
+            "sha256": "db10b49951e99056901784685ff272df03b4548e354149fe13b3f063a78b75ba",
+            "start": 50,
+            "end": 216,
+            "quote": "msProbe 使用指南[](https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/README.html#msprobe \"Link to this heading\")\n\nMindStudio Probe（msProbe）针对昇腾 AI 处理器提供全场景精度调试能力",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+            "field": "response",
+            "sha256": "f15d3b7dc9eed9dfea96ddfdabc06b29235b57f10e685ac2f27a75999d6937a2",
+            "start": 8,
+            "end": 50,
+            "quote": "精度调试 | MindStudio 81RC1 文档 | 昇思MindSpore社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+            "field": "response",
+            "sha256": "edd4cf6c70bb82042313a37d0b7f98a39830b80b63f46bc8fcf3d21e2d57e2db",
+            "start": 74,
+            "end": 181,
+            "quote": "1. [昇腾模型迁移调试：msprobe/msdebug精度比对与溢出检测 ...](https://blog.csdn.net/weixin_27734811/article/details/165403202)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_IcDA6KKsJzYg1mBYIbv08271.result",
+            "field": "response",
+            "sha256": "b18f9d35a79ae3d8f0a42d0c6aff08862f5fac650b54230a0b4855225f87d6db",
+            "start": 1171,
+            "end": 1249,
+            "quote": "5. [PyTorch的GradScaler - 知乎](https://zhuanlan.zhihu.com/p/2020212840615653898)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_xruSCSu2bJmJOlPB4WZs4352.result",
+            "field": "response",
+            "sha256": "11d47f020c1c8667aab8a595f10e1d65a72037fd22cb64dfacd98e5ea70b311c",
+            "start": 1416,
+            "end": 1514,
+            "quote": "5. [昇腾模型调试工具链实战：精度比对、溢出检测与性能调优指南](https://blog.csdn.net/weixin_33521678/article/details/165403199)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_REwh4BoMyhb14ZoNmxh61116.result",
+            "field": "response",
+            "sha256": "edd4cf6c70bb82042313a37d0b7f98a39830b80b63f46bc8fcf3d21e2d57e2db",
+            "start": 183,
+            "end": 253,
+            "quote": "2026年9月14日 · 昇腾AI处理器为此提供了msprobe/msdebug工具链：通过精度比对对比NPU与CPU参考实现的逐层张量输出",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "3d9b4cd5878f431341d8adcc3d73663971b9503aab52476a27cf5b95580f63c7",
+            "start": 714,
+            "end": 820,
+            "quote": "昇腾有专门的精度工具 **msprobe**（MindStudio Probe，旧称 msaccucmp / precision_tool），提供 `overflow` 检测和精度比对（compare）两大子功能",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "3d9b4cd5878f431341d8adcc3d73663971b9503aab52476a27cf5b95580f63c7",
+            "start": 1352,
+            "end": 1422,
+            "quote": "不确定处（需检索核实）**\\n- msprobe 的确切命令、子命令名（`overflow`、`compare`、`dump`）与参数格式。",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e3a27f68771e165d515453162bcac93dc83189833a2ae1922c6fa568ba51aec4",
+            "start": 6768,
+            "end": 6852,
+            "quote": "CANN 版本未在已取回正文中给出；`soc_version`、CANN↔TorchNPU↔PyTorch 配套版本表本轮未取回（msProbe 安装指南章节未抓取）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e3a27f68771e165d515453162bcac93dc83189833a2ae1922c6fa568ba51aec4",
+            "start": 6509,
+            "end": 6562,
+            "quote": "msProbe 工具文档版本：**MindStudio Probe 1.0**（readthedocs）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e3a27f68771e165d515453162bcac93dc83189833a2ae1922c6fa568ba51aec4",
+            "start": 4253,
+            "end": 4334,
+            "quote": "msprobe compare -tp /target_dump/dump.json -gp /golden_dump/dump.json -o ./output",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e3a27f68771e165d515453162bcac93dc83189833a2ae1922c6fa568ba51aec4",
+            "start": 7028,
+            "end": 7093,
+            "quote": "数据 dump 的 `config.json` 完整字段示例（未抓取 `pytorch_data_dump_instruct`）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e3a27f68771e165d515453162bcac93dc83189833a2ae1922c6fa568ba51aec4",
+            "start": 6967,
+            "end": 7024,
+            "quote": "msProbe 安装命令与 CANN/工具版本配套关系（`msprobe_install_guide` 未抓取）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e3a27f68771e165d515453162bcac93dc83189833a2ae1922c6fa568ba51aec4",
+            "start": 137,
+            "end": 276,
+            "quote": "**数值溢出型**（loss 变 NaN/Inf、跑飞）→ 溢出检测（msProbe `overflow_check`）。\n- **算子精度型**（loss 能降但与 GPU 对不齐、掉点）→ 逐层数据采集 + 精度比对（msProbe `dump` + `compare`）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+            "field": "response",
+            "sha256": "5bc58935e572b1c422e9d9cf25ef521d5e0e13cc20d7535903beb2583a124888",
+            "start": 2099,
+            "end": 2170,
+            "quote": "当dynamic参数设置为False时，支持使用固定值的Loss Scale，并且可以通过init_scale参数设置Loss Scale取值",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+            "alternative_body_event_ids": [
+              "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+              "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+              "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+              "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+              "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+              "call_00_dVipZfPvLRTzrPvdqnw40477.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_vyJD3LJBI5d909pgPIMD7606.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+            "alternative_body_event_ids": [
+              "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+              "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+              "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+              "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+              "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+              "call_00_dVipZfPvLRTzrPvdqnw40477.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-64ba07b9d1aa-predictors.json": "e71043582a74d11ca27bc18d738984f732a550ed7fde6723f2980fe4e29384ab",
+          "reviewed/development/case-64ba07b9d1aa-outcome.json": "6f2979cabb1854543d8131209dfb73598c1ce2b7cda94c2ca159be5961f685e9",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+            "url": "https://www.hiascend.com/developer/blog/details/02152211175104217059",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "score": 2,
+            "evidence": [
+              {
+                "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+                "quote": "**标题**: CANN精度调试工具详解\n\n[昇腾社区首页](https://www.hiascend.com/zh)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+                "quote": "版权所有 © 2021-2026华为技术有限公司 保留一切权利"
+              }
+            ],
+            "reference": "仅返回站点导航、页脚链接与版权信息，无可识别正文"
+          },
+          {
+            "event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+            "url": "https://www.hiascend.com/document/detail/zh/mindstudio/2600/msTT_msIT/msProbe/docs/zh/overflow_check/mindspore_overflow_check_instruct.md",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "score": 2,
+            "evidence": [
+              {
+                "event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+                "quote": "**标题**: 溢出检测与解析-MindSpore训练场景-功能介绍-精度调试 msProbe-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_vyJD3LJBI5d909pgPIMD7606.result",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": "仅返回标题与文档评分标签，无正文"
+          },
+          {
+            "event_id": "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+            "url": "https://www.mindspore.cn/mindstudio/docs/zh-CN/81RC1/feature/precision.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+                "quote": "msprobe 是 MindStudio Training Tools 工具链下精度调试部分的工具包。主要包括精度预检、溢出检测和精度比对等功能，目前适配 PyTorch 和 MindSpore 框架。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_fbN2ePXQgH6EjkL5Hn9i4900.result",
+                "quote": "4. 不支持“to cpu”操作，不支持预热功能"
+              }
+            ],
+            "reference": "取得直接正文（功能表格含约束），但无独立全文完整性核对依据"
+          },
+          {
+            "event_id": "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+            "url": "https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/README.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+                "quote": "MindStudio Probe（msProbe）针对昇腾 AI 处理器提供全场景精度调试能力，覆盖数据采集、精度比对、可视化以及多种进阶调试功能。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_rNZAxFnzXHEQdIlLFeTr7572.result",
+                "quote": "🔹 [训练状态监测工具标准性能基线报告](https://msprobe.readthedocs.io/zh-cn/latest/zh/baseline/monitor_perf_baseline.html)\n\n☰"
+              }
+            ],
+            "reference": "msprobe 项目官方使用指南（readthedocs 托管），取得直接正文，完整性无独立核对依据"
+          },
+          {
+            "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+            "url": "https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/overflow_check/overflow_check_instruct.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+                "quote": "msprobe overflow_check -i <input_path> -o <output_path>"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_Q1rK5ftwA7XIZE0srp5D2656.result",
+                "quote": "对于计算节点，按照dump的顺序排序。\n\n☰"
+              }
+            ],
+            "reference": "取得直接正文（命令、参数、判定规则），完整性无独立核对依据"
+          },
+          {
+            "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+            "url": "https://msprobe.readthedocs.io/zh-cn/latest/zh/user_guide/accuracy_compare/pytorch_accuracy_compare_instruct.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+                "quote": "msprobe compare -tp <target_path> -gp <golden_path> [options]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_rYtgCssmXlHofAX7GhNM8421.result",
+                "quote": "**⚠️ 截断提示**: 文档附录的 cell_mapping 部分在示例后即结束，页面仍有后续内容未覆盖（导航标记\"☰\"）。"
+              }
+            ],
+            "reference": "取得直接正文但工具明确标注截断，属4分"
+          },
+          {
+            "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0026.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+                "quote": "混合精度适配支持两种方式：\n\n- PyTorch框架内置的AMP功能模块\n- 第三方APEX混合精度模块"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_996CAgpxRVJNp9fpuZNC0912.result",
+                "quote": "init_scale\n\n在使用静态Loss Scale时的初始scale系数。\n\n仅在dynamic=False时可用，用户根据实际情况设置。"
+              }
+            ],
+            "reference": "TorchNPU6.0.0 官方文档，取得直接正文，完整性无独立核对依据"
+          },
+          {
+            "event_id": "call_00_dVipZfPvLRTzrPvdqnw40477.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0073.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_dVipZfPvLRTzrPvdqnw40477.result",
+                "quote": "# 混合精度问题调测\n\n#### 问题发现"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_dVipZfPvLRTzrPvdqnw40477.result",
+                "quote": "若精度问题好转，用户可通过调整梯度裁剪超参进行调优；若未好转，则建议尝试其他调优方法。"
+              }
+            ],
+            "reference": "TorchNPU6.0.0 官方文档，取得直接正文（调优方案与代码），完整性无独立核对依据"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_M3H10BtOmynGkCwbgQ3X7152.result",
+                "quote": "\"role\": \"fetch\", \"tool\": \"WebFetch\""
+              },
+              {
+                "event_id": "call_00_dVipZfPvLRTzrPvdqnw40477.result",
+                "quote": "\"role\": \"fetch\", \"tool\": \"WebFetch\""
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

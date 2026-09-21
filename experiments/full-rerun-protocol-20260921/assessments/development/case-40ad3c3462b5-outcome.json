@@ -1,0 +1,229 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "核心是：**把拷贝和计算分发到不同 stream，用 event 建立跨流依赖，避免用全局/同步接口把流水打断**",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_poa538KkSr4UTGaLxVDK5936.result",
+      "evidence_quote": "**[aclError](...) aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, [aclrtStream](...) stream)**",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题三个子要求均满足：(1) 多stream编排——答案给出 streamH2D/streamCompute/streamD2H 三流+双缓冲流水线，官方《同步等待》正文佐证跨流事件依赖（call_00_nB0Bq1OzM8PZtezIDySC1869.result：'调用aclrtStreamWaitEvent接口，阻塞指定Stream的运行，直到指定的Event完成。支持多个Stream等待同一个Event的场景'）；(2) 异步内存拷贝 aclrtMemcpyAsync——答案原型与官方8.0.RC1 API页逐字一致（evidence引文），64B对齐、aclrtMallocHost前置、不支持HOST_TO_HOST等约束均在官方正文核实（'源地址和目的地址都必须64字节对齐'）；(3) event 同步——答案的 aclrtCreateEventExWithFlag(ACL_EVENT_SYNC)/aclrtRecordEvent/aclrtStreamWaitEvent 用法与官方《同步等待》多Stream示例逐字一致（call_00_nB0Bq1OzM8PZtezIDySC1869.result：'aclrtRecordEvent(event, s1);' 及 'aclrtStreamWaitEvent(s2, event);'）。仅 aclrtStreamWaitEvent 单页API正文未取回，但答案改用开发指南正文核对并在未核实处单列，不影响三子要求满足。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "`aclrtMemcpyAsync`、`aclrtCreateStream`、`aclrtRecordEvent`、`aclrtStreamWaitEvent`、`aclrtCreateEventExWithFlag(ACL_EVENT_SYNC)` 的名称、参数、语义在这些 8.x 页面上一致，未发现冲突。**跨版本可移植性未逐版本核对**"
+        },
+        {
+          "event_id": "final",
+          "quote": "`soc_version`（如 310P / 910B / 训练系列 / A2）对\"拷贝与计算是否真并行\"的影响**官方未在这些页面给出说明**，未核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M10: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "/* 下发算子/模型推理（示意，接口随业务而定：aclopExecuteV2 / aclnnXxx / 模型 execute） */\n        /* MyKernelExecute(devA[i], devOut[i], streamCompute); */"
+        },
+        {
+          "event_id": "final",
+          "quote": "（注：以上为按官方接口拼装的示意，未在本机运行；算子下发、`ReadFile`、错误分支按业务/官方示例补全。）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_poa538KkSr4UTGaLxVDK5936.result",
+          "quote": "**[aclError](...) aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, [aclrtStream](...) stream)**"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation",
+      "M10: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-40ad3c3462b5",
+  "task_id": "V",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "核心是：**把拷贝和计算分发到不同 stream，用 event 建立跨流依赖，避免用全局/同步接口把流水打断**",
+        "answer_event_id": "final",
+        "evidence_id": "call_00_poa538KkSr4UTGaLxVDK5936.result",
+        "evidence_quote": "**[aclError](...) aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, [aclrtStream](...) stream)**",
+        "verification": "source",
+        "reason": "原题三个子要求均满足：(1) 多stream编排——答案给出 streamH2D/streamCompute/streamD2H 三流+双缓冲流水线，官方《同步等待》正文佐证跨流事件依赖（call_00_nB0Bq1OzM8PZtezIDySC1869.result：'调用aclrtStreamWaitEvent接口，阻塞指定Stream的运行，直到指定的Event完成。支持多个Stream等待同一个Event的场景'）；(2) 异步内存拷贝 aclrtMemcpyAsync——答案原型与官方8.0.RC1 API页逐字一致（evidence引文），64B对齐、aclrtMallocHost前置、不支持HOST_TO_HOST等约束均在官方正文核实（'源地址和目的地址都必须64字节对齐'）；(3) event 同步——答案的 aclrtCreateEventExWithFlag(ACL_EVENT_SYNC)/aclrtRecordEvent/aclrtStreamWaitEvent 用法与官方《同步等待》多Stream示例逐字一致（call_00_nB0Bq1OzM8PZtezIDySC1869.result：'aclrtRecordEvent(event, s1);' 及 'aclrtStreamWaitEvent(s2, event);'）。仅 aclrtStreamWaitEvent 单页API正文未取回，但答案改用开发指南正文核对并在未核实处单列，不影响三子要求满足。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "partial_version_basis_no_specific_lock",
+        "reason": "原题未要求定版具体库/soc版本，但答案所用接口的版本适用性：已核对 CANN 商用版8.0.RC1 与社区版8.0.0.alpha001-003 页面上接口一致且无冲突（有依据的范围），未定到具体单一版本，跨版本（6.x/7.x）未核对，soc_version 对并行为的影响未核实。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "`aclrtMemcpyAsync`、`aclrtCreateStream`、`aclrtRecordEvent`、`aclrtStreamWaitEvent`、`aclrtCreateEventExWithFlag(ACL_EVENT_SYNC)` 的名称、参数、语义在这些 8.x 页面上一致，未发现冲突。**跨版本可移植性未逐版本核对**"
+          },
+          {
+            "event_id": "final",
+            "quote": "`soc_version`（如 310P / 910B / 训练系列 / A2）对\"拷贝与计算是否真并行\"的影响**官方未在这些页面给出说明**，未核实。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "runnable_skeleton_with_declared_gaps",
+        "reason": "给出了完整可编译结构的C代码：aclInit/SetDevice、aclrtMallocHost/Malloc、三stream创建、事件创建、流水线编排、收尾同步与资源释放，接口用法均有官方正文核对。但按3档须指出具体缺口：算子/推理下发为注释占位，ReadFile 未实现，多块循环中 H2D 流等待复用缓冲的调用以注释给出（'实际多块时：aclrtStreamWaitEvent(streamH2D, evComp[i]); 再发下一块 H2D'），且答案自述代码未运行。用户需补充计算下发等业务内容才能实际执行，未达4/5档。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "/* 下发算子/模型推理（示意，接口随业务而定：aclopExecuteV2 / aclnnXxx / 模型 execute） */\n        /* MyKernelExecute(devA[i], devOut[i], streamCompute); */"
+          },
+          {
+            "event_id": "final",
+            "quote": "（注：以上为按官方接口拼装的示意，未在本机运行；算子下发、`ReadFile`、错误分支按业务/官方示例补全。）"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "9d723d54801d4450913d78339c3b3a9e",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "00df8b7bdd54a4fb880af8abbb6249dc",
+        "conversationRequestId": "00df8b7bdd54a4fb880af8abbb6249dc",
+        "agent": "cli"
+      },
+      {
+        "messageId": "9d723d54801d4450913d78339c3b3a9e",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "00df8b7bdd54a4fb880af8abbb6249dc",
+        "conversationRequestId": "00df8b7bdd54a4fb880af8abbb6249dc",
+        "rawUsage": {
+          "prompt_tokens": 23533,
+          "completion_tokens": 1755,
+          "total_tokens": 25288,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 778,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 20525,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 778,
+          "credit": 4.39,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 23533,
+          "outputTokens": 1755,
+          "totalTokens": 25288,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 778
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "0809662e73f364ec6837634a2f896bd83a3ae04154c1760a6f17d528415bf5fb",
+    "process_sha256": "feedbdfdb716c298beb1003695623f4708aae595f10123f9f255e4cc2864bd23",
+    "elapsed_seconds": 49.09,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-4c890ce3af6f4070bde74a3fa565f0a3",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

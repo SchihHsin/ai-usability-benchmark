@@ -1,0 +1,180 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "必须用 pinned（page-locked）host memory 才能真异步...用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
+      "evidence_quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案完整覆盖了原题的三个子要求：(1) stream：给出完整多流代码，用 cudaStreamCreateWithFlags(stream, cudaStreamNonBlocking) 创建非默认流，官方指南2.5.6明确non-blocking flag；(2) event：用 cudaEventRecord/cudaStreamSynchronize/cudaEventElapsedTime 进行同步和计时，代码中 per-stream events + timing events 完整，官方指南2.5.3提供API签名；(3) pinned memory：明确 cudaMallocHost 为硬前提，官方指南2.5.2.3原文支持'host buffers must be pinned and page-locked'。此外还给出编译命令、硬件前提（compute capability ≥1.1 concurrent copy+execute、≥2.0 overlap、≥3.5 Hyper-Q）、double buffering 提示（cudaStreamWaitEvent），并附完整可编译代码。所有关键点均有官方来源逐字引文支撑。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案给出了所用接口的版本适用范围：per-thread default stream 自CUDA-7起（官方指南2.5.6.2确认），硬件前提为compute capability ≥1.1/≥2.0/≥3.5（官方博客确认），文档版本v13.4.2。但核心API（cudaMemcpyAsync/cudaStreamCreate/cudaMallocHost）未锁定到具体CUDA toolkit版本，答案未指定'需要CUDA X.Y'，仅给出适用范围。部分组件（per-thread default stream, 硬件前提）有明确版本依据，但整体未定到具体CUDA版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "per-thread default stream | **CUDA-7 起**（官方指南 2.5.6.2 与官方博客）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "compute capability ≥ 1.1 支持 concurrent copy+execute；≥ 2.0 起可重叠 copy/compute；**3.5（K20，Hyper-Q）**起无需定制发射顺序"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案提供了完整可编译的overlap.cu代码（含所有include、CHECK宏、kernel定义、pinned分配、多流创建、异步拷贝、同步、验证、清理）和nvcc编译命令。仅需替换明确标识的环境参数：-arch=sm_80 需换成用户GPU的compute capability（答案明确注释'把 sm_80 换成你 GPU 的 compute capability'）。代码结构完整、无伪代码、无缺失步骤，同步和错误检查齐全。达到4分：仅需替换明确标识且有说明的用户环境参数即可执行。答案诚实声明代码未实际运行，但不影响内容完整性评分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "nvcc -O3 -arch=sm_80 overlap.cu -o overlap   # 把 sm_80 换成你 GPU 的 compute capability"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "CHECK(cudaStreamCreateWithFlags(&stream[i], cudaStreamNonBlocking));"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "必须用 pinned（page-locked）host memory 才能真异步...用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-4474d14d9e5a",
+  "task_id": "V",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "bfa50cdd35f74b3085c97d916db1edae",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "bfc31f5d4ec9d207946d30cad1d9fe16",
+        "conversationRequestId": "bfc31f5d4ec9d207946d30cad1d9fe16",
+        "agent": "cli"
+      },
+      {
+        "messageId": "bfa50cdd35f74b3085c97d916db1edae",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "bfc31f5d4ec9d207946d30cad1d9fe16",
+        "conversationRequestId": "bfc31f5d4ec9d207946d30cad1d9fe16",
+        "rawUsage": {
+          "prompt_tokens": 22211,
+          "completion_tokens": 2982,
+          "total_tokens": 25193,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2124,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 22211,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2124,
+          "credit": 5.22,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 22211,
+          "outputTokens": 2982,
+          "totalTokens": 25193,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2124
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "84f5867ec1937690e15ef13cdd93c709d0d46998ebf8ea1f48037b7872995e3e",
+    "process_sha256": "a3bad31444d26d4a42b1fe6b2f917e7b2c377c51b77f3914895f94b092c9abef",
+    "elapsed_seconds": 158.9,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-636e2dba999f45e5a4dc132c9eab48ca",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-4474d14d9e5a-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

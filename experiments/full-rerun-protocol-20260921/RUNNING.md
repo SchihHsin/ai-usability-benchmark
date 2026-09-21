@@ -102,3 +102,14 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Root restored9 exact same-event source/prior/final quotations in GLM U-CANN, DeepSeek M-CUDA/R-CANN/S-CANN; no scores/rules changed.
 - 31 focused tests pass; selected collection audit issues=[]; independent expanded-polynomial M11 check94 rows issues=[].
 - Continue remaining collection/assessment and evidence checks. Paper and installed skill untouched.
+
+
+## 2026-09-21 14:37 continuation
+
+- Collection148/156 (GLM44, DeepSeek52, Kimi52). GLM remaining wrapper active; frozen U-CUDA exhausted, W-CUDA retry status under Luna.
+- Assessed127; gates116; quote-clean124; independent M11 arithmetic105 computable rows no differences. Root GLM snapshot95413 replaced completed67275; Kimi50539, supplementary25551, DeepSeek agent process continue.
+- Added assessment_status.py and report links distinguishing pending versus exhausted phases; no null converted to score.
+- Recovered a398 predictors by removing single extraneous trailing brace, b3df predictors by escaping exactly two quotes around [...] in M2 reason. Raw failures/hash provenance preserved. No model calls or score changes in recovery.
+- F-CANN Kimi requirement corrected to unverified with exact final gaps (global rank/multi-node launch), M10 stays3. Rejected reviewer-kimi-final-quote-proposals.json: final_exact claims did not match actual final; not authoritative.
+- A-CUDA DeepSeek M4=3 under existing anchor: complete version relation still missing; raw4 inconsistent with own checklist. Exact quotes/official snippet provenance repaired; unknown ownership remains unknown.
+- Paper/installed skill untouched. Continue all possible phases and evidence review before final report.

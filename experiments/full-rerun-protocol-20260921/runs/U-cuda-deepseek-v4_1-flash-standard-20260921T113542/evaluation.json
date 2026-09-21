@@ -147,6 +147,678 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T06:33:59.739859+00:00",
+      "process_sha256": "634464aacab6fc00bc00790fbf2de69e68a0acf6d157ba716c8c48aef197c172",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "ncu --section MemoryWorkloadAnalysis --section Occupancy --section LaunchStats --section SchedulerStats ./app",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+            "evidence_quote": "| `MemoryWorkloadAnalysis` | Memory Workload Analysis | \"Detailed analysis of the memory resources of the GPU. Memory can become a limiting factor for the overall kernel performance when fully utilizing the involved hardware units (Mem Busy), exhausting the available communication bandwidth between those units (Max Bandwidth), or by reaching the maximum throughput of issuing memory instructions (Mem Pipes Busy).\"",
+            "verification": "source",
+            "reason": "原题为'如何用 Nsight Compute 分析并优化低 occupancy / 访存受限 kernel（coalescing / shared memory / occupancy calculator / bank conflict）'，逐子要求核对：(1) 分析工作流与采集命令——final 给出 ncu -o、--section、--kernel-name/--launch-skip/--launch-count、replay/cache/clock 等完整命令与默认值，与 CLI 指南来源（call_00_pWXMuk9hiIwoV4MJSJmi7421.result，含 '--section = LaunchStats, Occupancy' 配置样例与各选项默认值）一致；(2) 访存瓶颈判定——final 引用的 MemoryWorkloadAnalysis 描述、Mem Busy/Max Bandwidth/Mem Pipes Busy 三信号与来源逐字一致；(3) memory coalescing——final 的 sector 定义（'Aligned 32 byte-chunk'、4 sectors=128B）、requests:sectors 1:N 关系、offsetCopy/strideCopy 代码与 V100 实测数据（790 GB/s、stride=2 效率 50%）均与 call_00_QhO2JT1ZoPg7Tr9tythz7530.result 和 call_00_tuPjsq0u2TLlT5RUB37S6861.result 一致；(4) shared memory / bank conflict——final 引用的 32 banks、广播不冲突、l1tex__data_bank_conflicts_pipe_lsu.sum 指标族在 ProfilingGuide 来源中逐字存在；(5) occupancy calculator——final 给出 Runtime API 函数签名（cudaOccupancyMaxActiveBlocksPerMultiprocessor 等）与 call_00_bfeTRzbcqUQUb9EVKr0S9706.result 一致，并如实说明 UI 文档中 Calculator 仅确认存在（call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result 证实 §4.7.2 截断）。答案将 padding 示例、部分指标名等如实标注为未核实，属诚实披露而非错误，不构成 contradicted。四个子方向均有来源支撑，判定 supported。",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "首次查询前5条均为第三方来源（cnblogs/CSDN/知乎/技术站），无官方结果；第二次site限定查询第1条即为官方Profiling Guide，属第二次查询首次命中。",
+            "evidence": [
+              {
+                "event_id": "call_00_chMl2GWcGr65J9VpJSkZ4644.result",
+                "quote": "## 1. [手撕深度学习之CUDA矩阵乘法（中篇）：Nsight Compute ...]"
+              },
+              {
+                "event_id": "call_00_4PUvYa8L7r6mDB7XWFdO5363.result",
+                "quote": "## 1. [2. Profiling Guide — NsightCompute - NVIDIA Documentation Hub]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.6666666666666665,
+            "upper": 4.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+                "quote": "The provided content is **truncated**. The Metrics Reference chapter (Section 2.4) cuts off after **2.4.2 Launch Metrics**"
+              },
+              {
+                "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+                "quote": "The page does **not** appear truncated — it ends with the Nvprof Transition Guide pointer and the complete NVIDIA Notices/Trademarks boilerplate."
+              },
+              {
+                "event_id": "call_00_JRJy4U39mamjnDVBZh108824.result",
+                "quote": "The guide is broken down into five primary parts:"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文对主流程覆盖充分：ncu命令/section/metric选择、occupancy限制因素（registers/smem/threads）、sectors-per-request合并访存模型、32 bank冲突机制与精确指标名、coalescing具体数值（4×32B事务、stride-2效率50%）。但原题涉及的分支仍有缺失：Nsight Compute UI的occupancy calculator使用细节（页面截断未达）、achieved occupancy精确指标名（Metrics Reference截断）、bank conflict padding代码示例（Best Practices 10.2.3.2截断）。主流程与参数已说明，分支/参考细节不完整，判4。",
+            "evidence": [
+              {
+                "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+                "quote": "The number of CTAs that fit on each SM depends on the physical resources required by the CTA. These resource limiters include the number of threads and registers, shared memory utilization, and hardware barriers."
+              },
+              {
+                "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+                "quote": "Selects the section set to collect. If not specified, the `basic` set is collected."
+              },
+              {
+                "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+                "quote": "The content stops immediately before the subsections that would describe the **Directory** page, **Source** page, **Details** page"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "取得的官方资料仅有零散版本线索（Best Practices v13.4、--chips示例ga100/tu102/gh100、force-boost的Ampere+/driver 560说明），没有任何关于Nsight Compute版本与CUDA toolkit/目标GPU架构适用关系的说明，无法据此完成版本选择。",
+            "evidence": [
+              {
+                "event_id": "call_00_tuPjsq0u2TLlT5RUB37S6861.result",
+                "quote": "The provided content is a **truncated extraction** of the NVIDIA CUDA C++ Best Practices Guide (v13.4)."
+              },
+              {
+                "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+                "quote": "`--list-chips` lists supported chips; `--chips` selects chips (e.g., `--chips tu102,gh100`)."
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "两次检索共发现8条去重后的相关独立第三方来源：cnblogs qzero233、CSDN文库、jishuzhan、CSDN博客fumingxiaoshen、知乎、forceinjection博客、cnblogs zhaoweiwei、GitHub linxid，≥6条判5。正文未取得不影响计数。",
+            "evidence": [
+              {
+                "event_id": "call_00_chMl2GWcGr65J9VpJSkZ4644.result",
+                "quote": "## 5. [cuda学习日记 (6) nsight system / nsight compute - 知乎]"
+              },
+              {
+                "event_id": "call_00_4PUvYa8L7r6mDB7XWFdO5363.result",
+                "quote": "## 5. [AI-Learning/02_gpu_programming/04_profiling/06_nsight ...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "存在多条相关第三方来源（非N/A），但全部仅为搜索结果摘要，无任何第三方正文被实际抓取，其关键说法（如bank conflict排查流程、--set detailed内容）没有可追溯的核对依据，也未发现已确证的矛盾。",
+            "evidence": [
+              {
+                "event_id": "call_00_chMl2GWcGr65J9VpJSkZ4644.result",
+                "quote": "Bank Conflict（存储体冲突）可能是罪魁祸首之一。"
+              },
+              {
+                "event_id": "call_00_4PUvYa8L7r6mDB7XWFdO5363.result",
+                "quote": "4.2 深入 Memory → --set detailed 在 basic 基础上增加了 Memory Workload Analysis"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "检索前回答给出正确的完整流程：ncu命令用法（--set/--launch-skip/--cache-control均被CLI文档证实）、occupancy限制因素（被Profiling Guide证实）、bank conflict指标名、coalescing sectors~4理想值（被证实）、cudaOccupancyMaxActiveBlocksPerMultiprocessor（被Runtime API文档证实）。自标不确定项多数被文档解决（occupancy calculator确在UI中存在）。但achieved occupancy精确指标名与部分metric改名问题未在检索结果中得到核实，具体参数/约束仍有需补充处，保留4-5区间。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "CUDA runtime 提供 `cudaOccupancyMaxActiveBlocksPerMultiprocessor()` API；Nsight Compute UI 里有 Occupancy 计算视图。"
+              },
+              {
+                "event_id": "call_00_bfeTRzbcqUQUb9EVKr0S9706.result",
+                "quote": "__host__ ​ __device__ ​cudaError_t cudaOccupancyMaxActiveBlocksPerMultiprocessor ( int* numBlocks, const void* func, int  blockSize, size_t dynamicSMemSize )"
+              },
+              {
+                "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+                "quote": "\"Occupancy Calculator** opens the Occupancy Calculator in a new document.\""
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": [],
+            "candidate_score": 4,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_chMl2GWcGr65J9VpJSkZ4644.dispatch",
+              "call_00_4PUvYa8L7r6mDB7XWFdO5363.dispatch",
+              "call_00_QhO2JT1ZoPg7Tr9tythz7530.dispatch",
+              "call_00_pWXMuk9hiIWoV4MJSJmi7421.dispatch",
+              "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.dispatch",
+              "call_00_tuPjsq0u2TLlT5RUB37S6861.dispatch",
+              "call_00_bfeTRzbcqUQUb9EVKr0S9706.dispatch",
+              "call_00_JRJy4U39mamjnDVBZh108824.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "supported",
+            "reason": "适用范围为 Nsight Compute 与目标 GPU 的版本锁定。final 明确提及版本线索（Best Practices Guide v13.4、Profiling Guide 示例 --chip ga100/Ampere、V100/CC 7.0 数据），但自述且证据显示 Nsight Compute / CUDA Toolkit / 目标 GPU 的精确配套版本'无法仅凭本次抓取正文锁定'，三份 Nsight Compute 官方文档正文中未出现具体版本号。即提到了版本但未给出有依据的适用版本或范围锁定，对应档位 2，不存在与证据矛盾的定版。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "本次抓取的 **Profiling Guide**、**Nsight Compute CLI**、**Nsight Compute UI** 三份官方文档，正文中**未出现具体的 Nsight Compute 版本号**；Profiling Guide 示例使用 `--chip ga100`（Ampere）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "supported",
+            "reason": "操作可执行性评估最终答案中的命令与前置条件。采集命令完整：基础采集（ncu -o profile.ncu-rep ./app）、按 kernel 过滤（--kernel-name regex + --launch-skip/--launch-count 及默认值说明）、replay/cache/clock 控制项及其对访存指标的影响、发现命令（--list-sections/--query-metrics 及语法）均给出完整命令行、参数与默认值，并指出 --cache-control all 每次 replay 前 flush cache 等测量前提；代码示例（offsetCopy/strideCopy/coalescedMultiply、cudaOccupancyMaxActiveBlocksPerMultiprocessor 调用）完整可编译。占位符仅 ./app、myKernel 等用户环境值且含义明确；答案还给出未核实项的自行确认途径（--query-metrics --chip）。无缺步骤、无需修正内容，操作指导及适用前提明确，评 5。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "**基础采集（官方 CLI 指南 §5.3.1 Quickstart）**：\n```\nncu -o profile.ncu-rep ./app\n```"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "ncu --kernel-name regex:\"myKernel\" --launch-skip 5 --launch-count 1 ./app"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 71.0862592,
+            "upper": 77.08,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              71.0,
+              77.1
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 71.0862592,
+          "upper": 77.08,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            71.0,
+            77.1
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_chMl2GWcGr65J9VpJSkZ4644.result",
+            "field": "response",
+            "sha256": "02dd2d23372368e342c9577a2918425ce9260b5fb4dceaac9b401ae4f04ea794",
+            "start": 104,
+            "end": 150,
+            "quote": "## 1. [手撕深度学习之CUDA矩阵乘法（中篇）：Nsight Compute ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_4PUvYa8L7r6mDB7XWFdO5363.result",
+            "field": "response",
+            "sha256": "31e1ff326098dec6fb7b24f6bb4226bd0b952fb47fa69431d8de4928dd9a239d",
+            "start": 110,
+            "end": 179,
+            "quote": "## 1. [2. Profiling Guide — NsightCompute - NVIDIA Documentation Hub]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+            "field": "response",
+            "sha256": "1dedf4ef7e7f346f24fbfc9f14cf318b849bf50a689a6bf0b7bd480b6d63b701",
+            "start": 361,
+            "end": 483,
+            "quote": "The provided content is **truncated**. The Metrics Reference chapter (Section 2.4) cuts off after **2.4.2 Launch Metrics**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+            "field": "response",
+            "sha256": "b5de5d6a9d41189833b2357ff770dfb7cde8018766985ae3249d8c9b6012b56c",
+            "start": 289,
+            "end": 434,
+            "quote": "The page does **not** appear truncated — it ends with the Nvprof Transition Guide pointer and the complete NVIDIA Notices/Trademarks boilerplate.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_JRJy4U39mamjnDVBZh108824.result",
+            "field": "response",
+            "sha256": "5308857db08e563e69e77e598d97f69be83024a5d97800e16b1571f611e6169f",
+            "start": 1701,
+            "end": 1750,
+            "quote": "The guide is broken down into five primary parts:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+            "field": "response",
+            "sha256": "1dedf4ef7e7f346f24fbfc9f14cf318b849bf50a689a6bf0b7bd480b6d63b701",
+            "start": 2164,
+            "end": 2376,
+            "quote": "The number of CTAs that fit on each SM depends on the physical resources required by the CTA. These resource limiters include the number of threads and registers, shared memory utilization, and hardware barriers.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+            "field": "response",
+            "sha256": "b5de5d6a9d41189833b2357ff770dfb7cde8018766985ae3249d8c9b6012b56c",
+            "start": 798,
+            "end": 881,
+            "quote": "Selects the section set to collect. If not specified, the `basic` set is collected.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+            "field": "response",
+            "sha256": "573d17bf1f9f5e0c0d9e1c94ccdf9930d9425aac0f83bb9df4c105005ccaea57",
+            "start": 1208,
+            "end": 1338,
+            "quote": "The content stops immediately before the subsections that would describe the **Directory** page, **Source** page, **Details** page",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_tuPjsq0u2TLlT5RUB37S6861.result",
+            "field": "response",
+            "sha256": "abd9b271335d39586fbbbd4a7850ed6aeed991dbc1950ba81453821780d35318",
+            "start": 61,
+            "end": 164,
+            "quote": "The provided content is a **truncated extraction** of the NVIDIA CUDA C++ Best Practices Guide (v13.4).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+            "field": "response",
+            "sha256": "b5de5d6a9d41189833b2357ff770dfb7cde8018766985ae3249d8c9b6012b56c",
+            "start": 6808,
+            "end": 6900,
+            "quote": "`--list-chips` lists supported chips; `--chips` selects chips (e.g., `--chips tu102,gh100`).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_chMl2GWcGr65J9VpJSkZ4644.result",
+            "field": "response",
+            "sha256": "02dd2d23372368e342c9577a2918425ce9260b5fb4dceaac9b401ae4f04ea794",
+            "start": 1093,
+            "end": 1149,
+            "quote": "## 5. [cuda学习日记 (6) nsight system / nsight compute - 知乎]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_4PUvYa8L7r6mDB7XWFdO5363.result",
+            "field": "response",
+            "sha256": "31e1ff326098dec6fb7b24f6bb4226bd0b952fb47fa69431d8de4928dd9a239d",
+            "start": 1331,
+            "end": 1396,
+            "quote": "## 5. [AI-Learning/02_gpu_programming/04_profiling/06_nsight ...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_chMl2GWcGr65J9VpJSkZ4644.result",
+            "field": "response",
+            "sha256": "02dd2d23372368e342c9577a2918425ce9260b5fb4dceaac9b401ae4f04ea794",
+            "start": 444,
+            "end": 474,
+            "quote": "Bank Conflict（存储体冲突）可能是罪魁祸首之一。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_4PUvYa8L7r6mDB7XWFdO5363.result",
+            "field": "response",
+            "sha256": "31e1ff326098dec6fb7b24f6bb4226bd0b952fb47fa69431d8de4928dd9a239d",
+            "start": 613,
+            "end": 683,
+            "quote": "4.2 深入 Memory → --set detailed 在 basic 基础上增加了 Memory Workload Analysis",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "756b07a22e197e00b6903351cef5f99a61281761ca3ee5001fe67d3c933c3823",
+            "start": 1169,
+            "end": 1275,
+            "quote": "CUDA runtime 提供 `cudaOccupancyMaxActiveBlocksPerMultiprocessor()` API；Nsight Compute UI 里有 Occupancy 计算视图。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_bfeTRzbcqUQUb9EVKr0S9706.result",
+            "field": "response",
+            "sha256": "282b5b83869cb8e038712e13aaf384c8c64bb66aabf9a643fc33a5f3ad77762e",
+            "start": 1039,
+            "end": 1196,
+            "quote": "__host__ ​ __device__ ​cudaError_t cudaOccupancyMaxActiveBlocksPerMultiprocessor ( int* numBlocks, const void* func, int  blockSize, size_t dynamicSMemSize )",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+            "field": "response",
+            "sha256": "573d17bf1f9f5e0c0d9e1c94ccdf9930d9425aac0f83bb9df4c105005ccaea57",
+            "start": 2040,
+            "end": 2114,
+            "quote": "\"Occupancy Calculator** opens the Occupancy Calculator in a new document.\"",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "555629cb53e7b51d387c1fe354d5940a27ea31b868c377b22129fc2bc3f6e337",
+            "start": 10865,
+            "end": 11020,
+            "quote": "本次抓取的 **Profiling Guide**、**Nsight Compute CLI**、**Nsight Compute UI** 三份官方文档，正文中**未出现具体的 Nsight Compute 版本号**；Profiling Guide 示例使用 `--chip ga100`（Ampere）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "555629cb53e7b51d387c1fe354d5940a27ea31b868c377b22129fc2bc3f6e337",
+            "start": 523,
+            "end": 598,
+            "quote": "**基础采集（官方 CLI 指南 §5.3.1 Quickstart）**：\n```\nncu -o profile.ncu-rep ./app\n```",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "555629cb53e7b51d387c1fe354d5940a27ea31b868c377b22129fc2bc3f6e337",
+            "start": 1232,
+            "end": 1305,
+            "quote": "ncu --kernel-name regex:\"myKernel\" --launch-skip 5 --launch-count 1 ./app",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "555629cb53e7b51d387c1fe354d5940a27ea31b868c377b22129fc2bc3f6e337",
+            "start": 813,
+            "end": 922,
+            "quote": "ncu --section MemoryWorkloadAnalysis --section Occupancy --section LaunchStats --section SchedulerStats ./app",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+            "field": "response",
+            "sha256": "1dedf4ef7e7f346f24fbfc9f14cf318b849bf50a689a6bf0b7bd480b6d63b701",
+            "start": 4239,
+            "end": 4655,
+            "quote": "| `MemoryWorkloadAnalysis` | Memory Workload Analysis | \"Detailed analysis of the memory resources of the GPU. Memory can become a limiting factor for the overall kernel performance when fully utilizing the involved hardware units (Mem Busy), exhausting the available communication bandwidth between those units (Max Bandwidth), or by reaching the maximum throughput of issuing memory instructions (Mem Pipes Busy).\"",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_JRJy4U39mamjnDVBZh108824.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_JRJy4U39mamjnDVBZh108824.result",
+            "alternative_body_event_ids": [],
+            "recovery_status": "no_later_body_observed",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-a4a5fcafb0bc-predictors.json": "f12f1f6a5500754e06e1b2e412f8a13709f1815c376d1638a4344d4fba025b2b",
+          "reviewed/development/case-a4a5fcafb0bc-outcome.json": "10c785d776dda59f3a750ebd4e4907534d7a128df1b5430ac7a164e2e2b11fa7",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+                "quote": "A literal `[content truncated]` marker appears at the end of Section 2.4.2."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+                "quote": "**Page starts** | Title \"2. Profiling Guide — NsightCompute\""
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html"
+          },
+          {
+            "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+                "quote": "The page does **not** appear truncated — it ends with the Nvprof Transition Guide pointer and the complete NVIDIA Notices/Trademarks boilerplate."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_pWXMuk9hiIWoV4MJSJmi7421.result",
+                "quote": "§5.4.11 (MPS), followed by §5.5 Environment Variables and §5.6 Nvprof Transition Guide, then Notices."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html"
+          },
+          {
+            "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+                "quote": "Text ends abruptly with the literal marker `[content truncated]`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result",
+                "quote": "It ends at **Section 4.7.2 (Report Pages → Summary Page)** and is explicitly **cut off mid-content**"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/nsight-compute/NsightCompute/index.html"
+          },
+          {
+            "event_id": "call_00_tuPjsq0u2TLlT5RUB37S6861.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_tuPjsq0u2TLlT5RUB37S6861.result",
+                "quote": "the content is cut off mid-sentence** in Section 10.2.3.2 (Shared Memory in Matrix Multiplication)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_tuPjsq0u2TLlT5RUB37S6861.result",
+                "quote": "**Starts** | Very beginning of page: Table of contents + \"1. Overview\""
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html"
+          },
+          {
+            "event_id": "call_00_bfeTRzbcqUQUb9EVKr0S9706.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_bfeTRzbcqUQUb9EVKr0S9706.result",
+                "quote": "cudaOccupancyMaxPotentialClusterSize (C++ API), cuOccupancyMaxPotentialClusterSize"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_bfeTRzbcqUQUb9EVKr0S9706.result",
+                "quote": "* * *"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__OCCUPANCY.html"
+          },
+          {
+            "event_id": "call_00_JRJy4U39mamjnDVBZh108824.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_JRJy4U39mamjnDVBZh108824.result",
+                "quote": "The guide is broken down into five primary parts:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_JRJy4U39mamjnDVBZh108824.result",
+                "quote": "Part 5: Technical Appendices"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

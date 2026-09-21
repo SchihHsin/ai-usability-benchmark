@@ -1,0 +1,185 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "昇腾离线推理的动态 shape 通过 **ATC 编译时分档（gearing）** 实现：转换 OM 模型时把动态维度标记为 `-1`，再用 `--dynamic_batch_size` / `--dynamic_image_size` / `--dynamic_dims` 指定若干档位；运行时用 ACL 接口在执行前选中某一档。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_2_d8d458fc.result",
+      "evidence_quote": "该参数需要与[--input_shape](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0016.html)、[--input_format](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0015.html)配合使用，不能与[--dynamic_batch_size](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0018.html)、[--dynamic_image_size](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0019.html)、[--input_shape_range](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0017.html)、[--insert_op_conf](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0044.html)同时使用。",
+      "verification": "source",
+      "reason": "原题要求覆盖 MindIE/ACL/ATC 三方面的动态 batch / 动态 shape 配置（dynamic_dims / 分档 / 动态分辨率），最终答案逐项满足：ATC 侧给出 --dynamic_batch_size、--dynamic_image_size、--dynamic_dims 三个完整可执行命令示例及约束，与官方 CANN 8.5.0 文档（WebFetch_2/3/4）逐字一致，如互斥约束、档位数 (1,100]、N 需在首位、ND 格式要求、不支持过程动态 shape 算子等均有来源支撑；ACL 侧给出 aclmdlSetInputDynamicDims 官方原型（WebFetch_8 核实），动态 batch/分辨率接口以 ATC 文档交叉引用并明确标注未核实处；MindIE 侧给出 continuous batching 的 config.json 调度参数（maxBatchSize、maxPrefillBatchSize、maxPrefillTokens 等），与 WebFetch_7 镜像文档原文一致。MindIE 多模态动态分辨率未检索到正文，答案如实标注，不构成错误。整体有源支撑，判定 supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial_version_basis",
+      "reason": "ATC/ACL 部分定版明确：正文取自 CANN 商用版 8.5.0 文档，示例命令给出 --soc_version=Ascend910B，产品适用范围（Atlas A2/A3 等）有官方表格支撑。但 MindIE 部分版本依据不完整：参数取自 readthedocs 镜像（2026-06 更新），对应官方 MindIE 1.0.RC3 页面正文未取回，答案自述\"参数默认值/范围可能随 MindIE 版本变化，需按部署版本核对\"；社区版 8.2.RC1 与商用版 8.5.0 是否一致也未核对。部分所需组件有明确版本依据，其余未确定，符合 3 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "MindIE 参数来源：MindIE-LLM readthedocs 镜像（标注 2026-06 更新）；对应 hiascend 官方 MindIE 1.0.RC3 文档。参数默认值/范围可能随 MindIE 版本变化，需按部署版本核对"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "以下正文取自 CANN 商用版 8.5.0 ATC 参数说明（社区版 8.2.RC1.alpha002 同路径页面存在）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "executable_with_env_substitution",
+      "reason": "ATC 侧三条 atc 命令完整（含 --model、--framework、--soc_version、--input_shape、动态参数与 --input_format），仅需替换模型路径/档位等用户环境值即可执行；MindIE 侧给出可直接使用的 config.json 示例及参数默认值/范围。ACL 侧 aclmdlSetInputDynamicDims 有官方核实原型与填充示例，但 aclmdlSetDynamicBatchSize/aclmdlSetDynamicHWSize 精确原型未核实、典型流程仅为伪代码骨架（CreateDataset(...) 未展开），这部分需补充才能完整编码；由于答案明确标注了未核实处且核心操作路径可确定，整体评 4（不把是否实际运行作为分界，未含修正性内容错误）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "atc --model=model.onnx --framework=5 --output=model_dyn \\\n    --soc_version=Ascend910B \\\n    --input_shape=\"data:-1,3,416,416;img_info:-1,4\" \\\n    --dynamic_batch_size=\"1,2,4,8\""
+        },
+        {
+          "event_id": "run-end",
+          "quote": "aclmdlSetDynamicBatchSize(modelId, dataset, index, batchSize)`（index 用 `ACL_DYNAMIC_TENSOR_NAME` 获取；**注意**：该接口页本次只取回标题/导航，原型签名未能从官方页直接核实"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "\"ModelDeployConfig\": { \"maxSeqLen\": 4096, \"maxInputTokenLen\": 2048, \"truncation\": false }"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-f3e3dcdbd8ed",
+  "task_id": "T",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "ee7657b1ab4845f2a2f6ad6261c7579c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "a6bc8a7a5861a4ccdf75cc4327bbc141",
+        "conversationRequestId": "a6bc8a7a5861a4ccdf75cc4327bbc141",
+        "agent": "cli"
+      },
+      {
+        "messageId": "ee7657b1ab4845f2a2f6ad6261c7579c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "a6bc8a7a5861a4ccdf75cc4327bbc141",
+        "conversationRequestId": "a6bc8a7a5861a4ccdf75cc4327bbc141",
+        "rawUsage": {
+          "prompt_tokens": 19450,
+          "completion_tokens": 1764,
+          "total_tokens": 21214,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 583,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 19450,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 583,
+          "credit": 4.1,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19450,
+          "outputTokens": 1764,
+          "totalTokens": 21214,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 583
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "0bbe71eaca593b09ea4ce677103553b49ab941254a933ac164e23dd0f4e550c5",
+    "process_sha256": "42712c2e59356fcf415d6eaa0f891bb575c9f02901dcafdfc34f23b807121f9d",
+    "elapsed_seconds": 29.2,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-1935a2dc87364094800ed4d22c5a8377",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-f3e3dcdbd8ed-outcome.json",
+    "repairs": [
+      {
+        "event_id": "WebFetch_2_d8d458fc.result",
+        "original": "该参数需要与--input_shape、--input_format配合使用，不能与--dynamic_batch_size、--dynamic_image_size、--input_shape_range、--insert_op_conf同时使用。",
+        "replacement": "该参数需要与[--input_shape](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0016.html)、[--input_format](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0015.html)配合使用，不能与[--dynamic_batch_size](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0018.html)、[--dynamic_image_size](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0019.html)、[--input_shape_range](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0017.html)、[--insert_op_conf](https://www.hiascend.com/document/detail/zh/canncommercial/850/devaids/atctool/atlasatcparam_16_0044.html)同时使用。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "aclmdlSetDynamicBatchSize(modelId, dataset, index, batchSize)（index 用 `ACL_DYNAMIC_TENSOR_NAME` 获取；**注意**：该接口页本次只取回标题/导航，原型签名未能从官方页直接核实",
+        "replacement": "aclmdlSetDynamicBatchSize(modelId, dataset, index, batchSize)`（index 用 `ACL_DYNAMIC_TENSOR_NAME` 获取；**注意**：该接口页本次只取回标题/导航，原型签名未能从官方页直接核实",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

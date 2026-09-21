@@ -907,6 +907,766 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T06:28:22.267603+00:00",
+      "process_sha256": "f65f83f8653d5169c0a0873ade0eab978262bc98192f28df9156632172987789",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_3_4b855af3.result",
+            "evidence_quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models",
+            "verification": "source",
+            "reason": "子要求逐项核对：(1) model repository 布局——数字版本子目录、'非数字名或 0 开头会被忽略'、各 backend 默认文件名 model.plan/model.onnx/model.pt 及 default_model_filename 覆盖，见 WebFetch_2_fd288185.result（'非数字命名的子目录、或以字符 0 开头的目录名将**被忽略**'；'以上所有默认文件名均可通过模型配置中的 default_model_filename 属性覆盖'）。(2) config.pbtxt——platform tensorrt_plan、max_batch_size、input/output 必填字段、[-1]+dims 规则、可变维度 -1、instance_group 默认每 GPU 1 实例、auto-complete 与 --disable-auto-complete-config、cc_model_filenames、version_policy，均见 WebFetch_1_2f6135f4.result（如 '系统中**每块 GPU 默认创建 1 个执行实例**'、'当 max_batch_size > 1 且未指定调度器时自动启用'）。(3) trtexec 生成 engine——--onnx/--saveEngine/--fp16/--skipInference/--minShapes 等旗标定义见 WebFetch_6_6731356a.result，动态 shape 语法 'trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244' 见 WebFetch_9_972c93b7.result，答案并如实标注组合命令非原文单条示例。(4) 起服务与验证——docker run 命令、端口 8000/8001/8002、curl -v localhost:8000/v2/health/ready、客户端 -py3-sdk 镜像均逐字对应 WebFetch_3_4b855af3.result。(5) 版本——'Release 2.72.0 corresponding to NGC container 26.08' 及 cu134/cp312 artifact 名见 WebFetch_10_0e2f802e.result；TensorFlow backend 25.02 后移除见 WebSearch_7_78378e11.result（'The last release of Triton Inference Server with the Tensorflow Backend is 25.02'）。远程仓库 s3/gs/as 见 WebFetch_2。答案明确列出无法核实项，未将未证内容冒充已证。主问题（部署流程、仓库配置、起服务）已全部覆盖并有来源支撑。",
+            "evidence_refs": [
+              "ev-26",
+              "ev-27"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（Triton Model Configuration 官方文档）",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_dd8f4632.result",
+                "quote": "## 1. [Model Configuration — NVIDIA Triton Inference Server](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.857142857142857,
+            "upper": 4.714285714285714,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_2f6135f4.result",
+                "quote": "截断情况：未发现截断。** 本文档为完整页面，从 \"Model Configuration\" 章节开始，到 \"Response Cache\" 章节结束"
+              },
+              {
+                "event_id": "WebFetch_2_fd288185.result",
+                "quote": "页面整体结构 | ✅ 完整（从 Repository Layout 到 DALI Models，各章节齐全）"
+              },
+              {
+                "event_id": "WebFetch_3_4b855af3.result",
+                "quote": "$ docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models"
+              },
+              {
+                "event_id": "WebFetch_8_e8899301.result",
+                "quote": "For a complete view of the supported software and specific versions that are packaged with the frameworks based on the container image, see the [Frameworks Support Matrix]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "主流程完整：repository目录布局、config.pbtxt必填/可选字段及示例、Docker启动命令、验证curl、trtexec动态shape语法均从官方正文取得；但版本配套（Triton容器内TensorRT/CUDA版本）与trtexec组合完整示例需另查",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_fd288185.result",
+                "quote": "<model-repository-path>/\n  <model-name>/\n    [config.pbtxt]                  # 模型配置（部分模型必需，部分可选）"
+              },
+              {
+                "event_id": "WebFetch_1_2f6135f4.result",
+                "quote": "### ✅ 必填字段（Minimal Model Configuration）"
+              },
+              {
+                "event_id": "WebFetch_9_972c93b7.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已知最新版本对应关系（2.72.0↔NGC 26.08，客户端cu134），但容器内TensorRT版本、CUDA/驱动要求需查Frameworks Support Matrix（未取得），完成版本选择所需对应关系仍缺失",
+            "evidence": [
+              {
+                "event_id": "WebFetch_10_0e2f802e.result",
+                "quote": "- Release 2.72.0 corresponding to NGC container 26.08"
+              },
+              {
+                "event_id": "WebFetch_10_0e2f802e.result",
+                "quote": "tritonserver-2.72.0+nv26.08-cu134-cp312-manylinux_2_34-x86_64.zip"
+              },
+              {
+                "event_id": "WebFetch_8_e8899301.result",
+                "quote": "For a complete view of the supported software and specific versions that are packaged with the frameworks based on the container image, see the [Frameworks Support Matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)."
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索结果中去重后相关独立第三方来源≥6条（juexin、deepwiki、CSDN多篇、知乎、博客园等）",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_dd8f4632.result",
+                "quote": "## 3. [Triton config.pbtxt配置解析关键要点 config.pbtxt 是 Triton ...](https://juejin.cn/post/7483764347041071158)"
+              },
+              {
+                "event_id": "WebSearch_4_feac9f89.result",
+                "quote": "## 1. [trtexec实战：从ONNX到TensorRT engine的完整部署指南](https://blog.csdn.net/weixin_35756130/article/details/164974082)"
+              },
+              {
+                "event_id": "WebSearch_4_feac9f89.result",
+                "quote": "## 2. [【深度学习】TensorRT 转换 onnx 为 engine - 知乎](https://zhuanlan.zhihu.com/p/1988990258356962139)"
+              },
+              {
+                "event_id": "WebSearch_5_358d81f5.result",
+                "quote": "## 5. [TensorRT - 命令行程序 - 详解 - yxysuanfa - 博客园](https://www.cnblogs.com/yxysuanfa/p/19210940)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "第三方来源仅在搜索结果列表中出现，未fetch正文，关键说法无已核验的可追溯依据；但也无证据表明存在矛盾，故保留2-3区间",
+            "evidence": [
+              {
+                "event_id": "WebSearch_4_feac9f89.result",
+                "quote": "## 5. [TensorRT实战：trtexec工具从ONNX到engine的完整转换 ...](https://blog.csdn.net/weixin_29290863/article/details/158714153)"
+              },
+              {
+                "event_id": "WebSearch_0_dd8f4632.result",
+                "quote": "## 5. [突破性能瓶颈：Triton Inference Server模型配置文件pbtxt ...](https://blog.csdn.net/gitblog_00491/article/details/151337525)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": [],
+            "candidate_score": 2,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：repository结构、config.pbtxt示例、Docker启动命令（端口8000/8001/8002均正确）、验证命令；但自认不确定最新版本号、TensorRT与Triton版本对应、trtexec精确参数（事后核对：--minShapes等语法确需检索确认）。关键参数仍需补充",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "docker run --gpus all --rm -p 8000:8000 -p 8001:8001 -p 8002:8002 \\\n  -v /path/to/model_repository:/models \\"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "TensorRT 模型的 platform 为 `tensorrt_plan`；ONNX 为 `onnxruntime_onnx`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处**：当前最新 Triton 版本号与 NGC tag、CUDA/驱动配套关系；config.pbtxt 的精确字段名"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_dd8f4632.dispatch",
+              "WebFetch_1_2f6135f4.dispatch",
+              "WebFetch_2_fd288185.dispatch",
+              "WebFetch_3_4b855af3.dispatch",
+              "WebSearch_4_feac9f89.dispatch",
+              "WebSearch_5_358d81f5.dispatch",
+              "WebFetch_6_6731356a.dispatch",
+              "WebSearch_7_78378e11.dispatch",
+              "WebFetch_8_e8899301.dispatch",
+              "WebFetch_9_972c93b7.dispatch",
+              "WebFetch_10_0e2f802e.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "服务栈组件已定到具体版本，容器内 TensorRT 精确版本未定",
+            "reason": "原题实际需要定版的组件为所选 Triton 服务栈。最终答案给出 Triton Server 2.72.0 ↔ NGC 容器 26.08、cu134（CUDA 13.4）、Python 3.12，与 WebFetch_10_0e2f802e.result 的 release 标题及 artifact 名（tritonserver-2.72.0+nv26.08-cu134-cp312）一致，有依据且无冲突；并给出容器 tag 规则。但部署栈中的 TensorRT 本身仅给出'随容器内置、查 Frameworks Support Matrix'的范围性说明，未取得 26.08 对应的具体 TensorRT 版本号，答案自己承认'本次未逐字取得'。属'所有所需组件均给出有依据的适用范围，但至少一项尚未定到具体版本'，记 4 分；.plan 与 TRT 版本绑定的风险已给出缓解建议（容器内运行 trtexec）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "最新 release（GitHub，2026-08-31）：**Triton Server 2.72.0 ↔ NGC 容器 26.08**，artifact 标注 `cu134`（CUDA 13.4）、Python 3.12"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "TensorRT 版本随容器内置，配套关系查 Frameworks Support Matrix（docs.nvidia.com/deeplearning/frameworks/support-matrix）；本次未逐字取得 26.08 对应的 TensorRT 具体小版本"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "操作指导完整，仅需替换明确标识的用户环境参数",
+            "reason": "最终答案给出可直接执行的完整命令：docker run 含具体镜像 tag 26.08-py3、端口映射、仓库挂载与服务参数；启动前提（NVIDIA 驱动 + Container Toolkit）已写明；验证命令 curl -v localhost:8000/v2/health/ready 及客户端 SDK 镜像命令完整；config.pbtxt 给出可照抄的最小配置；trtexec 静态与动态 shape 命令含全部必要参数，语法与官方 README 一致。需替换的仅为明确标识的环境值：仓库路径、模型名、输入名与维度。扣至 4 而非 5 的原因：四参数合一的 trtexec 命令为按官方语法拼接（答案自标'非原文单条示例'），且'TensorRT backend 直接加载 ONNX 自动转 TRT'的配置路径答案自认未取得官方逐字说明，属需补充/未证实内容，不满足 5 分'无需补写或修正'标准；但关键操作本身均可据答案确定，超过 3 分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "curl -v localhost:8000/v2/health/ready   # 200 即就绪"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "四参数合一的 trtexec 完整命令为按官方语法拼接，非原文单条示例"
+              }
+            ],
+            "evidence_refs": [
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 77.24046628571429,
+            "upper": 79.3685577142857,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              77.2,
+              79.4
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 77.24046628571429,
+          "upper": 79.3685577142857,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            77.2,
+            79.4
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_dd8f4632.result",
+            "field": "response",
+            "sha256": "65a29439fb5c055a91cf4bf8c057ca61aa0b3c6c1942cd91b65d58845eeb8bb6",
+            "start": 115,
+            "end": 289,
+            "quote": "## 1. [Model Configuration — NVIDIA Triton Inference Server](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_2f6135f4.result",
+            "field": "response",
+            "sha256": "c89cd9efa1249643df67fb0334020f532288ae5c06387b594f73570241543e70",
+            "start": 51,
+            "end": 126,
+            "quote": "截断情况：未发现截断。** 本文档为完整页面，从 \"Model Configuration\" 章节开始，到 \"Response Cache\" 章节结束",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_fd288185.result",
+            "field": "response",
+            "sha256": "cbbe2db14d1aad72666e340b213aae743c496e98ba3998a6ec3576e5433ba42c",
+            "start": 4100,
+            "end": 4154,
+            "quote": "页面整体结构 | ✅ 完整（从 Repository Layout 到 DALI Models，各章节齐全）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_3_4b855af3.result",
+            "field": "response",
+            "sha256": "054baef9a5e87b80a5a196af4d1a5b376606df9410b33dcd28c0f2e62673386d",
+            "start": 2633,
+            "end": 2830,
+            "quote": "$ docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_8_e8899301.result",
+            "field": "response",
+            "sha256": "aa875ff3272c948a68d0f3e3a1cfab3f9e226cdc845204598a48ba3669300cd6",
+            "start": 1128,
+            "end": 1299,
+            "quote": "For a complete view of the supported software and specific versions that are packaged with the frameworks based on the container image, see the [Frameworks Support Matrix]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_fd288185.result",
+            "field": "response",
+            "sha256": "cbbe2db14d1aad72666e340b213aae743c496e98ba3998a6ec3576e5433ba42c",
+            "start": 376,
+            "end": 472,
+            "quote": "<model-repository-path>/\n  <model-name>/\n    [config.pbtxt]                  # 模型配置（部分模型必需，部分可选）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_1_2f6135f4.result",
+            "field": "response",
+            "sha256": "c89cd9efa1249643df67fb0334020f532288ae5c06387b594f73570241543e70",
+            "start": 474,
+            "end": 513,
+            "quote": "### ✅ 必填字段（Minimal Model Configuration）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_9_972c93b7.result",
+            "field": "response",
+            "sha256": "b93aa9e33031c9f3b5ebff9ff50cca280bda0ccc1896d1d7864e89e056fa7edf",
+            "start": 475,
+            "end": 621,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_10_0e2f802e.result",
+            "field": "response",
+            "sha256": "262b07a1703ffa1ba5a20a4c45a70b6f26e36c22da2b44d8b3b1cdb33662f01e",
+            "start": 186,
+            "end": 239,
+            "quote": "- Release 2.72.0 corresponding to NGC container 26.08",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_10_0e2f802e.result",
+            "field": "response",
+            "sha256": "262b07a1703ffa1ba5a20a4c45a70b6f26e36c22da2b44d8b3b1cdb33662f01e",
+            "start": 3848,
+            "end": 3913,
+            "quote": "tritonserver-2.72.0+nv26.08-cu134-cp312-manylinux_2_34-x86_64.zip",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_8_e8899301.result",
+            "field": "response",
+            "sha256": "aa875ff3272c948a68d0f3e3a1cfab3f9e226cdc845204598a48ba3669300cd6",
+            "start": 1128,
+            "end": 1375,
+            "quote": "For a complete view of the supported software and specific versions that are packaged with the frameworks based on the container image, see the [Frameworks Support Matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_dd8f4632.result",
+            "field": "response",
+            "sha256": "65a29439fb5c055a91cf4bf8c057ca61aa0b3c6c1942cd91b65d58845eeb8bb6",
+            "start": 1096,
+            "end": 1201,
+            "quote": "## 3. [Triton config.pbtxt配置解析关键要点 config.pbtxt 是 Triton ...](https://juejin.cn/post/7483764347041071158)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_4_feac9f89.result",
+            "field": "response",
+            "sha256": "8a142086bb9fc88e882819fc9a37a36c974833bf298cda28d39604255523bc7b",
+            "start": 107,
+            "end": 218,
+            "quote": "## 1. [trtexec实战：从ONNX到TensorRT engine的完整部署指南](https://blog.csdn.net/weixin_35756130/article/details/164974082)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_4_feac9f89.result",
+            "field": "response",
+            "sha256": "8a142086bb9fc88e882819fc9a37a36c974833bf298cda28d39604255523bc7b",
+            "start": 377,
+            "end": 471,
+            "quote": "## 2. [【深度学习】TensorRT 转换 onnx 为 engine - 知乎](https://zhuanlan.zhihu.com/p/1988990258356962139)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_5_358d81f5.result",
+            "field": "response",
+            "sha256": "22a8975681f02490d98cfed92853827063b54664dd4c6b2799b834830ee1524e",
+            "start": 1471,
+            "end": 1564,
+            "quote": "## 5. [TensorRT - 命令行程序 - 详解 - yxysuanfa - 博客园](https://www.cnblogs.com/yxysuanfa/p/19210940)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_4_feac9f89.result",
+            "field": "response",
+            "sha256": "8a142086bb9fc88e882819fc9a37a36c974833bf298cda28d39604255523bc7b",
+            "start": 1060,
+            "end": 1174,
+            "quote": "## 5. [TensorRT实战：trtexec工具从ONNX到engine的完整转换 ...](https://blog.csdn.net/weixin_29290863/article/details/158714153)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_0_dd8f4632.result",
+            "field": "response",
+            "sha256": "65a29439fb5c055a91cf4bf8c057ca61aa0b3c6c1942cd91b65d58845eeb8bb6",
+            "start": 1711,
+            "end": 1827,
+            "quote": "## 5. [突破性能瓶颈：Triton Inference Server模型配置文件pbtxt ...](https://blog.csdn.net/gitblog_00491/article/details/151337525)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "2f72549a6da718fff36e64b5fc33cdfa39940c6a09f6fb2d4617c1dd4fd89671",
+            "start": 1122,
+            "end": 1233,
+            "quote": "docker run --gpus all --rm -p 8000:8000 -p 8001:8001 -p 8002:8002 \\\\\\n  -v /path/to/model_repository:/models \\\\",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "2f72549a6da718fff36e64b5fc33cdfa39940c6a09f6fb2d4617c1dd4fd89671",
+            "start": 487,
+            "end": 552,
+            "quote": "TensorRT 模型的 platform 为 `tensorrt_plan`；ONNX 为 `onnxruntime_onnx`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "2f72549a6da718fff36e64b5fc33cdfa39940c6a09f6fb2d4617c1dd4fd89671",
+            "start": 1785,
+            "end": 1848,
+            "quote": "不确定处**：当前最新 Triton 版本号与 NGC tag、CUDA/驱动配套关系；config.pbtxt 的精确字段名",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ec41c66bd5e33b91363edf2a80ec976f3e3c445565382b6e865f4dc2c5fb6550",
+            "start": 2916,
+            "end": 3028,
+            "quote": "最新 release（GitHub，2026-08-31）：**Triton Server 2.72.0 ↔ NGC 容器 26.08**，artifact 标注 `cu134`（CUDA 13.4）、Python 3.12",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ec41c66bd5e33b91363edf2a80ec976f3e3c445565382b6e865f4dc2c5fb6550",
+            "start": 3108,
+            "end": 3245,
+            "quote": "TensorRT 版本随容器内置，配套关系查 Frameworks Support Matrix（docs.nvidia.com/deeplearning/frameworks/support-matrix）；本次未逐字取得 26.08 对应的 TensorRT 具体小版本",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ec41c66bd5e33b91363edf2a80ec976f3e3c445565382b6e865f4dc2c5fb6550",
+            "start": 2277,
+            "end": 2472,
+            "quote": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ec41c66bd5e33b91363edf2a80ec976f3e3c445565382b6e865f4dc2c5fb6550",
+            "start": 2667,
+            "end": 2717,
+            "quote": "curl -v localhost:8000/v2/health/ready   # 200 即就绪",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ec41c66bd5e33b91363edf2a80ec976f3e3c445565382b6e865f4dc2c5fb6550",
+            "start": 4182,
+            "end": 4217,
+            "quote": "四参数合一的 trtexec 完整命令为按官方语法拼接，非原文单条示例",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ec41c66bd5e33b91363edf2a80ec976f3e3c445565382b6e865f4dc2c5fb6550",
+            "start": 2277,
+            "end": 2472,
+            "quote": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "WebFetch_3_4b855af3.result",
+            "field": "response",
+            "sha256": "054baef9a5e87b80a5a196af4d1a5b376606df9410b33dcd28c0f2e62673386d",
+            "start": 2635,
+            "end": 2830,
+            "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-f6ba6df5574d-predictors.json": "d7125fcd549ce15109e5816a9c96172584a9fe92462a6a1c23913e297bf7c273",
+          "reviewed/development/case-f6ba6df5574d-outcome.json": "77b6d03fa02d4fb8124beb814bb838115614765d9d0f1a441d1786567dcbaca1",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_2f6135f4.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_2f6135f4.result",
+                "quote": "截断情况：未发现截断。** 本文档为完整页面，从 \"Model Configuration\" 章节开始，到 \"Response Cache\" 章节结束"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_2f6135f4.result",
+                "quote": "覆盖了官方页的全部小节（Minimal Configuration → Auto-Generated → Custom Configuration → Datatypes → Reshape → Shape Tensors → Non-Linear I/O → Version Policy → Instance Groups → CUDA Compute Capability → Optimization Policy → Model Warmup → Response Cache）"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html"
+          },
+          {
+            "event_id": "WebFetch_2_fd288185.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_fd288185.result",
+                "quote": "页面整体结构 | ✅ 完整（从 Repository Layout 到 DALI Models，各章节齐全）"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_fd288185.result",
+                "quote": "TensorFlow SavedModel 章节 | ❌ 本文档中不存在（新版文档已移除该后端，非截断）"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_repository.html"
+          },
+          {
+            "event_id": "WebFetch_3_4b855af3.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_4b855af3.result",
+                "quote": "$ docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_4b855af3.result",
+                "quote": "## Send an Inference Request[#"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/getting_started/quickstart.html"
+          },
+          {
+            "event_id": "WebFetch_6_6731356a.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_6731356a.result",
+                "quote": "Table 21（Build Phase，30 项） | ✅ 完整，无截断"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_6731356a.result",
+                "quote": "Table 22（Inference Phase，21 项） | ✅ 完整，无截断"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/reference/command-line-programs.html"
+          },
+          {
+            "event_id": "WebFetch_8_e8899301.result",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_e8899301.result",
+                "quote": "The actual inference server is packaged in the Triton Inference Server container."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_8_e8899301.result",
+                "quote": "For a complete view of the supported software and specific versions that are packaged with the frameworks based on the container image, see the [Frameworks Support Matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html"
+          },
+          {
+            "event_id": "WebFetch_9_972c93b7.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_9_972c93b7.result",
+                "quote": "上文第一至三部分引用的所有命令均为 README 中的**完整原文命令，未做任何截断或改写**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_9_972c93b7.result",
+                "quote": "## 二、--saveEngine 保存 engine 的原文命令（Example 5，完整未截断）"
+              }
+            ],
+            "reference": "https://github.com/NVIDIA/TensorRT/tree/main/samples/trtexec"
+          },
+          {
+            "event_id": "WebFetch_10_0e2f802e.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_10_0e2f802e.result",
+                "quote": "- Release 2.72.0 corresponding to NGC container 26.08"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_10_0e2f802e.result",
+                "quote": "## Release 2.64.0 corresponding to NGC container 25.12\n\nRelease 2.64.0 corresponding to NGC container 25.12\n\nRead more"
+              }
+            ],
+            "reference": "https://github.com/triton-inference-server/server/releases"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

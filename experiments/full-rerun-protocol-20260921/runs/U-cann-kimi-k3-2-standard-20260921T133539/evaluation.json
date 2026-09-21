@@ -147,6 +147,734 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T06:28:22.311779+00:00",
+      "process_sha256": "c2ff74535e6d0e3bfc76eafbeab0bcde06500a2fe9dabefe098324f9cf2be28a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "msprof op --aic-metrics=PipeUtilization,Memory,MemoryUB --output=./output_data ./add_custom_npu",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_5_cbe2dbc7.result",
+            "evidence_quote": "msprof op --aic-metrics=<select_metrics> --output=./output_data ./add_custom_npu",
+            "verification": "source",
+            "reason": "答案覆盖原题各子方面：(1) 分析方法——msprof op/simulator 命令与官方 CANN 8.5.0 文档逐字一致（WebFetch_5_cbe2dbc7.result：'msprof op --launch-count=10 --kernel-name=\"Add|Sub\" --output=./output_data ./test' 与 'msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu' 均为原文），输出 csv 文件含义（PipeUtilization/Memory/MemoryUB/ResourceConflictRatio 等）与该来源表2逐项对应；(2) 访存瓶颈判读规则——MTE 与 Cube/Vector 占比对比、理论耗时公式、MTE2/MTE3 共享带宽，与官方性能分析页正文一致（WebSearch_2_f7723493.result 第1条：'当MTE2/MTE3同时进行GM读写时,搬运流水线的耗时应该是(MTE2搬运量 + MTE3搬运量)/ GM带宽'，'针对每次搬运数据量较小的情况,实测性能达不到理论带宽'）；(3) UB/L1 搬运与 Cube/Vector 优化——bank conflict 调整依据 ResourceConflictRatio.csv、ArithmeticUtilization.csv 区分 Cube/Vector，均在 WebFetch_5 文件表中有依据；(4) double buffer——机制（V/M/S/MTE 独立指令队列并行）有官方最佳实践条目摘要支持（WebSearch_1_eedb12d8.result 第3条：'执行于AI Core上的指令队列主要包括如下几类，Vector指令队列（V）、Cube指令队列（M）、Scalar指令队列（S）和搬运…'），InitBuffer BUFFER_NUM=2 的具体使能代码细节仅靠检索摘要交叉印证（官方页面正文未抓取成功，WebFetch_3 仅返回标题），但答案对此已透明标注，且该细节不改变整体分析+优化路线的正确性与完整性。综合判定为主干有源支持。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第5条即为相关官方来源（hiascend.com 的 msproftx 性能数据参考页），前4条为第三方CSDN/镜像。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_620d4ae2.result",
+                "quote": "5. [msproftx数据说明-性能数据文件参考-性能调优工具-开发 ...](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910beta3/devaids/Profiling/atlasprofiling_16_0061.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.3333333333333335,
+            "upper": 4.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_77f87142.result",
+                "quote": "**标题**: 使能double buffer-流水优化-性能优化-Ascend C最佳实践-算子开发-CANN8.2.RC1开发文档-昇腾社区"
+              },
+              {
+                "event_id": "WebFetch_4_ff994af6.result",
+                "quote": "# 获取性能数据\n\n在进行性能优化之前，需要拿到准确的性能数据"
+              },
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "msProf工具包含msprof op和msprof op simulator两种使用方式"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "官方正文对分析流程较完整（msprof op/simulator 命令、参数、PipeUtilization/Memory等CSV指标文件说明），但原题明确涉及的优化分支（double buffer 使能、UB/L1 搬运优化代码）因该官方页仅取回框架而缺失。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "Memory.csv\n   \n   UB/L1/L2/主存储器采集内存读写带宽速率"
+              },
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "PipeUtilization.csv\n   \n   采集计算单元和搬运单元耗时和占比"
+              },
+              {
+                "event_id": "WebFetch_3_77f87142.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得的官方资料标注版本（CANN8.2.RC1、CANN8.5.0）并给出部分产品适用约束（热点函数仅A2、simulator需--soc-version），但用户目标芯片未知，工具版本与目标芯片的完整对应关系仍缺失。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "msprof op的热点函数功能仅支持Atlas A2 训练系列产品/Atlas A2 推理系列产品"
+              },
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu"
+              },
+              {
+                "event_id": "WebFetch_3_77f87142.result",
+                "quote": "CANN8.2.RC1开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "预算内相关独立第三方来源5—6条（lmnt.cn为CSDN文镜像、cann.csdn.net与six_1243096140同文去重）：weixin_26833503、zhangfeng1133、devpress、six_1243096140、neurpulse，另ascendai.csdn.net归属存疑（可能官方运营频道）。5—6条跨4/5档，记区间。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_620d4ae2.result",
+                "quote": "1. [用msprof精准定位AI Core利用率瓶颈：CANN性能分析实战 ...](https://blog.csdn.net/weixin_26833503/article/details/165369527)"
+              },
+              {
+                "event_id": "WebSearch_1_eedb12d8.result",
+                "quote": "1. [Ascend C内存搬运的艺术：Double Buffer与流水线优化详解 ...](https://blog.csdn.net/six_1243096140/article/details/155393212)"
+              },
+              {
+                "event_id": "WebSearch_1_eedb12d8.result",
+                "quote": "5. [Ascend C 矢量编程范式：CopyIn、Compute、CopyOut 与 ...](https://neurpulse.github.io/notes/ascend-c-vector-programming-paradigm/)"
+              },
+              {
+                "event_id": "WebSearch_2_f7723493.result",
+                "quote": "3. [昇腾开源生态专区](https://ascendai.csdn.net/692c5f30791c233193d1487a.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方有关键可核验陈述：msprof工具用法与官方文档（PipeUtilization.csv等）一致，但阈值类关键说法（aic_mac_ratio理想>85%、MTE2>90%判内存瓶颈）在已取得材料中无官方或独立交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_2_f7723493.result",
+                "quote": "aic_mac_ratio:Cube计算单元利用率,理想应>85%"
+              },
+              {
+                "event_id": "WebSearch_2_f7723493.result",
+                "quote": "如果MTE2利用率持续高于90%,且Cube利用率低,表明是内存瓶颈(Memory-Bound)"
+              },
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "PipeUtilization.csv\n   \n   采集计算单元和搬运单元耗时和占比"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前答案给出正确的完整分析与优化流程（msprof工具、MTE1/2/3与Cube/Vector指标、搬运粒度、SetBlockDim、InitBuffer BUFFER_NUM=2 double buffer），事后与官方源核对工具名与msprof op用法一致、无矛盾；但具体参数名（msprof-analyze子命令、op_statistic字段、soc_version差异）自认需外部补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "double buffer：TQue 上 EnQue/DeQue 的 BUFFER_NUM=2，实现 MTE 与计算重叠；代码形态 `InitBuffer(que, 2, size)`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处：\n   - 当前 CANN 最新版本（如 8.x）中 msprof-analyze 的精确子命令与参数名。"
+              },
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "msprof op --output=$HOME/projects/output $HOME/projects/MyApp/out/main"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_620d4ae2.dispatch",
+              "WebSearch_1_eedb12d8.dispatch",
+              "WebSearch_2_f7723493.dispatch",
+              "WebFetch_3_77f87142.dispatch",
+              "WebFetch_4_ff994af6.dispatch",
+              "WebFetch_5_cbe2dbc7.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "分析工具版本已锁定：答案明确 msprof op 文件结构、指标与仿真流程取自 CANN 社区版 8.5.0 开发文档，与实际抓取来源 URL（CANNCommunityEdition/850）一致，有依据。但目标芯片未定版：仅给出适用范围'Atlas A2/A3 训练/推理系列等'（'等'字致范围不闭合），--soc-version 留为占位符由用户填写，各芯片理论带宽/算力数值答案自记为未核实；double buffer 最佳实践页为 8.2.RC1，与 8.5.0 的参数差异未比对。属'部分所需组件有明确版本依据，其余仍未确定'。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "上述 `msprof op` 文件结构、`MemoryUB.csv`/`ResourceConflictRatio.csv` 等指标、仿真流水图流程取自 **CANN 社区版 8.5.0** 开发文档"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "`--soc-version` 需填实际芯片（如 Ascend910B 系列，文档中写作 `Ascendxxxyy` 占位）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "具体芯片的理论带宽/算力需查对应 soc 的硬件规格页，本次未检索到逐芯片数值，记为未核实。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "executable_with_env_substitution",
+            "reason": "操作指导完整：msprof op 三条命令（含 --aic-metrics、--launch-count、--kernel-name）与 msprof op simulator 命令均与官方文档逐字一致，可直接执行；前置条件明确（上板需 app 功能正常、仿真需 -DASCENDC_TRACE_ON、仿真核数不超物理核数、不支持 MC2/HCCL），与来源一致；double buffer 给出关键代码 pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half)) 并说明 UB 占用翻倍的代价与核对方法。只需替换明确标识且有说明的环境参数（./add_custom_npu、./test、Ascendxxxyy、TILE_LEN）。未达5分：double buffer 代码为骨架片段（TILE_LEN/loopCnt 未定义、非完整可编译算子），部分优化建议（如'调整 UB 内数据排布/偏移错开 bank'）为方向性指导需结合具体算子改写。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "需编译时加 `-DASCENDC_TRACE_ON`；仿真核数不能超过物理核数；不支持 MC2/HCCL 算子。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half));   // BUFFER_NUM=2 开启 double buffer"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 78.50557439999999,
+            "upper": 80.3168256,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              78.5,
+              80.4
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 78.50557439999999,
+          "upper": 80.3168256,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            78.5,
+            80.4
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_620d4ae2.result",
+            "field": "response",
+            "sha256": "f8d21c9b3a09ca06736a22c0e66a53c50983003ac457002cff60c3e598f7d601",
+            "start": 1074,
+            "end": 1235,
+            "quote": "5. [msproftx数据说明-性能数据文件参考-性能调优工具-开发 ...](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910beta3/devaids/Profiling/atlasprofiling_16_0061.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_3_77f87142.result",
+            "field": "response",
+            "sha256": "307503c122a3fc6a2e7b2e7100c5b5ea17bf6b71da8bce3e4965699dc4dd2911",
+            "start": 0,
+            "end": 72,
+            "quote": "**标题**: 使能double buffer-流水优化-性能优化-Ascend C最佳实践-算子开发-CANN8.2.RC1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_4_ff994af6.result",
+            "field": "response",
+            "sha256": "e890b8fffe2ce7b49910917b1b496ebf0f3df15c3403bd11ea96f50b447c65bf",
+            "start": 337,
+            "end": 368,
+            "quote": "# 获取性能数据\n\n在进行性能优化之前，需要拿到准确的性能数据",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 68,
+            "end": 113,
+            "quote": "msProf工具包含msprof op和msprof op simulator两种使用方式",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 4414,
+            "end": 4455,
+            "quote": "Memory.csv\n   \n   UB/L1/L2/主存储器采集内存读写带宽速率",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 4634,
+            "end": 4677,
+            "quote": "PipeUtilization.csv\n   \n   采集计算单元和搬运单元耗时和占比",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_3_77f87142.result",
+            "field": "response",
+            "sha256": "307503c122a3fc6a2e7b2e7100c5b5ea17bf6b71da8bce3e4965699dc4dd2911",
+            "start": 74,
+            "end": 99,
+            "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 5152,
+            "end": 5202,
+            "quote": "msprof op的热点函数功能仅支持Atlas A2 训练系列产品/Atlas A2 推理系列产品",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 6388,
+            "end": 6473,
+            "quote": "msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_3_77f87142.result",
+            "field": "response",
+            "sha256": "307503c122a3fc6a2e7b2e7100c5b5ea17bf6b71da8bce3e4965699dc4dd2911",
+            "start": 52,
+            "end": 72,
+            "quote": "CANN8.2.RC1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_0_620d4ae2.result",
+            "field": "response",
+            "sha256": "f8d21c9b3a09ca06736a22c0e66a53c50983003ac457002cff60c3e598f7d601",
+            "start": 76,
+            "end": 184,
+            "quote": "1. [用msprof精准定位AI Core利用率瓶颈：CANN性能分析实战 ...](https://blog.csdn.net/weixin_26833503/article/details/165369527)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_1_eedb12d8.result",
+            "field": "response",
+            "sha256": "bd1b9d381bf7f588fc3def0ee0f51b17180eb4c92ab9a8c68bbd7d2d17ebfd90",
+            "start": 85,
+            "end": 195,
+            "quote": "1. [Ascend C内存搬运的艺术：Double Buffer与流水线优化详解 ...](https://blog.csdn.net/six_1243096140/article/details/155393212)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_1_eedb12d8.result",
+            "field": "response",
+            "sha256": "bd1b9d381bf7f588fc3def0ee0f51b17180eb4c92ab9a8c68bbd7d2d17ebfd90",
+            "start": 1281,
+            "end": 1403,
+            "quote": "5. [Ascend C 矢量编程范式：CopyIn、Compute、CopyOut 与 ...](https://neurpulse.github.io/notes/ascend-c-vector-programming-paradigm/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_2_f7723493.result",
+            "field": "response",
+            "sha256": "640a0b0bba6881b0ceaf2566d259816778191490fadff12ec8394c41bd705de3",
+            "start": 7028,
+            "end": 7098,
+            "quote": "3. [昇腾开源生态专区](https://ascendai.csdn.net/692c5f30791c233193d1487a.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_2_f7723493.result",
+            "field": "response",
+            "sha256": "640a0b0bba6881b0ceaf2566d259816778191490fadff12ec8394c41bd705de3",
+            "start": 7216,
+            "end": 7249,
+            "quote": "aic_mac_ratio:Cube计算单元利用率,理想应>85%",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_2_f7723493.result",
+            "field": "response",
+            "sha256": "640a0b0bba6881b0ceaf2566d259816778191490fadff12ec8394c41bd705de3",
+            "start": 7557,
+            "end": 7605,
+            "quote": "如果MTE2利用率持续高于90%,且Cube利用率低,表明是内存瓶颈(Memory-Bound)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 4634,
+            "end": 4677,
+            "quote": "PipeUtilization.csv\n   \n   采集计算单元和搬运单元耗时和占比",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0bb936ba72de91bd8fdeb65dadd82e56dac51900ae2297bcb0a314330a42b562",
+            "start": 1018,
+            "end": 1110,
+            "quote": "double buffer：TQue 上 EnQue/DeQue 的 BUFFER_NUM=2，实现 MTE 与计算重叠；代码形态 `InitBuffer(que, 2, size)`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0bb936ba72de91bd8fdeb65dadd82e56dac51900ae2297bcb0a314330a42b562",
+            "start": 1142,
+            "end": 1201,
+            "quote": "不确定处：\\n   - 当前 CANN 最新版本（如 8.x）中 msprof-analyze 的精确子命令与参数名。",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-20",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 927,
+            "end": 997,
+            "quote": "msprof op --output=$HOME/projects/output $HOME/projects/MyApp/out/main",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 3012,
+            "end": 3112,
+            "quote": "上述 `msprof op` 文件结构、`MemoryUB.csv`/`ResourceConflictRatio.csv` 等指标、仿真流水图流程取自 **CANN 社区版 8.5.0** 开发文档",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 3165,
+            "end": 3227,
+            "quote": "`--soc-version` 需填实际芯片（如 Ascend910B 系列，文档中写作 `Ascendxxxyy` 占位）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 3317,
+            "end": 3363,
+            "quote": "具体芯片的理论带宽/算力需查对应 soc 的硬件规格页，本次未检索到逐芯片数值，记为未核实。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 1025,
+            "end": 1110,
+            "quote": "msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 1182,
+            "end": 1238,
+            "quote": "需编译时加 `-DASCENDC_TRACE_ON`；仿真核数不能超过物理核数；不支持 MC2/HCCL 算子。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 2487,
+            "end": 2576,
+            "quote": "pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half));   // BUFFER_NUM=2 开启 double buffer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b022101d58434f64220be22cbb33bfd5c850925d43df603d7f867fc728dcfe01",
+            "start": 404,
+            "end": 499,
+            "quote": "msprof op --aic-metrics=PipeUtilization,Memory,MemoryUB --output=./output_data ./add_custom_npu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "field": "response",
+            "sha256": "06a9f9a9ac485726a33c3f52c0d339216f5b2273ff055648cd28464dfb8ce3b2",
+            "start": 1271,
+            "end": 1351,
+            "quote": "msprof op --aic-metrics=<select_metrics> --output=./output_data ./add_custom_npu",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_3_77f87142.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_3_77f87142.result",
+            "alternative_body_event_ids": [
+              "WebFetch_4_ff994af6.result",
+              "WebFetch_5_cbe2dbc7.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-9d911169fe4a-predictors.json": "93823584cf82073fe71fc44c283a530bddce6b2959f4c4b529f999f8731f4838",
+          "reviewed/development/case-9d911169fe4a-outcome.json": "cf3b1ee362d8672e9da17c5b9d8bd7861235483618a9d92bf0476eee128d6cf1",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_3_77f87142.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "score": 2,
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_77f87142.result",
+                "quote": "**标题**: 使能double buffer-流水优化-性能优化-Ascend C最佳实践-算子开发-CANN8.2.RC1开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_77f87142.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1/opdevg/ascendcbestP/atlas_ascendc_best_practices_10_0033.html"
+          },
+          {
+            "event_id": "WebFetch_4_ff994af6.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_ff994af6.result",
+                "quote": "# 获取性能数据\n\n在进行性能优化之前，需要拿到准确的性能数据，了解性能现状"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_ff994af6.result",
+                "quote": "开发者可以参考[指令流水图](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/optool/atlasopdev_16_0087.html)查看具体字段的含义。"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/opdevg/Ascendcopdevg/atlas_ascendc_best_practices_10_0008.html"
+          },
+          {
+            "event_id": "WebFetch_5_cbe2dbc7.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "msProf工具包含msprof op和msprof op simulator两种使用方式，协助用户定位算子内存、算子代码以及算子指令的异常"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_cbe2dbc7.result",
+                "quote": "<!--THE END-->"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/optool/atlasopdev_16_00851.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "\"search\": 3, \"fetch\": 3"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

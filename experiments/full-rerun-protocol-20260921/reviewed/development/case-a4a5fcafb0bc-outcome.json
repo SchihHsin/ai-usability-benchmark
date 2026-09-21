@@ -1,0 +1,177 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "ncu --section MemoryWorkloadAnalysis --section Occupancy --section LaunchStats --section SchedulerStats ./app",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_QhO2JT1ZoPg7Tr9tythz7530.result",
+      "evidence_quote": "| `MemoryWorkloadAnalysis` | Memory Workload Analysis | \"Detailed analysis of the memory resources of the GPU. Memory can become a limiting factor for the overall kernel performance when fully utilizing the involved hardware units (Mem Busy), exhausting the available communication bandwidth between those units (Max Bandwidth), or by reaching the maximum throughput of issuing memory instructions (Mem Pipes Busy).\"",
+      "verification": "source",
+      "reason": "原题为'如何用 Nsight Compute 分析并优化低 occupancy / 访存受限 kernel（coalescing / shared memory / occupancy calculator / bank conflict）'，逐子要求核对：(1) 分析工作流与采集命令——final 给出 ncu -o、--section、--kernel-name/--launch-skip/--launch-count、replay/cache/clock 等完整命令与默认值，与 CLI 指南来源（call_00_pWXMuk9hiIwoV4MJSJmi7421.result，含 '--section = LaunchStats, Occupancy' 配置样例与各选项默认值）一致；(2) 访存瓶颈判定——final 引用的 MemoryWorkloadAnalysis 描述、Mem Busy/Max Bandwidth/Mem Pipes Busy 三信号与来源逐字一致；(3) memory coalescing——final 的 sector 定义（'Aligned 32 byte-chunk'、4 sectors=128B）、requests:sectors 1:N 关系、offsetCopy/strideCopy 代码与 V100 实测数据（790 GB/s、stride=2 效率 50%）均与 call_00_QhO2JT1ZoPg7Tr9tythz7530.result 和 call_00_tuPjsq0u2TLlT5RUB37S6861.result 一致；(4) shared memory / bank conflict——final 引用的 32 banks、广播不冲突、l1tex__data_bank_conflicts_pipe_lsu.sum 指标族在 ProfilingGuide 来源中逐字存在；(5) occupancy calculator——final 给出 Runtime API 函数签名（cudaOccupancyMaxActiveBlocksPerMultiprocessor 等）与 call_00_bfeTRzbcqUQUb9EVKr0S9706.result 一致，并如实说明 UI 文档中 Calculator 仅确认存在（call_00_9u4Zh5D3hh3l3Kfh9jLa6587.result 证实 §4.7.2 截断）。答案将 padding 示例、部分指标名等如实标注为未核实，属诚实披露而非错误，不构成 contradicted。四个子方向均有来源支撑，判定 supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 2,
+      "lower": 2,
+      "upper": 2,
+      "status": "supported",
+      "reason": "适用范围为 Nsight Compute 与目标 GPU 的版本锁定。final 明确提及版本线索（Best Practices Guide v13.4、Profiling Guide 示例 --chip ga100/Ampere、V100/CC 7.0 数据），但自述且证据显示 Nsight Compute / CUDA Toolkit / 目标 GPU 的精确配套版本'无法仅凭本次抓取正文锁定'，三份 Nsight Compute 官方文档正文中未出现具体版本号。即提到了版本但未给出有依据的适用版本或范围锁定，对应档位 2，不存在与证据矛盾的定版。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "本次抓取的 **Profiling Guide**、**Nsight Compute CLI**、**Nsight Compute UI** 三份官方文档，正文中**未出现具体的 Nsight Compute 版本号**；Profiling Guide 示例使用 `--chip ga100`（Ampere）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "supported",
+      "reason": "操作可执行性评估最终答案中的命令与前置条件。采集命令完整：基础采集（ncu -o profile.ncu-rep ./app）、按 kernel 过滤（--kernel-name regex + --launch-skip/--launch-count 及默认值说明）、replay/cache/clock 控制项及其对访存指标的影响、发现命令（--list-sections/--query-metrics 及语法）均给出完整命令行、参数与默认值，并指出 --cache-control all 每次 replay 前 flush cache 等测量前提；代码示例（offsetCopy/strideCopy/coalescedMultiply、cudaOccupancyMaxActiveBlocksPerMultiprocessor 调用）完整可编译。占位符仅 ./app、myKernel 等用户环境值且含义明确；答案还给出未核实项的自行确认途径（--query-metrics --chip）。无缺步骤、无需修正内容，操作指导及适用前提明确，评 5。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "**基础采集（官方 CLI 指南 §5.3.1 Quickstart）**：\n```\nncu -o profile.ncu-rep ./app\n```"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "ncu --kernel-name regex:\"myKernel\" --launch-skip 5 --launch-count 1 ./app"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a4a5fcafb0bc",
+  "task_id": "U",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "993db469c72a4e60acecaed91dde4abb",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "0f4ecc8809acabdbad091d57d7a1b0e6",
+        "conversationRequestId": "0f4ecc8809acabdbad091d57d7a1b0e6",
+        "agent": "cli"
+      },
+      {
+        "messageId": "993db469c72a4e60acecaed91dde4abb",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "0f4ecc8809acabdbad091d57d7a1b0e6",
+        "conversationRequestId": "0f4ecc8809acabdbad091d57d7a1b0e6",
+        "rawUsage": {
+          "prompt_tokens": 28459,
+          "completion_tokens": 3540,
+          "total_tokens": 31999,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2315,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 28459,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2315,
+          "credit": 6.54,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 28459,
+          "outputTokens": 3540,
+          "totalTokens": 31999,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2315
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "3425569235d3af594711342f2247164fda656294033fa0a028baaa460bb84187",
+    "process_sha256": "634464aacab6fc00bc00790fbf2de69e68a0acf6d157ba716c8c48aef197c172",
+    "elapsed_seconds": 72.65,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-0d5b1b2cd637403b8089939e491479c6",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a4a5fcafb0bc-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

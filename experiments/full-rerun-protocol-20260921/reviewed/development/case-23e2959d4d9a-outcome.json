@@ -1,0 +1,203 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "传输与 kernel 必须位于不同的、非默认的流中……主机内存必须是 pinned（页锁定）内存……cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes, cudaMemcpyHostToDevice, stream[i]); kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_63f6cab40b034ab59a8f8c78.result",
+      "evidence_quote": "\"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work.\"",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求说明 stream/event/pinned memory 三方面如何实现 H2D/D2H 与 kernel 重叠。最终答案逐项覆盖：(1) stream——cudaStreamCreate/WithFlags 用法、默认流陷阱、多流分段流水线两种官方模式（V1 交错/V2 批量）及完整循环代码；(2) event——cudaEventRecord/cudaStreamWaitEvent/cudaEventQuery 跨流依赖与轮询示例；(3) pinned memory——cudaMallocHost 分配及 Programming Guide 原文约束（未 pinned 会退化为同步行为）。三个必要条件（设备并发拷贝能力 asyncEngineCount、非默认流、pinned 内存）均与官方来源一致：call_63f6cab40b034ab59a8f8c78 提供编程指南 §2.5 完整原文（含 pinned 约束、cudaStreamNonBlocking、per-thread 默认流、cudaStreamWaitEvent DAG 用法）；call_cdb1d00751424291a3e1497b 提供官方博客的两种流水线代码与三条件；call_c69b567047e3480384fb529d 确认 asyncEngineCount 为 cudaDeviceProp 当前字段。答案还正确区分了旧字段 deviceOverlap 与当前字段。子要求均满足，无矛盾。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "applicable",
+      "reason": "答案将所用接口定版到 CUDA 13.x（依据 v13.3.1 Runtime API 文档），asyncEngineCount 确认为当前 cudaDeviceProp 字段（call_c69b567047e3480384fb529d 佐证），per-thread default stream 定到 CUDA 7（博客来源佐证）。但答案自述部分 API 的历史引入版本未核实，且 'CUDA 13.x' 是范围而非单一具体工具链版本，用户实际所用工具链版本未定，故锁定粒度为有依据的适用范围而非全部具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "本答案依据的官方文档：CUDA Runtime API **v13.3.1**、CUDA Programming Guide 当前版（2026-09 更新）。所有 API（`cudaStreamCreate`、`cudaStreamCreateWithFlags`、`cudaMemcpyAsync`、`cudaMallocHost`、`cudaEventRecord`、`cudaStreamWaitEvent`、`cudaStreamSynchronize`）均为当前 CUDA 13.x 有效接口。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "未核实处**：`cudaStreamCreate`/`cudaMemcpyAsync` 等最早引入的确切 CUDA 版本号（推断为 2.x 时代，未从本次取得的文档中逐版本核实）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "applicable",
+      "reason": "操作指导完整：完整 API 签名（含 cudaMemcpyAsync 第五参数为流、kernel 启动第四参数为流）、两种可照抄运行的多流流水线代码模式（V1/V2）、event 跨流依赖与轮询代码、编译选项（nvcc --default-stream per-thread）、前置条件（pinned 内存 cudaMallocHost、非默认流、查询 asyncEngineCount）均已给出。用户仅需替换数据规模、指针等自身环境值，无需修正内容错误。答案明确标注代码未在本机运行（仅内容核查），按规则这不影响 4/5 分界。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "for (int i = 0; i < nStreams; ++i) {\n    int offset = i*streamSize;\n    cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes,\n                    cudaMemcpyHostToDevice, stream[i]);\n    kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "所有代码均未在本机运行（无 GPU 环境，仅内容核查）。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "传输与 kernel 必须位于不同的、非默认的流中……主机内存必须是 pinned（页锁定）内存……cudaMemcpyAsync(&d_a[offset], &a[offset], streamBytes, cudaMemcpyHostToDevice, stream[i]); kernel<<<grid, block, 0, stream[i]>>>(d_a, offset, streamSize);"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_63f6cab40b034ab59a8f8c78.result",
+          "quote": "\"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work.\""
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-23e2959d4d9a",
+  "task_id": "V",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "de048f07a6874fb195afaf3449309d42",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "bddb73918e458f44cff7dff811d506a0",
+        "conversationRequestId": "bddb73918e458f44cff7dff811d506a0",
+        "agent": "cli"
+      },
+      {
+        "messageId": "de048f07a6874fb195afaf3449309d42",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "bddb73918e458f44cff7dff811d506a0",
+        "conversationRequestId": "bddb73918e458f44cff7dff811d506a0",
+        "rawUsage": {
+          "prompt_tokens": 25125,
+          "completion_tokens": 2136,
+          "total_tokens": 27261,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1035,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 22117,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1035,
+          "credit": 4.86,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 25125,
+          "outputTokens": 2136,
+          "totalTokens": 27261,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1035
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "58da35e536b35c3b2aa188bd84943b65a38d53c8161bf5122182ad50cf6bd0d9",
+    "process_sha256": "8bb64dd54b86a5903d57d6d47d13eec798373d950d13955d19ba977c74a91454",
+    "elapsed_seconds": 65.49,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-a1c2860a88d24d90837120263cd6ba6e",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-23e2959d4d9a-outcome.json",
+    "repairs": [
+      {
+        "original_event_id": "call_63f6cab40b034ab59a8f8c78",
+        "replacement_event_id": "call_63f6cab40b034ab59a8f8c78.result",
+        "basis": "unique exact tool-result ID suffix; quote still separately checked"
+      },
+      {
+        "event_id": "run-end",
+        "original": "本答案依据的官方文档：CUDA Runtime API v13.3.1、CUDA Programming Guide 当前版（2026-09 更新）。所有 API（cudaStreamCreate、cudaStreamCreateWithFlags、cudaMemcpyAsync、cudaMallocHost、cudaEventRecord、cudaStreamWaitEvent、cudaStreamSynchronize）均为当前 CUDA 13.x 有效接口。",
+        "replacement": "本答案依据的官方文档：CUDA Runtime API **v13.3.1**、CUDA Programming Guide 当前版（2026-09 更新）。所有 API（`cudaStreamCreate`、`cudaStreamCreateWithFlags`、`cudaMemcpyAsync`、`cudaMallocHost`、`cudaEventRecord`、`cudaStreamWaitEvent`、`cudaStreamSynchronize`）均为当前 CUDA 13.x 有效接口。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "未核实处：cudaStreamCreate/cudaMemcpyAsync 等最早引入的确切 CUDA 版本号（推断为 2.x 时代，未从本次取得的文档中逐版本核实）",
+        "replacement": "未核实处**：`cudaStreamCreate`/`cudaMemcpyAsync` 等最早引入的确切 CUDA 版本号（推断为 2.x 时代，未从本次取得的文档中逐版本核实）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

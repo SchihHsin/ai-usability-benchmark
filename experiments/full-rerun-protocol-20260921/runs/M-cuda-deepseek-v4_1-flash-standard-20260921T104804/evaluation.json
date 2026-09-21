@@ -1657,6 +1657,755 @@
         ],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T06:25:42.108062+00:00",
+      "process_sha256": "c01d4dd57b7e00f2674e4435b7a499226695495151e408fd769034ca44f1a4a0",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "构建期指定一个或多个 optimization profile，给出运行时维度输入的允许范围，以及 auto-tuner 用于优化的维度。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "evidence_quote": "An *optimization profile* describes a range of dimensions for each network input and the dimensions the auto-tuner will use for optimization. You must create at least one optimization profile at build time when using runtime dimensions.",
+            "verification": "source",
+            "reason": "原题问动态 shape 的 optimization profile / 运行时 shape 做法，答案各子方面均有来源支撑：(a) 构建期以 -1 标记动态维度并创建 IOptimizationProfile（min/opt/max）——call_00_gCmvW3aqyTkTz2j239FH9080 含 addInput(\"foo\", DataType::kFLOAT, Dims3(3, -1, -1)) 与 setDimensions(kMIN/kOPT/kMAX) 官方原文；(b) 运行时 setOptimizationProfileAsync → setInputShape → 查询输出维度 → enqueueV3 及 stream 一致性约束——同源 'At runtime, you must set an optimization profile before setting input dimensions'；(c) trtexec --minShapes/--optShapes/--maxShapes/--shapes 完整命令——call_00_BXg6VWP1yDkEvqDlVyut5649 收录 benchmarking 页与 GitHub trtexec 示例原文；(d) 8.x 与 10.x/11.x 接口差异——call_00_UoWr6KmWZwYv0P4g92Pa5912（迁移指南主路径）、call_00_9O2MwlmEZJRLkcfURKVc5943（移除清单）、call_00_KCEUml04Rg3xGjvQ7WaG3806（enqueueV2→enqueueV3）、8.6.1 归档与 cnblogs 正文（call_00_1OonOaZxsf42msYftlgd7728）相互印证；(e) 动态输出 IOutputAllocator——call_00_gCmvW3aqyTkTz2j239FH9080 原文。纯 CUDA kernel 小节答案自标'仅概念层面，未获本轮官方正文支撑'，但原题括号焦点为 TensorRT 的 optimization profile / 运行时 shape 机制且已全部落地取证，故整体判定 supported。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为TensorRT官方文档Working with Dynamic Shapes。",
+            "evidence": [
+              {
+                "event_id": "call_00_VK4SYaOX5tVjxFQzd5VP1849.result",
+                "quote": "## 1. [Working with Dynamic Shapes — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.3333333333333335,
+            "upper": 3.6666666666666665,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_eUpVA04ygidGjLNBSPTP8120.result",
+                "quote": "Here is an overview of the steps for building an engine with dynamic shapes:"
+              },
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "profile->setDimensions(\"foo\", OptProfileSelector::kMIN, Dims3(3,100,200));"
+              },
+              {
+                "event_id": "call_00_RwYFYAYpcaTqde1di36U0862.result",
+                "quote": "**In this guide**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "已取得正文完整覆盖原题所需：-1标记动态维度、profile三组shape、addOptimizationProfile、运行时setInputShape/getTensorShape、enqueueV3、setOptimizationProfileAsync语义、trtexec --minShapes/--optShapes/--maxShapes，以及约束（profile范围、MIN=OPT=MAX tactic、多profile互斥性）。纯CUDA kernel侧仅先验覆盖，官方正文未涉及，故保留[4,5]，主体满足5。",
+            "evidence": [
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "You must create at least one optimization profile at build time when using runtime dimensions."
+              },
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "context.setInputShape(\"foo\", Dims{3, {3, 150, 250}})"
+              },
+              {
+                "event_id": "call_00_BXg6VWP1yDkEvqDlVyut5649.result",
+                "quote": "--minShapes=, --optShapes=, and --maxShapes= Specify the range of input shapes with which to build the engine."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": [],
+            "candidate_score": 5,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "官方迁移指南给出10.x->11.x与8.x->10.x路径及11.x移除API清单（IOptimizationProfile/setOptimizationProfileAsync保留，setCalibrationProfile等移除），即部分适用关系明确；但原题涉及的enqueueV2/setBindingDimensions确切移除版本未在取得正文中逐项列出，属仍需补充的对应关系。",
+            "evidence": [
+              {
+                "event_id": "call_00_UoWr6KmWZwYv0P4g92Pa5912.result",
+                "quote": "The primary path is TensorRT 10.x to 11.x; an appendix covers TensorRT 8.x to 10.x."
+              },
+              {
+                "event_id": "call_00_9O2MwlmEZJRLkcfURKVc5943.result",
+                "quote": "The APIs listed below have been **removed** in TensorRT 11.x and will cause compile-time errors if used."
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "统一预算内去重后相关独立第三方来源：CSDN gitblog_00970、CSDN gitblog_00595、CSDN weixin_28988985、cnblogs xiaohuozhi、CSDN weicao1990，约5条（pytorch.ac.cn为文档镜像、developer.nvidia.cn与GitHub官方仓库按渠道分类排除），对应4档；因部分来源相关性无法完全确定保留[3,4]。",
+            "evidence": [
+              {
+                "event_id": "call_00_VK4SYaOX5tVjxFQzd5VP1849.result",
+                "quote": "## 2. [TensorRT 动态形状（Dynamic Shapes）实战：基于 ...](https://blog.csdn.net/gitblog_00970/article/details/162996293)"
+              },
+              {
+                "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+                "quote": "【TensorRT 10 C++ inference example】最新版本TensorRT c++ api的推理部署教程 - 萧霍之 - 博客园"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": [],
+            "candidate_score": 4,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 3,
+            "upper": 4,
+            "status": "bounded",
+            "reason": "第三方cnblogs文章对TRT 10的enqueueV3/setInputTensorAddress用法与官方文档一致，可追溯；但多profile约束、版本API演变等关键说法仅有单一第三方来源，缺独立交叉印证，未见未解决矛盾。",
+            "evidence": [
+              {
+                "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+                "quote": "旧版本使用enqueue、enqueueV2进行推理，而新api是enqueueV3"
+              },
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "The provided `stream` argument should be the same CUDA stream that will be used for the subsequent `enqueueV3()` invocation in this context."
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": [],
+            "candidate_score": 3,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "检索前回答已给出完整机制：-1动态维度、IOptimizationProfile三组shape、setDimensions(kMIN/kOPT/kMAX)、addOptimizationProfile、setOptimizationProfileAsync、setInputShape/getTensorShape、profile范围校验、CUDA kernel动态grid计算与gridDim上限，均被官方正文核对一致；仅部分版本细节自记不确定，主体达5，保留[4,5]。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "构建时通过 `IOptimizationProfile`（`createOptimizationProfile()`）为每个动态输入指定三组 shape"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "新 API（TensorRT 8.5+）：用 `context->setInputShape(tensorName, dims)`"
+              },
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "context.setInputShape(\"foo\", Dims{3, {3, 150, 250}})"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": [],
+            "candidate_score": 5,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=10",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_VK4SYaOX5tVjxFQzd5VP1849.dispatch",
+              "call_00_eUpVA04ygidGjLNBSPTP8120.dispatch",
+              "call_00_gCmvW3aqyTkTz2j239FH9080.dispatch",
+              "call_00_BXg6VWP1yDkEvqDlVyut5649.dispatch",
+              "call_00_NGCBg9E2nv2RZfMoX6tc9201.dispatch",
+              "call_00_UoWr6KmWZwYv0P4g92Pa5912.dispatch",
+              "call_00_RwYFYAYpcaTqde1di36U0862.dispatch",
+              "call_00_9O2MwlmEZJRLkcfURKVc5943.dispatch",
+              "call_00_KCEUml04Rg3xGjvQ7WaG3806.dispatch",
+              "call_00_1OonOaZxsf42msYftlgd7728.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "status": "supported",
+            "reason": "最终答案按接口族给出有依据的版本适用范围：TensorRT 10.x/11.x 对应 setInputShape/getTensorShape/setOptimizationProfileAsync/enqueueV3，TensorRT 8.x 对应 setBindingDimensions/getBindingDimensions/enqueueV2，并注明所抓文档为 11.x 主线（出现 11.3.0 等版本号）、社区例为 CUDA 12.4 + TensorRT 10.11。所选接口的适用范围均有依据且相互无矛盾，但均未定到单一具体版本，且 setInputShape/enqueueV3 的精确引入版本（是否 8.5）自标未核实——符合第 4 档：全部组件有依据的适用范围、至少一项未定到具体版本。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "**TensorRT 10.x / 11.x**：`setInputShape` + `getTensorShape` + `setOptimizationProfileAsync` + `enqueueV3`；execution context 用名称寻址。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**TensorRT 8.x**：binding 式 —— `setBindingDimensions` + `getBindingDimensions` + `enqueueV2`"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "（8.5 起已引入 `setInputShape`/`enqueueV3`，但我本轮未取到官方对\"8.5 引入\"的明确版本声明）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "supported",
+            "reason": "答案给出可照抄的完整 trtexec 命令行（构建期 --minShapes/--optShapes/--maxShapes 加运行时 --shapes，并说明仅 ONNX 输入时必需），以及 C++/Python 双语完整 API 调用序列（createOptimizationProfile/setDimensions/addOptimizationProfile → setOptimizationProfileAsync(0, stream) → setInputShape → getTensorShape → enqueueV3(stream)），前置约束明确（profile 须先于输入维度设置、stream 须与后续 enqueueV3 同流、每 execution context 独立 profile）。用户仅需替换明确标识的环境值（张量名 foo/input、shape 数值、模型路径）。API 路径需将官方片段组装为完整程序、输入地址注册仅在第四节与社区引文中出现而非主流程逐步展示，未达第 5 档'无需补写'；答案自标全部代码未运行，按约定不影响档位。综合第 4 档：操作指导完整，仅需替换环境参数。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "context.setOptimizationProfileAsync(0, stream)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 76.12398933333333,
+            "upper": 80.96,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              76.1,
+              81.0
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 76.12398933333333,
+          "upper": 80.96,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            76.1,
+            81.0
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_VK4SYaOX5tVjxFQzd5VP1849.result",
+            "field": "response",
+            "sha256": "068ad0a8932633d13b4ac06c2ec18f20f2f57fc08d403ad94631fae3375047a6",
+            "start": 83,
+            "end": 238,
+            "quote": "## 1. [Working with Dynamic Shapes — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_eUpVA04ygidGjLNBSPTP8120.result",
+            "field": "response",
+            "sha256": "98bb29b2e65dc37cee2867b28bdf2a60fa0174739a881415957649b92cbd46c8",
+            "start": 471,
+            "end": 547,
+            "quote": "Here is an overview of the steps for building an engine with dynamic shapes:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "field": "response",
+            "sha256": "be75145673f466ea446d5babb8942fcf0d1431e39b18b7eb9466f048cbd776d5",
+            "start": 7961,
+            "end": 8035,
+            "quote": "profile->setDimensions(\"foo\", OptProfileSelector::kMIN, Dims3(3,100,200));",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_RwYFYAYpcaTqde1di36U0862.result",
+            "field": "response",
+            "sha256": "e639658d2c6a99ee6dc500d3ac4092df295ed68668697bc3dab760eb21de8a6e",
+            "start": 1449,
+            "end": 1466,
+            "quote": "**In this guide**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "field": "response",
+            "sha256": "be75145673f466ea446d5babb8942fcf0d1431e39b18b7eb9466f048cbd776d5",
+            "start": 6843,
+            "end": 6937,
+            "quote": "You must create at least one optimization profile at build time when using runtime dimensions.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "field": "response",
+            "sha256": "be75145673f466ea446d5babb8942fcf0d1431e39b18b7eb9466f048cbd776d5",
+            "start": 873,
+            "end": 925,
+            "quote": "context.setInputShape(\"foo\", Dims{3, {3, 150, 250}})",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_BXg6VWP1yDkEvqDlVyut5649.result",
+            "field": "response",
+            "sha256": "e257246cfd5de69133c63b37fb442df012a3706bc248422c233bb1cc0993661d",
+            "start": 11154,
+            "end": 11264,
+            "quote": "--minShapes=, --optShapes=, and --maxShapes= Specify the range of input shapes with which to build the engine.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_UoWr6KmWZwYv0P4g92Pa5912.result",
+            "field": "response",
+            "sha256": "4129fd8a508ca48ce49f84962e3847ea44c838e8813d0af30b801cc7bd43d79e",
+            "start": 319,
+            "end": 402,
+            "quote": "The primary path is TensorRT 10.x to 11.x; an appendix covers TensorRT 8.x to 10.x.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_9O2MwlmEZJRLkcfURKVc5943.result",
+            "field": "response",
+            "sha256": "d224a325c74f5b01508626794b4347dd11013c83851ee85b1dea9117c5cf9fd1",
+            "start": 287,
+            "end": 391,
+            "quote": "The APIs listed below have been **removed** in TensorRT 11.x and will cause compile-time errors if used.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_VK4SYaOX5tVjxFQzd5VP1849.result",
+            "field": "response",
+            "sha256": "068ad0a8932633d13b4ac06c2ec18f20f2f57fc08d403ad94631fae3375047a6",
+            "start": 485,
+            "end": 594,
+            "quote": "## 2. [TensorRT 动态形状（Dynamic Shapes）实战：基于 ...](https://blog.csdn.net/gitblog_00970/article/details/162996293)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+            "field": "response",
+            "sha256": "37c5846dd9280fec719a3ffd88c77415bfb77caaf04fd78c73124ff0ffb7985c",
+            "start": 8,
+            "end": 82,
+            "quote": "【TensorRT 10 C++ inference example】最新版本TensorRT c++ api的推理部署教程 - 萧霍之 - 博客园",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+            "field": "response",
+            "sha256": "37c5846dd9280fec719a3ffd88c77415bfb77caaf04fd78c73124ff0ffb7985c",
+            "start": 2523,
+            "end": 2565,
+            "quote": "旧版本使用enqueue、enqueueV2进行推理，而新api是enqueueV3",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "field": "response",
+            "sha256": "be75145673f466ea446d5babb8942fcf0d1431e39b18b7eb9466f048cbd776d5",
+            "start": 8886,
+            "end": 9026,
+            "quote": "The provided `stream` argument should be the same CUDA stream that will be used for the subsequent `enqueueV3()` invocation in this context.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f398a032945e8f4b4efb47d6b68d3c57e403e6162abab6c15319caa9bbe49311",
+            "start": 436,
+            "end": 512,
+            "quote": "构建时通过 `IOptimizationProfile`（`createOptimizationProfile()`）为每个动态输入指定三组 shape",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f398a032945e8f4b4efb47d6b68d3c57e403e6162abab6c15319caa9bbe49311",
+            "start": 1157,
+            "end": 1222,
+            "quote": "新 API（TensorRT 8.5+）：用 `context->setInputShape(tensorName, dims)`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "field": "response",
+            "sha256": "be75145673f466ea446d5babb8942fcf0d1431e39b18b7eb9466f048cbd776d5",
+            "start": 873,
+            "end": 925,
+            "quote": "context.setInputShape(\"foo\", Dims{3, {3, 150, 250}})",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 7544,
+            "end": 7674,
+            "quote": "**TensorRT 10.x / 11.x**：`setInputShape` + `getTensorShape` + `setOptimizationProfileAsync` + `enqueueV3`；execution context 用名称寻址。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 7677,
+            "end": 7768,
+            "quote": "**TensorRT 8.x**：binding 式 —— `setBindingDimensions` + `getBindingDimensions` + `enqueueV2`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 7768,
+            "end": 7832,
+            "quote": "（8.5 起已引入 `setInputShape`/`enqueueV3`，但我本轮未取到官方对\"8.5 引入\"的明确版本声明）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 2484,
+            "end": 2630,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 1712,
+            "end": 1781,
+            "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 3131,
+            "end": 3177,
+            "quote": "context.setOptimizationProfileAsync(0, stream)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "64df519e8c9b046346a4c1fc14fc76e90f7aef95d3dc6966bfc38e18e6abdea8",
+            "start": 264,
+            "end": 333,
+            "quote": "构建期指定一个或多个 optimization profile，给出运行时维度输入的允许范围，以及 auto-tuner 用于优化的维度。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "field": "response",
+            "sha256": "be75145673f466ea446d5babb8942fcf0d1431e39b18b7eb9466f048cbd776d5",
+            "start": 6701,
+            "end": 6937,
+            "quote": "An *optimization profile* describes a range of dimensions for each network input and the dimensions the auto-tuner will use for optimization. You must create at least one optimization profile at build time when using runtime dimensions.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_RwYFYAYpcaTqde1di36U0862.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_RwYFYAYpcaTqde1di36U0862.result",
+            "alternative_body_event_ids": [
+              "call_00_9O2MwlmEZJRLkcfURKVc5943.result",
+              "call_00_1OonOaZxsf42msYftlgd7728.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_KCEUml04Rg3xGjvQ7WaG3806.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_KCEUml04Rg3xGjvQ7WaG3806.result",
+            "alternative_body_event_ids": [
+              "call_00_1OonOaZxsf42msYftlgd7728.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-2d40017dd3c1-predictors.json": "5c2939ee87505a436576189ed786d9c8673d83c091516ba403e82abf1861a659",
+          "reviewed/development/case-2d40017dd3c1-outcome.json": "af74e823522843191d8eac84ac0502392b8c29dd79cdf9d4432566661a701975",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_eUpVA04ygidGjLNBSPTP8120.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_eUpVA04ygidGjLNBSPTP8120.result",
+                "quote": "The following sections provide greater detail. Here is an overview of the steps for building an engine with dynamic shapes:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_eUpVA04ygidGjLNBSPTP8120.result",
+                "quote": "- [Dynamic Shapes: Advanced Topics](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-advanced.html): shape layers, data-dependent shapes, and restrictions for dynamic networks."
+              }
+            ],
+            "reference": "docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html"
+          },
+          {
+            "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "An *optimization profile* describes a range of dimensions for each network input and the dimensions the auto-tuner will use for optimization."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+                "quote": "Always omit the suffix for `K=0`."
+              }
+            ],
+            "reference": "docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html"
+          },
+          {
+            "event_id": "call_00_UoWr6KmWZwYv0P4g92Pa5912.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_UoWr6KmWZwYv0P4g92Pa5912.result",
+                "quote": "This guide covers the API and tooling changes required to migrate NVIDIA TensorRT workloads on NVIDIA DriveOS 6.x and 7.x."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_UoWr6KmWZwYv0P4g92Pa5912.result",
+                "quote": "View API changes between releases using the GitHub compare tool."
+              }
+            ],
+            "reference": "docs.nvidia.com/deeplearning/tensorrt/latest/api/migration-guide.html"
+          },
+          {
+            "event_id": "call_00_RwYFYAYpcaTqde1di36U0862.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_RwYFYAYpcaTqde1di36U0862.result",
+                "quote": "**In this guide**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_RwYFYAYpcaTqde1di36U0862.result",
+                "quote": "- [Removed C++ APIs and Replacements](https://docs.nvidia.com/deeplearning/tensorrt/latest/api/migration/tensorrt-10x-to-11x-c-api-reference.html): removed C++ APIs, plugins, and replacements"
+              }
+            ],
+            "reference": "docs.nvidia.com/deeplearning/tensorrt/latest/api/migration/tensorrt-10x-to-11x-c-api.html"
+          },
+          {
+            "event_id": "call_00_9O2MwlmEZJRLkcfURKVc5943.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_9O2MwlmEZJRLkcfURKVc5943.result",
+                "quote": "The APIs listed below have been **removed** in TensorRT 11.x and will cause compile-time errors if used."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_9O2MwlmEZJRLkcfURKVc5943.result",
+                "quote": "Refer to [Migrate to IAttention](https://github.com/NVIDIA/TensorRT/tree/main/plugin/bertQKVToContextPlugin#migration-to-iattention) for more information."
+              }
+            ],
+            "reference": "docs.nvidia.com/deeplearning/tensorrt/latest/api/migration/tensorrt-10x-to-11x-c-api-reference.html"
+          },
+          {
+            "event_id": "call_00_KCEUml04Rg3xGjvQ7WaG3806.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_KCEUml04Rg3xGjvQ7WaG3806.result",
+                "quote": "**In this guide**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_KCEUml04Rg3xGjvQ7WaG3806.result",
+                "quote": "- [C++ APIs Added in 10.x](https://docs.nvidia.com/deeplearning/tensorrt/latest/api/migration/tensorrt-8x-to-10x-c-api-reference.html): C++ APIs added and removed in 10.x"
+              }
+            ],
+            "reference": "docs.nvidia.com/deeplearning/tensorrt/latest/api/migration/tensorrt-8x-to-10x-c-api.html"
+          },
+          {
+            "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+                "quote": "**发布时间**: 2025-05-16 10:44 阅读: 3313 评论: 4 推荐: 0"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_1OonOaZxsf42msYftlgd7728.result",
+                "quote": "好啦，以上就是本次分享的全部内容，欢迎大家评论区交流！"
+              }
+            ],
+            "reference": "cnblogs.com/xiaohuozhi/p/18879627"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "counts",
+                "quote": "{\"search\": 3, \"fetch\": 7}"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

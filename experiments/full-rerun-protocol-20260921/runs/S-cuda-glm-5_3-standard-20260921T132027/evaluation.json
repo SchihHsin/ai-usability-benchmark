@@ -895,6 +895,752 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T06:25:41.680073+00:00",
+      "process_sha256": "6635b9469e1f2bc44509d526e39ff093621bf50017ed3823a957025b40eb9c19",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "完整流程分三步：**生成 TensorRT engine → 搭 model repository → 起服务并验证**。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_438a631ea52640d6a615a6d6.result",
+            "evidence_quote": "Triton 的 TensorRT 平台标识为 **`\"tensorrt_plan\"`**。",
+            "verification": "source",
+            "reason": "原题三个子要求均有证据支撑：(1) 部署成推理服务并用 TensorRT——最终答案给出 trtexec 从 ONNX 构建 .plan 的完整命令（--onnx/--saveEngine/--min/--opt/--maxShapes），trtexec README 来源确认这些标志（'./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244'）及 INT8 随机权重警告（'in INT8 mode, random weights are used'）。(2) 配 model repository——目录结构（config.pbtxt + 数字版本子目录 + model.plan）与 Model Repository 来源一致（最小仓库 '<model-name>/config.pbtxt 1/ model.plan'；'非数字命名或以 0 开头会被忽略'）；config.pbtxt 最小配置、cc_model_filenames、dynamic_batching、instance_group、shape tensor 等均在 Model Configuration 来源中逐字出现。(3) 起服务——docker run 命令、8000/8001/8002 端口、READY 状态表、curl /v2/health/ready 验证、SDK 容器 image_client 示例均与 Quickstart 来源原文一致。版本配套表与 26.08 Release Notes 来源一致（TensorRT 11.2.1、CUDA 13.3、cc≥7.5）。未发现与来源矛盾的内容。",
+            "evidence_refs": [
+              "ev-29",
+              "ev-30"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（NVIDIA Triton 官方 model repository 文档）；第二次查询第1条亦为官方 TensorRT 文档。",
+            "evidence": [
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "## 1. [Model Repository — NVIDIA Triton Inference Server](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_repository.html)"
+              },
+              {
+                "event_id": "call_ccd1745d5ef24d62a0c00310.result",
+                "quote": "## 1. [NVIDIA TensorRT Documentation](https://docs.nvidia.com/deeplearning/tensorrt/latest/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_4fa42d03ba524502ae516d94.result",
+                "quote": "The Triton Inference Server serves models from one or more model repositories that are specified when the server is started."
+              },
+              {
+                "event_id": "call_438a631ea52640d6a615a6d6.result",
+                "quote": "platform: \"tensorrt_plan\""
+              },
+              {
+                "event_id": "call_50defa28495b41dab4344fdd.result",
+                "quote": "$ docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002"
+              },
+              {
+                "event_id": "call_16f19cbf583f42068dd88ed2.result",
+                "quote": "trtexec --onnx=resnet50.onnx --saveEngine=g1.trt --int8 --skipInference"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "原题所需内容均已取得：model repository 目录布局与版本子目录规则、config.pbtxt 完整字段（platform tensorrt_plan、max_batch_size、input/output、instance_group、cc_model_filenames）、docker 启动命令与端口、健康检查验证、trtexec 从 ONNX 构建 engine 的命令与形状/精度约束。",
+            "evidence": [
+              {
+                "event_id": "call_4fa42d03ba524502ae516d94.result",
+                "quote": "Each version is stored in its own, **numerically named**, subdirectory"
+              },
+              {
+                "event_id": "call_438a631ea52640d6a615a6d6.result",
+                "quote": "  platform: \"tensorrt_plan\"\n  max_batch_size: 8"
+              },
+              {
+                "event_id": "call_50defa28495b41dab4344fdd.result",
+                "quote": "$ curl -v localhost:8000/v2/health/ready"
+              },
+              {
+                "event_id": "call_16f19cbf583f42068dd88ed2.result",
+                "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "release notes 摘要直接给出 26.08 容器含 TensorRT 11.2.1、CC 7.5+ 等部分适用关系，但具体驱动版本号在摘要中截断，且 engine 构建所用 TensorRT 版本与容器内 TensorRT 运行时的兼容规则未在取得的官方正文中明文出现，版本选择所需对应关系仍有缺口。",
+            "evidence": [
+              {
+                "event_id": "call_6636b6088de447108941d8f3.result",
+                "quote": "Release 26.08 supports CUDA compute capability 7.5 and later."
+              },
+              {
+                "event_id": "call_6636b6088de447108941d8f3.result",
+                "quote": "Release 26.08 is based on CUDA 13.4.1 which requires the NVIDIA Driver release."
+              },
+              {
+                "event_id": "call_50defa28495b41dab4344fdd.result",
+                "quote": "Where <xx.yy> is the version of Triton that you want to use (and pulled above)."
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一预算内去重后的相关独立第三方来源4条（Rep-YOLO GitHub 仓库、DeepWiki 页面、两篇 CSDN 博客）；NVIDIA/TensorRT 官方仓库与 developer.nvidia.cn 官方博客按渠道分类不计入。首次发现于第一次查询第3-5条。",
+            "evidence": [
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "## 3. [Rep-YOLO/deploy/triton-inference-server at master - GitHub](https://github.com/DrLSB/Rep-YOLO/tree/master/deploy/triton-inference-server)"
+              },
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "## 4. [Model Repository | triton-inference-server/server | DeepWiki](https://deepwiki.com/triton-inference-server/server/4.1-model-repository)"
+              },
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "## 5. [Triton server的部署、构建、backend插件机制整体介绍 ...](https://blog.csdn.net/u013171226/article/details/148792425)"
+              },
+              {
+                "event_id": "call_ccd1745d5ef24d62a0c00310.result",
+                "quote": "## 3. [从零开始 TensorRT（4）命令行工具篇：trtexec 基本功能 ...](https://blog.csdn.net/weixin_43605641/article/details/135866806)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A）。关键操作主张可由官方文档追溯支持；第三方仅以搜索摘要形式出现且与部署路径一致（未见已确证矛盾），但无第三方正文取得，缺少独立来源交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "Instructions to deploy YOLOv7 as TensorRT engine to Triton Inference Server."
+              },
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "It defines the directory layout, file organization, version management, and storage backend configuration"
+              },
+              {
+                "event_id": "call_84d8fe0c9cf6496dac268088.result",
+                "quote": "Triton Inference Server is an open source inference serving software that streamlines AI inferencing."
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确完整流程：仓库结构、config.pbtxt（tensorrt_plan、max_batch_size、input/output、instance_group）、trtexec 命令、docker 启动与端口、健康检查，经后续官方文档核对均一致；但 cc_model_filenames、当前容器 tag、engine 与容器 TensorRT 版本兼容的具体规定等参数/约束先验自认不确定且确未给出，需外部补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "docker run --gpus all -p 8000:8000 -p 8001:8001 -p 8002:8002"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "8000 是 HTTP，8001 是 gRPC，8002 是 metrics。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "注意 engine 与 GPU 架构和 TensorRT 版本绑定，需与 Triton 容器内的 TensorRT 版本一致。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=7",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_84d8fe0c9cf6496dac268088.dispatch",
+              "call_4fa42d03ba524502ae516d94.dispatch",
+              "call_438a631ea52640d6a615a6d6.dispatch",
+              "call_50defa28495b41dab4344fdd.dispatch",
+              "call_ccd1745d5ef24d62a0c00310.dispatch",
+              "call_16f19cbf583f42068dd88ed2.dispatch",
+              "call_6636b6088de447108941d8f3.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 5,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "最终答案将全部组件锁定到具体版本：Triton 26.08 容器、TensorRT 11.2.1、CUDA 13.3（基于 CUDA 13.4.1 驱动栈）、Ubuntu 24.04 / Python 3.12、compute capability ≥ 7.5，且明确 engine 必须用与容器一致的 TensorRT 版本构建。该配套关系与 26.08 Release Notes（来源核实）一致，无未解决冲突。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "以最新版（Triton 26.08 容器，含 TensorRT 11.2.1、CUDA 13.3，支持 compute capability ≥ 7.5，即 Turing/Ampere/Hopper/Ada/Blackwell）为例"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "engine 必须用与容器一致的 TensorRT 版本构建。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "操作指导完整：trtexec 构建命令含全部必要参数，config.pbtxt 给出完整可写示例，docker run 含端口映射、挂载与镜像 tag（已将官方 <xx.yy> 占位替换为 26.08-py3），验证命令 curl 与 SDK 容器示例齐全，前置条件（NVIDIA Container Toolkit、绝对路径）已说明。仅需替换明确标识的用户环境参数（模型路径 /full/path/to、输入 tensor 名与形状、GPU 数量），故评 4 分而非 5 分。答案自身声明 model-control-mode 等选项未经官方页核实，但不属于原题必需步骤。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "curl -v localhost:8000/v2/health/ready     # 返回 200 即就绪"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "./trtexec --onnx=model.onnx --saveEngine=model.plan --fp16"
+              }
+            ],
+            "evidence_refs": [
+              "ev-26",
+              "ev-27",
+              "ev-28"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 80.602368,
+            "upper": 82.71999999999998,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              80.6,
+              82.8
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 80.602368,
+          "upper": 82.71999999999998,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            80.6,
+            82.8
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 106,
+            "end": 274,
+            "quote": "## 1. [Model Repository — NVIDIA Triton Inference Server](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_repository.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_ccd1745d5ef24d62a0c00310.result",
+            "field": "response",
+            "sha256": "8ce479400fcd90625c88b42e58631dc333722b6cb9a096db45ef8ad44ac38536",
+            "start": 82,
+            "end": 184,
+            "quote": "## 1. [NVIDIA TensorRT Documentation](https://docs.nvidia.com/deeplearning/tensorrt/latest/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_4fa42d03ba524502ae516d94.result",
+            "field": "response",
+            "sha256": "591421acd4f6d0855a93008b71a92ff8bf148de2193a1494e0bc975a90323243",
+            "start": 651,
+            "end": 775,
+            "quote": "The Triton Inference Server serves models from one or more model repositories that are specified when the server is started.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_438a631ea52640d6a615a6d6.result",
+            "field": "response",
+            "sha256": "c33dc9feba22e72ec7bb796f063d5ea31179fb4001ba1c3fb7eb9ead037ab667",
+            "start": 592,
+            "end": 617,
+            "quote": "platform: \"tensorrt_plan\"",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_50defa28495b41dab4344fdd.result",
+            "field": "response",
+            "sha256": "054baef9a5e87b80a5a196af4d1a5b376606df9410b33dcd28c0f2e62673386d",
+            "start": 2633,
+            "end": 2695,
+            "quote": "$ docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_16f19cbf583f42068dd88ed2.result",
+            "field": "response",
+            "sha256": "9630fc0d0f2e9f096f72dcd2232351e85692d86db09c0992963cd105af9c9ada",
+            "start": 1179,
+            "end": 1250,
+            "quote": "trtexec --onnx=resnet50.onnx --saveEngine=g1.trt --int8 --skipInference",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_4fa42d03ba524502ae516d94.result",
+            "field": "response",
+            "sha256": "591421acd4f6d0855a93008b71a92ff8bf148de2193a1494e0bc975a90323243",
+            "start": 6740,
+            "end": 6810,
+            "quote": "Each version is stored in its own, **numerically named**, subdirectory",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_438a631ea52640d6a615a6d6.result",
+            "field": "response",
+            "sha256": "c33dc9feba22e72ec7bb796f063d5ea31179fb4001ba1c3fb7eb9ead037ab667",
+            "start": 590,
+            "end": 637,
+            "quote": "  platform: \"tensorrt_plan\"\n  max_batch_size: 8",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_50defa28495b41dab4344fdd.result",
+            "field": "response",
+            "sha256": "054baef9a5e87b80a5a196af4d1a5b376606df9410b33dcd28c0f2e62673386d",
+            "start": 5059,
+            "end": 5099,
+            "quote": "$ curl -v localhost:8000/v2/health/ready",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_16f19cbf583f42068dd88ed2.result",
+            "field": "response",
+            "sha256": "9630fc0d0f2e9f096f72dcd2232351e85692d86db09c0992963cd105af9c9ada",
+            "start": 504,
+            "end": 623,
+            "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_6636b6088de447108941d8f3.result",
+            "field": "response",
+            "sha256": "8ac92f65164548b5d45d9f3b3a908bfb10d4cf6470e2490f011f69d50243dfdb",
+            "start": 1643,
+            "end": 1704,
+            "quote": "Release 26.08 supports CUDA compute capability 7.5 and later.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_6636b6088de447108941d8f3.result",
+            "field": "response",
+            "sha256": "8ac92f65164548b5d45d9f3b3a908bfb10d4cf6470e2490f011f69d50243dfdb",
+            "start": 1123,
+            "end": 1202,
+            "quote": "Release 26.08 is based on CUDA 13.4.1 which requires the NVIDIA Driver release.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_50defa28495b41dab4344fdd.result",
+            "field": "response",
+            "sha256": "054baef9a5e87b80a5a196af4d1a5b376606df9410b33dcd28c0f2e62673386d",
+            "start": 2836,
+            "end": 2915,
+            "quote": "Where <xx.yy> is the version of Triton that you want to use (and pulled above).",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 1025,
+            "end": 1169,
+            "quote": "## 3. [Rep-YOLO/deploy/triton-inference-server at master - GitHub](https://github.com/DrLSB/Rep-YOLO/tree/master/deploy/triton-inference-server)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 1387,
+            "end": 1529,
+            "quote": "## 4. [Model Repository | triton-inference-server/server | DeepWiki](https://deepwiki.com/triton-inference-server/server/4.1-model-repository)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 1746,
+            "end": 1853,
+            "quote": "## 5. [Triton server的部署、构建、backend插件机制整体介绍 ...](https://blog.csdn.net/u013171226/article/details/148792425)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_ccd1745d5ef24d62a0c00310.result",
+            "field": "response",
+            "sha256": "8ce479400fcd90625c88b42e58631dc333722b6cb9a096db45ef8ad44ac38536",
+            "start": 765,
+            "end": 877,
+            "quote": "## 3. [从零开始 TensorRT（4）命令行工具篇：trtexec 基本功能 ...](https://blog.csdn.net/weixin_43605641/article/details/135866806)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 1171,
+            "end": 1247,
+            "quote": "Instructions to deploy YOLOv7 as TensorRT engine to Triton Inference Server.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 1544,
+            "end": 1649,
+            "quote": "It defines the directory layout, file organization, version management, and storage backend configuration",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "call_84d8fe0c9cf6496dac268088.result",
+            "field": "response",
+            "sha256": "4b3a8cbb622615a337f36bd6033da91b62b5cd42810565d29bf7e6a23207d7f8",
+            "start": 1868,
+            "end": 1969,
+            "quote": "Triton Inference Server is an open source inference serving software that streamlines AI inferencing.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "478a31fc1809e027e934fd82e2596698509d4e6d287f32332a7d2834c8a3df65",
+            "start": 1058,
+            "end": 1118,
+            "quote": "docker run --gpus all -p 8000:8000 -p 8001:8001 -p 8002:8002",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "478a31fc1809e027e934fd82e2596698509d4e6d287f32332a7d2834c8a3df65",
+            "start": 1258,
+            "end": 1297,
+            "quote": "8000 是 HTTP，8001 是 gRPC，8002 是 metrics。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "478a31fc1809e027e934fd82e2596698509d4e6d287f32332a7d2834c8a3df65",
+            "start": 972,
+            "end": 1035,
+            "quote": "注意 engine 与 GPU 架构和 TensorRT 版本绑定，需与 Triton 容器内的 TensorRT 版本一致。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "d3726e3b7768dcafa512bd4ecc4f1937f6f88b4d554fd045951003ea61981766",
+            "start": 157,
+            "end": 273,
+            "quote": "以最新版（Triton 26.08 容器，含 TensorRT 11.2.1、CUDA 13.3，支持 compute capability ≥ 7.5，即 Turing/Ampere/Hopper/Ada/Blackwell）为例",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "d3726e3b7768dcafa512bd4ecc4f1937f6f88b4d554fd045951003ea61981766",
+            "start": 3253,
+            "end": 3284,
+            "quote": "engine 必须用与容器一致的 TensorRT 版本构建。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "d3726e3b7768dcafa512bd4ecc4f1937f6f88b4d554fd045951003ea61981766",
+            "start": 2348,
+            "end": 2539,
+            "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "d3726e3b7768dcafa512bd4ecc4f1937f6f88b4d554fd045951003ea61981766",
+            "start": 2689,
+            "end": 2744,
+            "quote": "curl -v localhost:8000/v2/health/ready     # 返回 200 即就绪",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "d3726e3b7768dcafa512bd4ecc4f1937f6f88b4d554fd045951003ea61981766",
+            "start": 422,
+            "end": 480,
+            "quote": "./trtexec --onnx=model.onnx --saveEngine=model.plan --fp16",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "d3726e3b7768dcafa512bd4ecc4f1937f6f88b4d554fd045951003ea61981766",
+            "start": 274,
+            "end": 335,
+            "quote": "完整流程分三步：**生成 TensorRT engine → 搭 model repository → 起服务并验证**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "call_438a631ea52640d6a615a6d6.result",
+            "field": "response",
+            "sha256": "c33dc9feba22e72ec7bb796f063d5ea31179fb4001ba1c3fb7eb9ead037ab667",
+            "start": 322,
+            "end": 368,
+            "quote": "Triton 的 TensorRT 平台标识为 **`\"tensorrt_plan\"`**。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-14bba652f0fd-predictors.json": "086d7735b96e13f295cc2f153c1fb67cede29c1c5719e01923a51f736d521cfe",
+          "reviewed/development/case-14bba652f0fd-outcome.json": "80433780b1c212d5260ea7449490059955fc2934fa5c8df027f3ed53280e514f",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_4fa42d03ba524502ae516d94.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_repository.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_4fa42d03ba524502ae516d94.result",
+                "quote": "The Triton Inference Server serves models from one or more model repositories that are specified when the server is started."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_4fa42d03ba524502ae516d94.result",
+                "quote": "完整字段规范（包括 `platform`/`backend` 字段及 `\"tensorrt_plan\"` 取值）**不在本页面**"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_repository.html"
+          },
+          {
+            "event_id": "call_438a631ea52640d6a615a6d6.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_438a631ea52640d6a615a6d6.result",
+                "quote": "  platform: \"tensorrt_plan\"\n  max_batch_size: 8"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_438a631ea52640d6a615a6d6.result",
+                "quote": "以下为 config.pbtxt 中所请求字段的完整内容与示例，代码块均保留原文。"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html"
+          },
+          {
+            "event_id": "call_50defa28495b41dab4344fdd.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/getting_started/quickstart.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_50defa28495b41dab4344fdd.result",
+                "quote": "$ docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_50defa28495b41dab4344fdd.result",
+                "quote": "15.346230 (504) = COFFEE MUG"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/getting_started/quickstart.html"
+          },
+          {
+            "event_id": "call_16f19cbf583f42068dd88ed2.result",
+            "url": "https://github.com/NVIDIA/TensorRT/tree/main/samples/trtexec",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_16f19cbf583f42068dd88ed2.result",
+                "quote": "trtexec --onnx=resnet50.onnx --saveEngine=g1.trt --int8 --skipInference"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_16f19cbf583f42068dd88ed2.result",
+                "quote": "本页面(README)未提及 `--memPoolSize` 或 `--workspace` 参数。"
+              }
+            ],
+            "reference": "https://github.com/NVIDIA/TensorRT/tree/main/samples/trtexec"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

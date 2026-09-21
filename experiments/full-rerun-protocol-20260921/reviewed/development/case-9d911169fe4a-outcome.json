@@ -1,0 +1,183 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "msprof op --aic-metrics=PipeUtilization,Memory,MemoryUB --output=./output_data ./add_custom_npu",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_5_cbe2dbc7.result",
+      "evidence_quote": "msprof op --aic-metrics=<select_metrics> --output=./output_data ./add_custom_npu",
+      "verification": "source",
+      "reason": "答案覆盖原题各子方面：(1) 分析方法——msprof op/simulator 命令与官方 CANN 8.5.0 文档逐字一致（WebFetch_5_cbe2dbc7.result：'msprof op --launch-count=10 --kernel-name=\"Add|Sub\" --output=./output_data ./test' 与 'msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu' 均为原文），输出 csv 文件含义（PipeUtilization/Memory/MemoryUB/ResourceConflictRatio 等）与该来源表2逐项对应；(2) 访存瓶颈判读规则——MTE 与 Cube/Vector 占比对比、理论耗时公式、MTE2/MTE3 共享带宽，与官方性能分析页正文一致（WebSearch_2_f7723493.result 第1条：'当MTE2/MTE3同时进行GM读写时,搬运流水线的耗时应该是(MTE2搬运量 + MTE3搬运量)/ GM带宽'，'针对每次搬运数据量较小的情况,实测性能达不到理论带宽'）；(3) UB/L1 搬运与 Cube/Vector 优化——bank conflict 调整依据 ResourceConflictRatio.csv、ArithmeticUtilization.csv 区分 Cube/Vector，均在 WebFetch_5 文件表中有依据；(4) double buffer——机制（V/M/S/MTE 独立指令队列并行）有官方最佳实践条目摘要支持（WebSearch_1_eedb12d8.result 第3条：'执行于AI Core上的指令队列主要包括如下几类，Vector指令队列（V）、Cube指令队列（M）、Scalar指令队列（S）和搬运…'），InitBuffer BUFFER_NUM=2 的具体使能代码细节仅靠检索摘要交叉印证（官方页面正文未抓取成功，WebFetch_3 仅返回标题），但答案对此已透明标注，且该细节不改变整体分析+优化路线的正确性与完整性。综合判定为主干有源支持。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "分析工具版本已锁定：答案明确 msprof op 文件结构、指标与仿真流程取自 CANN 社区版 8.5.0 开发文档，与实际抓取来源 URL（CANNCommunityEdition/850）一致，有依据。但目标芯片未定版：仅给出适用范围'Atlas A2/A3 训练/推理系列等'（'等'字致范围不闭合），--soc-version 留为占位符由用户填写，各芯片理论带宽/算力数值答案自记为未核实；double buffer 最佳实践页为 8.2.RC1，与 8.5.0 的参数差异未比对。属'部分所需组件有明确版本依据，其余仍未确定'。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "上述 `msprof op` 文件结构、`MemoryUB.csv`/`ResourceConflictRatio.csv` 等指标、仿真流水图流程取自 **CANN 社区版 8.5.0** 开发文档"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "`--soc-version` 需填实际芯片（如 Ascend910B 系列，文档中写作 `Ascendxxxyy` 占位）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "具体芯片的理论带宽/算力需查对应 soc 的硬件规格页，本次未检索到逐芯片数值，记为未核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "executable_with_env_substitution",
+      "reason": "操作指导完整：msprof op 三条命令（含 --aic-metrics、--launch-count、--kernel-name）与 msprof op simulator 命令均与官方文档逐字一致，可直接执行；前置条件明确（上板需 app 功能正常、仿真需 -DASCENDC_TRACE_ON、仿真核数不超物理核数、不支持 MC2/HCCL），与来源一致；double buffer 给出关键代码 pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half)) 并说明 UB 占用翻倍的代价与核对方法。只需替换明确标识且有说明的环境参数（./add_custom_npu、./test、Ascendxxxyy、TILE_LEN）。未达5分：double buffer 代码为骨架片段（TILE_LEN/loopCnt 未定义、非完整可编译算子），部分优化建议（如'调整 UB 内数据排布/偏移错开 bank'）为方向性指导需结合具体算子改写。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "msprof op simulator --soc-version=Ascendxxxyy --output=./output_data ./add_custom_npu"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "需编译时加 `-DASCENDC_TRACE_ON`；仿真核数不能超过物理核数；不支持 MC2/HCCL 算子。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "pipe.InitBuffer(inQueueX, 2, TILE_LEN * sizeof(half));   // BUFFER_NUM=2 开启 double buffer"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-9d911169fe4a",
+  "task_id": "U",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "9cbfadd5d7e343748788997940f99b71",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "48f072a858289f3ab4870f48ac49ca81",
+        "conversationRequestId": "48f072a858289f3ab4870f48ac49ca81",
+        "agent": "cli"
+      },
+      {
+        "messageId": "9cbfadd5d7e343748788997940f99b71",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "48f072a858289f3ab4870f48ac49ca81",
+        "conversationRequestId": "48f072a858289f3ab4870f48ac49ca81",
+        "rawUsage": {
+          "prompt_tokens": 18965,
+          "completion_tokens": 7954,
+          "total_tokens": 26919,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 6731,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 15957,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 6731,
+          "credit": 7.13,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 18965,
+          "outputTokens": 7954,
+          "totalTokens": 26919,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 6731
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "c94db39c08e4612b198f3c544e52248bce1e0a8e225f432a8b5cc87c78b4fc48",
+    "process_sha256": "c2ff74535e6d0e3bfc76eafbeab0bcde06500a2fe9dabefe098324f9cf2be28a",
+    "elapsed_seconds": 140.52,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-3016b1ba29f544b79dd07359607ef5ce",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-9d911169fe4a-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "需编译时加 -DASCENDC_TRACE_ON；仿真核数不能超过物理核数；不支持 MC2/HCCL 算子。",
+        "replacement": "需编译时加 `-DASCENDC_TRACE_ON`；仿真核数不能超过物理核数；不支持 MC2/HCCL 算子。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

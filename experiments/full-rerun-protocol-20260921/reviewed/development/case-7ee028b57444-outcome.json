@@ -1,0 +1,176 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "用 `cudaMallocHost()` 分配主机缓冲区（也可 `cudaHostAlloc` / `cudaHostRegister`）。\n2. **非默认 stream**：`cudaStreamCreate()` 创建的是 blocking stream，会与 legacy default stream（stream 0）互相隐式同步。最佳实践是用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_8dc25f49.result",
+      "evidence_quote": "host buffers must be **pinned and page-locked**. `cudaMemcpyAsync()` works with non-pinned memory but **reverts to synchronous behavior**",
+      "verification": "source",
+      "reason": "原题三个子要求均覆盖且有官方来源支撑：(1) pinned memory——答案要求 cudaMallocHost 分配并指出非 pinned 会退化为同步，与来源 §2.5.2.3 逐字一致；(2) stream——cudaStreamCreateWithFlags(cudaStreamNonBlocking) 及默认流陷阱，与来源 §2.5.6/2.5.8 一致；(3) event——cudaEventRecord/cudaEventQuery 跨流模式与 cudaStreamWaitEvent，与来源 §2.5.3.4 及显式同步表一致；重叠流水骨架（H2D→kernel→D2H 逐流入队）与来源 API 语义相符。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为方法性问题，未要求定版到具体 CUDA 版本；答案仅给出条件范围（per-thread default stream 需 CUDA ≥ 7，其余 API 为长期稳定接口），且自述无法核实确切次版本。无版本锁定需求，记 N/A。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "per-thread default stream 需 **CUDA ≥ 7**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "给出了两段可编译骨架（分块流水与 event 轮询），API 名称、参数、方向枚举、stream 参数与同步调用均完整正确；但属于教学骨架而非可直接运行的完整程序：kernel 函数签名/实现、blocks/threads 配置、chunkBytes 取值、头文件包含与错误检查均需用户补写。属第3档：有具体操作方案，需补充缺失内容才能执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "cudaMemcpyAsync(d_in[i], h_in[i], chunkBytes, cudaMemcpyHostToDevice, streams[i]);\n    kernel<<<blocks, threads, 0, streams[i]>>>(d_in[i], d_out[i]);"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-7ee028b57444",
+  "task_id": "V",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "53e73dcdb87440e2be8c5f6fe142b6c6",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7d32995a67a446675c9d3e8c8bcf8761",
+        "conversationRequestId": "7d32995a67a446675c9d3e8c8bcf8761",
+        "agent": "cli"
+      },
+      {
+        "messageId": "53e73dcdb87440e2be8c5f6fe142b6c6",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7d32995a67a446675c9d3e8c8bcf8761",
+        "conversationRequestId": "7d32995a67a446675c9d3e8c8bcf8761",
+        "rawUsage": {
+          "prompt_tokens": 12555,
+          "completion_tokens": 1157,
+          "total_tokens": 13712,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 609,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 9547,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 609,
+          "credit": 2.3,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 12555,
+          "outputTokens": 1157,
+          "totalTokens": 13712,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 609
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "366f69c45db97614e71b6f0f6f9088b6e39620903d8b9aa0bb27c491aab0b836",
+    "process_sha256": "f996f42663bedb698a89634bd9e71fd01ee1f3b80de57c237a12abf8f1202724",
+    "elapsed_seconds": 31.87,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-51ad9d3f683a436db48b1977e6d54db6",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-7ee028b57444-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "用 `cudaMallocHost()` 分配主机缓冲区……最佳实践是用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`",
+        "replacement": "用 `cudaMallocHost()` 分配主机缓冲区（也可 `cudaHostAlloc` / `cudaHostRegister`）。\n2. **非默认 stream**：`cudaStreamCreate()` 创建的是 blocking stream，会与 legacy default stream（stream 0）互相隐式同步。最佳实践是用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)`",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

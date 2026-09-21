@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models",
+      "status": "supported",
+      "answer_quote": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
       "answer_event_id": "run-end",
       "evidence_id": "WebFetch_3_4b855af3.result",
       "evidence_quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；子要求逐项核对：(1) model repository 布局——数字版本子目录、'非数字名或 0 开头会被忽略'、各 backend 默认文件名 model.plan/model.onnx/model.pt 及 default_model_filename 覆盖，见 WebFetch_2_fd288185.result（'非数字命名的子目录、或以字符 0 开头的目录名将**被忽略**'；'以上所有默认文件名均可通过模型配置中的 default_model_filename 属性覆盖'）。(2) config.pbtxt——platform tensorrt_plan、max_batch_size、input/output 必填字段、[-1]+dims 规则、可变维度 -1、instance_group 默认每 GPU 1 实例、auto-complete 与 --disable-auto-complete-config、cc_model_filenames、version_policy，均见 WebFetch_1_2f6135f4.result（如 '系统中**每块 GPU 默认创建 1 个执行实例**'、'当 max_batch_size > 1 且未指定调度器时自动启用'）。(3) trtexec 生成 engine——--onnx/--saveEngine/--fp16/--skipInference/--minShapes 等旗标定义见 WebFetch_6_6731356a.result，动态 shape 语法 'trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244' 见 WebFetch_9_972c93b7.result，答案并如实标注组合命令非原文单条示例。(4) 起服务与验证——docker run 命令、端口 8000/8001/8002、curl -v localhost:8000/v2/health/ready、客户端 -py3-sdk 镜像均逐字对应 WebFetch_3_4b855af3.result。(5) 版本——'Release 2.72.0 corresponding to NGC container 26.08' 及 cu134/cp312 artifact 名见 WebFetch_10_0e2f802e.result；TensorFlow backend 25.02 后移除见 WebSearch_7_78378e11.result（'The last release of Triton Inference Server with the Tensorflow Backend is 25.02'）。远程仓库 s3/gs/as 见 WebFetch_2。答案明确列出无法核实项，未将未证内容冒充已证。主问题（部署流程、仓库配置、起服务）已全部覆盖并有来源支撑。",
-      "raw_status": "supported"
+      "reason": "子要求逐项核对：(1) model repository 布局——数字版本子目录、'非数字名或 0 开头会被忽略'、各 backend 默认文件名 model.plan/model.onnx/model.pt 及 default_model_filename 覆盖，见 WebFetch_2_fd288185.result（'非数字命名的子目录、或以字符 0 开头的目录名将**被忽略**'；'以上所有默认文件名均可通过模型配置中的 default_model_filename 属性覆盖'）。(2) config.pbtxt——platform tensorrt_plan、max_batch_size、input/output 必填字段、[-1]+dims 规则、可变维度 -1、instance_group 默认每 GPU 1 实例、auto-complete 与 --disable-auto-complete-config、cc_model_filenames、version_policy，均见 WebFetch_1_2f6135f4.result（如 '系统中**每块 GPU 默认创建 1 个执行实例**'、'当 max_batch_size > 1 且未指定调度器时自动启用'）。(3) trtexec 生成 engine——--onnx/--saveEngine/--fp16/--skipInference/--minShapes 等旗标定义见 WebFetch_6_6731356a.result，动态 shape 语法 'trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244' 见 WebFetch_9_972c93b7.result，答案并如实标注组合命令非原文单条示例。(4) 起服务与验证——docker run 命令、端口 8000/8001/8002、curl -v localhost:8000/v2/health/ready、客户端 -py3-sdk 镜像均逐字对应 WebFetch_3_4b855af3.result。(5) 版本——'Release 2.72.0 corresponding to NGC container 26.08' 及 cu134/cp312 artifact 名见 WebFetch_10_0e2f802e.result；TensorFlow backend 25.02 后移除见 WebSearch_7_78378e11.result（'The last release of Triton Inference Server with the Tensorflow Backend is 25.02'）。远程仓库 s3/gs/as 见 WebFetch_2。答案明确列出无法核实项，未将未证内容冒充已证。主问题（部署流程、仓库配置、起服务）已全部覆盖并有来源支撑。"
     }
   ],
   "m9_m10": [
@@ -33,15 +32,15 @@
     },
     {
       "id": "M10",
-      "score": null,
+      "score": 4,
       "lower": null,
       "upper": null,
-      "status": "insufficient_evidence",
+      "status": "操作指导完整，仅需替换明确标识的用户环境参数",
       "reason": "最终答案给出可直接执行的完整命令：docker run 含具体镜像 tag 26.08-py3、端口映射、仓库挂载与服务参数；启动前提（NVIDIA 驱动 + Container Toolkit）已写明；验证命令 curl -v localhost:8000/v2/health/ready 及客户端 SDK 镜像命令完整；config.pbtxt 给出可照抄的最小配置；trtexec 静态与动态 shape 命令含全部必要参数，语法与官方 README 一致。需替换的仅为明确标识的环境值：仓库路径、模型名、输入名与维度。扣至 4 而非 5 的原因：四参数合一的 trtexec 命令为按官方语法拼接（答案自标'非原文单条示例'），且'TensorRT backend 直接加载 ONNX 自动转 TRT'的配置路径答案自认未取得官方逐字说明，属需补充/未证实内容，不满足 5 分'无需补写或修正'标准；但关键操作本身均可据答案确定，超过 3 分。",
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models"
+          "quote": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models"
         },
         {
           "event_id": "run-end",
@@ -51,31 +50,10 @@
           "event_id": "run-end",
           "quote": "四参数合一的 trtexec 完整命令为按官方语法拼接，非原文单条示例"
         }
-      ],
-      "raw_status": "操作指导完整，仅需替换明确标识的用户环境参数"
-    }
-  ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "run-end",
-          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models"
-        }
-      ]
-    },
-    {
-      "metric": "M10",
-      "bad_refs": [
-        {
-          "event_id": "run-end",
-          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models"
-        }
       ]
     }
   ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -186,7 +164,20 @@
   },
   "review": {
     "raw_file": "assessments/development/case-f6ba6df5574d-outcome.json",
-    "repairs": [],
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models",
+        "replacement": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models",
+        "replacement": "docker run --gpus=1 --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
     "semantic_validation": false,
     "document_identity_review": null,
     "official_search_evidence_review": null
