@@ -40,6 +40,8 @@ for run in (R/'runs').iterdir():
      quoted={'event_id':x['evidence_id'],'quote':x['evidence_quote'],'_source_quote':True};walk(quoted)
      x['evidence_id']=quoted['event_id'];x['evidence_quote']=quoted['quote']
     old_id=x.get('event_id')
+    if 'quote' not in x and isinstance(x.get('text'),str) and old_id in texts:
+     x['quote']=x['text'];repairs.append({'basis':'evidence text field normalized to quote without wording changes; exact quotation audited separately'})
     if old_id=='final':
      x['event_id']='run-end';old_id='run-end';repairs.append({'basis':'final alias maps to frozen final answer'})
     if isinstance(old_id,str) and old_id not in texts and old_id+'.result' in texts:
@@ -100,7 +102,7 @@ for run in (R/'runs').iterdir():
     parent=value
     for key in fix['path'][:-1]:parent=parent[key]
     key=fix['path'][-1]
-    if parent.get(key)!=fix['original']:raise ValueError('pre-quote field original mismatch')
+    if (parent[key] if isinstance(parent,list) else parent.get(key))!=fix['original']:raise ValueError('pre-quote field original mismatch')
     parent[key]=copy.deepcopy(fix['replacement']);repairs.append(fix)
   walk(value)
   for fix in (json.loads((R/'reviewed-field-corrections.json').read_text()) if (R/'reviewed-field-corrections.json').exists() else []):
@@ -108,7 +110,7 @@ for run in (R/'runs').iterdir():
     parent=value
     for key in fix['path'][:-1]:parent=parent[key]
     key=fix['path'][-1]
-    if parent.get(key)!=fix['original']:raise ValueError('review field original mismatch')
+    if (parent[key] if isinstance(parent,list) else parent.get(key))!=fix['original']:raise ValueError('review field original mismatch')
     parent[key]=copy.deepcopy(fix['replacement']);repairs.append(fix)
   for doc in value.get('m2_documents',[]):
    change=completeness(doc,item)
