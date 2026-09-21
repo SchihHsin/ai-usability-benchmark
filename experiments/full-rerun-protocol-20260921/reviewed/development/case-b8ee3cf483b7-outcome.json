@@ -1,0 +1,211 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "方式 A：不用 runtime，手动挂载（官方文档给出完整命令）\n\n来源：华为官方文档《宿主机目录挂载至容器》（CANN 商用版 6.0.1，envdeployment/instg_000115）\nhttps://www.hiascend.com/doc_center/source/zh/canncommercial/601/envdeployment/instg/instg_000115.html\n\n官方示例（Atlas 300I Pro / 300V / 300I Duo / 800/900 训练推理服务器通用骨架）：\n\n```bash\ndocker run -it \\\n--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_6_67aaec4a.result",
+      "evidence_quote": "docker run -it \\\n--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc \\",
+      "verification": "source",
+      "reason": "原题三个子问题均有据回答：(1) 如何跑带NPU的PyTorch容器——给出方式A手动挂载完整docker run命令与方式B用ascend-docker-runtime，命令逐字来自官方文档WebFetch_6_67aaec4a（CANN商用版6.0.1 instg_000115）与WebFetch_2_6ae9f353/9_8eabe8a6（CANN 8.2.RC1 / MindCluster 7.1.RC1 安装步骤）；(2) 要挂哪些/dev设备——/dev/davinciX、davinci_manager、devmm_svm、hisi_hdc 均与官方表1-3逐字一致，且答案补充了 Atlas 200I SoC 的不同设备清单（WebFetch_6 表内可证）；(3) 是否用 ascend-docker-runtime——明确给出官方插件安装命令与 ASCEND_VISIBLE_DEVICES 机制（WebFetch_3_3f803367 README：'根据ASCEND_VISIBLE_DEVICES，将对应的NPU设备挂载到容器的namespace'）。唯一未完全覆盖的子方面是官方PyTorch镜像的具体名称/tag，答案已诚实标注'具体镜像名与 tag 未能从官方页核实'（AscendHub 页面 WebFetch_8 仅返回导航框架），属未核实的次要子项，不影响主问题成立，故整体supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "部分所需组件有明确版本依据：文档链路锁定 CANN 8.2.RC1 配套 Ascend Docker Runtime 7.1.RC1（有官方来源），手动挂载清单取自 CANN 商用版 6.0.1 文档。但驱动/固件与 CANN 的版本配套表答案自认未抓取，官方PyTorch镜像的具体tag也未核实，且未定到单一具体版本组合，符合'部分所需组件有明确版本依据，其余仍未确定'档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "文档链路版本：CANN 8.2.RC1（社区版）配套 Ascend Docker Runtime 7.1.RC1（mind-cluster v7.1.RC1 发布页）；CANN 商用版 6.0.1 文档中的挂载清单同样有效。驱动/固件与 CANN 的版本配套表本轮未抓取"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "昇腾 PyTorch 镜像在 quay.io/ascend/pytorch 与华为云 SWR …… 此具体地址本轮未获官方正文证实"
+        }
+      ],
+      "raw_status": "partial"
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "方式A给出完整可照抄的docker run命令，含全部--device与-v挂载及CentOS/BC-Linux的--pids-limit 409600前置条件，仅需替换明确标识的<镜像ID>和按卡号增减davinciX；方式B给出runtime安装、重启docker与ASCEND_VISIBLE_DEVICES用法。缺口：方式B的完整docker run示例因'在Docker客户端使用'页未取得正文而按环境变量说明给出，镜像具体地址未核实需用户到AscendHub确认，但方式A独立构成完整可执行路线，符合'仅需替换明确标识且有说明的用户环境参数'档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "docker run -it \\\n--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc \\\n-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \\\n…… <镜像ID> /bin/bash"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "用法即 docker run -e ASCEND_VISIBLE_DEVICES=0,1 <镜像> ...（README 明确该环境变量决定挂载哪些卡；具体完整 docker run 示例所在官方章节……本次抓取只返回了导航框架，未取得正文"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "昇腾 PyTorch 镜像在 quay.io/ascend/pytorch 与华为云 SWR …… 此具体地址本轮未获官方正文证实"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "docker run -it \\\n--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc \\\n-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \\\n…… <镜像ID> /bin/bash"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-b8ee3cf483b7",
+  "task_id": "K",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "86e026622c494c4e826187993e65c622",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "f160eaa06724e2c1a9089e7ed6452e30",
+        "conversationRequestId": "f160eaa06724e2c1a9089e7ed6452e30",
+        "agent": "cli"
+      },
+      {
+        "messageId": "86e026622c494c4e826187993e65c622",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "f160eaa06724e2c1a9089e7ed6452e30",
+        "conversationRequestId": "f160eaa06724e2c1a9089e7ed6452e30",
+        "rawUsage": {
+          "prompt_tokens": 21076,
+          "completion_tokens": 1829,
+          "total_tokens": 22905,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 716,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 18068,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 716,
+          "credit": 4.04,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21076,
+          "outputTokens": 1829,
+          "totalTokens": 22905,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 716
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "53c1d639c7cdaf41b9d80a3d79a58d703cd577bc5575ff1472236f2518959e69",
+    "process_sha256": "7a0d58f4929dda3bf1cff6f392d53277f79a682ea37f48ff8b1d0b97fca8039f",
+    "elapsed_seconds": 29.68,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-a3a1c69e91104af892894f3e6962e888",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-b8ee3cf483b7-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "方式 A：不用 runtime，手动挂载（官方文档给出完整命令）……--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc",
+        "replacement": "方式 A：不用 runtime，手动挂载（官方文档给出完整命令）\n\n来源：华为官方文档《宿主机目录挂载至容器》（CANN 商用版 6.0.1，envdeployment/instg_000115）\nhttps://www.hiascend.com/doc_center/source/zh/canncommercial/601/envdeployment/instg/instg_000115.html\n\n官方示例（Atlas 300I Pro / 300V / 300I Duo / 800/900 训练推理服务器通用骨架）：\n\n```bash\ndocker run -it \\\n--device=/dev/davinci0 \\\n--device=/dev/davinci_manager \\\n--device=/dev/devmm_svm \\\n--device=/dev/hisi_hdc",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

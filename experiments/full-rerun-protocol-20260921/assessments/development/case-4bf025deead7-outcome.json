@@ -1,0 +1,230 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "需要已安装：Docker Engine、NVIDIA GPU 驱动、nvidia-container-toolkit。**不需要在宿主安装 CUDA Toolkit**（NGC 镜像内已含完整 CUDA 栈）",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_2_964f63d1.result",
+      "evidence_quote": "Using the PyTorch NGC Container requires the host system to have the following installed:\n\n- Docker Engine\n- NVIDIA GPU Drivers\n- NVIDIA Container Toolkit",
+      "verification": "source",
+      "reason": "逐项核对：(1) 是否要装 nvidia-container-toolkit——答案明确需要，NGC 目录页 Prerequisites 列出 'NVIDIA Container Toolkit'，且官方安装指南（WebFetch_1）给出完整 apt 安装步骤（含 gpgkey、repo 配置、版本 1.20.1-1），答案命令与官方逐字一致。(2) 是否要加 `--gpus`——答案给出 `docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3`，NGC 页原文 'If you have Docker 19.03 or later... docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3' 证实；Docker ≤19.02 用 nvidia-docker 的说明也与 NGC 页一致。(3) 运行时配置——`nvidia-ctk runtime configure --runtime=docker` + `systemctl restart docker` 与官方指南 Configuring Docker 一节逐字对应。(4) 宿主无需 CUDA Toolkit——NGC 页原文 'It is not necessary to install the NVIDIA CUDA Toolkit.' 直接支持。(5) 镜像 tag 26.08-py3——NGC 目录页 'Latest (26.08-py3)' 证实。(6) 容器内验证 torch.cuda.is_available() 与 NGC 页示例一致。唯一未定项（26.08 对应的确切最低宿主驱动号）答案已如实标注'未完全核实'并给出保守 R575+ 建议，不构成错误。各子要求均有官方来源支撑。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案将 nvidia-container-toolkit 锁定到具体版本 1.20.1-1（官方安装指南原文 'export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.20.1-1' 支撑），NGC PyTorch 镜像锁定到 26.08-py3（NGC 目录页 'Latest (26.08-py3)' 支撑），容器内 CUDA 13.4.1、PyTorch 2.14.0a0+4fdf77b940 亦有支持矩阵页支撑。但宿主最低驱动版本未定到具体版本：答案自述'26.xx 的支持矩阵页不再内联驱动要求……CUDA 13.4.1 的确切最低驱动号需查 CUDA Toolkit Release Notes，此处无法核实，建议保守使用 R575+ 驱动'，属部分组件仅给出有依据的保守范围而未锁定具体版本，且有依据的保守值（R575+ 为 CUDA 13.0 内联记录，非 13.4.1 确认值）。符合第4档：所有组件有依据的适用范围，但至少一项（宿主驱动）未定到具体版本，配套关系无未解决冲突。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "nvidia-container-toolkit：官方安装文档锁定 `1.20.1-1`"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "NGC PyTorch 最新镜像 `26.08-py3`：PyTorch `2.14.0a0+4fdf77b940`，基于 **CUDA 13.4.1**"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "CUDA 13.4.1 的确切最低驱动号需查 CUDA Toolkit Release Notes，此处无法核实，建议保守使用 R575+ 驱动"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "操作指导完整可照抄执行：前置条件明确列出（Docker Engine、NVIDIA 驱动、toolkit，且说明宿主无需 CUDA Toolkit）；toolkit 安装为完整 apt 命令链（含前置包、gpg key、repo 配置、版本固定的 install）；运行时配置给出 `nvidia-ctk runtime configure --runtime=docker` 和 `systemctl restart docker`；运行命令 `docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3` 使用具体可拉取的 tag；并附容器内验证命令。所有命令与官方文档（WebFetch_1、WebFetch_2）逐字一致，无需修正或补写；用户环境参数（镜像 tag、设备号 `--gpus '\"device=0,1\"'`、挂载路径）均已明确标识并给出说明。宿主驱动版本一项答案已明确标注为未核实并给出保守 R575+ 建议及核实途径，属前提说明的诚实边界而非操作步骤缺失。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "sudo nvidia-ctk runtime configure --runtime=docker   # 修改 /etc/docker/daemon.json\nsudo systemctl restart docker"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "python -c \"import torch; print(torch.cuda.is_available())\"   # 应输出 True"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-4bf025deead7",
+  "task_id": "K",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "需要已安装：Docker Engine、NVIDIA GPU 驱动、nvidia-container-toolkit。**不需要在宿主安装 CUDA Toolkit**（NGC 镜像内已含完整 CUDA 栈）",
+        "answer_event_id": "run-end",
+        "evidence_id": "WebFetch_2_964f63d1.result",
+        "evidence_quote": "Using the PyTorch NGC Container requires the host system to have the following installed:\n\n- Docker Engine\n- NVIDIA GPU Drivers\n- NVIDIA Container Toolkit",
+        "verification": "source",
+        "reason": "逐项核对：(1) 是否要装 nvidia-container-toolkit——答案明确需要，NGC 目录页 Prerequisites 列出 'NVIDIA Container Toolkit'，且官方安装指南（WebFetch_1）给出完整 apt 安装步骤（含 gpgkey、repo 配置、版本 1.20.1-1），答案命令与官方逐字一致。(2) 是否要加 `--gpus`——答案给出 `docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3`，NGC 页原文 'If you have Docker 19.03 or later... docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3' 证实；Docker ≤19.02 用 nvidia-docker 的说明也与 NGC 页一致。(3) 运行时配置——`nvidia-ctk runtime configure --runtime=docker` + `systemctl restart docker` 与官方指南 Configuring Docker 一节逐字对应。(4) 宿主无需 CUDA Toolkit——NGC 页原文 'It is not necessary to install the NVIDIA CUDA Toolkit.' 直接支持。(5) 镜像 tag 26.08-py3——NGC 目录页 'Latest (26.08-py3)' 证实。(6) 容器内验证 torch.cuda.is_available() 与 NGC 页示例一致。唯一未定项（26.08 对应的确切最低宿主驱动号）答案已如实标注'未完全核实'并给出保守 R575+ 建议，不构成错误。各子要求均有官方来源支撑。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "答案将 nvidia-container-toolkit 锁定到具体版本 1.20.1-1（官方安装指南原文 'export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.20.1-1' 支撑），NGC PyTorch 镜像锁定到 26.08-py3（NGC 目录页 'Latest (26.08-py3)' 支撑），容器内 CUDA 13.4.1、PyTorch 2.14.0a0+4fdf77b940 亦有支持矩阵页支撑。但宿主最低驱动版本未定到具体版本：答案自述'26.xx 的支持矩阵页不再内联驱动要求……CUDA 13.4.1 的确切最低驱动号需查 CUDA Toolkit Release Notes，此处无法核实，建议保守使用 R575+ 驱动'，属部分组件仅给出有依据的保守范围而未锁定具体版本，且有依据的保守值（R575+ 为 CUDA 13.0 内联记录，非 13.4.1 确认值）。符合第4档：所有组件有依据的适用范围，但至少一项（宿主驱动）未定到具体版本，配套关系无未解决冲突。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "nvidia-container-toolkit：官方安装文档锁定 `1.20.1-1`"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "NGC PyTorch 最新镜像 `26.08-py3`：PyTorch `2.14.0a0+4fdf77b940`，基于 **CUDA 13.4.1**"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "CUDA 13.4.1 的确切最低驱动号需查 CUDA Toolkit Release Notes，此处无法核实，建议保守使用 R575+ 驱动"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "操作指导完整可照抄执行：前置条件明确列出（Docker Engine、NVIDIA 驱动、toolkit，且说明宿主无需 CUDA Toolkit）；toolkit 安装为完整 apt 命令链（含前置包、gpg key、repo 配置、版本固定的 install）；运行时配置给出 `nvidia-ctk runtime configure --runtime=docker` 和 `systemctl restart docker`；运行命令 `docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3` 使用具体可拉取的 tag；并附容器内验证命令。所有命令与官方文档（WebFetch_1、WebFetch_2）逐字一致，无需修正或补写；用户环境参数（镜像 tag、设备号 `--gpus '\"device=0,1\"'`、挂载路径）均已明确标识并给出说明。宿主驱动版本一项答案已明确标注为未核实并给出保守 R575+ 建议及核实途径，属前提说明的诚实边界而非操作步骤缺失。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "sudo nvidia-ctk runtime configure --runtime=docker   # 修改 /etc/docker/daemon.json\nsudo systemctl restart docker"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:26.08-py3"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "python -c \"import torch; print(torch.cuda.is_available())\"   # 应输出 True"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "9580da6cfef4431bb5bf1080639fa7ec",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "fc658b02211260aecf4c9624211e359e",
+        "conversationRequestId": "fc658b02211260aecf4c9624211e359e",
+        "agent": "cli"
+      },
+      {
+        "messageId": "9580da6cfef4431bb5bf1080639fa7ec",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "fc658b02211260aecf4c9624211e359e",
+        "conversationRequestId": "fc658b02211260aecf4c9624211e359e",
+        "rawUsage": {
+          "prompt_tokens": 15200,
+          "completion_tokens": 2070,
+          "total_tokens": 17270,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 746,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 15200,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 746,
+          "credit": 3.59,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 15200,
+          "outputTokens": 2070,
+          "totalTokens": 17270,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 746
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "217599ab82799dbe50cdecbe819d15a9243efcf91cae56b9a5e7bac4523f69fd",
+    "process_sha256": "94298a8331c1b40e140da0dee6622109d225a60e4ebd6354c887f584f3cd7179",
+    "elapsed_seconds": 41.59,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-c66dd870e83e48a398bbfac3a7ed08f1",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

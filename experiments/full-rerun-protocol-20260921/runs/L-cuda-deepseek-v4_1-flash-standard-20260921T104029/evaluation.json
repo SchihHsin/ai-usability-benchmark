@@ -147,6 +147,755 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T04:29:56.592788+00:00",
+      "process_sha256": "c1d6a6fb34866e4baeb6f9687c17f0a6450aef89378e0741218a55aac091e871",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "`assert_close` 报的是整体通过与否；定位用下面脚本，输出最大绝对/相对误差及其索引：",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+            "evidence_quote": "torch.testing.assert_close(result, expected)",
+            "verification": "source",
+            "reason": "最终答案逐项覆盖原题子要求：(1) 逐元素比对——给出官方 assert_close 用法（默认容差表、rtol/atol 须同设、assert_allclose 自 1.12 弃用）与 diff_report 脚本定位最大误差及其索引（answer_quote），与官方教程逐字代码 'torch.testing.assert_close(result, expected)'（call_00_JSwqavxrlfQDDcb6sTvj9957.result）及容差表/弃用说明 'torch.testing.assert_allclose() is deprecated since `1.12`'（call_00_p1i23osEN6LTpFUGsYaA7671.result）一致；(2) 逐层比对——'### 3.1 模型级：forward hook 抓每层输出' 提供完整 hook 采集代码，'在 kernel 之间把中间张量 `cudaMemcpy` 回主机 dump' 给出子步骤二分定位；(3) 根因归因——FMA/-fmad、--use_fast_math、FTZ、原子加、归约顺序、TF32 均有官方逐字依据（call_00_q6x0K06QXwxmHm9kvPPh2843.result：'To maximize the portability of results, users are recommended to use the default settings of the nvcc compiler’s floating-point options: `-ftz=false`, `-prec-div=true`, and `-prec-sqrt=true`, and not use the `--use_fast_math` option.'；call_00_4PynDHnFAGR0aEgrKkwl9471.result：'CPU and GPU results can be different even for bitwise-identical inputs'）；(4) 基准与确定性——种子设置与确定性开关有 call_00_xvFxk1frLGqkM2YUlvnN1142.result（'torch.manual_seed(0)'、cudnn benchmark 关闭）与 call_00_uU4VvNttddmHmSgKwlBT0306.result（'they will throw a `RuntimeError`）支持。答案对未核实项（CUBLAS_WORKSPACE_CONFIG 取值、compute-sanitizer）如实标注，不影响已核对部分的支持判定。",
+            "evidence_refs": [
+              "ev-26",
+              "ev-27"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即出现相关官方来源（docs.pytorch.org 自定义 CUDA 算子教程），第5条为官方 numerical_accuracy 文档。",
+            "evidence": [
+              {
+                "event_id": "call_00_JhyN0nfMWvz3Ua2ovZpC1676.result",
+                "quote": "2. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)"
+              },
+              {
+                "event_id": "call_00_JhyN0nfMWvz3Ua2ovZpC1676.result",
+                "quote": "5. [Numerical accuracy — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.6666666666666665,
+            "upper": 4.333333333333333,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_4PynDHnFAGR0aEgrKkwl9471.result",
+                "quote": "Back to top\n\n# Numerical accuracy[#]"
+              },
+              {
+                "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+                "quote": "[...]\n\n# torch.testing#\n\n# torch.testing#"
+              },
+              {
+                "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+                "quote": "## Summary of Relevant Content"
+              },
+              {
+                "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+                "quote": "Below is a complete extraction of the CUDA Programming Guide content on floating-point computation, organized by the topics you requested"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取得正文覆盖原题主流程与参数：浮点差异根因（FMA、--use_fast_math、FTZ、TF32、原子非确定性）、比对接口 assert_close 的定义式与 dtype 默认容差表、随机种子与确定性算法。但原题明确涉及的逐层比对方法（forward hook、二分定位中间张量）在官方正文中未说明，教程摘要亦确认无容差/float64 测试指导。",
+            "evidence": [
+              {
+                "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+                "quote": "The `nvcc` compilation flag `-fmad=true`, also included in `--use_fast_math`, enables contraction of floating-point multiplies and adds/subtracts"
+              },
+              {
+                "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+                "quote": "float32`\n\n`1.3e-6`\n\n`1e-5"
+              },
+              {
+                "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+                "quote": "it **contains no content on float64/double precision, tolerances (rtol/atol), or gradcheck usage examples**"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已明确部分适用关系：assert_allclose 自 1.12 弃用、改用 assert_close；TF32 控制 API 在 2.14 中 allow_tf32 即将弃用、推荐 fp32_precision。但用户运行环境版本未知，且所用文档混用 2.14 与 main（v2.15.0 unstable），完成版本选择所需的对应关系仍缺失。",
+            "evidence": [
+              {
+                "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+                "quote": "torch.testing.assert_allclose()` is deprecated since `1.12` and will be removed in a future release. Please use `torch.testing.assert_close()` instead."
+              },
+              {
+                "event_id": "call_00_4PynDHnFAGR0aEgrKkwl9471.result",
+                "quote": "torch.backends.cuda.matmul.allow_tf32 = True` is going to be deprecated"
+              },
+              {
+                "event_id": "call_00_uU4VvNttddmHmSgKwlBT0306.result",
+                "quote": "v2.15.0 (unstable)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "搜索预算内出现的第三方来源多为官方文档的中文镜像/翻译（pytorch.ac.cn、it-docs.cn、pytorch.com.tw、bearneck、HeKun GitHub 译本），属同内容转载，合计约1条独立计数；runebook.dev 含一定解析内容。去重后相关独立第三方来源约1—2条。",
+            "evidence": [
+              {
+                "event_id": "call_00_p58gtH6E1wLfsCsRULaA5915.result",
+                "quote": "5. [深度解析 PyTorch 张量比较：解决 assert_close 的精度和 ...](https://runebook.dev/zh/docs/pytorch/testing)"
+              },
+              {
+                "event_id": "call_00_ORpWjxT9IWg5D0SSJDsW6275.result",
+                "quote": "2. [5.5 浮点运算 - CUDA 编程指南（中文版）](https://bearneck.github.io/cuda-programming-guide-zh/chapters/38-floating-point/)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方材料（runebook、中文译本）关于 assert_allclose 弃用与 assert_close 迁移的说法与官方文档一致，有可追溯依据；但无独立来源对 distinctive 关键说法提供交叉印证，且多数第三方为镜像不构成独立互证。",
+            "evidence": [
+              {
+                "event_id": "call_00_p58gtH6E1wLfsCsRULaA5915.result",
+                "quote": "在 PyTorch 1.9 版本之前，常用的比较函数是 torch.testing.assert_allclose。 但是，这个函数已经被弃用，并推荐使 …"
+              },
+              {
+                "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+                "quote": "torch.testing.assert_allclose()` is deprecated since `1.12"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已覆盖原题所需流程、解释、参数与约束：高精度参考基准（float64）、固定种子、逐元素误差定位（argmax/unravel_index、assert_close）、逐层比对（forward hook、二分法）、常见根因（FMA、fast_math、TF32、FTZ、原子非确定性）与工具（compute-sanitizer、Nsight）。事后核对：FMA/fast_math/FTZ 行为与 NVIDIA 官方指南一致，TF32、原子浮点行为均获官方文档印证，未发现被否定的关键主张。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.testing.assert_close(actual, expected, rtol=..., atol=...)` 会给出最大不匹配元素的数量与位置"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "FMA 融合**：`a*b+c` 在 GPU 上常编译为 FMA（一次舍入），CPU/参考为两次舍入"
+              },
+              {
+                "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+                "quote": "Because the FMA uses only one rounding step, it produces a **more accurate result**."
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=10",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_JhyN0nfMWvz3Ua2ovZpC1676.dispatch",
+              "call_00_4PynDHnFAGR0aEgrKkwl9471.dispatch",
+              "call_00_JSwqavxrlfQDDcb6sTvj9957.dispatch",
+              "call_00_ORpWjxT9IWg5D0SSJDsW6275.dispatch",
+              "call_00_q6x0K06QXwxmHm9kvPPh2843.dispatch",
+              "call_00_p58gtH6E1wLfsCsRULaA5915.dispatch",
+              "call_00_p1i23osEN6LTpFUGsYaA7671.dispatch",
+              "call_00_uplrqwY2pAL3w3Ar2Cr15670.dispatch",
+              "call_00_uU4VvNttddmHmSgKwlBT0306.dispatch",
+              "call_00_xvFxk1frLGqkM2YUlvnN1142.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "status": "scored",
+            "reason": "适用范围为所用比对接口与 PyTorch/CUDA 运行环境。比对接口已定到有依据的版本（PyTorch 2.14 文档容差表、assert_allclose 自 1.12 弃用），但用户运行环境组件（本机 PyTorch 版本、CUDA Toolkit 版本、GPU 架构）答案明确表示无法从公开文档确定且需自行确认，CUDA Programming Guide 页面亦未标注版本号。符合第 3 档：部分所需组件有明确版本依据，其余仍未确定；答案诚实披露未锁定，不构成技术错误。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "比对接口 `torch.testing.assert_close` 的默认容差表取自 **PyTorch 2.14** 文档；`assert_allclose` 自 **1.12** 弃用。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "用户具体的 PyTorch 版本 / CUDA Toolkit 版本 / GPU 架构（是否 Ampere+ 影响 TF32）需自行确认——**本轮无法从公开文档得知你的运行环境版本**。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**CUDA Programming Guide 的具体版本号**：页面未给出，无法锁定到某 CUDA 版本。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "scored",
+            "reason": "答案提供可直接执行的完整脚本与命令：逐元素定位 diff_report（含完整函数体与带具体 rtol/atol 的调用）、逐层 forward hook 采集代码、种子与确定性设置、以及具名编译器对照实验（-fmad=false、--use_fast_math 移除、-G 对照）。用户仅需替换明确标识的环境参数（out_cuda/ref_cpu/model/x 即用户自身算子输出与参考、自身模型），符合第 4 档。不给 5 的原因：辅助项 CUBLAS_WORKSPACE_CONFIG 确切取值与 compute-sanitizer 命令被答案自身标注为未核实；且答案明确声明代码未实际运行、仅内容核查（据规则不据此升降档，仅如实记录）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "diff_report(out_cuda, ref_cpu, \"myop\", rtol=1.3e-6, atol=1e-5)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "torch.manual_seed(0)   # 同时给 CPU 和 CUDA RNG 设种子"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "cpu_model = model.to(\"cpu\").to(torch.float64)\ngpu_model = model.to(\"cuda\").to(torch.float32)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "以上代码/命令均为**内容核查**，本轮**未运行**，不声称复现成功。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取得正文覆盖原题主流程与参数：浮点差异根因（FMA、--use_fast_math、FTZ、TF32、原子非确定性）、比对接口 assert_close 的定义式与 dtype 默认容差表、随机种子与确定性算法。但原题明确涉及的逐层比对方法（forward hook、二分定位中间张量）在官方正文中未说明，教程摘要亦确认无容差/float64 测试指导。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；已取得正文覆盖原题主流程与参数：浮点差异根因（FMA、--use_fast_math、FTZ、TF32、原子非确定性）、比对接口 assert_close 的定义式与 dtype 默认容差表、随机种子与确定性算法。但原题明确涉及的逐层比对方法（forward hook、二分定位中间张量）在官方正文中未说明，教程摘要亦确认无容差/float64 测试指导。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_JhyN0nfMWvz3Ua2ovZpC1676.result",
+            "field": "response",
+            "sha256": "4a005cf20c9e212f7ca8dfca6b9930c8ae0b6d2919e799245baa06cee6c0bcfd",
+            "start": 413,
+            "end": 522,
+            "quote": "2. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_JhyN0nfMWvz3Ua2ovZpC1676.result",
+            "field": "response",
+            "sha256": "4a005cf20c9e212f7ca8dfca6b9930c8ae0b6d2919e799245baa06cee6c0bcfd",
+            "start": 1360,
+            "end": 1478,
+            "quote": "5. [Numerical accuracy — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_4PynDHnFAGR0aEgrKkwl9471.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 124,
+            "end": 160,
+            "quote": "Back to top\n\n# Numerical accuracy[#]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+            "field": "response",
+            "sha256": "c975a67a3d33653f4c6e826710b096b7e5e194fcab7f58b47664580a43a6f0ac",
+            "start": 211,
+            "end": 252,
+            "quote": "[...]\n\n# torch.testing#\n\n# torch.testing#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+            "field": "response",
+            "sha256": "e411b757e52542756c1106ff5f3464fc4bbd93ed934e525125a9cc4eb8273be8",
+            "start": 47,
+            "end": 77,
+            "quote": "## Summary of Relevant Content",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+            "field": "response",
+            "sha256": "c7676e6e37009a591f107854d6c4449f75c91081862c564401e7829a1dd64882",
+            "start": 59,
+            "end": 196,
+            "quote": "Below is a complete extraction of the CUDA Programming Guide content on floating-point computation, organized by the topics you requested",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+            "field": "response",
+            "sha256": "c7676e6e37009a591f107854d6c4449f75c91081862c564401e7829a1dd64882",
+            "start": 3951,
+            "end": 4096,
+            "quote": "The `nvcc` compilation flag `-fmad=true`, also included in `--use_fast_math`, enables contraction of floating-point multiplies and adds/subtracts",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+            "field": "response",
+            "sha256": "c975a67a3d33653f4c6e826710b096b7e5e194fcab7f58b47664580a43a6f0ac",
+            "start": 6340,
+            "end": 6365,
+            "quote": "float32`\n\n`1.3e-6`\n\n`1e-5",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+            "field": "response",
+            "sha256": "c975a67a3d33653f4c6e826710b096b7e5e194fcab7f58b47664580a43a6f0ac",
+            "start": 10664,
+            "end": 10815,
+            "quote": "torch.testing.assert_allclose()` is deprecated since `1.12` and will be removed in a future release. Please use `torch.testing.assert_close()` instead.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_4PynDHnFAGR0aEgrKkwl9471.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 7722,
+            "end": 7793,
+            "quote": "torch.backends.cuda.matmul.allow_tf32 = True` is going to be deprecated",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_uU4VvNttddmHmSgKwlBT0306.result",
+            "field": "response",
+            "sha256": "f8f046f71f1cc5e2916c8030d8a0ec383b99e07fd1ba00f8f125cb8c8ebe2a7c",
+            "start": 492,
+            "end": 510,
+            "quote": "v2.15.0 (unstable)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_p58gtH6E1wLfsCsRULaA5915.result",
+            "field": "response",
+            "sha256": "7eb4f5115319ea5963bdcee448518f3b74026ad481b8ae523fc7777fe79ca80d",
+            "start": 1216,
+            "end": 1309,
+            "quote": "5. [深度解析 PyTorch 张量比较：解决 assert_close 的精度和 ...](https://runebook.dev/zh/docs/pytorch/testing)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_ORpWjxT9IWg5D0SSJDsW6275.result",
+            "field": "response",
+            "sha256": "0a75e196ad7141cfce9e478f47ec1fdb98e5c342da9490103b225320832ca9fa",
+            "start": 538,
+            "end": 650,
+            "quote": "2. [5.5 浮点运算 - CUDA 编程指南（中文版）](https://bearneck.github.io/cuda-programming-guide-zh/chapters/38-floating-point/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_p58gtH6E1wLfsCsRULaA5915.result",
+            "field": "response",
+            "sha256": "7eb4f5115319ea5963bdcee448518f3b74026ad481b8ae523fc7777fe79ca80d",
+            "start": 1325,
+            "end": 1403,
+            "quote": "在 PyTorch 1.9 版本之前，常用的比较函数是 torch.testing.assert_allclose。 但是，这个函数已经被弃用，并推荐使 …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+            "field": "response",
+            "sha256": "c975a67a3d33653f4c6e826710b096b7e5e194fcab7f58b47664580a43a6f0ac",
+            "start": 10664,
+            "end": 10722,
+            "quote": "torch.testing.assert_allclose()` is deprecated since `1.12",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f62b64e725e0c570c39d9972f2f7f6f7c3ec85c939f19c89f898bf2ef8fe5f23",
+            "start": 961,
+            "end": 1043,
+            "quote": "torch.testing.assert_close(actual, expected, rtol=..., atol=...)` 会给出最大不匹配元素的数量与位置",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f62b64e725e0c570c39d9972f2f7f6f7c3ec85c939f19c89f898bf2ef8fe5f23",
+            "start": 1698,
+            "end": 1748,
+            "quote": "FMA 融合**：`a*b+c` 在 GPU 上常编译为 FMA（一次舍入），CPU/参考为两次舍入",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+            "field": "response",
+            "sha256": "c7676e6e37009a591f107854d6c4449f75c91081862c564401e7829a1dd64882",
+            "start": 593,
+            "end": 677,
+            "quote": "Because the FMA uses only one rounding step, it produces a **more accurate result**.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 9320,
+            "end": 9415,
+            "quote": "比对接口 `torch.testing.assert_close` 的默认容差表取自 **PyTorch 2.14** 文档；`assert_allclose` 自 **1.12** 弃用。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 9985,
+            "end": 10079,
+            "quote": "用户具体的 PyTorch 版本 / CUDA Toolkit 版本 / GPU 架构（是否 Ampere+ 影响 TF32）需自行确认——**本轮无法从公开文档得知你的运行环境版本**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 10370,
+            "end": 10425,
+            "quote": "**CUDA Programming Guide 的具体版本号**：页面未给出，无法锁定到某 CUDA 版本。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 4327,
+            "end": 4389,
+            "quote": "diff_report(out_cuda, ref_cpu, \"myop\", rtol=1.3e-6, atol=1e-5)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 1283,
+            "end": 1330,
+            "quote": "torch.manual_seed(0)   # 同时给 CPU 和 CUDA RNG 设种子",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 4975,
+            "end": 5067,
+            "quote": "cpu_model = model.to(\"cpu\").to(torch.float64)\ngpu_model = model.to(\"cuda\").to(torch.float32)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 10489,
+            "end": 10525,
+            "quote": "以上代码/命令均为**内容核查**，本轮**未运行**，不声称复现成功。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "cd2ccb781a66271695704da02fc85b4fd413e30e2c1f50135c7e46766df798e1",
+            "start": 3572,
+            "end": 3621,
+            "quote": "`assert_close` 报的是整体通过与否；定位用下面脚本，输出最大绝对/相对误差及其索引：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+            "field": "response",
+            "sha256": "e411b757e52542756c1106ff5f3464fc4bbd93ed934e525125a9cc4eb8273be8",
+            "start": 2055,
+            "end": 2099,
+            "quote": "torch.testing.assert_close(result, expected)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a081938d85e5-predictors.json": "1f26bb9d7b6e5fbb9475070c6d87790917e425d986e2be04df2906bd7e8754d6",
+          "reviewed/development/case-a081938d85e5-outcome.json": "ea07ff49ece2f6441febb742a8f38aa6fb039cdda34419059d3303566d9fa0ca",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_4PynDHnFAGR0aEgrKkwl9471.result",
+            "url": "https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_4PynDHnFAGR0aEgrKkwl9471.result",
+                "quote": "# Numerical accuracy[#]"
+              }
+            ],
+            "boundary_evidence": "正文含多个完整章节，但无独立全文起止核对依据",
+            "reference": "PyTorch 2.14 numerical accuracy notes"
+          },
+          {
+            "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "not_applicable",
+            "score_interval": [
+              3,
+              3
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+                "quote": "The tutorial contains **one dedicated section on testing**"
+              }
+            ],
+            "boundary_evidence": "工具组织的摘要与逐字引文，非直接页面正文",
+            "reference": "PyTorch 自定义 C++/CUDA 算子教程（Testing an operator 节）"
+          },
+          {
+            "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/mathematical-functions.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "not_applicable",
+            "score_interval": [
+              3,
+              3
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_q6x0K06QXwxmHm9kvPPh2843.result",
+                "quote": "Below is a complete extraction of the CUDA Programming Guide content on floating-point computation, organized by the topics you requested"
+              }
+            ],
+            "boundary_evidence": "按请求主题重组的提取，含逐字引文，非直接页面正文",
+            "reference": "CUDA Programming Guide 5.5 Floating-Point Computation"
+          },
+          {
+            "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+            "url": "https://docs.pytorch.org/docs/2.14/testing.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_p1i23osEN6LTpFUGsYaA7671.result",
+                "quote": "[...]\n\n# torch.testing#\n\n# torch.testing#"
+              }
+            ],
+            "boundary_evidence": "文本含 [...] 截断标记与重复断裂",
+            "reference": "PyTorch 2.14 torch.testing 文档"
+          },
+          {
+            "event_id": "call_00_uU4VvNttddmHmSgKwlBT0306.result",
+            "url": "https://docs.pytorch.org/docs/main/generated/torch.use_deterministic_algorithms.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_interval": [
+              4,
+              4
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_uU4VvNttddmHmSgKwlBT0306.result",
+                "quote": "v2.15.0 (unstable)\n\n[...]"
+              }
+            ],
+            "boundary_evidence": "文本含 [...] 截断与 cookie 横幅噪声",
+            "reference": "PyTorch main torch.use_deterministic_algorithms 文档"
+          },
+          {
+            "event_id": "call_00_xvFxk1frLGqkM2YUlvnN1142.result",
+            "url": "https://docs.pytorch.org/docs/stable/notes/randomness.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_interval": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_xvFxk1frLGqkM2YUlvnN1142.result",
+                "quote": "# Reproducibility[#]"
+              }
+            ],
+            "boundary_evidence": "多节完整正文，无截断标记，但无独立全文起止核对依据",
+            "reference": "PyTorch 2.14 Reproducibility notes"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+                "quote": "it **contains no content on float64/double precision, tolerances (rtol/atol), or gradcheck usage examples**"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }
