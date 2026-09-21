@@ -1,0 +1,183 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "多机多卡训练，先参考单卡脚本修改为多卡脚本章节，再参考准备多机多卡训练环境进行必要的配置，最后参考拉起多卡分布式训练章节，选择拉起合适的方式",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_36f3a59f.result",
+      "evidence_quote": "多机多卡训练，先参考[单卡脚本修改为多卡脚本]……再参考[准备多机多卡训练环境]进行必要的配置，最后参考[拉起多卡分布式训练]章节",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求初始化和启动方式，答案两方面均给出且与官方文档对应：初始化方面，env:// 限制（'昇腾AI处理器初始化进程组时initmethod只支持env://'，WebFetch_2）、MASTER_ADDR/MASTER_PORT 设置、backend=\"hccl\"（'torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)'，WebFetch_1）、set_device、DistributedDataParallel(device_ids=[local_rank])、DistributedSampler 均与 WebFetch_1/WebFetch_2 官方内容一致；启动方面，5 种拉起方式（shell/mp.spawn/Python/torchrun/torch_npu_run）与 WebFetch_1 '在单机和多机场景下，有5种方式可拉起分布式训练' 及 WebFetch_2 各命令逐字对应（含 HCCL_WHITELIST_DISABLE=1、torch_npu_run --rdzv_backend=parallel 等）；多机环境准备（端口预留 60000-60015、hccn_tool 配 IP、netdetect/net_health 验证、关防火墙、somaxconn 调整）与 WebFetch_1 原文一致。版本配套表与 WebFetch_4 官方表一致。答案自行标注的缺口（多机 torchrun 完整命令、多机全局 rank 计算）属诚实标注，不影响已交付内容与来源一致。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案给出有依据的版本配套表（CANN 8.0.RC1 ↔ PyTorch 1.11.0/2.1.0/2.2.0 ↔ torch_npu v*.0-6.0.rc1 ↔ 安装包版本），与 WebFetch_4 官方配套表一致，且标注了 torchrun（≥1.11.0）与 torch_npu_run（仅1.11.0）的适用限制，均有官方来源。但答案提供的是同一 CANN 版本下三条可选 PyTorch 路线，未替用户锁定到唯一具体 PyTorch/torch_npu 组合，属'有依据的适用范围而非全部定到具体版本'，故 4 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "| CANN 版本 | PyTorch | torch_npu 分支 | 安装包版本 |"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "torchrun 仅 PyTorch 1.11.0 及以上支持；`torch_npu_run`（大集群推荐）官方标注仅在 PyTorch 1.11.0 版本支持"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "环境准备（sysctl、hccn_tool、防火墙、交换机检查）与多种启动命令（shell 循环、torch.distributed.launch、torch_npu_run 含 --nnodes=8 多机参数）具体可执行，占位符（<rank0 IP>、<端口>）标注清晰。但答案自认两处需补充才能多机执行：多机 rank 应传全局 rank 而示例仅用 local_rank（官方未给多机 rank 计算代码，答案需用户补写），多机 torchrun 完整命令需按通用用法补全，属'需补充缺失内容才能执行'，故 3 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "多机应传全局 rank（官方正文只提示\"配置相应的 rank 与 world_size\"，未给多机 rank 计算代码）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "多机 torchrun 完整命令官方文档未直接给出，需按 PyTorch 通用参数补全"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "多机多卡训练，先参考单卡脚本修改为多卡脚本章节，再参考准备多机多卡训练环境进行必要的配置，最后参考拉起多卡分布式训练章节，选择拉起合适的方式"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "WebFetch_1_36f3a59f.result",
+          "quote": "多机多卡训练，先参考[单卡脚本修改为多卡脚本]……再参考[准备多机多卡训练环境]进行必要的配置，最后参考[拉起多卡分布式训练]章节"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a9d014cddc75",
+  "task_id": "F",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "bbdba39ac9e645e789daaea6e8ac9a52",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "e25fb6e78b0d8e277b482e24e86f2e30",
+        "conversationRequestId": "e25fb6e78b0d8e277b482e24e86f2e30",
+        "agent": "cli"
+      },
+      {
+        "messageId": "bbdba39ac9e645e789daaea6e8ac9a52",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "e25fb6e78b0d8e277b482e24e86f2e30",
+        "conversationRequestId": "e25fb6e78b0d8e277b482e24e86f2e30",
+        "rawUsage": {
+          "prompt_tokens": 18015,
+          "completion_tokens": 1731,
+          "total_tokens": 19746,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 705,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 64
+          },
+          "prompt_cache_hit_tokens": 64,
+          "prompt_cache_miss_tokens": 17951,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 705,
+          "credit": 3.84,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 18015,
+          "outputTokens": 1731,
+          "totalTokens": 19746,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 64
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 705
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "030f4be08cd02cba9c7ac689eacdc8bff376be8c2ac7df45bcbe58aacae530dc",
+    "process_sha256": "6250e87fa3d3a3a3aa383dc134452a36b14fc379461f6c04cdc63851fea2f25c",
+    "elapsed_seconds": 41.94,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-52d9dbb2cad849dca643c70d3f3608fe",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a9d014cddc75-outcome.json",
+    "repairs": [],
+    "semantic_validation": false
+  }
+}

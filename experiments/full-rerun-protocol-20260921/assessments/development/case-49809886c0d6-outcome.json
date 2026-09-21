@@ -1,0 +1,238 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "初始化进程组，通信方式设为 hccl",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_grPkUCwgpENDaZKIkrBm1537.result",
+      "evidence_quote": "dist.init_process_group(\"hccl\", rank=global_rank_idx, world_size=world_size, timeout=timedelta(minutes=30))",
+      "verification": "source",
+      "reason": "原题三个子要求均被最终答案覆盖且有来源支撑。①多机多卡方法与集群准备：HCCL后端、'一个device对应执行一个训练进程'、1/2/4/8P粒度、hccn_tool配device IP（call_00_grPkUCwgpENDaZKIkrBm1537.result: 'hccn_tool -i 0 -ip -s address 10.***.***.2 netmask 255.255.255.0'）、预留端口（同源: 'HCCL建议使用60000-60015端口'）、somaxconn调优均与官方7.2.0多机页逐项吻合。②初始化方式：答案代码用全局 os.environ[\"RANK\"] 初始化进程组，与官方多机示例一致（见evidence_quote），并正确指出官方单机页示例用 rank=local_rank_idx（call_00_KRCaLL3yNL62SkixdBkS1679.result: 'dist.init_process_group(\"hccl\", rank=local_rank_idx'）不可照搬到多机；torch_npu.npu.set_device 与 DDP 封装写法亦见于两官方页。③启动方式：5种拉起方式及torch_npu_run集群推荐见官方页（call_00_KRCaLL3yNL62SkixdBkS1679.result: 'torch_npu_run方式'**（集群场景推荐）**），多机torchrun命令与官方一致（call_00_grPkUCwgpENDaZKIkrBm1537.result: 'torchrun --nnodes 2 --node_rank 0 --nproc_per_node 8 --master_addr xxxx --master_port 12345 train_16p_torchrun.py'）；四个必配参数说明见同源'指定参与计算节点总数（--nnodes）'等要点。第三方来源佐证初始化写法（call_00_bLHnFNmo6qrxGGNCcuyp4592.result: 'dist.init_process_group(backend=\"hccl\")'）。答案对未取得正文的内容（torch_npu_run命令行、HCCL_IF_IP官方定义等）如实标注未核实，未发现与来源矛盾的主张。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "applicable",
+      "reason": "最终答案给出部分组件的确切版本依据：文档版本（多机页TorchNPU 7.2.0、单机页26.0.0、入口6.0.RC1、CANN 9.0.0安装链接）与第三方实测组合（CANN 8.0.1 + torch_npu 2.1.0 + Ascend 910B3）。但答案自认未取得官方CANN/torch_npu/PyTorch配套矩阵，整套适用版本组合未确定，属'部分所需组件有明确版本依据，其余仍未确定'。原题为方法类问题，未强制要求定版，此为锁定粒度评价而非技术错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "第三方实测环境：**CANN 8.0.1 + torch_npu 2.1.0 + Ascend 910B3**（forceinjection）。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "官方文档版本：多机多卡页为 **TorchNPU 7.2.0**；单机多卡页为 **TorchNPU 26.0.0**；另一入口为 **6.0.RC1**；安装链接指向 **CANN 9.0.0**（商用版/社区版）。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "**版本配套矩阵**（CANN / torch_npu / PyTorch 精确对应）：仅见文档版本号与第三方实测组合，未取得官方配套表。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "applicable",
+      "reason": "启动指导完整：多机torchrun命令给出全部必配参数（--nnodes/--node_rank/--nproc_per_node/--master_addr/--master_port），仅需替换明确标注的<主节点IP>等环境值；前置条件齐全（sysctl预留端口、hccn_tool配置device IP与网络健康检测、关闭防火墙、somaxconn/tcp_max_syn_backlog调优均为完整可执行命令行）。初始化代码为官方多机示例核心骨架，分布式逻辑（init_process_group hccl+全局RANK、set_device、DDP封装、DistributedSampler）完整可照抄，仅ToyModel/数据集等用户自有内容需替换，且答案链接了官方完整示例。社区脚本的NNONES笔误与多余反斜杠被答案明确标注'不能直接照抄'，不影响官方主路径。未实际运行，仅内容核查，不宣称复现成功；因存在需替换的IP占位与骨架省略，不给5分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "torchrun --nnodes 2 --node_rank 0 --nproc_per_node 8"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "hccn_tool -i 0 -ip -s address 10.***.***.2 netmask 255.255.255.0"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "# 初始化进程组，通信方式设为 hccl"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-49809886c0d6",
+  "task_id": "F",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "初始化进程组，通信方式设为 hccl",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_grPkUCwgpENDaZKIkrBm1537.result",
+        "evidence_quote": "dist.init_process_group(\"hccl\", rank=global_rank_idx, world_size=world_size, timeout=timedelta(minutes=30))",
+        "verification": "source",
+        "reason": "原题三个子要求均被最终答案覆盖且有来源支撑。①多机多卡方法与集群准备：HCCL后端、'一个device对应执行一个训练进程'、1/2/4/8P粒度、hccn_tool配device IP（call_00_grPkUCwgpENDaZKIkrBm1537.result: 'hccn_tool -i 0 -ip -s address 10.***.***.2 netmask 255.255.255.0'）、预留端口（同源: 'HCCL建议使用60000-60015端口'）、somaxconn调优均与官方7.2.0多机页逐项吻合。②初始化方式：答案代码用全局 os.environ[\"RANK\"] 初始化进程组，与官方多机示例一致（见evidence_quote），并正确指出官方单机页示例用 rank=local_rank_idx（call_00_KRCaLL3yNL62SkixdBkS1679.result: 'dist.init_process_group(\"hccl\", rank=local_rank_idx'）不可照搬到多机；torch_npu.npu.set_device 与 DDP 封装写法亦见于两官方页。③启动方式：5种拉起方式及torch_npu_run集群推荐见官方页（call_00_KRCaLL3yNL62SkixdBkS1679.result: 'torch_npu_run方式'**（集群场景推荐）**），多机torchrun命令与官方一致（call_00_grPkUCwgpENDaZKIkrBm1537.result: 'torchrun --nnodes 2 --node_rank 0 --nproc_per_node 8 --master_addr xxxx --master_port 12345 train_16p_torchrun.py'）；四个必配参数说明见同源'指定参与计算节点总数（--nnodes）'等要点。第三方来源佐证初始化写法（call_00_bLHnFNmo6qrxGGNCcuyp4592.result: 'dist.init_process_group(backend=\"hccl\")'）。答案对未取得正文的内容（torch_npu_run命令行、HCCL_IF_IP官方定义等）如实标注未核实，未发现与来源矛盾的主张。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "applicable",
+        "reason": "最终答案给出部分组件的确切版本依据：文档版本（多机页TorchNPU 7.2.0、单机页26.0.0、入口6.0.RC1、CANN 9.0.0安装链接）与第三方实测组合（CANN 8.0.1 + torch_npu 2.1.0 + Ascend 910B3）。但答案自认未取得官方CANN/torch_npu/PyTorch配套矩阵，整套适用版本组合未确定，属'部分所需组件有明确版本依据，其余仍未确定'。原题为方法类问题，未强制要求定版，此为锁定粒度评价而非技术错误。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "第三方实测环境：**CANN 8.0.1 + torch_npu 2.1.0 + Ascend 910B3**（forceinjection）。"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "官方文档版本：多机多卡页为 **TorchNPU 7.2.0**；单机多卡页为 **TorchNPU 26.0.0**；另一入口为 **6.0.RC1**；安装链接指向 **CANN 9.0.0**（商用版/社区版）。"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "**版本配套矩阵**（CANN / torch_npu / PyTorch 精确对应）：仅见文档版本号与第三方实测组合，未取得官方配套表。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "applicable",
+        "reason": "启动指导完整：多机torchrun命令给出全部必配参数（--nnodes/--node_rank/--nproc_per_node/--master_addr/--master_port），仅需替换明确标注的<主节点IP>等环境值；前置条件齐全（sysctl预留端口、hccn_tool配置device IP与网络健康检测、关闭防火墙、somaxconn/tcp_max_syn_backlog调优均为完整可执行命令行）。初始化代码为官方多机示例核心骨架，分布式逻辑（init_process_group hccl+全局RANK、set_device、DDP封装、DistributedSampler）完整可照抄，仅ToyModel/数据集等用户自有内容需替换，且答案链接了官方完整示例。社区脚本的NNONES笔误与多余反斜杠被答案明确标注'不能直接照抄'，不影响官方主路径。未实际运行，仅内容核查，不宣称复现成功；因存在需替换的IP占位与骨架省略，不给5分。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "torchrun --nnodes 2 --node_rank 0 --nproc_per_node 8"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "sysctl -w net.ipv4.ip_local_reserved_ports=60000-60015"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "hccn_tool -i 0 -ip -s address 10.***.***.2 netmask 255.255.255.0"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "# 初始化进程组，通信方式设为 hccl"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "0acc975ccb174bc3905f4c5e27223ad7",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "5ea01fc7e82c9330b5b84206e45ae373",
+        "conversationRequestId": "5ea01fc7e82c9330b5b84206e45ae373",
+        "agent": "cli"
+      },
+      {
+        "messageId": "0acc975ccb174bc3905f4c5e27223ad7",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "5ea01fc7e82c9330b5b84206e45ae373",
+        "conversationRequestId": "5ea01fc7e82c9330b5b84206e45ae373",
+        "rawUsage": {
+          "prompt_tokens": 25154,
+          "completion_tokens": 14741,
+          "total_tokens": 39895,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 13433,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 23644
+          },
+          "prompt_cache_hit_tokens": 23644,
+          "prompt_cache_miss_tokens": 1510,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 13433,
+          "credit": 9.44,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 25154,
+          "outputTokens": 14741,
+          "totalTokens": 39895,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 23644
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 13433
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "7f9e8fec1e23afada71a7008104c754ed605474c7b053fe48e313d64b11abcb8",
+    "process_sha256": "57a2d59bd048bf5c102fa40f39c2ce3b3c9d72e786559a75b3d5a5f09cce50c3",
+    "elapsed_seconds": 196.12,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-bd4ea68756474ea89e74fd557b6ac749",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

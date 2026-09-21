@@ -1,0 +1,178 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "下面按\"先定位 Python 行 → 再定位设备端文件/行与 kernel 名 → 再定位非法访存细节\"三步走",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_DZSQHjIKyaFSAwggTEiv6360.result",
+      "evidence_quote": "You can force synchronous computation by setting environment variable `CUDA_LAUNCH_BLOCKING=1`.",
+      "verification": "source",
+      "reason": "原题两个子要求均有证据支撑：(a) 定位哪一行——答案给出 CUDA_LAUNCH_BLOCKING=1 使 traceback 指向真正发起 kernel 的 Python 行，官方 CUDA semantics 文档原文确认；设备端 file:line 由 DSA 输出字段 File containing assertion / File containing kernel launch 提供，PyTorch 源码（call_00_k8cpNJs1fenFYCVr6b0g6817.result 中 c10_retrieve_device_side_assertion_info 的 oss 输出 \"File containing assertion = \" 等）逐字对应。(b) 定位哪个 kernel——DSA 输出 \"Name of kernel launched that led to failure\"，源码同文件确认；compute-sanitizer 部分语法与选项（--tool memcheck、--kernel-name kns=、--launch-skip/--launch-count、memcheck 输出含 kernel 名与 file:line）均与 NVIDIA 官方文档抓取（call_00_J2pb5EIrEIhYC2Pvvlfb7243.result）一致。答案还如实标注 NVIDIA 文档未记载 device-side assert、DSA 版本定版未核实等限制，未虚构。answer_event_id 为运行末次事件（404 fetch），最终答案在其后的 final 中给出。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "部分所需组件有明确版本依据：CUDA_LAUNCH_BLOCKING 由 PyTorch 2.14 文档确认（来源标题 \"CUDA semantics — PyTorch 2.14 documentation\"）；compute-sanitizer 给出 \"must be from the same CUDA toolkit version\" 与 \"Starting from CUDA 11.6\" 的适用关系。但关键组件 DSA 的运行时开关 PYTORCH_USE_CUDA_DSA 重命名及自动编译标志的确切入版本未确定（答案自述 v1.13.0 源文件 404、预算用尽无法核实），即所需组件之一仅有源码 main 分支证据而定不到具体 PyTorch 版本，符合第 3 档。",
+      "evidence": [
+        {
+          "event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
+          "quote": "DSA 运行时环境变量重命名/自动编译标志的确切引入版本未核实（v1.13.0 源文件 404；预算内无法再查）。"
+        }
+      ],
+      "raw_status": "scored"
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "给出完整可直接照抄的命令序列：CUDA_LAUNCH_BLOCKING=1 python train.py、PYTORCH_USE_CUDA_DSA=1 CUDA_LAUNCH_BLOCKING=1 python train.py、compute-sanitizer --tool memcheck python train.py，仅需替换明确标识的脚本名等用户环境值；前置条件（compute capability ≥ 6 / managed memory、断言计数上限、环队列上限、需重启进程、CUDA toolkit 版本一致性、-lineinfo/-rdynamic）均已说明。未给 5 分的原因：DSA 开关在新旧版本间的适用名（PYTORCH_USE_CUDA_DSA vs TORCH_USE_CUDA_DSA）答案自认未核实，旧版本用户可能需按其提示改试另一开关名，属需依环境调整的内容；其余命令无需修正。答案明确未实际执行，仅内容核查，不据此升降档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "PYTORCH_USE_CUDA_DSA=1 CUDA_LAUNCH_BLOCKING=1 python train.py\n# 需要 kernel 启动处主机堆栈时再叠加：\nPYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 CUDA_LAUNCH_BLOCKING=1 python train.py"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
+          "quote": "DSA 运行时环境变量重命名/自动编译标志的确切引入版本未核实（v1.13.0 源文件 404；预算内无法再查）。"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-8597ef512f3f",
+  "task_id": "E",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "785d93ab2a584792876313923b3e227d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "037f09b84e2b435164d20253c9d3b5c6",
+        "conversationRequestId": "037f09b84e2b435164d20253c9d3b5c6",
+        "agent": "cli"
+      },
+      {
+        "messageId": "785d93ab2a584792876313923b3e227d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "037f09b84e2b435164d20253c9d3b5c6",
+        "conversationRequestId": "037f09b84e2b435164d20253c9d3b5c6",
+        "rawUsage": {
+          "prompt_tokens": 29620,
+          "completion_tokens": 2022,
+          "total_tokens": 31642,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1055,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 29620,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1055,
+          "credit": 5.87,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 29620,
+          "outputTokens": 2022,
+          "totalTokens": 31642,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1055
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "0944ae8fa764046f234fecd942e8d7fe32e2cfd317e2177f8b51fee732fe73a3",
+    "process_sha256": "8537ac79504cef182957dce3dfd24e828456154b31e7cc5caafcef9a6578a484",
+    "elapsed_seconds": 57.78,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-e8181a22584b428b831b095a593c86fc",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-8597ef512f3f-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "original_event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
+        "replacement_event_id": "run-end",
+        "basis": "M9/M10 evidence is an exact frozen final-answer substring"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

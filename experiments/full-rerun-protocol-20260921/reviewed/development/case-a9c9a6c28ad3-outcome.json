@@ -1,0 +1,182 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_b43bcf4d.result",
+      "evidence_quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+      "verification": "source",
+      "reason": "原题三个子要求均满足：(1) 完整步骤——最终答案给出5步总览（写.cu、注册、setup.py构建、pip install、Python调用），与官方教程流程一致（WebFetch_1教程结构覆盖build setup/定义算子/CPU与CUDA实现/测试）；(2) setup.py——给出最小版（CUDAExtension+BuildExtension，与WebFetch_2中CUDAExtension官方示例一致：sources=['extension.cpp', 'extension_kernel.cu'], extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}）及生产级版本（与WebFetch_4摘录的官方仓库setup.py实质一致，仅排版压缩）；(3) 注册代码——TORCH_LIBRARY定义schema、TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m)注册，逐字对应WebFetch_1非ABI-Stable注册代码；CUDA kernel（muladd_kernel + mymuladd_cuda，含at::cuda::getCurrentCUDAStream()）也与WebFetch_1一致。构建命令 pip install --no-build-isolation -e . 与WebFetch_3官方仓库README一致。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "assessed",
+      "reason": "部分组件有明确版本依据：PyTorch ≥2.4（TORCH_LIBRARY）/≥2.10（Stable ABI）、最低Python 3.9、-std=c++20，均有官方教程与cpp_extension文档支撑；但CUDA toolkit仅说需单独安装，最终答案自认'当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实'，该组件版本未确定，且PyTorch也只给出适用范围而非锁定单一具体版本，属第3档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "assessed",
+      "reason": "操作指导基本完整：完整kernel/注册/setup.py代码、构建命令（pip install --no-build-isolation -e .）、TORCH_CUDA_ARCH_LIST设置、JIT替代方案与Python调用示例，前置条件（CUDA toolkit、CUDA_HOME、ninja）均有说明，环境参数（架构列表8.0 8.6）已明确标识需按用户GPU替换。但生产级setup.py摘录中使用了未定义的this_dir（原文WebFetch_4中有 this_dir = os.path.dirname(os.path.curdir) 一行被省略），照抄会NameError，需补一行才能运行，故未达5；最小setup.py与JIT路线可执行，整体高于3，记4。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a9c9a6c28ad3",
+  "task_id": "D",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "8d451295d4904405a4866bce3f6a9b3d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "150e15dc895f9dcc25f89d734e5ca1c5",
+        "conversationRequestId": "150e15dc895f9dcc25f89d734e5ca1c5",
+        "agent": "cli"
+      },
+      {
+        "messageId": "8d451295d4904405a4866bce3f6a9b3d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "150e15dc895f9dcc25f89d734e5ca1c5",
+        "conversationRequestId": "150e15dc895f9dcc25f89d734e5ca1c5",
+        "rawUsage": {
+          "prompt_tokens": 23537,
+          "completion_tokens": 3945,
+          "total_tokens": 27482,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 3054,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 23537,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 3054,
+          "credit": 5.98,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 23537,
+          "outputTokens": 3945,
+          "totalTokens": 27482,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 3054
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "8046662f5055ef642528640bc8aae0f68cad01707300c213f571fb0c4a3392bf",
+    "process_sha256": "cb20d4215640b0eea6f8407a7e2ce3b7ee71313580ee5db99b8992f4776ac7c2",
+    "elapsed_seconds": 110.69,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-7541cb393eaf4587b83de20348795c8d",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a9c9a6c28ad3-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

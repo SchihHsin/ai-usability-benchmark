@@ -1,0 +1,208 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "EZ9999 本身不是根因，只是\"内部错误\"的外层封装**，根因要从它携带的扩展信息和第一条 ERROR 日志里找。",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_083676bd.result",
+      "evidence_quote": "用户在执行任务过程中出现aicore/aivector执行失败后报错退出，打屏日志错误码为EZ9999，且日志中包含“**there is an aivec error exception**”或“**there is an aicore error exception**”；或者plog日志中存在报错日志“**Aicore kernel execute failed**”。",
+      "verification": "source",
+      "reason": "原题为诊断类问题，内部子要求逐项核对：(a)错误码含义——EZ9999属E*9***内部错误的释义有官方搜索摘要佐证（WebSearch_2_eb779b89.result: “E*9***表示系统内部错误码，请根据报错信息进行问题排查”），答案已如实标注正文抓取受阻、释义引自摘要；(b)根因定位方法——读chipId/core id/errcode/errorStr/fault kernel_name并从首报错算子排查，与官方正文逐条对应（WebFetch_1_083676bd.result、WebFetch_4_4791d0cc.result的“报错日志解读”节）；(c)日志收集——plog路径、ASCEND_GLOBAL_LOG_LEVEL取值有官方正文（WebFetch_8_b7c1d335.result: “0：对应DEBUG级别…默认为ERROR级别”、支持型号列表）及知乎专栏（WebFetch_10_2fb13ebf.result: “$Driver_HOME/driver/tools/msnpureport -a”）；(d)分类排查与求助路径——HCCL/OOM/动态shape等来自CSDN二手来源（WebFetch_9_438b3fac.result），答案已明确标注哪些未经官方核实。核心定位与排查方法有官方来源支撑，未核实项均已披露且无证据表明错误，判定supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial_version_basis",
+      "reason": "最终答案给出部分组件的有依据版本范围：AI Core Error文档取到8.1.RC1与8.2.RC1正文（WebFetch_1/WebFetch_4），ASCEND_GLOBAL_LOG_LEVEL取到8.0.RC2.alpha002正文，错误码页有9.0.0-beta.2与商用版8.0.RC2摘要证据；但E*9***错误码页与《查看日志》页正文未取回，msnpureport用法与plog子路径仅来自第三方来源未定版，关键定版依赖（如用户实际CANN/驱动配套版本）也未锁定到具体版本。属于“部分所需组件有明确版本依据，其余仍未确定”。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "以上文档证据覆盖 CANN 社区版 8.0.RC2 / 8.1.RC1 / 8.2.RC1 / 9.0.0-beta.2 与商用版 8.0.RC2"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "EZ9999 的官方释义引自搜索结果摘要"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "`ASCEND_SLOG_PRINT_TO_STDOUT=1`、`plog` 具体子路径、`HCCL_EXEC_TIMEOUT`、`msaccucmp.py` 用法来自二手来源，本轮未取到对应官方正文核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "executable_with_env_params",
+      "reason": "主要操作路径可直接执行：日志级别设置给出完整命令与取值含义，系统日志导出给出完整命令行（$Driver_HOME为明确标识且有说明的环境参数），硬件检查用npu-smi info，版本核对给出cat version.cfg与npu-smi -V。这些与官方正文一致（WebFetch_8的配置示例“export ASCEND_GLOBAL_LOG_LEVEL=1”；WebFetch_10的“$Driver_HOME/driver/tools/msnpureport -a”）。扣1分原因：算子Dump与msaccucmp.py比对分支仅有思路级描述（“可用算子 Dump + `msaccucmp.py` 与 CPU/GPU 逐层比对定位首错层”）无具体命令，ASCEND_SLOG_PRINT_TO_STDOUT未经官方核实（答案已自行标注），HCCL_EXEC_TIMEOUT调整未给出具体设置方式；主流程无需修正即可照抄运行，故4分而非3分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export ASCEND_GLOBAL_LOG_LEVEL=1   # 0=DEBUG, 1=INFO, 2=WARNING, 3=ERROR(默认), 4=NULL"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "$Driver_HOME/driver/tools/msnpureport -a        # 导出全部系统日志到 Host"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "可用算子 Dump + `msaccucmp.py` 与 CPU/GPU 逐层比对定位首错层"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-1b8d7da5de1d",
+  "task_id": "E",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "7539633af0474c00b32f7457a2d0a6e1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "71d4a9f2506b4e6cd7e347ece7cb76c0",
+        "conversationRequestId": "71d4a9f2506b4e6cd7e347ece7cb76c0",
+        "agent": "cli"
+      },
+      {
+        "messageId": "7539633af0474c00b32f7457a2d0a6e1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "71d4a9f2506b4e6cd7e347ece7cb76c0",
+        "conversationRequestId": "71d4a9f2506b4e6cd7e347ece7cb76c0",
+        "rawUsage": {
+          "prompt_tokens": 21321,
+          "completion_tokens": 3684,
+          "total_tokens": 25005,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2566,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 19615
+          },
+          "prompt_cache_hit_tokens": 19615,
+          "prompt_cache_miss_tokens": 1706,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2566,
+          "credit": 3.12,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21321,
+          "outputTokens": 3684,
+          "totalTokens": 25005,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 19615
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2566
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "b002496e502523b4b216fb1625cb15564c1a508394407c4493a486b9f210b6d8",
+    "process_sha256": "763d8c278e1aa14e547f7c55d4d9abb80dc8195cffb80cda16edca0966859fb0",
+    "elapsed_seconds": 64.47,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-5da6d653c29f409c9641b072edd580e8",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-1b8d7da5de1d-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "EZ9999 本身不是根因，只是\"内部错误\"的外层封装，根因要从它携带的扩展信息和第一条 ERROR 日志里找。",
+        "replacement": "EZ9999 本身不是根因，只是\"内部错误\"的外层封装**，根因要从它携带的扩展信息和第一条 ERROR 日志里找。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "event_id": "WebFetch_1_083676bd.result",
+        "original": "用户在执行任务过程中出现aicore/aivector执行失败后报错退出，打屏日志错误码为EZ9999，且日志中包含“there is an aivec error exception”或“there is an aicore error exception”；或者plog日志中存在报错日志“Aicore kernel execute failed”。",
+        "replacement": "用户在执行任务过程中出现aicore/aivector执行失败后报错退出，打屏日志错误码为EZ9999，且日志中包含“**there is an aivec error exception**”或“**there is an aicore error exception**”；或者plog日志中存在报错日志“**Aicore kernel execute failed**”。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

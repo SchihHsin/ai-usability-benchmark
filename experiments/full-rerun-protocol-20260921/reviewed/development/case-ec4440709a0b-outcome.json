@@ -1,0 +1,198 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "构建 INT8 引擎时 builder 执行三步…1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；2. 从直方图构建校准表（每个张量一个尺度值）；3. 根据校准表和网络定义构建 INT8 引擎。",
+      "answer_event_id": "final",
+      "evidence_id": "call_d6a60ecb834448569ceab816.result",
+      "evidence_quote": "构建 INT8 引擎时，构建器执行以下步骤：\n\n1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。\n2. 从直方图构建一个校准表，为每个张量提供一个比例值。\n3. 根据校准表和网络定义构建 INT8 引擎。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题含多个子要求，逐项核对：(1) INT8量化部署方法——答案给出隐式量化(校准器)与显式量化(Q/DQ)两条路线，官方博客7.1.2节及API文档(call_1529bcda33854363b9b8dcbd.result '[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.')与TRT11发布说明(call_3d41a11fa91c4785a560d9fd.result 'Weak-typing APIs (`setPrecision`, `setDynamicRange`, the per-precision `BuilderFlag` family) and implicit quantization (`IInt8Calibrator`) have been removed.')均支持该分叉；(2) 校准流程——三步builder流程、校准器选择(Entropy2/MinMax推荐及适用场景)、约500张图经验值、缓存读写与可移植条件、INT8 I/O校准数据须FP32且在[-128.0F,127.0F]，逐字对应官方博客7.3节(call_d6a60ecb834448569ceab816.result '实验表明大约 500 张图像足以校准 ImageNet 分类网络'、'只要校准发生在层融合之前，校准缓存数据就可以在平台之间…移植')；(3) 可执行代码——Python校准器类与build流程基于TRT 10.16.1 API文档示例(call_1529bcda33854363b9b8dcbd.result get_batch/read_calibration_cache/write_calibration_cache示例)；Torch-TensorRT封装对应官方PTQ文档(call_80afebd2f9a04262a4b25358.result)；显式量化Q/DQ路线对应call_0fd7a8496af044ddbd267ba1.result 'Calibration is performed before ONNX export…scales are embedded directly into the Q/DQ nodes.'。答案主动标注trtexec --calib等未核实处，不影响主体要求满足。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "version_ranges_established_not_locked_to_single_version",
+      "reason": "答案未指定单一版本，而是按版本分叉给出有依据的适用范围：TRT 8.x–10.x用IInt8Calibrator（10.1起deprecated，引TRT 10.16.1 API文档原文）、TRT 11.0+移除该校准器改用显式量化（引11.0 Release Highlights原文）。各路线的版本边界均有官方逐字引文支撑，无未消解冲突；但最终落点依赖用户所处版本，未锁定到唯一具体版本，且答案自述trtexec参数拼写等未核实。按档为4：所有组件给出有依据的适用范围，但未定到单一具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "TRT 10.16.1 Python API 文档原文：`CalibrationAlgoType`/`IInt8Calibrator` \"[DEPRECATED] Deprecated in TensorRT 10.1. Superseded by explicit quantization.\""
+        },
+        {
+          "event_id": "run-end",
+          "quote": "11.0 移除了 `IInt8Calibrator` 及弱类型 API（`setPrecision`、`setDynamicRange` 等），强类型网络成为默认"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "executable_with_corrections_needed",
+      "reason": "主代码为具体可操作方案：校准器类四接口实现、ONNX解析、config.set_flag(trt.BuilderFlag.INT8)、config.int8_calibrator挂载、build_engine触发校准，均与官方文档一致。但存在需修正/补写的缺口：(1) `self.device_input = ...` 为占位符，设备缓冲分配需补写；(2) get_batch内使用 `self.batches` 而__init__只定义了 `self.batch_stream`，属性不一致需修正；(3) 构建段引用未定义变量 `batchstream`（应为MyCalibrator(batch_stream)之类）；(4) Torch-TensorRT片段以 `...` 截断参数。trtexec --calib参数拼写答案自认未核实。属3档：有具体操作方案但需修正错误或补充缺失内容才能直接执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "self.device_input = ...  # 用 pycuda/cuda alloc 分配的 device buffer"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "data = next(self.batches)"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "config.int8_calibrator = MyCalibrator(batchstream)   # 挂载校准器"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "构建 INT8 引擎时 builder 执行三步…1. 构建 32 位引擎，在校准集上运行，为每个激活张量记录分布直方图；2. 从直方图构建校准表（每个张量一个尺度值）；3. 根据校准表和网络定义构建 INT8 引擎。"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-ec4440709a0b",
+  "task_id": "H",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "83e1508efd8f4213bcc67cdf3cd42418",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c652e5d0a96f73ecc881754fb66fb9af",
+        "conversationRequestId": "c652e5d0a96f73ecc881754fb66fb9af",
+        "agent": "cli"
+      },
+      {
+        "messageId": "83e1508efd8f4213bcc67cdf3cd42418",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c652e5d0a96f73ecc881754fb66fb9af",
+        "conversationRequestId": "c652e5d0a96f73ecc881754fb66fb9af",
+        "rawUsage": {
+          "prompt_tokens": 32354,
+          "completion_tokens": 1869,
+          "total_tokens": 34223,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 571,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 32354,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 571,
+          "credit": 6.22,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 32354,
+          "outputTokens": 1869,
+          "totalTokens": 34223,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 571
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "dbe69825d6b533d96b7c38be41794475366229ef5a560c9a63357a29d69eb2ec",
+    "process_sha256": "273458959af5079aad05b36eeeffe057440cd99ced50945299ff14bf2f921c18",
+    "elapsed_seconds": 60.93,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-9b8f1f578911484bbe708fd3969863f2",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-ec4440709a0b-outcome.json",
+    "repairs": [
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

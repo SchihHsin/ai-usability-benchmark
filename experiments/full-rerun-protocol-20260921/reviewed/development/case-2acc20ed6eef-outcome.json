@@ -1,0 +1,224 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。",
+      "answer_event_id": "final",
+      "evidence_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+      "evidence_quote": "构建 INT8 引擎时，构建器执行以下步骤：1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。2. 从直方图构建一个校准表，为每个张量提供一个比例值。3. 根据校准表和网络定义构建 INT8 引擎。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求INT8量化部署+校准流程。答案覆盖各子方面：(1)量化路线选择（PTQ隐式 vs QAT/PTQ显式），与官方博客7.1.1/7.1.2一致；(2)校准流程——隐式路线给出构建器三步校准、校准器选择（EntropyCalibrator2/MinMax等）、Python校准器完整实现与C++接口，均由官方博客7.3及call_00_uXZzZWkNfxomyg7p4FoJ2219（显式量化页）、call_00_4nhBYhtvcxPjfYHseVjd9602（issue #4095的ModelOpt与trtexec命令）支撑；(3)部署（反序列化+推理）给出骨架并如实标注未逐字核实；(4)版本/弃用状态由10.3.0 Release Notes（call_01_aSAI4pScSHPWSB2hoxiH0186）支撑。未运行代码已在答案中声明，属内容核查，不构成否定。少量样板代码（pycuda部分）为通用写法且已标注，不影响核心校准流程有据可依。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "答案对所需组件给出有依据的适用范围：TensorRT目标10.x（10.3及以上，基于10.3.0 Release Notes弃用说明）、隐式校准器路线限定10.0.x（基于issue #4095的10.1起弃用警告）、ONNX opset 13（每通道量化必需）、PyTorch 1.8+（opset 13导出）。各范围均有官方来源支撑且无冲突。但最新具体版本号未取得（答案自述'本轮只取到10.3.0 Release Notes页，未抓取最新版'），故未能定到确切具体版本，且弃用API是否已实际移除属未知，锁定粒度为范围而非具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "结论：**新项目应直接走显式量化（Q/DQ + ModelOpt），目标 TensorRT 10.x（10.3 及以上）**；仅在必须复用旧校准器管线时才留在 10.0.x，并接受弃用状态。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。"
+        }
+      ],
+      "raw_status": "assessed"
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "校准路线给出可照抄的完整Python实现（EntropyCalibrator类、get_batch_size/get_batch/read/write_calibration_cache四接口、config.set_flag(trt.BuilderFlag.INT8)、int8_calibrator赋值、build_serialized_network），接口契约与官方资料一致；显式路线给出trtexec --onnx=model.quant.onnx --best（issue #4095原文）；C++给出setInt8Calibrator调用。需替换的仅为环境参数（模型路径、校准数据迭代器、输入shape、缓存文件名），均有明确标识。部署节为骨架（'绑定 I/O、分配 device 缓冲后'为注释占位），且答案自述pycuda样板与部署API未逐字核实，略低于5分；未实际运行已如实声明，不影响本项评分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "config = builder.create_builder_config()\nconfig.set_flag(trt.BuilderFlag.INT8)                 # 关键 flag\nconfig.int8_calibrator = EntropyCalibrator(iter_calib, \"calib.cache\", (3, 224, 224))"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "trtexec --onnx=model.quant.onnx --best"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+          "quote": "构建 INT8 引擎时，构建器执行以下步骤：1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。2. 从直方图构建一个校准表，为每个张量提供一个比例值。3. 根据校准表和网络定义构建 INT8 引擎。"
+        }
+      ]
+    },
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-2acc20ed6eef",
+  "task_id": "H",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "a4aa35a1863e4750939300318e886d37",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "994b7c74ba137024b8b3b33760adcac4",
+        "conversationRequestId": "994b7c74ba137024b8b3b33760adcac4",
+        "agent": "cli"
+      },
+      {
+        "messageId": "a4aa35a1863e4750939300318e886d37",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "994b7c74ba137024b8b3b33760adcac4",
+        "conversationRequestId": "994b7c74ba137024b8b3b33760adcac4",
+        "rawUsage": {
+          "prompt_tokens": 30448,
+          "completion_tokens": 1969,
+          "total_tokens": 32417,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 834,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 30448,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 834,
+          "credit": 5.97,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 30448,
+          "outputTokens": 1969,
+          "totalTokens": 32417,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 834
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "d732f250f5d74e3fab616518bcfda526022378ef66422b12700dc8a979f62c98",
+    "process_sha256": "0f42f0c9cc3749d132afb3385d306d077bc77fbfc35f58de973c6d4e82ebc98f",
+    "elapsed_seconds": 41.66,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-1b864a2800864574b9e48f7b845b2465",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-2acc20ed6eef-outcome.json",
+    "repairs": [
+      {
+        "original_event_id": "call_01_XcwNmTGam5bwX8aBdQM62451",
+        "replacement_event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+        "basis": "unique exact tool-result ID suffix; quote still separately checked"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "event_id": "run-end",
+        "original": "结论：新项目应直接走显式量化（Q/DQ + ModelOpt），目标 TensorRT 10.x（10.3 及以上）；仅在必须复用旧校准器管线时才留在 10.0.x，并接受弃用状态。",
+        "replacement": "结论：**新项目应直接走显式量化（Q/DQ + ModelOpt），目标 TensorRT 10.x（10.3 及以上）**；仅在必须复用旧校准器管线时才留在 10.0.x，并接受弃用状态。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

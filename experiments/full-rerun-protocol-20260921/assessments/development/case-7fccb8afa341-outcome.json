@@ -1,0 +1,214 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+      "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+      "verification": "source",
+      "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 5,
+      "status": "supported",
+      "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "supported",
+      "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-7fccb8afa341",
+  "task_id": "H",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "核心工具是华为官方的 **msModelSlim**（MindStudio ModelSlim，昇腾模型压缩工具），量化后可用 **vLLM-Ascend** 或 **MindIE/ATB** 部署。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_76bf4ed41e0046158836a7cb.result",
+        "evidence_quote": "msModelSlim 是面向昇腾生态的模型压缩工具，覆盖稠密 LLM、MoE 及多模态模型的量化与压缩。本文以 Qwen3.6-27B 为例，带你体验如何通过一键量化将模型权重压缩为 W8A8 格式，并基于vLLM-Ascend完成推理部署验证。",
+        "verification": "source",
+        "reason": "原题要求给出昇腾 W8A8 量化的工具和流程，逐项核对：(1) 量化工具——答案给出 msModelSlim（版本 26.1.0，含官方 wheel 安装 URL），官方快速入门证实其为昇腾模型压缩工具并以 W8A8 一键量化为例；(2) 量化流程——一键命令 'msmodelslim quant --model_path ... --quant_type w8a8 --trust_remote_code true' 与官方快速入门逐字一致（来源 call_76bf4ed41e0046158836a7cb.result），Python API 路线（AntiOutlierConfig/QuantConfig/Calibrator、act_method 1/2/3、disable_names/disable_level 回退、anti_method m1-m6、kv_quant）与官方《W8A8 精度调优策略》（call_977411b909a549a0a185f217.result）一致，ChatGLM2-6B 精度数据 0.794→0.519→0.793 与来源表格一致；(3) 推理部署——vllm serve 命令（--quantization ascend、--tensor-parallel-size 2 等）与快速入门一致，MindIE/ATB 路线（convert_quant_weights.py、run_pa.sh、config.json 含 \"quantize\": \"w8a8\"、input_scale/input_offset/quant_bias/deq_scale 说明、支持 NPU 多卡校准、float16/bfloat16）与昇腾社区 MindIE 1.0.RC2 官方文档（call_50ece96ecf8a498b95ef698d.result）一致。所有关键主张均可溯源至官方来源，未发现错误。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 5,
+        "status": "supported",
+        "reason": "推荐路线（路线一）所需组件均锁定到有依据的具体版本：量化工具 msModelSlim 26.1.0（官方 wheel URL tag_MindStudio_26.1.0.B100_002）、部署镜像 vLLM-Ascend v0.18.0（A2）/v0.18.0-a3（A3）、transformers 5.2.0（量化）→4.57.6（推理），全部直接来自官方快速入门（该文档即使用这些确切版本，来源 call_76bf4ed41e0046158836a7cb.result）；MindIE 路线亦标明文档版本 1.0.RC2。transformers 5.x→4.x 的切换是来源中文档化的操作步骤，非未消解冲突。答案自行披露 MindIE 与 msModelSlim 各版本完整配套矩阵未取得，该缺口属替代路线的跨工具矩阵；按约定只检查实际采用（推荐）路线的版本适用关系，不影响主路线定版。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "快速入门路线：vLLM-Ascend 镜像 `v0.18.0`（A2）/ `v0.18.0-a3`（A3）+ msModelSlim `26.1.0` + transformers `5.2.0`（量化）→ `4.57.6`（推理）。"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "MindIE 1.0.RC2 与 msModelSlim 各版本之间的完整版本配套矩阵未在上述页面中取得，需查对应版本的《安装指南》。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "status": "supported",
+        "reason": "路线一给出可照抄的完整命令链：pip 安装（含确切 wheel URL 与 transformers 版本）、环境验证、modelscope 下载、msmodelslim quant 全参数命令（与官方文档逐字一致，含成功标志 ===========SUCCESS===========）、transformers 降级 4.57.6、vllm serve 全参数命令、curl 验证；前置条件明确（≥2 张 A2/A3 NPU、驱动固件已装、npu-smi info 正常、Docker）。未给 5 分：'export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>' 及路线三的 {浮点权重路径}/{W8A8量化权重路径}/${ATB_SPEED_HOME_PATH} 为需用户替换的明确标识环境值；容器启动步骤概括为 'docker pull 后启动容器'，未给出官方教程中 ctr_in.py 启动脚本命令；路线二校准数据加载仅以注释示例引用。均为环境参数替换或边缘步骤省略，无需修正内容错误，符合 4 档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "要求：≥2 张昇腾 NPU（A2/A3 系列），驱动固件已装，`npu-smi info` 正常。"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "export ASCEND_RT_VISIBLE_DEVICES=<空闲卡ID>"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "msmodelslim quant --model_path ~/qwen36_27b_base --save_path ~/qwen36_27b_w8a8 \\\n    --device npu --model_type Qwen3.6-27B --quant_type w8a8 --trust_remote_code true"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "a2002c767b1e4682aa4275d791304ad1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "744f35a1f91dd8d0121ebb3e672aed18",
+        "conversationRequestId": "744f35a1f91dd8d0121ebb3e672aed18",
+        "agent": "cli"
+      },
+      {
+        "messageId": "a2002c767b1e4682aa4275d791304ad1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "744f35a1f91dd8d0121ebb3e672aed18",
+        "conversationRequestId": "744f35a1f91dd8d0121ebb3e672aed18",
+        "rawUsage": {
+          "prompt_tokens": 24404,
+          "completion_tokens": 20532,
+          "total_tokens": 44936,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 19195,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 22207
+          },
+          "prompt_cache_hit_tokens": 22207,
+          "prompt_cache_miss_tokens": 2197,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 19195,
+          "credit": 12.74,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 24404,
+          "outputTokens": 20532,
+          "totalTokens": 44936,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 22207
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 19195
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "bad14e899d362489ced29b9ed7cbfd03812c3e1c1b4625bd049eefb3506afa61",
+    "process_sha256": "0ce49bc0ad3d676620d1a13c3536abcd637c6055091f327a429459307f6ccc3f",
+    "elapsed_seconds": 268.59,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-ed7afc6e53884dde84b2d302ec4b3e26",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

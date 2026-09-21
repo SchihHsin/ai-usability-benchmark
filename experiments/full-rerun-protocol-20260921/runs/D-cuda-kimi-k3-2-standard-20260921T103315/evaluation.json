@@ -147,6 +147,2050 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T03:31:53.772565+00:00",
+      "process_sha256": "cb20d4215640b0eea6f8407a7e2ce3b7ee71313580ee5db99b8992f4776ac7c2",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_b43bcf4d.result",
+            "evidence_quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+            "verification": "source",
+            "reason": "原题三个子要求均满足：(1) 完整步骤——最终答案给出5步总览（写.cu、注册、setup.py构建、pip install、Python调用），与官方教程流程一致（WebFetch_1教程结构覆盖build setup/定义算子/CPU与CUDA实现/测试）；(2) setup.py——给出最小版（CUDAExtension+BuildExtension，与WebFetch_2中CUDAExtension官方示例一致：sources=['extension.cpp', 'extension_kernel.cu'], extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}）及生产级版本（与WebFetch_4摘录的官方仓库setup.py实质一致，仅排版压缩）；(3) 注册代码——TORCH_LIBRARY定义schema、TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m)注册，逐字对应WebFetch_1非ABI-Stable注册代码；CUDA kernel（muladd_kernel + mymuladd_cuda，含at::cuda::getCurrentCUDAStream()）也与WebFetch_1一致。构建命令 pip install --no-build-isolation -e . 与WebFetch_3官方仓库README一致。",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.pytorch.org 教程页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 1. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence WebFetch_2_c7644fda.result",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "The page also documents (available on request): CppExtension, SyclExtension"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The full document body appears to have been returned — no truncation detected."
+              },
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "This repository contains two example C++/CUDA extensions for PyTorch:"
+              },
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              },
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "By default the extension will be compiled to run on all archs of the cards visible during the building process of the extension, plus PTX."
+              },
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "cd extension_cpp\npip install --no-build-isolation -e ."
+              },
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    ext_modules=get_extensions(),"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用规则：标准 API 需 PyTorch 2.4+，stable ABI 需 2.10+，Python 3.9 最低版本，直接套用即可确定版本条件，无需自行合并。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later** if using the stable ABI)"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "3.9 is minimum supported Python version"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "**ABI-Stable LibTorch API (recommended):** PyTorch 2.10+; build a single wheel working across multiple PyTorch versions (2.10, 2.11, 2.12, etc.)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一预算内发现相关独立第三方来源3条（CSDN 博客、知乎文章、maskerprc 镜像站，镜像计一次），落入3—4条档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 4. [Custom C++ and CUDA Extensions - PyTorch-CSDN博客](https://blog.csdn.net/qq_32527569/article/details/142679069)"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 5. [pytorch custom C++/CUDA extension - 知乎](https://zhuanlan.zhihu.com/p/664699263)"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A）。未发现已确证的关键矛盾，但检索结果中第三方仅出现片段，其关键说法（如 CUDA 版本匹配）无完整可核验的核对依据，也未取得正文进行交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "编译的时候，首先需要确保pytorch是用哪个cuda版本进行编译的，可以进入python之后调用"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "经历了一波 pybind11 和 CUDA 编程 的学习, 接下来看一看 PyTorch 官方给的 C++/CUDA 扩展的教程."
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "setup(ext_modules=[CUDAExtension(...)], cmdclass={'build_ext': BuildExtension})"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY 新式注册的确切 API 签名与推荐用法（TORCH_LIBRARY_FRAGMENT vs TORCH_LIBRARY、m.def、m.impl 的细节，pybind 与 dispatcher 注册的取舍）。"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=5",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_638c6c75.dispatch",
+              "WebFetch_1_b43bcf4d.dispatch",
+              "WebFetch_2_c7644fda.dispatch",
+              "WebFetch_3_118fe924.dispatch",
+              "WebFetch_4_1df9df66.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "assessed",
+            "reason": "部分组件有明确版本依据：PyTorch ≥2.4（TORCH_LIBRARY）/≥2.10（Stable ABI）、最低Python 3.9、-std=c++20，均有官方教程与cpp_extension文档支撑；但CUDA toolkit仅说需单独安装，最终答案自认'当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实'，该组件版本未确定，且PyTorch也只给出适用范围而非锁定单一具体版本，属第3档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "assessed",
+            "reason": "操作指导基本完整：完整kernel/注册/setup.py代码、构建命令（pip install --no-build-isolation -e .）、TORCH_CUDA_ARCH_LIST设置、JIT替代方案与Python调用示例，前置条件（CUDA toolkit、CUDA_HOME、ninja）均有说明，环境参数（架构列表8.0 8.6）已明确标识需按用户GPU替换。但生产级setup.py摘录中使用了未定义的this_dir（原文WebFetch_4中有 this_dir = os.path.dirname(os.path.curdir) 一行被省略），照抄会NameError，需补一行才能运行，故未达5；最小setup.py与JIT路线可执行，整体高于3，记4。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "insufficient_evidence",
+                "reason": "M2: missing return evidence WebFetch_2_c7644fda.result"
+              },
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。"
+              },
+              {
+                "metric": "M7",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence WebFetch_2_c7644fda.result"
+            },
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。"
+            },
+            {
+              "metric": "M7",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M2: missing return evidence WebFetch_2_c7644fda.result"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 86,
+            "end": 198,
+            "quote": "## 1. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 96,
+            "end": 174,
+            "quote": "The full document body appears to have been returned — no truncation detected.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_3_118fe924.result",
+            "field": "response",
+            "sha256": "07d848fb0f3efc9d63422dda20f970500b6b57907896224565e5357afaa9c5f2",
+            "start": 3755,
+            "end": 3824,
+            "quote": "This repository contains two example C++/CUDA extensions for PyTorch:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_1df9df66.result",
+            "field": "response",
+            "sha256": "f2db60fdcbac053c6a6d0220de8a49fc9ea61243324513bd16c36d017c39b784",
+            "start": 2459,
+            "end": 2543,
+            "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_2_c7644fda.result",
+            "field": "response",
+            "sha256": "1c86ef75c676c3d6f14adc10742e2a9338bf1b20ee74fc6f6bd71218c90a6cfe",
+            "start": 2978,
+            "end": 3116,
+            "quote": "By default the extension will be compiled to run on all archs of the cards visible during the building process of the extension, plus PTX.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_3_118fe924.result",
+            "field": "response",
+            "sha256": "07d848fb0f3efc9d63422dda20f970500b6b57907896224565e5357afaa9c5f2",
+            "start": 4891,
+            "end": 4945,
+            "quote": "cd extension_cpp\npip install --no-build-isolation -e .",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_4_1df9df66.result",
+            "field": "response",
+            "sha256": "f2db60fdcbac053c6a6d0220de8a49fc9ea61243324513bd16c36d017c39b784",
+            "start": 2059,
+            "end": 2092,
+            "quote": "    ext_modules=get_extensions(),",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 1106,
+            "end": 1185,
+            "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later** if using the stable ABI)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 3189,
+            "end": 3228,
+            "quote": "3.9 is minimum supported Python version",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 1699,
+            "end": 1843,
+            "quote": "**ABI-Stable LibTorch API (recommended):** PyTorch 2.10+; build a single wheel working across multiple PyTorch versions (2.10, 2.11, 2.12, etc.)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1007,
+            "end": 1123,
+            "quote": "## 4. [Custom C++ and CUDA Extensions - PyTorch-CSDN博客](https://blog.csdn.net/qq_32527569/article/details/142679069)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1289,
+            "end": 1375,
+            "quote": "## 5. [pytorch custom C++/CUDA extension - 知乎](https://zhuanlan.zhihu.com/p/664699263)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 717,
+            "end": 850,
+            "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1400,
+            "end": 1449,
+            "quote": "编译的时候，首先需要确保pytorch是用哪个cuda版本进行编译的，可以进入python之后调用",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1139,
+            "end": 1204,
+            "quote": "经历了一波 pybind11 和 CUDA 编程 的学习, 接下来看一看 PyTorch 官方给的 C++/CUDA 扩展的教程.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f8af297b9af5123620554984e1204a34e3151479177f0fa15ee05fcd213710d7",
+            "start": 850,
+            "end": 929,
+            "quote": "setup(ext_modules=[CUDAExtension(...)], cmdclass={'build_ext': BuildExtension})",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 141,
+            "end": 245,
+            "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 6422,
+            "end": 6471,
+            "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 5026,
+            "end": 5148,
+            "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 4286,
+            "end": 4347,
+            "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 497,
+            "end": 574,
+            "quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 8672,
+            "end": 8729,
+            "quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a9c9a6c28ad3-predictors.json": "f12928498e62f50e01af4058eb5269b6aa3e27f413b681756259b917e45e1141",
+          "reviewed/development/case-a9c9a6c28ad3-outcome.json": "a602247b3efbada3af89f32dee69c7a63f78dd6b8338dc363f93ca1d253d2272",
+          "consolidate_evaluations.py": "d292f7154e63168603495f2a59bbfcb98585beca31ddc45f768c9e968ce3e40c",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The full document body appears to have been returned — no truncation detected."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The content runs continuously from the tutorial header/metadata through the **Conclusion** section"
+              }
+            ],
+            "reference": "工具自述完整，不构成独立完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_2_c7644fda.result",
+            "url": "https://docs.pytorch.org/docs/stable/cpp_extension.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "The page also documents (available on request): CppExtension, SyclExtension"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "whitespace inside code examples was partially collapsed during page extraction"
+              }
+            ],
+            "reference": "抽取明确省略部分 API 条目且代码空白受损，正文边界存在缺失"
+          },
+          {
+            "event_id": "WebFetch_3_118fe924.result",
+            "url": "https://github.com/pytorch/extension-cpp",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "This repository contains two example C++/CUDA extensions for PyTorch:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "Peter Goldsborough, Richard Zou"
+              }
+            ],
+            "reference": "README 自然结尾可作边界线索，但无独立完整性核对依据"
+          },
+          {
+            "event_id": "WebFetch_4_1df9df66.result",
+            "url": "https://github.com/pytorch/extension-cpp/blob/master/extension_cpp/setup.py",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "# Copyright (c) Meta Platforms, Inc. and affiliates."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)"
+              }
+            ],
+            "reference": "整个源文件以单一代码块完整返回，起止边界（版权头至 setup() 收尾）可核对"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY 新式注册的确切 API 签名与推荐用法（TORCH_LIBRARY_FRAGMENT vs TORCH_LIBRARY、m.def、m.impl 的细节，pybind 与 dispatcher 注册的取舍）。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T03:45:05.997871+00:00",
+      "process_sha256": "cb20d4215640b0eea6f8407a7e2ce3b7ee71313580ee5db99b8992f4776ac7c2",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_b43bcf4d.result",
+            "evidence_quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+            "verification": "source",
+            "reason": "原题三个子要求均满足：(1) 完整步骤——最终答案给出5步总览（写.cu、注册、setup.py构建、pip install、Python调用），与官方教程流程一致（WebFetch_1教程结构覆盖build setup/定义算子/CPU与CUDA实现/测试）；(2) setup.py——给出最小版（CUDAExtension+BuildExtension，与WebFetch_2中CUDAExtension官方示例一致：sources=['extension.cpp', 'extension_kernel.cu'], extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}）及生产级版本（与WebFetch_4摘录的官方仓库setup.py实质一致，仅排版压缩）；(3) 注册代码——TORCH_LIBRARY定义schema、TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m)注册，逐字对应WebFetch_1非ABI-Stable注册代码；CUDA kernel（muladd_kernel + mymuladd_cuda，含at::cuda::getCurrentCUDAStream()）也与WebFetch_1一致。构建命令 pip install --no-build-isolation -e . 与WebFetch_3官方仓库README一致。",
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.pytorch.org 教程页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 1. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.75,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "The page also documents (available on request): `CppExtension`, `SyclExtension`"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The full document body appears to have been returned — no truncation detected."
+              },
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "This repository contains two example C++/CUDA extensions for PyTorch:"
+              },
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              },
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "By default the extension will be compiled to run on all archs of the cards visible during the building process of the extension, plus PTX."
+              },
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "cd extension_cpp\npip install --no-build-isolation -e ."
+              },
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    ext_modules=get_extensions(),"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用规则：标准 API 需 PyTorch 2.4+，stable ABI 需 2.10+，Python 3.9 最低版本，直接套用即可确定版本条件，无需自行合并。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later** if using the stable ABI)"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "3.9 is minimum supported Python version"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "**ABI-Stable LibTorch API (recommended):** PyTorch 2.10+; build a single wheel working across multiple PyTorch versions (2.10, 2.11, 2.12, etc.)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一预算内发现相关独立第三方来源3条（CSDN 博客、知乎文章、maskerprc 镜像站，镜像计一次），落入3—4条档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 4. [Custom C++ and CUDA Extensions - PyTorch-CSDN博客](https://blog.csdn.net/qq_32527569/article/details/142679069)"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 5. [pytorch custom C++/CUDA extension - 知乎](https://zhuanlan.zhihu.com/p/664699263)"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A）。未发现已确证的关键矛盾，但检索结果中第三方仅出现片段，其关键说法（如 CUDA 版本匹配）无完整可核验的核对依据，也未取得正文进行交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "编译的时候，首先需要确保pytorch是用哪个cuda版本进行编译的，可以进入python之后调用"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "经历了一波 pybind11 和 CUDA 编程 的学习, 接下来看一看 PyTorch 官方给的 C++/CUDA 扩展的教程."
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "setup(ext_modules=[CUDAExtension(...)], cmdclass={'build_ext': BuildExtension})"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY 新式注册的确切 API 签名与推荐用法（TORCH_LIBRARY_FRAGMENT vs TORCH_LIBRARY、m.def、m.impl 的细节，pybind 与 dispatcher 注册的取舍）。"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=5",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_638c6c75.dispatch",
+              "WebFetch_1_b43bcf4d.dispatch",
+              "WebFetch_2_c7644fda.dispatch",
+              "WebFetch_3_118fe924.dispatch",
+              "WebFetch_4_1df9df66.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "assessed",
+            "reason": "部分组件有明确版本依据：PyTorch ≥2.4（TORCH_LIBRARY）/≥2.10（Stable ABI）、最低Python 3.9、-std=c++20，均有官方教程与cpp_extension文档支撑；但CUDA toolkit仅说需单独安装，最终答案自认'当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实'，该组件版本未确定，且PyTorch也只给出适用范围而非锁定单一具体版本，属第3档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "assessed",
+            "reason": "操作指导基本完整：完整kernel/注册/setup.py代码、构建命令（pip install --no-build-isolation -e .）、TORCH_CUDA_ARCH_LIST设置、JIT替代方案与Python调用示例，前置条件（CUDA toolkit、CUDA_HOME、ninja）均有说明，环境参数（架构列表8.0 8.6）已明确标识需按用户GPU替换。但生产级setup.py摘录中使用了未定义的this_dir（原文WebFetch_4中有 this_dir = os.path.dirname(os.path.curdir) 一行被省略），照抄会NameError，需补一行才能运行，故未达5；最小setup.py与JIT路线可执行，整体高于3，记4。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。"
+              },
+              {
+                "metric": "M7",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。"
+            },
+            {
+              "metric": "M7",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 86,
+            "end": 198,
+            "quote": "## 1. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_2_c7644fda.result",
+            "field": "response",
+            "sha256": "1c86ef75c676c3d6f14adc10742e2a9338bf1b20ee74fc6f6bd71218c90a6cfe",
+            "start": 15664,
+            "end": 15743,
+            "quote": "The page also documents (available on request): `CppExtension`, `SyclExtension`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 96,
+            "end": 174,
+            "quote": "The full document body appears to have been returned — no truncation detected.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_3_118fe924.result",
+            "field": "response",
+            "sha256": "07d848fb0f3efc9d63422dda20f970500b6b57907896224565e5357afaa9c5f2",
+            "start": 3755,
+            "end": 3824,
+            "quote": "This repository contains two example C++/CUDA extensions for PyTorch:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_4_1df9df66.result",
+            "field": "response",
+            "sha256": "f2db60fdcbac053c6a6d0220de8a49fc9ea61243324513bd16c36d017c39b784",
+            "start": 2459,
+            "end": 2543,
+            "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_c7644fda.result",
+            "field": "response",
+            "sha256": "1c86ef75c676c3d6f14adc10742e2a9338bf1b20ee74fc6f6bd71218c90a6cfe",
+            "start": 2978,
+            "end": 3116,
+            "quote": "By default the extension will be compiled to run on all archs of the cards visible during the building process of the extension, plus PTX.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_3_118fe924.result",
+            "field": "response",
+            "sha256": "07d848fb0f3efc9d63422dda20f970500b6b57907896224565e5357afaa9c5f2",
+            "start": 4891,
+            "end": 4945,
+            "quote": "cd extension_cpp\npip install --no-build-isolation -e .",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_4_1df9df66.result",
+            "field": "response",
+            "sha256": "f2db60fdcbac053c6a6d0220de8a49fc9ea61243324513bd16c36d017c39b784",
+            "start": 2059,
+            "end": 2092,
+            "quote": "    ext_modules=get_extensions(),",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 1106,
+            "end": 1185,
+            "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later** if using the stable ABI)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 3189,
+            "end": 3228,
+            "quote": "3.9 is minimum supported Python version",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 1699,
+            "end": 1843,
+            "quote": "**ABI-Stable LibTorch API (recommended):** PyTorch 2.10+; build a single wheel working across multiple PyTorch versions (2.10, 2.11, 2.12, etc.)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1007,
+            "end": 1123,
+            "quote": "## 4. [Custom C++ and CUDA Extensions - PyTorch-CSDN博客](https://blog.csdn.net/qq_32527569/article/details/142679069)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1289,
+            "end": 1375,
+            "quote": "## 5. [pytorch custom C++/CUDA extension - 知乎](https://zhuanlan.zhihu.com/p/664699263)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 717,
+            "end": 850,
+            "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1400,
+            "end": 1449,
+            "quote": "编译的时候，首先需要确保pytorch是用哪个cuda版本进行编译的，可以进入python之后调用",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1139,
+            "end": 1204,
+            "quote": "经历了一波 pybind11 和 CUDA 编程 的学习, 接下来看一看 PyTorch 官方给的 C++/CUDA 扩展的教程.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f8af297b9af5123620554984e1204a34e3151479177f0fa15ee05fcd213710d7",
+            "start": 850,
+            "end": 929,
+            "quote": "setup(ext_modules=[CUDAExtension(...)], cmdclass={'build_ext': BuildExtension})",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 141,
+            "end": 245,
+            "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 6422,
+            "end": 6471,
+            "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 5026,
+            "end": 5148,
+            "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 4286,
+            "end": 4347,
+            "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 497,
+            "end": 574,
+            "quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 8672,
+            "end": 8729,
+            "quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a9c9a6c28ad3-predictors.json": "8beef2179c0aeccf17932aea76933eae7f2efc281bf34fc1d484fcda7c49dd03",
+          "reviewed/development/case-a9c9a6c28ad3-outcome.json": "a602247b3efbada3af89f32dee69c7a63f78dd6b8338dc363f93ca1d253d2272",
+          "consolidate_evaluations.py": "d292f7154e63168603495f2a59bbfcb98585beca31ddc45f768c9e968ce3e40c",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The full document body appears to have been returned — no truncation detected."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The content runs continuously from the tutorial header/metadata through the **Conclusion** section"
+              }
+            ],
+            "reference": "工具自述完整，不构成独立完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_2_c7644fda.result",
+            "url": "https://docs.pytorch.org/docs/stable/cpp_extension.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "The page also documents (available on request): `CppExtension`, `SyclExtension`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "whitespace inside code examples was partially collapsed during page extraction"
+              }
+            ],
+            "reference": "抽取明确省略部分 API 条目且代码空白受损，正文边界存在缺失"
+          },
+          {
+            "event_id": "WebFetch_3_118fe924.result",
+            "url": "https://github.com/pytorch/extension-cpp",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "This repository contains two example C++/CUDA extensions for PyTorch:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "Peter Goldsborough, Richard Zou"
+              }
+            ],
+            "reference": "README 自然结尾可作边界线索，但无独立完整性核对依据"
+          },
+          {
+            "event_id": "WebFetch_4_1df9df66.result",
+            "url": "https://github.com/pytorch/extension-cpp/blob/master/extension_cpp/setup.py",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "# Copyright (c) Meta Platforms, Inc. and affiliates."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)"
+              }
+            ],
+            "reference": "整个源文件以单一代码块完整返回，起止边界（版权头至 setup() 收尾）可核对"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY 新式注册的确切 API 签名与推荐用法（TORCH_LIBRARY_FRAGMENT vs TORCH_LIBRARY、m.def、m.impl 的细节，pybind 与 dispatcher 注册的取舍）。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T03:46:24.142914+00:00",
+      "process_sha256": "cb20d4215640b0eea6f8407a7e2ce3b7ee71313580ee5db99b8992f4776ac7c2",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_b43bcf4d.result",
+            "evidence_quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+            "verification": "source",
+            "reason": "原题三个子要求均满足：(1) 完整步骤——最终答案给出5步总览（写.cu、注册、setup.py构建、pip install、Python调用），与官方教程流程一致（WebFetch_1教程结构覆盖build setup/定义算子/CPU与CUDA实现/测试）；(2) setup.py——给出最小版（CUDAExtension+BuildExtension，与WebFetch_2中CUDAExtension官方示例一致：sources=['extension.cpp', 'extension_kernel.cu'], extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}）及生产级版本（与WebFetch_4摘录的官方仓库setup.py实质一致，仅排版压缩）；(3) 注册代码——TORCH_LIBRARY定义schema、TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m)注册，逐字对应WebFetch_1非ABI-Stable注册代码；CUDA kernel（muladd_kernel + mymuladd_cuda，含at::cuda::getCurrentCUDAStream()）也与WebFetch_1一致。构建命令 pip install --no-build-isolation -e . 与WebFetch_3官方仓库README一致。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.pytorch.org 教程页）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 1. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.75,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "The page also documents (available on request): `CppExtension`, `SyclExtension`"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The full document body appears to have been returned — no truncation detected."
+              },
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "This repository contains two example C++/CUDA extensions for PyTorch:"
+              },
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              },
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "By default the extension will be compiled to run on all archs of the cards visible during the building process of the extension, plus PTX."
+              },
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "cd extension_cpp\npip install --no-build-isolation -e ."
+              },
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    ext_modules=get_extensions(),"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方直接给出适用规则：标准 API 需 PyTorch 2.4+，stable ABI 需 2.10+，Python 3.9 最低版本，直接套用即可确定版本条件，无需自行合并。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later** if using the stable ABI)"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "3.9 is minimum supported Python version"
+              },
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "**ABI-Stable LibTorch API (recommended):** PyTorch 2.10+; build a single wheel working across multiple PyTorch versions (2.10, 2.11, 2.12, etc.)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一预算内发现相关独立第三方来源3条（CSDN 博客、知乎文章、maskerprc 镜像站，镜像计一次），落入3—4条档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 4. [Custom C++ and CUDA Extensions - PyTorch-CSDN博客](https://blog.csdn.net/qq_32527569/article/details/142679069)"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 5. [pytorch custom C++/CUDA extension - 知乎](https://zhuanlan.zhihu.com/p/664699263)"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A）。未发现已确证的关键矛盾，但检索结果中第三方仅出现片段，其关键说法（如 CUDA 版本匹配）无完整可核验的核对依据，也未取得正文进行交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "编译的时候，首先需要确保pytorch是用哪个cuda版本进行编译的，可以进入python之后调用"
+              },
+              {
+                "event_id": "WebSearch_0_638c6c75.result",
+                "quote": "经历了一波 pybind11 和 CUDA 编程 的学习, 接下来看一看 PyTorch 官方给的 C++/CUDA 扩展的教程."
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出了正确完整流程：.cu/.cpp 结构、CUDAExtension+BuildExtension 的 setup.py（与官方一致）、kernel 示例、PYBIND11 绑定、TORCH_CUDA_ARCH_LIST 与 CUDA 版本匹配提示。但原题涉及的 TORCH_LIBRARY 注册细节、版本要求（2.4+/2.10+）、stable ABI、register_fake/register_autograd 等具体参数与约束仍需检索补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "setup(ext_modules=[CUDAExtension(...)], cmdclass={'build_ext': BuildExtension})"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY` 新式注册的确切 API 签名与推荐用法（`TORCH_LIBRARY_FRAGMENT` vs `TORCH_LIBRARY`、`m.def`、`m.impl` 的细节，pybind 与 dispatcher 注册的取舍）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=5",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_638c6c75.dispatch",
+              "WebFetch_1_b43bcf4d.dispatch",
+              "WebFetch_2_c7644fda.dispatch",
+              "WebFetch_3_118fe924.dispatch",
+              "WebFetch_4_1df9df66.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "assessed",
+            "reason": "部分组件有明确版本依据：PyTorch ≥2.4（TORCH_LIBRARY）/≥2.10（Stable ABI）、最低Python 3.9、-std=c++20，均有官方教程与cpp_extension文档支撑；但CUDA toolkit仅说需单独安装，最终答案自认'当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实'，该组件版本未确定，且PyTorch也只给出适用范围而非锁定单一具体版本，属第3档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "assessed",
+            "reason": "操作指导基本完整：完整kernel/注册/setup.py代码、构建命令（pip install --no-build-isolation -e .）、TORCH_CUDA_ARCH_LIST设置、JIT替代方案与Python调用示例，前置条件（CUDA toolkit、CUDA_HOME、ninja）均有说明，环境参数（架构列表8.0 8.6）已明确标识需按用户GPU替换。但生产级setup.py摘录中使用了未定义的this_dir（原文WebFetch_4中有 this_dir = os.path.dirname(os.path.curdir) 一行被省略），照抄会NameError，需补一行才能运行，故未达5；最小setup.py与JIT路线可执行，整体高于3，记4。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需内容均已说明完整：完整 setup.py（仓库源码）、CUDA kernel 与 host launcher 代码、TORCH_LIBRARY 注册代码、构建命令、TORCH_CUDA_ARCH_LIST、版本与编译器约束、autograd/torch.compile 扩展均有覆盖。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 86,
+            "end": 198,
+            "quote": "## 1. [Custom C++ and CUDA Operators - PyTorch](https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_2_c7644fda.result",
+            "field": "response",
+            "sha256": "1c86ef75c676c3d6f14adc10742e2a9338bf1b20ee74fc6f6bd71218c90a6cfe",
+            "start": 15664,
+            "end": 15743,
+            "quote": "The page also documents (available on request): `CppExtension`, `SyclExtension`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 96,
+            "end": 174,
+            "quote": "The full document body appears to have been returned — no truncation detected.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_3_118fe924.result",
+            "field": "response",
+            "sha256": "07d848fb0f3efc9d63422dda20f970500b6b57907896224565e5357afaa9c5f2",
+            "start": 3755,
+            "end": 3824,
+            "quote": "This repository contains two example C++/CUDA extensions for PyTorch:",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_4_1df9df66.result",
+            "field": "response",
+            "sha256": "f2db60fdcbac053c6a6d0220de8a49fc9ea61243324513bd16c36d017c39b784",
+            "start": 2459,
+            "end": 2543,
+            "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_c7644fda.result",
+            "field": "response",
+            "sha256": "1c86ef75c676c3d6f14adc10742e2a9338bf1b20ee74fc6f6bd71218c90a6cfe",
+            "start": 2978,
+            "end": 3116,
+            "quote": "By default the extension will be compiled to run on all archs of the cards visible during the building process of the extension, plus PTX.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_3_118fe924.result",
+            "field": "response",
+            "sha256": "07d848fb0f3efc9d63422dda20f970500b6b57907896224565e5357afaa9c5f2",
+            "start": 4891,
+            "end": 4945,
+            "quote": "cd extension_cpp\npip install --no-build-isolation -e .",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_4_1df9df66.result",
+            "field": "response",
+            "sha256": "f2db60fdcbac053c6a6d0220de8a49fc9ea61243324513bd16c36d017c39b784",
+            "start": 2059,
+            "end": 2092,
+            "quote": "    ext_modules=get_extensions(),",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 1106,
+            "end": 1185,
+            "quote": "**PyTorch 2.4 or later** (or **PyTorch 2.10 or later** if using the stable ABI)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 3189,
+            "end": 3228,
+            "quote": "3.9 is minimum supported Python version",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 1699,
+            "end": 1843,
+            "quote": "**ABI-Stable LibTorch API (recommended):** PyTorch 2.10+; build a single wheel working across multiple PyTorch versions (2.10, 2.11, 2.12, etc.)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1007,
+            "end": 1123,
+            "quote": "## 4. [Custom C++ and CUDA Extensions - PyTorch-CSDN博客](https://blog.csdn.net/qq_32527569/article/details/142679069)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1289,
+            "end": 1375,
+            "quote": "## 5. [pytorch custom C++/CUDA extension - 知乎](https://zhuanlan.zhihu.com/p/664699263)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 717,
+            "end": 850,
+            "quote": "## 3. [Custom C++ and CUDA Operators — PyTorch Tutorials 2.3 ...](https://maskerprc.github.io/tutorials/advanced/cpp_custom_ops.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1400,
+            "end": 1449,
+            "quote": "编译的时候，首先需要确保pytorch是用哪个cuda版本进行编译的，可以进入python之后调用",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_0_638c6c75.result",
+            "field": "response",
+            "sha256": "53111dee94d14e82da21e3e144ee00f51f0de70c74b19f99b1f68238c816ed23",
+            "start": 1139,
+            "end": 1204,
+            "quote": "经历了一波 pybind11 和 CUDA 编程 的学习, 接下来看一看 PyTorch 官方给的 C++/CUDA 扩展的教程.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f8af297b9af5123620554984e1204a34e3151479177f0fa15ee05fcd213710d7",
+            "start": 850,
+            "end": 929,
+            "quote": "setup(ext_modules=[CUDAExtension(...)], cmdclass={'build_ext': BuildExtension})",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "f8af297b9af5123620554984e1204a34e3151479177f0fa15ee05fcd213710d7",
+            "start": 2414,
+            "end": 2541,
+            "quote": "TORCH_LIBRARY` 新式注册的确切 API 签名与推荐用法（`TORCH_LIBRARY_FRAGMENT` vs `TORCH_LIBRARY`、`m.def`、`m.impl` 的细节，pybind 与 dispatcher 注册的取舍）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 141,
+            "end": 245,
+            "quote": "官方推荐 `TORCH_LIBRARY` 注册方式要求 **PyTorch ≥ 2.4**；若用 Stable ABI（`STABLE_TORCH_LIBRARY`）要求 **PyTorch ≥ 2.10**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 6422,
+            "end": 6471,
+            "quote": "当前 CUDA toolkit 与 PyTorch 2.14+cu130 的精确兼容矩阵未单独核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 5026,
+            "end": 5148,
+            "quote": "export TORCH_CUDA_ARCH_LIST=\"8.0 8.6\"        # 或 \"8.6+PTX\" 提供前向兼容\npip install --no-build-isolation -e .        # 官方仓库的构建命令",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 4286,
+            "end": 4347,
+            "quote": "extensions_dir = os.path.join(this_dir, library_name, \"csrc\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "611654fcb47c7ca8523cd14793061b5916266cd5b256cc48bd850704d72c2fdc",
+            "start": 497,
+            "end": 574,
+            "quote": "用 `TORCH_LIBRARY` 定义算子 schema、`TORCH_LIBRARY_IMPL(..., CUDA, ...)` 注册 CUDA 实现",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "field": "response",
+            "sha256": "58f6688a466b327da8ed1d6825de118e1c7e0c8f502322f1a86a1242350570e7",
+            "start": 8672,
+            "end": 8729,
+            "quote": "m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a9c9a6c28ad3-predictors.json": "7b4f42b4cbc933d4232c93367b6cb38e37ae729ddb97273e132593ad36b599c8",
+          "reviewed/development/case-a9c9a6c28ad3-outcome.json": "a602247b3efbada3af89f32dee69c7a63f78dd6b8338dc363f93ca1d253d2272",
+          "consolidate_evaluations.py": "d292f7154e63168603495f2a59bbfcb98585beca31ddc45f768c9e968ce3e40c",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_b43bcf4d.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The full document body appears to have been returned — no truncation detected."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "The content runs continuously from the tutorial header/metadata through the **Conclusion** section"
+              }
+            ],
+            "reference": "工具自述完整，不构成独立完整性核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "WebFetch_2_c7644fda.result",
+            "url": "https://docs.pytorch.org/docs/stable/cpp_extension.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "The page also documents (available on request): `CppExtension`, `SyclExtension`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_c7644fda.result",
+                "quote": "whitespace inside code examples was partially collapsed during page extraction"
+              }
+            ],
+            "reference": "抽取明确省略部分 API 条目且代码空白受损，正文边界存在缺失"
+          },
+          {
+            "event_id": "WebFetch_3_118fe924.result",
+            "url": "https://github.com/pytorch/extension-cpp",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "This repository contains two example C++/CUDA extensions for PyTorch:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_118fe924.result",
+                "quote": "Peter Goldsborough](https://github.com/goldsborough), [Richard Zou"
+              }
+            ],
+            "reference": "README 自然结尾可作边界线索，但无独立完整性核对依据"
+          },
+          {
+            "event_id": "WebFetch_4_1df9df66.result",
+            "url": "https://github.com/pytorch/extension-cpp/blob/master/extension_cpp/setup.py",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "# Copyright (c) Meta Platforms, Inc. and affiliates."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_1df9df66.result",
+                "quote": "    options={\"bdist_wheel\": {\"py_limited_api\": \"cp39\"}} if py_limited_api else {},\n)"
+              }
+            ],
+            "reference": "整个源文件以单一代码块完整返回，起止边界（版权头至 setup() 收尾）可核对"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_1_b43bcf4d.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

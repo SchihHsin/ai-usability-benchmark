@@ -1,0 +1,162 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_2_fe613e7b.result",
+      "evidence_quote": "To initialize a process group in your training script, simply run:\n\n```\n>>> importtorch.distributedasdist\n>>> dist.init_process_group(backend=\"gloo|nccl\")\n```",
+      "verification": "source",
+      "reason": "原题包含三个子要求，均有官方来源支撑。(1) 初始化：答案给出 torch.cuda.set_device(LOCAL_RANK)、dist.init_process_group(backend=\"nccl\")、DDP(model, device_ids=[local_rank])、DistributedSampler 及 set_epoch，与 WebFetch_2（torchrun 文档 Important Notices：init_process_group 与 DDP device_ids=[local_rank] 写法）和 WebFetch_3（官方 multinode.py 示例的 ddp_setup 与 DDP 用法）一致。(2) 启动命令：方式 A 的 --nnodes/--nproc_per_node/--node_rank/--master_addr/--master_port 与方式 B 的 rendezvous 参数（--rdzv-backend=c10d、--rdzv-endpoint、--max-restarts、弹性 --nnodes=1:4）均可在 WebFetch_2 的 Usage 与 Note on rendezvous backend 章节逐项对应。(3) 环境变量：答案表格中的 RANK、LOCAL_RANK、WORLD_SIZE、LOCAL_WORLD_SIZE、MASTER_ADDR/MASTER_PORT、GROUP_RANK、ROLE_RANK、TORCHELASTIC_RUN_ID 与 WebFetch_2 的 Environment Variables 列表一致；NCCL_DEBUG=INFO 与 NCCL_SOCKET_IFNAME=eth0 在 WebFetch_1 Troubleshooting 中有官方原文（\"Set env variable `NCCL_DEBUG` to `INFO`\"、\"export NCCL_SOCKET_IFNAME=eth0\"）。答案还如实声明 NCCL 完整变量清单未取得，不构成错误。--local-rank 连字符注意事项亦与 WebFetch_2 的 version 2.0.0 变更说明一致。所有子要求均满足。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题询问的是方法（初始化、启动命令、环境变量），未要求锁定具体 PyTorch/NCCL/CUDA 版本。答案虽注明文档对应 PyTorch 2.14（2.14.0+cu130），但按规则无版本定版需求记 N/A，不给分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "torchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-879b5d267b8e",
+  "task_id": "F",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "59a20d949650494496c8860b3626a46c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "8a06644a873a422a41363698384a79fc",
+        "conversationRequestId": "8a06644a873a422a41363698384a79fc",
+        "agent": "cli"
+      },
+      {
+        "messageId": "59a20d949650494496c8860b3626a46c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "8a06644a873a422a41363698384a79fc",
+        "conversationRequestId": "8a06644a873a422a41363698384a79fc",
+        "rawUsage": {
+          "prompt_tokens": 13676,
+          "completion_tokens": 1255,
+          "total_tokens": 14931,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 342,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 13676,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 342,
+          "credit": 2.89,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 13676,
+          "outputTokens": 1255,
+          "totalTokens": 14931,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 342
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "586fb47df4bb322abde77ca893345d8b3ae9e8ed871e4ccd58d392665082cad4",
+    "process_sha256": "2df8b78b1262b0506772835e5fc6d3d89f414ab4dfacfaaaadeaef99b6fff374",
+    "elapsed_seconds": 28.5,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-0a2d1d611d1a4f10b0189c989f5b3abf",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-879b5d267b8e-outcome.json",
+    "repairs": [],
+    "semantic_validation": false
+  }
+}

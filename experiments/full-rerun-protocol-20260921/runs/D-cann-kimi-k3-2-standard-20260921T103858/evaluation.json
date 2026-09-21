@@ -147,6 +147,1395 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T03:41:03.551798+00:00",
+      "process_sha256": "fa7779a5c83a72b799e2a44c309d905eefaca83e115b028b2bc7823c748e271a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "整体分两大阶段：**A. 用 msOpGen 生成并开发 CANN 自定义算子（产出 aclnn 接口）**；**B. 通过 torch_npu 的 C++ extensions 机制把 aclnn 算子注册进 PyTorch**。",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_4_10ddf5dd.result",
+            "evidence_quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+            "verification": "source",
+            "reason": "原题为单一综合how-to（Ascend C开发+msOpGen工程+aclnn接口+PyTorch集成完整步骤），逐方面核对：(1)环境准备——答案'安装 CANN……source ${INSTALL_DIR}/set_env.sh'与WebFetch_4_10ddf5dd.result前提'完成CANN软件的安装'一致；(2)msOpGen工程创建——答案'msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom'对应WebFetch_1_692367d8.result'msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom'，工程目录结构亦同源；(3)编译部署——'./build.sh'与'./build_out/custom_opp_<target_os>_<target_architecture>.run'在WebFetch_1_692367d8.result原文中；(4)Kernel/Host实现——CopyIn/Compute/CopyOut流水、TilingFunc、OpDef注册与WebFetch_8_26ec4a6f.result（'AscendC::Add(zLocal, xLocal, yLocal, this->tileLength);'、'GET_TILING_DATA(tiling_data, tiling);'）及WebFetch_5_add06bb1.result（'Ascend C的算子实现主要包含两个部分：'）一致；(5)PyTorch集成——TORCH_LIBRARY schema注册、EXEC_NPU_CMD调aclnnAddCustom、PrivateUse1/XLA版本差异、setup.py bdist_wheel、torchair converter逐字对应WebFetch_4_10ddf5dd.result。剩余缺口（setup.py原文、EXEC_NPU_CMD宏展开、-f全部合法取值）答案已在'未核实处'如实披露，不影响所要求步骤链的完整性，综合判定supported。",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为相关官方来源(hiascend.com MindStudio文档)，第3条亦为官方文档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_28ae6b5e.result",
+                "quote": "## 2. [Ascend C自定义算子开发实践-典型案例-算子工程创建 ...](https://www.hiascend.com/document/detail/zh/mindstudio/70RC3/ODtools/Operatordevelopmenttools/msopdev_16_0085.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom"
+              },
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);"
+              },
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "Ascend C的算子实现主要包含两个部分："
+              },
+              {
+                "event_id": "WebFetch_3_752d7173.result",
+                "quote": "C++ extensions插件提供了将自定义算子映射到昇腾AI处理器的功能"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文覆盖了工程创建(msopgen命令、json、目录)、编译部署(build.sh、custom_opp run)、ST测试与PyTorch集成(TORCH_LIBRARY注册、aclnn调用、setup.py wheel、torchair入图)，主流程及参数已说明；但Ascend C Kernel实现(TPipe/TQue/CopyIn/Compute/CopyOut核函数代码与tiling实现)官方仅取得概述页，关键步骤缺失。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "本章首先介绍矢量编程、矩阵编程、融合算子编程三种典型场景下的算子 Tiling、Kernel 实现"
+              },
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run"
+              },
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "python3 setup.py build bdist_wheel"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方页给出部分适用关系(商用版/社区版CANN安装指南并存、PyTorch 2.1上下版本设备名差异)，但跨CANN 8.2.RC1 / MindStudio 8.1.RC1 / TorchNPU 7.1.0的完整版本对应关系未在已取得正文中说明，需自行合并且仍缺TorchNPU↔CANN适配表。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "完成CANN软件的安装具体请参见《CANN 软件安装指南》（商用版）或《CANN 软件安装指南》（社区版）"
+              },
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "NPU设备在pytorch 2.1及以上版本使用的设备名称是PrivateUse1，在2.1以下版本用的是XLA"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内去重后的相关独立第三方来源≥6条：CSDN(m0_46721576)、阿里云开发者社区(1643997/1643995系列)、gitcode博客、rej177算子适配文(多处转载计1)、skillsmd.top、CSDN(2503_93740796)、feng8403000(hwcomputing镜像计1)等。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_28ae6b5e.result",
+                "quote": "## 5. [使用 msopgen 生成自定义算子工程并完成 ACLNN 调用验证 ...](https://blog.gitcode.com/7a2dd9f8acbeafeb0f9f6de9f3c186a6.html)"
+              },
+              {
+                "event_id": "WebSearch_7_fba68185.result",
+                "quote": "## 4. [AscendC从入门到精通系列（二）基于Kernel直调开发 ...](https://developer.aliyun.com/article/1643995)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "实际抓取的第三方文档(WebFetch_8 CSDN)关键说法(msopgen工程结构、CopyIn/Compute/CopyOut、custom_opp部署)与官方文档可追溯互证，未见矛盾；但其余多数第三方来源仅见摘要未核验，关键说法仅部分获交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_26ec4a6f.result",
+                "quote": "三个阶段的流水线执行实现了计算和数据传输的重叠"
+              },
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "执行以下命令，将算子部署到CANN"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程(环境变量、msopgen命令、Kernel实现要素、build部署、aclnn生成、两条PyTorch集成路径、测试)，与后续官方核对基本一致；但具体参数与约束(soc_version取值、json确切字段、链接库名、build细节)自认不确定，需外部补充，未达5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "msopgen gen -i add_custom.json -c ai_core-<soc_version> -lan cpp -out ./AddCustom"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "soc_version 取值（Ascend910B/Ascend310P 等）"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_28ae6b5e.dispatch",
+              "WebFetch_1_692367d8.dispatch",
+              "WebSearch_2_f24e8bae.dispatch",
+              "WebFetch_3_752d7173.dispatch",
+              "WebFetch_4_10ddf5dd.dispatch",
+              "WebFetch_5_add06bb1.dispatch",
+              "WebSearch_6_3fe7cc14.dispatch",
+              "WebSearch_7_fba68185.dispatch",
+              "WebFetch_8_26ec4a6f.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "仅评最终答案。CANN（8.2.RC1）与torch_npu（TorchNPU 7.1.0）已锁定到有依据的具体版本；PyTorch给出有依据的适用范围'2.1+（PrivateUse1）'而非单一具体版本；soc_version为依芯片的条件清单（ascend910/910b/310p/310b），未定到具体芯片。所有组件均给出有依据的适用范围且配套关系无未解决冲突，但PyTorch与soc_version未锁定到具体版本，符合第4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "| CANN | 8.2.RC1（商用版/社区版文档）；算子工具文档 8.1.RC1 |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "| torch_npu | TorchNPU 7.1.0 文档 |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "| PyTorch | 2.1+（PrivateUse1）；<2.1 需把 PrivateUse1 改 XLA |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "| soc_version | 依芯片：ascend910 / ascend910b / ascend310p / ascend310b（AddConfig/msopgen -c 参数） |"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "命令链与代码具体：msopgen gen、./build.sh、.run部署、TORCH_LIBRARY/PYBIND11注册、EXEC_NPU_CMD(aclnnAddCustom…)调用、'python3 setup.py build bdist_wheel'、pip install均可确定，前置条件（CANN安装、set_env.sh、PyTorch≥2.1设备名差异）已说明，<soc_version>等占位符有明确标注。但需补充内容才能照抄执行，具体缺口：(a)setup.py内容缺失，答案自认'官方页未展示具体文本，此处为推断'，需补写头文件包含与链接库配置；(b)KernelAdd完整类代码仅以流水概述呈现，反向实现以'// 反向实现 add_custom_backward_impl_npu ...'省略。符合第3档：有具体操作方案但需补充缺失内容。答案声明'代码未实际运行（无本地执行环境）'，本次仅内容核查，不宣称复现成功。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "- `setup.py` 的完整内容（编译时需 include torch_npu 头文件、链接 `opapi`/`libopapi.so` 与 `torch_npu` 库，官方页未展示具体文本，此处为推断）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "// 反向实现 add_custom_backward_impl_npu ..."
+              },
+              {
+                "event_id": "run-end",
+                "quote": "代码未实际运行（无本地执行环境）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文覆盖了工程创建(msopgen命令、json、目录)、编译部署(build.sh、custom_opp run)、ST测试与PyTorch集成(TORCH_LIBRARY注册、aclnn调用、setup.py wheel、torchair入图)，主流程及参数已说明；但Ascend C Kernel实现(TPipe/TQue/CopyIn/Compute/CopyOut核函数代码与tiling实现)官方仅取得概述页，关键步骤缺失。"
+              },
+              {
+                "metric": "M7",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程(环境变量、msopgen命令、Kernel实现要素、build部署、aclnn生成、两条PyTorch集成路径、测试)，与后续官方核对基本一致；但具体参数与约束(soc_version取值、json确切字段、链接库名、build细节)自认不确定，需外部补充，未达5。"
+              },
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方页给出部分适用关系(商用版/社区版CANN安装指南并存、PyTorch 2.1上下版本设备名差异)，但跨CANN 8.2.RC1 / MindStudio 8.1.RC1 / TorchNPU 7.1.0的完整版本对应关系未在已取得正文中说明，需自行合并且仍缺TorchNPU↔CANN适配表。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文覆盖了工程创建(msopgen命令、json、目录)、编译部署(build.sh、custom_opp run)、ST测试与PyTorch集成(TORCH_LIBRARY注册、aclnn调用、setup.py wheel、torchair入图)，主流程及参数已说明；但Ascend C Kernel实现(TPipe/TQue/CopyIn/Compute/CopyOut核函数代码与tiling实现)官方仅取得概述页，关键步骤缺失。"
+            },
+            {
+              "metric": "M7",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程(环境变量、msopgen命令、Kernel实现要素、build部署、aclnn生成、两条PyTorch集成路径、测试)，与后续官方核对基本一致；但具体参数与约束(soc_version取值、json确切字段、链接库名、build细节)自认不确定，需外部补充，未达5。"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方页给出部分适用关系(商用版/社区版CANN安装指南并存、PyTorch 2.1上下版本设备名差异)，但跨CANN 8.2.RC1 / MindStudio 8.1.RC1 / TorchNPU 7.1.0的完整版本对应关系未在已取得正文中说明，需自行合并且仍缺TorchNPU↔CANN适配表。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_28ae6b5e.result",
+            "field": "response",
+            "sha256": "8a280416af53c03e2b30a08cf38d75f19152a26762e09e3253b05ea2647f7b7b",
+            "start": 320,
+            "end": 477,
+            "quote": "## 2. [Ascend C自定义算子开发实践-典型案例-算子工程创建 ...](https://www.hiascend.com/document/detail/zh/mindstudio/70RC3/ODtools/Operatordevelopmenttools/msopdev_16_0085.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_692367d8.result",
+            "field": "response",
+            "sha256": "919246f781ce2d5fd443d081c14793fd05e9c162a8418eb9b6f276827f1fbfa3",
+            "start": 2640,
+            "end": 2728,
+            "quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 4106,
+            "end": 4156,
+            "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_5_add06bb1.result",
+            "field": "response",
+            "sha256": "87d16794cd2e551cf30a4011ee5a889b26549e71fb2552eb5905d8299f03a6fd",
+            "start": 299,
+            "end": 321,
+            "quote": "Ascend C的算子实现主要包含两个部分：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_3_752d7173.result",
+            "field": "response",
+            "sha256": "1db211eb614c25637b1983f3acaa106ff3f805e10cd22253ccb5e51c038bc621",
+            "start": 323,
+            "end": 361,
+            "quote": "C++ extensions插件提供了将自定义算子映射到昇腾AI处理器的功能",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_1_692367d8.result",
+            "field": "response",
+            "sha256": "919246f781ce2d5fd443d081c14793fd05e9c162a8418eb9b6f276827f1fbfa3",
+            "start": 3689,
+            "end": 3749,
+            "quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 10089,
+            "end": 10123,
+            "quote": "python3 setup.py build bdist_wheel",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 5863,
+            "end": 5919,
+            "quote": "NPU设备在pytorch 2.1及以上版本使用的设备名称是PrivateUse1，在2.1以下版本用的是XLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebSearch_0_28ae6b5e.result",
+            "field": "response",
+            "sha256": "8a280416af53c03e2b30a08cf38d75f19152a26762e09e3253b05ea2647f7b7b",
+            "start": 1304,
+            "end": 1414,
+            "quote": "## 5. [使用 msopgen 生成自定义算子工程并完成 ACLNN 调用验证 ...](https://blog.gitcode.com/7a2dd9f8acbeafeb0f9f6de9f3c186a6.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_7_fba68185.result",
+            "field": "response",
+            "sha256": "b64f2fe7b68a9e36c5440c04ecdc07cbec0ccd8ad07a830741211ae9c3d4a048",
+            "start": 845,
+            "end": 933,
+            "quote": "## 4. [AscendC从入门到精通系列（二）基于Kernel直调开发 ...](https://developer.aliyun.com/article/1643995)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_8_26ec4a6f.result",
+            "field": "response",
+            "sha256": "228ebb1480373e84eb15667310348ef29956e8469e2f081ce8033d841e1efef1",
+            "start": 5775,
+            "end": 5798,
+            "quote": "三个阶段的流水线执行实现了计算和数据传输的重叠",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_1_692367d8.result",
+            "field": "response",
+            "sha256": "919246f781ce2d5fd443d081c14793fd05e9c162a8418eb9b6f276827f1fbfa3",
+            "start": 3650,
+            "end": 3667,
+            "quote": "执行以下命令，将算子部署到CANN",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6383,
+            "end": 6427,
+            "quote": "| CANN | 8.2.RC1（商用版/社区版文档）；算子工具文档 8.1.RC1 |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6428,
+            "end": 6461,
+            "quote": "| torch_npu | TorchNPU 7.1.0 文档 |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6462,
+            "end": 6519,
+            "quote": "| PyTorch | 2.1+（PrivateUse1）；<2.1 需把 PrivateUse1 改 XLA |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6520,
+            "end": 6615,
+            "quote": "| soc_version | 依芯片：ascend910 / ascend910b / ascend310p / ascend310b（AddConfig/msopgen -c 参数） |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 1100,
+            "end": 1184,
+            "quote": "msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 7296,
+            "end": 7401,
+            "quote": "- `setup.py` 的完整内容（编译时需 include torch_npu 头文件、链接 `opapi`/`libopapi.so` 与 `torch_npu` 库，官方页未展示具体文本，此处为推断）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 4835,
+            "end": 4875,
+            "quote": "// 反向实现 add_custom_backward_impl_npu ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 7604,
+            "end": 7621,
+            "quote": "代码未实际运行（无本地执行环境）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 80,
+            "end": 196,
+            "quote": "整体分两大阶段：**A. 用 msOpGen 生成并开发 CANN 自定义算子（产出 aclnn 接口）**；**B. 通过 torch_npu 的 C++ extensions 机制把 aclnn 算子注册进 PyTorch**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 4106,
+            "end": 4156,
+            "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-3a66e4840f3e-predictors.json": "5dc4f5a98f86ceab6e435958abd6efae88e82263d89841f36bc73a5efeb146a2",
+          "reviewed/development/case-3a66e4840f3e-outcome.json": "fd63f9aaefcf79068c93e2ef28d07e9dab3aeb1862ad3dd46d61f32c262981bb",
+          "consolidate_evaluations.py": "d292f7154e63168603495f2a59bbfcb98585beca31ddc45f768c9e968ce3e40c",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_692367d8.result",
+            "url": "https://www.hiascend.com/document/detail/zh/mindstudio/81RC1/ODtools/Operatordevelopmenttools/atlasopdev_16_0027.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom"
+              }
+            ],
+            "boundary_evidence": "取得操作步骤1-7含json、目录树、编译部署与ST测试命令，未见截断声明，但无独立完整性核对依据",
+            "reference": "MindStudio8.1.RC1 Ascend C自定义算子开发实践"
+          },
+          {
+            "event_id": "WebFetch_3_752d7173.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/710/ptmoddevg/Frameworkfeatures/featuresguide_00024.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_752d7173.result",
+                "quote": "C++ extensions插件提供了将自定义算子映射到昇腾AI处理器的功能"
+              }
+            ],
+            "boundary_evidence": "页面本身为概述性适配说明，含指向单算子API调用与kernel直调章节的链接；正文似为该页全部内容但无独立核对",
+            "reference": "TorchNPU7.1.0 适配说明"
+          },
+          {
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/710/ptmoddevg/Frameworkfeatures/featuresguide_00025.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);"
+              }
+            ],
+            "boundary_evidence": "取得文件结构、registration/add_custom代码、setup.py、入图converter示例，未见截断声明，无独立完整性核对",
+            "reference": "TorchNPU7.1.0 单算子API调用适配开发"
+          },
+          {
+            "event_id": "WebFetch_5_add06bb1.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/82RC1/opdevg/Ascendcopdevg/atlas_ascendc_10_0031.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "Ascend C的算子实现主要包含两个部分："
+              }
+            ],
+            "boundary_evidence": "取得Host侧Tiling与Device侧Kernel概述及章节导语，无截断声明，无独立完整性核对",
+            "reference": "CANN商用版8.2.RC1 算子实现概述"
+          },
+          {
+            "event_id": "WebFetch_8_26ec4a6f.result",
+            "url": "https://hwcomputing.csdn.net/6947ee13836da32144868911.html",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": null,
+            "upper": null,
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_26ec4a6f.result",
+                "quote": "extern \"C\" __global__ __aicore__ void add_custom("
+              }
+            ],
+            "boundary_evidence": "第三方文档，不计入M2官方均值；正文含一处[...]省略标记",
+            "reference": "从零开始学昇腾Ascend C算子开发- 第十篇"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "本章首先介绍矢量编程、矩阵编程、融合算子编程三种典型场景下的算子 Tiling、Kernel 实现"
+              }
+            ]
+          },
+          {
+            "metric": "M4",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "完成CANN软件的安装具体请参见《CANN 软件安装指南》（商用版）或《CANN 软件安装指南》（社区版）"
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "text": "msopgen gen -i add_custom.json -c ai_core-<soc_version> -lan cpp -out ./AddCustom"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "soc_version 取值（Ascend910B/Ascend310P 等）"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T03:46:24.153439+00:00",
+      "process_sha256": "fa7779a5c83a72b799e2a44c309d905eefaca83e115b028b2bc7823c748e271a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "整体分两大阶段：**A. 用 msOpGen 生成并开发 CANN 自定义算子（产出 aclnn 接口）**；**B. 通过 torch_npu 的 C++ extensions 机制把 aclnn 算子注册进 PyTorch**。",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_4_10ddf5dd.result",
+            "evidence_quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+            "verification": "source",
+            "reason": "原题为单一综合how-to（Ascend C开发+msOpGen工程+aclnn接口+PyTorch集成完整步骤），逐方面核对：(1)环境准备——答案'安装 CANN……source ${INSTALL_DIR}/set_env.sh'与WebFetch_4_10ddf5dd.result前提'完成CANN软件的安装'一致；(2)msOpGen工程创建——答案'msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom'对应WebFetch_1_692367d8.result'msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom'，工程目录结构亦同源；(3)编译部署——'./build.sh'与'./build_out/custom_opp_<target_os>_<target_architecture>.run'在WebFetch_1_692367d8.result原文中；(4)Kernel/Host实现——CopyIn/Compute/CopyOut流水、TilingFunc、OpDef注册与WebFetch_8_26ec4a6f.result（'AscendC::Add(zLocal, xLocal, yLocal, this->tileLength);'、'GET_TILING_DATA(tiling_data, tiling);'）及WebFetch_5_add06bb1.result（'Ascend C的算子实现主要包含两个部分：'）一致；(5)PyTorch集成——TORCH_LIBRARY schema注册、EXEC_NPU_CMD调aclnnAddCustom、PrivateUse1/XLA版本差异、setup.py bdist_wheel、torchair converter逐字对应WebFetch_4_10ddf5dd.result。剩余缺口（setup.py原文、EXEC_NPU_CMD宏展开、-f全部合法取值）答案已在'未核实处'如实披露，不影响所要求步骤链的完整性，综合判定supported。",
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为相关官方来源(hiascend.com MindStudio文档)，第3条亦为官方文档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_28ae6b5e.result",
+                "quote": "## 2. [Ascend C自定义算子开发实践-典型案例-算子工程创建 ...](https://www.hiascend.com/document/detail/zh/mindstudio/70RC3/ODtools/Operatordevelopmenttools/msopdev_16_0085.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom"
+              },
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);"
+              },
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "Ascend C的算子实现主要包含两个部分："
+              },
+              {
+                "event_id": "WebFetch_3_752d7173.result",
+                "quote": "C++ extensions插件提供了将自定义算子映射到昇腾AI处理器的功能"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文覆盖了工程创建(msopgen命令、json、目录)、编译部署(build.sh、custom_opp run)、ST测试与PyTorch集成(TORCH_LIBRARY注册、aclnn调用、setup.py wheel、torchair入图)，主流程及参数已说明；但Ascend C Kernel实现(TPipe/TQue/CopyIn/Compute/CopyOut核函数代码与tiling实现)官方仅取得概述页，关键步骤缺失。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "本章首先介绍矢量编程、矩阵编程、融合算子编程三种典型场景下的算子 Tiling、Kernel 实现"
+              },
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run"
+              },
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "python3 setup.py build bdist_wheel"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "官方页给出部分适用关系(商用版/社区版CANN安装指南并存、PyTorch 2.1上下版本设备名差异)，但跨CANN 8.2.RC1 / MindStudio 8.1.RC1 / TorchNPU 7.1.0的完整版本对应关系未在已取得正文中说明，需自行合并且仍缺TorchNPU↔CANN适配表。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "完成CANN软件的安装具体请参见《[CANN 软件安装指南](https://www.hiascend.com/document/detail/zh/canncommercial/82RC1/softwareinst/instg/instg_0000.html)》（商用版）或《[CANN 软件安装指南](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1/softwareinst/instg/instg_0000.html)》（社区版）"
+              },
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "NPU设备在pytorch 2.1及以上版本使用的设备名称是PrivateUse1，在2.1以下版本用的是XLA"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一预算内去重后的相关独立第三方来源≥6条：CSDN(m0_46721576)、阿里云开发者社区(1643997/1643995系列)、gitcode博客、rej177算子适配文(多处转载计1)、skillsmd.top、CSDN(2503_93740796)、feng8403000(hwcomputing镜像计1)等。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_28ae6b5e.result",
+                "quote": "## 5. [使用 msopgen 生成自定义算子工程并完成 ACLNN 调用验证 ...](https://blog.gitcode.com/7a2dd9f8acbeafeb0f9f6de9f3c186a6.html)"
+              },
+              {
+                "event_id": "WebSearch_7_fba68185.result",
+                "quote": "## 4. [AscendC从入门到精通系列（二）基于Kernel直调开发 ...](https://developer.aliyun.com/article/1643995)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "实际抓取的第三方文档(WebFetch_8 CSDN)关键说法(msopgen工程结构、CopyIn/Compute/CopyOut、custom_opp部署)与官方文档可追溯互证，未见矛盾；但其余多数第三方来源仅见摘要未核验，关键说法仅部分获交叉印证。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_26ec4a6f.result",
+                "quote": "三个阶段的流水线执行实现了计算和数据传输的重叠"
+              },
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "执行以下命令，将算子部署到CANN"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": null,
+            "lower": 1,
+            "upper": 5,
+            "status": "insufficient_evidence",
+            "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程(环境变量、msopgen命令、Kernel实现要素、build部署、aclnn生成、两条PyTorch集成路径、测试)，与后续官方核对基本一致；但具体参数与约束(soc_version取值、json确切字段、链接库名、build细节)自认不确定，需外部补充，未达5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "msopgen gen -i add_custom.json -c ai_core-<soc_version> -lan cpp -out ./AddCustom"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "soc_version 取值（Ascend910B/Ascend310P 等）"
+              }
+            ],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_28ae6b5e.dispatch",
+              "WebFetch_1_692367d8.dispatch",
+              "WebSearch_2_f24e8bae.dispatch",
+              "WebFetch_3_752d7173.dispatch",
+              "WebFetch_4_10ddf5dd.dispatch",
+              "WebFetch_5_add06bb1.dispatch",
+              "WebSearch_6_3fe7cc14.dispatch",
+              "WebSearch_7_fba68185.dispatch",
+              "WebFetch_8_26ec4a6f.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "仅评最终答案。CANN（8.2.RC1）与torch_npu（TorchNPU 7.1.0）已锁定到有依据的具体版本；PyTorch给出有依据的适用范围'2.1+（PrivateUse1）'而非单一具体版本；soc_version为依芯片的条件清单（ascend910/910b/310p/310b），未定到具体芯片。所有组件均给出有依据的适用范围且配套关系无未解决冲突，但PyTorch与soc_version未锁定到具体版本，符合第4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "| CANN | 8.2.RC1（商用版/社区版文档）；算子工具文档 8.1.RC1 |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "| torch_npu | TorchNPU 7.1.0 文档 |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "| PyTorch | 2.1+（PrivateUse1）；<2.1 需把 PrivateUse1 改 XLA |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "| soc_version | 依芯片：ascend910 / ascend910b / ascend310p / ascend310b（AddConfig/msopgen -c 参数） |"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "命令链与代码具体：msopgen gen、./build.sh、.run部署、TORCH_LIBRARY/PYBIND11注册、EXEC_NPU_CMD(aclnnAddCustom…)调用、'python3 setup.py build bdist_wheel'、pip install均可确定，前置条件（CANN安装、set_env.sh、PyTorch≥2.1设备名差异）已说明，<soc_version>等占位符有明确标注。但需补充内容才能照抄执行，具体缺口：(a)setup.py内容缺失，答案自认'官方页未展示具体文本，此处为推断'，需补写头文件包含与链接库配置；(b)KernelAdd完整类代码仅以流水概述呈现，反向实现以'// 反向实现 add_custom_backward_impl_npu ...'省略。符合第3档：有具体操作方案但需补充缺失内容。答案声明'代码未实际运行（无本地执行环境）'，本次仅内容核查，不宣称复现成功。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "- `setup.py` 的完整内容（编译时需 include torch_npu 头文件、链接 `opapi`/`libopapi.so` 与 `torch_npu` 库，官方页未展示具体文本，此处为推断）。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "// 反向实现 add_custom_backward_impl_npu ..."
+              },
+              {
+                "event_id": "run-end",
+                "quote": "代码未实际运行（无本地执行环境）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M3",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文覆盖了工程创建(msopgen命令、json、目录)、编译部署(build.sh、custom_opp run)、ST测试与PyTorch集成(TORCH_LIBRARY注册、aclnn调用、setup.py wheel、torchair入图)，主流程及参数已说明；但Ascend C Kernel实现(TPipe/TQue/CopyIn/Compute/CopyOut核函数代码与tiling实现)官方仅取得概述页，关键步骤缺失。"
+              },
+              {
+                "metric": "M7",
+                "status": "insufficient_evidence",
+                "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程(环境变量、msopgen命令、Kernel实现要素、build部署、aclnn生成、两条PyTorch集成路径、测试)，与后续官方核对基本一致；但具体参数与约束(soc_version取值、json确切字段、链接库名、build细节)自认不确定，需外部补充，未达5。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M3",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；官方正文覆盖了工程创建(msopgen命令、json、目录)、编译部署(build.sh、custom_opp run)、ST测试与PyTorch集成(TORCH_LIBRARY注册、aclnn调用、setup.py wheel、torchair入图)，主流程及参数已说明；但Ascend C Kernel实现(TPipe/TQue/CopyIn/Compute/CopyOut核函数代码与tiling实现)官方仅取得概述页，关键步骤缺失。"
+            },
+            {
+              "metric": "M7",
+              "status": "insufficient_evidence",
+              "reason": "自动引文审计未匹配，原判断保留在 raw_status；检索前回答已给出正确完整流程(环境变量、msopgen命令、Kernel实现要素、build部署、aclnn生成、两条PyTorch集成路径、测试)，与后续官方核对基本一致；但具体参数与约束(soc_version取值、json确切字段、链接库名、build细节)自认不确定，需外部补充，未达5。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_28ae6b5e.result",
+            "field": "response",
+            "sha256": "8a280416af53c03e2b30a08cf38d75f19152a26762e09e3253b05ea2647f7b7b",
+            "start": 320,
+            "end": 477,
+            "quote": "## 2. [Ascend C自定义算子开发实践-典型案例-算子工程创建 ...](https://www.hiascend.com/document/detail/zh/mindstudio/70RC3/ODtools/Operatordevelopmenttools/msopdev_16_0085.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_692367d8.result",
+            "field": "response",
+            "sha256": "919246f781ce2d5fd443d081c14793fd05e9c162a8418eb9b6f276827f1fbfa3",
+            "start": 2640,
+            "end": 2728,
+            "quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 4106,
+            "end": 4156,
+            "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_5_add06bb1.result",
+            "field": "response",
+            "sha256": "87d16794cd2e551cf30a4011ee5a889b26549e71fb2552eb5905d8299f03a6fd",
+            "start": 299,
+            "end": 321,
+            "quote": "Ascend C的算子实现主要包含两个部分：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_3_752d7173.result",
+            "field": "response",
+            "sha256": "1db211eb614c25637b1983f3acaa106ff3f805e10cd22253ccb5e51c038bc621",
+            "start": 323,
+            "end": 361,
+            "quote": "C++ extensions插件提供了将自定义算子映射到昇腾AI处理器的功能",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_1_692367d8.result",
+            "field": "response",
+            "sha256": "919246f781ce2d5fd443d081c14793fd05e9c162a8418eb9b6f276827f1fbfa3",
+            "start": 3689,
+            "end": 3749,
+            "quote": "./build_out/custom_opp_<target_os>_<target_architecture>.run",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 10089,
+            "end": 10123,
+            "quote": "python3 setup.py build bdist_wheel",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 394,
+            "end": 659,
+            "quote": "完成CANN软件的安装具体请参见《[CANN 软件安装指南](https://www.hiascend.com/document/detail/zh/canncommercial/82RC1/softwareinst/instg/instg_0000.html)》（商用版）或《[CANN 软件安装指南](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1/softwareinst/instg/instg_0000.html)》（社区版）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 5863,
+            "end": 5919,
+            "quote": "NPU设备在pytorch 2.1及以上版本使用的设备名称是PrivateUse1，在2.1以下版本用的是XLA",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebSearch_0_28ae6b5e.result",
+            "field": "response",
+            "sha256": "8a280416af53c03e2b30a08cf38d75f19152a26762e09e3253b05ea2647f7b7b",
+            "start": 1304,
+            "end": 1414,
+            "quote": "## 5. [使用 msopgen 生成自定义算子工程并完成 ACLNN 调用验证 ...](https://blog.gitcode.com/7a2dd9f8acbeafeb0f9f6de9f3c186a6.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_7_fba68185.result",
+            "field": "response",
+            "sha256": "b64f2fe7b68a9e36c5440c04ecdc07cbec0ccd8ad07a830741211ae9c3d4a048",
+            "start": 845,
+            "end": 933,
+            "quote": "## 4. [AscendC从入门到精通系列（二）基于Kernel直调开发 ...](https://developer.aliyun.com/article/1643995)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_8_26ec4a6f.result",
+            "field": "response",
+            "sha256": "228ebb1480373e84eb15667310348ef29956e8469e2f081ce8033d841e1efef1",
+            "start": 5775,
+            "end": 5798,
+            "quote": "三个阶段的流水线执行实现了计算和数据传输的重叠",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebFetch_1_692367d8.result",
+            "field": "response",
+            "sha256": "919246f781ce2d5fd443d081c14793fd05e9c162a8418eb9b6f276827f1fbfa3",
+            "start": 3650,
+            "end": 3667,
+            "quote": "执行以下命令，将算子部署到CANN",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6383,
+            "end": 6427,
+            "quote": "| CANN | 8.2.RC1（商用版/社区版文档）；算子工具文档 8.1.RC1 |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6428,
+            "end": 6461,
+            "quote": "| torch_npu | TorchNPU 7.1.0 文档 |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6462,
+            "end": 6519,
+            "quote": "| PyTorch | 2.1+（PrivateUse1）；<2.1 需把 PrivateUse1 改 XLA |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 6520,
+            "end": 6615,
+            "quote": "| soc_version | 依芯片：ascend910 / ascend910b / ascend310p / ascend310b（AddConfig/msopgen -c 参数） |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 1100,
+            "end": 1184,
+            "quote": "msopgen gen -i AddCustom.json -f tf -c ai_core-<soc_version> -lan cpp -out AddCustom",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 7296,
+            "end": 7401,
+            "quote": "- `setup.py` 的完整内容（编译时需 include torch_npu 头文件、链接 `opapi`/`libopapi.so` 与 `torch_npu` 库，官方页未展示具体文本，此处为推断）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 4835,
+            "end": 4875,
+            "quote": "// 反向实现 add_custom_backward_impl_npu ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 7604,
+            "end": 7621,
+            "quote": "代码未实际运行（无本地执行环境）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c2967759f30e42a36c3548b173956cba979647fcc1ed4bd84feb34a2ba0442d9",
+            "start": 80,
+            "end": 196,
+            "quote": "整体分两大阶段：**A. 用 msOpGen 生成并开发 CANN 自定义算子（产出 aclnn 接口）**；**B. 通过 torch_npu 的 C++ extensions 机制把 aclnn 算子注册进 PyTorch**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "field": "response",
+            "sha256": "dfe8d4675be0cafa2e060ebc94e11e3c9d83697aed1dc678a1534deb801e2bd7",
+            "start": 4106,
+            "end": 4156,
+            "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-3a66e4840f3e-predictors.json": "28d4257dbc9a62898ea01af74aa6a673cb99fdda1aec9d99e43250f24e77b182",
+          "reviewed/development/case-3a66e4840f3e-outcome.json": "fd63f9aaefcf79068c93e2ef28d07e9dab3aeb1862ad3dd46d61f32c262981bb",
+          "consolidate_evaluations.py": "d292f7154e63168603495f2a59bbfcb98585beca31ddc45f768c9e968ce3e40c",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_692367d8.result",
+            "url": "https://www.hiascend.com/document/detail/zh/mindstudio/81RC1/ODtools/Operatordevelopmenttools/atlasopdev_16_0027.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_692367d8.result",
+                "quote": "msopgen gen -i MatmulCustom.json -f tf -c ai_core-Ascendxxxyy -lan cpp -out MatmulCustom"
+              }
+            ],
+            "boundary_evidence": "取得操作步骤1-7含json、目录树、编译部署与ST测试命令，未见截断声明，但无独立完整性核对依据",
+            "reference": "MindStudio8.1.RC1 Ascend C自定义算子开发实践"
+          },
+          {
+            "event_id": "WebFetch_3_752d7173.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/710/ptmoddevg/Frameworkfeatures/featuresguide_00024.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_752d7173.result",
+                "quote": "C++ extensions插件提供了将自定义算子映射到昇腾AI处理器的功能"
+              }
+            ],
+            "boundary_evidence": "页面本身为概述性适配说明，含指向单算子API调用与kernel直调章节的链接；正文似为该页全部内容但无独立核对",
+            "reference": "TorchNPU7.1.0 适配说明"
+          },
+          {
+            "event_id": "WebFetch_4_10ddf5dd.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/710/ptmoddevg/Frameworkfeatures/featuresguide_00025.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_10ddf5dd.result",
+                "quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);"
+              }
+            ],
+            "boundary_evidence": "取得文件结构、registration/add_custom代码、setup.py、入图converter示例，未见截断声明，无独立完整性核对",
+            "reference": "TorchNPU7.1.0 单算子API调用适配开发"
+          },
+          {
+            "event_id": "WebFetch_5_add06bb1.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/82RC1/opdevg/Ascendcopdevg/atlas_ascendc_10_0031.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "Ascend C的算子实现主要包含两个部分："
+              }
+            ],
+            "boundary_evidence": "取得Host侧Tiling与Device侧Kernel概述及章节导语，无截断声明，无独立完整性核对",
+            "reference": "CANN商用版8.2.RC1 算子实现概述"
+          },
+          {
+            "event_id": "WebFetch_8_26ec4a6f.result",
+            "url": "https://hwcomputing.csdn.net/6947ee13836da32144868911.html",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "unknown",
+            "lower": null,
+            "upper": null,
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_26ec4a6f.result",
+                "quote": "extern \"C\" __global__ __aicore__ void add_custom("
+              }
+            ],
+            "boundary_evidence": "第三方文档，不计入M2官方均值；正文含一处[...]省略标记",
+            "reference": "从零开始学昇腾Ascend C算子开发- 第十篇"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M3",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_add06bb1.result",
+                "quote": "本章首先介绍矢量编程、矩阵编程、融合算子编程三种典型场景下的算子 Tiling、Kernel 实现"
+              }
+            ]
+          },
+          {
+            "metric": "M7",
+            "bad_refs": [
+              {
+                "event_id": "client-note-00005",
+                "text": "msopgen gen -i add_custom.json -c ai_core-<soc_version> -lan cpp -out ./AddCustom"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "soc_version 取值（Ascend910B/Ascend310P 等）"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
