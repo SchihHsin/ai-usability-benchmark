@@ -1,0 +1,190 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "定位方法（按推荐顺序）：1. CUDA_LAUNCH_BLOCKING=1；2. PYTORCH_USE_CUDA_DSA=1 直接给出 kernel 名与两侧 file:line；3. compute-sanitizer 精确到 kernel/线程；4. cuda-gdb 现场调试；5. torch.cuda.synchronize() 二分等辅助手段",
+      "answer_event_id": "final",
+      "evidence_id": "call_f743c20cb6744fa1ab01de2b.result",
+      "evidence_quote": "bool CUDAKernelLaunchRegistry::check_env_for_dsa_enabled() const {\n  return env_flag_set(\"PYTORCH_USE_CUDA_DSA\");",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求定位device-side assert的行与kernel。答案的四个主要路线均有官方证据支撑：(1) CUDA_LAUNCH_BLOCKING：NVIDIA Programming Guide 5.2.3.1（call_11dfd1e21b224d79bf538b8e.result）原文\"This allows CUDA API errors to be observed at the exact API call that triggered them\"；(2) PYTORCH_USE_CUDA_DSA：PyTorch官方源码（call_f743c20cb6744fa1ab01de2b.result）证实env_flag_set(\"PYTORCH_USE_CUDA_DSA\")，且c10_retrieve_device_side_assertion_info输出\"File containing assertion = ... self.filename << ':' << self.line_number\"与\"Name of kernel launched that led to failure = \"，直接回答哪一行哪个kernel；compute capability≥6前提亦由dsa_check_if_all_devices_support_managed_memory中\"if (dsa_get_device_compute_capability(i) < 6) return false\"证实；(3) compute-sanitizer（call_7fe0ba0ed2c34baf9a92e1f0.result）证实kernel名/线程/块坐标报告能力及Hardware exception为Imprecise的限制，答案如实转述；(4) CUDA_DEVICE_WAITS_ON_EXCEPTION由Programming Guide 5.2.3.6证实。答案对未核实项（DSA引入版本、cuda-memcheck弃用）明确标注，未编造。次要辅助手段标注为社区做法未核实，不构成错误。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "上述均未能在本轮锁定到具体引入版本号，只能给出有依据的适用条件。"
+        },
+        {
+          "event_id": "final",
+          "quote": "`--generate-coredump` 需 CUDA 11.6 起。"
+        },
+        {
+          "event_id": "final",
+          "quote": "`PYTORCH_USE_CUDA_DSA` / `PYTORCH_CUDA_DSA_STACKTRACING`：以 PyTorch main 分支源码为准（2026-09 抓取）；确切引入版本未核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M10: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py"
+        },
+        {
+          "event_id": "final",
+          "quote": "PYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 python train.py"
+        },
+        {
+          "event_id": "final",
+          "quote": "compute-sanitizer --kernel-name regex='embedding' python train.py"
+        },
+        {
+          "event_id": "final",
+          "quote": "CUDA_DEVICE_WAITS_ON_EXCEPTION=1 python train.py   # 进程在设备异常处暂停\ncuda-gdb -p <pid>"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "定位方法（按推荐顺序）：1. CUDA_LAUNCH_BLOCKING=1；2. PYTORCH_USE_CUDA_DSA=1 直接给出 kernel 名与两侧 file:line；3. compute-sanitizer 精确到 kernel/线程；4. cuda-gdb 现场调试；5. torch.cuda.synchronize() 二分等辅助手段"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation",
+      "M10: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-75590c766a78",
+  "task_id": "E",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "prompt_sha256": "4727cdc87d56483247b6d036dbc1fabfee0610d822e6bf6b8c2c885a123107aa",
+    "process_sha256": "c9936217cf0e2adcd581acbcb188d6b85ca44bb60eda1cd78c4cb7ff794b281f",
+    "elapsed_seconds": 50.39,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-7953c2a207d64d048f936bf37e0d8fd1",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": ""
+  },
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "定位方法（按推荐顺序）：1. CUDA_LAUNCH_BLOCKING=1；2. PYTORCH_USE_CUDA_DSA=1 直接给出 kernel 名与两侧 file:line；3. compute-sanitizer 精确到 kernel/线程；4. cuda-gdb 现场调试；5. torch.cuda.synchronize() 二分等辅助手段",
+        "answer_event_id": "final",
+        "evidence_id": "call_f743c20cb6744fa1ab01de2b.result",
+        "evidence_quote": "bool CUDAKernelLaunchRegistry::check_env_for_dsa_enabled() const {\n  return env_flag_set(\"PYTORCH_USE_CUDA_DSA\");",
+        "verification": "source",
+        "reason": "原题要求定位device-side assert的行与kernel。答案的四个主要路线均有官方证据支撑：(1) CUDA_LAUNCH_BLOCKING：NVIDIA Programming Guide 5.2.3.1（call_11dfd1e21b224d79bf538b8e.result）原文\"This allows CUDA API errors to be observed at the exact API call that triggered them\"；(2) PYTORCH_USE_CUDA_DSA：PyTorch官方源码（call_f743c20cb6744fa1ab01de2b.result）证实env_flag_set(\"PYTORCH_USE_CUDA_DSA\")，且c10_retrieve_device_side_assertion_info输出\"File containing assertion = ... self.filename << ':' << self.line_number\"与\"Name of kernel launched that led to failure = \"，直接回答哪一行哪个kernel；compute capability≥6前提亦由dsa_check_if_all_devices_support_managed_memory中\"if (dsa_get_device_compute_capability(i) < 6) return false\"证实；(3) compute-sanitizer（call_7fe0ba0ed2c34baf9a92e1f0.result）证实kernel名/线程/块坐标报告能力及Hardware exception为Imprecise的限制，答案如实转述；(4) CUDA_DEVICE_WAITS_ON_EXCEPTION由Programming Guide 5.2.3.6证实。答案对未核实项（DSA引入版本、cuda-memcheck弃用）明确标注，未编造。次要辅助手段标注为社区做法未核实，不构成错误。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": 3,
+        "upper": 3,
+        "status": "部分所需组件有明确版本依据，其余仍未确定",
+        "reason": "答案明确自述未能锁定版本：DSA环境变量确切引入版本、CUDA_LAUNCH_BLOCKING引入版本、compute-sanitizer最低版本均未核实；仅--generate-coredump给出CUDA 11.6起、DSA给出compute capability≥6条件及main分支2026-09抓取时点。属于第3档：部分组件有依据的适用条件，但均未定到具体引入版本。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "上述均未能在本轮锁定到具体引入版本号，只能给出有依据的适用条件。"
+          },
+          {
+            "event_id": "final",
+            "quote": "`--generate-coredump` 需 CUDA 11.6 起。"
+          },
+          {
+            "event_id": "final",
+            "quote": "`PYTORCH_USE_CUDA_DSA` / `PYTORCH_CUDA_DSA_STACKTRACING`：以 PyTorch main 分支源码为准（2026-09 抓取）；确切引入版本未核实。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "lower": 5,
+        "upper": 5,
+        "status": "操作指导及适用前提明确，无需补写或修正即可直接执行",
+        "reason": "各方法均给出完整命令行与参数：CUDA_LAUNCH_BLOCKING=1 python train.py、PYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1、compute-sanitizer含--kernel-name regex/--launch-skip/--generate-coredump具体用法、cuda-gdb -p <pid>附着流程。前置条件明确标注（compute capability≥6需managed memory、-lineinfo/-G才有file:line、release构建只有kernel名、Imprecise错误行号归因受限）。仅需替换train.py路径、pid等明确环境值。实际运行未验证，但按内容核查操作完整。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py"
+          },
+          {
+            "event_id": "final",
+            "quote": "PYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 python train.py"
+          },
+          {
+            "event_id": "final",
+            "quote": "compute-sanitizer --kernel-name regex='embedding' python train.py"
+          },
+          {
+            "event_id": "final",
+            "quote": "CUDA_DEVICE_WAITS_ON_EXCEPTION=1 python train.py   # 进程在设备异常处暂停\ncuda-gdb -p <pid>"
+          }
+        ]
+      }
+    ]
+  },
+  "shape_recovery": {
+    "source": "assessments/development/case-75590c766a78-outcome.json",
+    "action": "Move M9/M10 objects from requirements into their schema field; preserve all values.",
+    "new_model_call": false
+  }
+}

@@ -1574,6 +1574,721 @@
         ],
         "quote_audit": []
       }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T02:51:06.340673+00:00",
+      "process_sha256": "24355916d1b7ef5ab69bd2b173f736d3add874b12f5b6390c03dfc09b1d2b658",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-deterministic-evidence-audit",
+          "method": "separate source/prior and outcome contexts; automatic assessment, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "以下步骤与命令均依据 NVIDIA 与 PyTorch 官方文档（来源见文末）。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_d355dbc7d8154b50abe19bd1.result",
+            "evidence_quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "verification": "source",
+            "reason": "最终答案完整覆盖 PyTorch→ONNX→TensorRT 全流程：导出（dynamo=True 与旧版两种写法，与 PyTorch 官方教程一致）、ONNX 验证（onnx.checker + onnxruntime 对比）、trtexec 构建（含 --saveEngine/--optShapes/精度 flag，与 NVIDIA quickstart 及 Command-Line Programs 页一致）、Python/C++ Runtime 推理（set_input_shape/set_tensor_address/execute_async_v3，与 Runtime 教程一致），并给出 GPU SM 7.5+、engine 不可移植等前提约束。各环节命令与代码均可在来源中逐字对应。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为NVIDIA官方TensorRT文档（ONNX部署快速开始），官方可发现性最佳。",
+            "evidence": [
+              {
+                "event_id": "call_b0544c8d75844523a3153d61.result",
+                "quote": "## 1. [Example Deployment Using ONNX — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-onnx-deployment.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.3333333333333335,
+            "upper": 3.8333333333333335,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_e0c04109a47942468cb118fb.result",
+                "quote": "**标题**: Page Not Found"
+              },
+              {
+                "event_id": "call_076b30690cbe4492a4fb110c.result",
+                "quote": "### Serialized Engine Generation#"
+              },
+              {
+                "event_id": "call_69351a212f2c460785e80bce.result",
+                "quote": "# 页面标题：Using the TensorRT Runtime API — NVIDIA TensorRT"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文覆盖原题主流程及参数：PyTorch导出ONNX（torch.onnx.export/dynamo=True、依赖onnx/onnxscript、onnx.checker验证）、trtexec构建engine（--onnx/--saveEngine/--fp16/--stronglyTyped等）、runtime反序列化与推理（set_tensor_address/execute_async_v3）、GPU约束（SM 7.5+、CUDA 12.x/13.x）。但原题涉及的ONNX opset与TensorRT的精确对应、具体版本系统要求明细未完整说明。",
+            "evidence": [
+              {
+                "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+                "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+              },
+              {
+                "event_id": "call_a0f520aa631a4793861c472a.result",
+                "quote": "onnx_program = torch.onnx.export(torch_model, example_inputs, dynamo=True)"
+              },
+              {
+                "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+                "quote": "TensorRT supports NVIDIA hardware with compute capability SM 7.5 or higher."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已明确部分适用关系：GPU架构要求（SM 7.5+）、CUDA兼容性（12.x/13.x）、PyTorch 2.5起dynamo导出器推荐、ONNX Runtime 1.27+对应TRT 11.x。但ONNX opset与TensorRT版本的精确对应关系未取得，具体版本系统要求为交互式选择未提取明细，存在缺失关系不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+                "quote": "This support matrix provides filterable access to TensorRT compatibility information across all releases from 10.0.0 EA through 11.3.0."
+              },
+              {
+                "event_id": "call_a0f520aa631a4793861c472a.result",
+                "quote": "Starting with PyTorch 2.5, there are two ONNX Exporter options available."
+              },
+              {
+                "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+                "quote": "use ONNX Runtime **1.27 or later** with TensorRT 11.x."
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一预算内相关独立第三方来源：CSDN博客、SegmentFault文章、sekorm（官方Support Matrix转载，镜像计1次）共3条；NVIDIA官方博客与GitHub官方仓库按渠道分类排除。",
+            "evidence": [
+              {
+                "event_id": "call_b0544c8d75844523a3153d61.result",
+                "quote": "## 2. [PyTorch模型ONNX导出与TensorRT部署实战指南-CSDN博客]"
+              },
+              {
+                "event_id": "call_b0544c8d75844523a3153d61.result",
+                "quote": "## 5. [PyTorch->ONNX->TensorRT，TensorRT官方插件使用demo ...](https://segmentfault.com/a/1190000044798363)"
+              },
+              {
+                "event_id": "call_c13ced0a423f455cb68d9c27.result",
+                "quote": "## 3. [NVIDIA TensorRT Support Matrix | NVIDIA Docs](https://en.sekorm.com/doc/578261502.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "存在第三方材料（CSDN、SegmentFault、sekorm转载），但其内容仅以搜索摘要出现，未实质改变操作或结论。全部关键操作/命令主张均可追溯至官方文档（NVIDIA TensorRT文档、PyTorch官方教程），未见未解决矛盾；缺少独立第三方来源对关键说法的交叉印证，故4分。",
+            "evidence": [
+              {
+                "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+                "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped"
+              },
+              {
+                "event_id": "call_076b30690cbe4492a4fb110c.result",
+                "quote": "`--fp16`, `--bf16`, `--int8`, `--fp8`, `--noTF32`, and `--best`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出完整正确流程：torch.onnx.export（含opset、dynamic_axes、dynamo_export）、onnx.checker/onnxruntime验证、trtexec --onnx/--saveEngine/--fp16、Python Builder+OnnxParser、deserialize_cuda_engine/execute_v3。事后核对与官方文档一致（legacy export仍被官方文档使用、dynamo推荐、--fp16为有效flag）。具体参数与约束（trtexec精确参数名、opset对应、最新推理API写法）自认需补充，符合4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "3. 构建 engine：`trtexec --onnx=model.onnx --saveEngine=model.engine --fp16`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处：\n- 当前 TensorRT 10.x 的 trtexec 精确参数名"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_b0544c8d75844523a3153d61.dispatch",
+              "call_d355dbc7d8154b50abe19bd1.dispatch",
+              "call_a0f520aa631a4793861c472a.dispatch",
+              "call_e0c04109a47942468cb118fb.dispatch",
+              "call_9988be4454d9460bb5210e65.dispatch",
+              "call_076b30690cbe4492a4fb110c.dispatch",
+              "call_69351a212f2c460785e80bce.dispatch",
+              "call_c13ced0a423f455cb68d9c27.dispatch",
+              "call_afa1bf2c70cb4abd9ec0e88f.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "最终答案对所需组件给出了有依据的适用范围：TensorRT 11.3.0=CUDA 13.x、10.16.1=CUDA 12.x（来源 Support Matrix 脚注可证）、GPU SM≥7.5、Python 3.10-3.14、PyTorch 2.5+（dynamo 导出器门槛），但 PyTorch 仅给出\"2.5+\"范围、TensorRT 给出两个可选版本而非针对目标环境锁定单一具体版本，属'所有组件有依据的适用范围但至少一项未定到具体版本'，评 4 分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "当前最新为 **11.3.0**（基于 CUDA 13.x，仅兼容 CUDA 13.x）；**10.16.1** 基于 CUDA 12.9、仅兼容 CUDA 12.x"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "**PyTorch**：2.5+ 提供两种 ONNX 导出器"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 5,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "答案给出可直接执行的完整命令与代码：trtexec 构建命令、动态形状 --optShapes 示例、Python Runtime 完整脚本（含 cuda-python 元组返回的正确处理 err, d_in = cudart.cudaMalloc）、依赖安装 pip 命令、GPU/版本前提条件均明确；onnx_helper wrapper 路径的已知 patch 也已说明改法（err = 改 err, =）。仅需替换文件路径/形状等用户环境值，无需修正内容错误即可执行。答案自述未实际运行，按规则不影响 4/5 档判定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "trtexec --onnx=model.onnx --saveEngine=model.engine --stronglyTyped"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "err, d_in  = cudart.cudaMalloc(host_input.nbytes)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "需按官方给出的 patch 修改 helper 中的 `err =` 为 `err, =`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 77.03074133333334,
+            "upper": 77.70432853333334,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              77.0,
+              77.8
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 77.03074133333334,
+          "upper": 77.70432853333334,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            77.0,
+            77.8
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_b0544c8d75844523a3153d61.result",
+            "field": "response",
+            "sha256": "060cc4c334323acd74eec1e045c8af30d59a7194c947eb873cbf9bfe7a1ebdd7",
+            "start": 90,
+            "end": 248,
+            "quote": "## 1. [Example Deployment Using ONNX — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-onnx-deployment.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_e0c04109a47942468cb118fb.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 0,
+            "end": 22,
+            "quote": "**标题**: Page Not Found",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_076b30690cbe4492a4fb110c.result",
+            "field": "response",
+            "sha256": "8c2baa6b8815d9f4013329e8cd831cf780fdaa9c823f989105327df3f884ac11",
+            "start": 1622,
+            "end": 1655,
+            "quote": "### Serialized Engine Generation#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_69351a212f2c460785e80bce.result",
+            "field": "response",
+            "sha256": "9c3962cfb3f2456d44d2b8dc38f8669ef38ea5ef3983497622997fe011e466af",
+            "start": 0,
+            "end": 55,
+            "quote": "# 页面标题：Using the TensorRT Runtime API — NVIDIA TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 4487,
+            "end": 4577,
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_a0f520aa631a4793861c472a.result",
+            "field": "response",
+            "sha256": "4e262619693801e93ce99fe923a35096f04a2fb4e0efe661b17fdd349515d8ea",
+            "start": 4379,
+            "end": 4453,
+            "quote": "onnx_program = torch.onnx.export(torch_model, example_inputs, dynamo=True)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+            "field": "response",
+            "sha256": "a11418c6e9cb5cde9033b9836a64eae0ae7568f8d230c90fd023aaac12ba688e",
+            "start": 2436,
+            "end": 2511,
+            "quote": "TensorRT supports NVIDIA hardware with compute capability SM 7.5 or higher.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+            "field": "response",
+            "sha256": "a11418c6e9cb5cde9033b9836a64eae0ae7568f8d230c90fd023aaac12ba688e",
+            "start": 216,
+            "end": 351,
+            "quote": "This support matrix provides filterable access to TensorRT compatibility information across all releases from 10.0.0 EA through 11.3.0.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_a0f520aa631a4793861c472a.result",
+            "field": "response",
+            "sha256": "4e262619693801e93ce99fe923a35096f04a2fb4e0efe661b17fdd349515d8ea",
+            "start": 761,
+            "end": 834,
+            "quote": "Starting with PyTorch 2.5, there are two ONNX Exporter options available.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 837,
+            "end": 891,
+            "quote": "use ONNX Runtime **1.27 or later** with TensorRT 11.x.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_b0544c8d75844523a3153d61.result",
+            "field": "response",
+            "sha256": "060cc4c334323acd74eec1e045c8af30d59a7194c947eb873cbf9bfe7a1ebdd7",
+            "start": 491,
+            "end": 536,
+            "quote": "## 2. [PyTorch模型ONNX导出与TensorRT部署实战指南-CSDN博客]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_b0544c8d75844523a3153d61.result",
+            "field": "response",
+            "sha256": "060cc4c334323acd74eec1e045c8af30d59a7194c947eb873cbf9bfe7a1ebdd7",
+            "start": 1459,
+            "end": 1558,
+            "quote": "## 5. [PyTorch->ONNX->TensorRT，TensorRT官方插件使用demo ...](https://segmentfault.com/a/1190000044798363)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_c13ced0a423f455cb68d9c27.result",
+            "field": "response",
+            "sha256": "d78f55b1d996cbbaeaa8262cd9d8e7db322609e9f926a0742725ae0d8cd060b4",
+            "start": 867,
+            "end": 961,
+            "quote": "## 3. [NVIDIA TensorRT Support Matrix | NVIDIA Docs](https://en.sekorm.com/doc/578261502.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 4487,
+            "end": 4577,
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_076b30690cbe4492a4fb110c.result",
+            "field": "response",
+            "sha256": "8c2baa6b8815d9f4013329e8cd831cf780fdaa9c823f989105327df3f884ac11",
+            "start": 3608,
+            "end": 3671,
+            "quote": "`--fp16`, `--bf16`, `--int8`, `--fp8`, `--noTF32`, and `--best`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "768ccab448f86ed691321c67c8642783d7e141fb4059c2ebf0625d2052a7bb1a",
+            "start": 560,
+            "end": 633,
+            "quote": "3. 构建 engine：`trtexec --onnx=model.onnx --saveEngine=model.engine --fp16`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "768ccab448f86ed691321c67c8642783d7e141fb4059c2ebf0625d2052a7bb1a",
+            "start": 807,
+            "end": 848,
+            "quote": "不确定处：\\n- 当前 TensorRT 10.x 的 trtexec 精确参数名",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "70324f22c47b3f60c9aa8484e37603815876593bf658b3557d5f247b7e02df6a",
+            "start": 236,
+            "end": 319,
+            "quote": "当前最新为 **11.3.0**（基于 CUDA 13.x，仅兼容 CUDA 13.x）；**10.16.1** 基于 CUDA 12.9、仅兼容 CUDA 12.x",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "70324f22c47b3f60c9aa8484e37603815876593bf658b3557d5f247b7e02df6a",
+            "start": 382,
+            "end": 412,
+            "quote": "**PyTorch**：2.5+ 提供两种 ONNX 导出器",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "70324f22c47b3f60c9aa8484e37603815876593bf658b3557d5f247b7e02df6a",
+            "start": 2045,
+            "end": 2112,
+            "quote": "trtexec --onnx=model.onnx --saveEngine=model.engine --stronglyTyped",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "70324f22c47b3f60c9aa8484e37603815876593bf658b3557d5f247b7e02df6a",
+            "start": 3611,
+            "end": 3660,
+            "quote": "err, d_in  = cudart.cudaMalloc(host_input.nbytes)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "70324f22c47b3f60c9aa8484e37603815876593bf658b3557d5f247b7e02df6a",
+            "start": 4858,
+            "end": 4903,
+            "quote": "需按官方给出的 patch 修改 helper 中的 `err =` 为 `err, =`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "70324f22c47b3f60c9aa8484e37603815876593bf658b3557d5f247b7e02df6a",
+            "start": 52,
+            "end": 92,
+            "quote": "以下步骤与命令均依据 NVIDIA 与 PyTorch 官方文档（来源见文末）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+            "field": "response",
+            "sha256": "b2ffdd435b86bf8d79f6badd42bc6b8aa568704180e6df40c3f0f217e78c2c77",
+            "start": 4487,
+            "end": 4577,
+            "quote": "trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine_intro.engine --stronglyTyped",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_e0c04109a47942468cb118fb.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_e0c04109a47942468cb118fb.result",
+            "alternative_body_event_ids": [
+              "call_076b30690cbe4492a4fb110c.result",
+              "call_afa1bf2c70cb4abd9ec0e88f.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-7b8f7c08cb54-predictors.json": "a0a52dfdbbf62219c4f451f3654c8794b1850c64c10f5d97f8c16402d2988581",
+          "reviewed/development/case-7b8f7c08cb54-outcome.json": "e9738b5f6257567dbdccd49f7419d534acc2e9f17c1961b8c0a0e0eb3de62be0",
+          "consolidate_evaluations.py": "d292f7154e63168603495f2a59bbfcb98585beca31ddc45f768c9e968ce3e40c",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+                "quote": "# Example Deployment Using ONNX[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_d355dbc7d8154b50abe19bd1.result",
+                "quote": "For a deeper look at the TensorRT C++ and Python runtime APIs, refer to [Using the TensorRT Runtime API]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-onnx-deployment.html"
+          },
+          {
+            "event_id": "call_a0f520aa631a4793861c472a.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_a0f520aa631a4793861c472a.result",
+                "quote": "**标题**: Export a PyTorch model to ONNX — PyTorch Tutorials 2.14.0+cu130 documentation"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_a0f520aa631a4793861c472a.result",
+                "quote": "**Total running time of the script:** (0 minutes 1.850 seconds)"
+              }
+            ],
+            "reference": "https://pytorch.org/tutorials/beginner/onnx/export_simple_model_to_onnx_tutorial.html"
+          },
+          {
+            "event_id": "call_e0c04109a47942468cb118fb.result",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_e0c04109a47942468cb118fb.result",
+                "quote": "**标题**: Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_e0c04109a47942468cb118fb.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/developer-guide.html#trtexec-overview"
+          },
+          {
+            "event_id": "call_076b30690cbe4492a4fb110c.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_076b30690cbe4492a4fb110c.result",
+                "quote": "The `trtexec` tool prints the following performance metrics."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_076b30690cbe4492a4fb110c.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/reference/command-line-programs.html"
+          },
+          {
+            "event_id": "call_69351a212f2c460785e80bce.result",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "unknown",
+            "score": 3,
+            "evidence": [
+              {
+                "event_id": "call_69351a212f2c460785e80bce.result",
+                "quote": "# 页面标题：Using the TensorRT Runtime API — NVIDIA TensorRT"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_69351a212f2c460785e80bce.result",
+                "quote": "**来源**: NVIDIA TensorRT 官方文档 Quick Start 教程"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/quick-start-runtime-tutorial.html"
+          },
+          {
+            "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+                "quote": "This support matrix provides filterable access to TensorRT compatibility information across all releases from 10.0.0 EA through 11.3.0."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_afa1bf2c70cb4abd9ec0e88f.result",
+                "quote": "**[#f10]** Built with CUDA Toolkit 13.4. Compatible with CUDA 13.x versions only."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/getting-started/support-matrix.html"
+          }
+        ],
+        "quote_audit": []
+      }
     }
   ]
 }

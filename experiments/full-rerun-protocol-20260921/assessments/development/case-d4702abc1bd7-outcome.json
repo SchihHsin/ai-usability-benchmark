@@ -1,0 +1,228 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "官方文档把这类带末位 `9999` 的码（`E*9***`）明确定义为**系统内部错误码**，不通过错误码参考表直接给出修复方案。……要在日志里找到**第一条真正的报错**和它后面附带的 `The extend info: errorcode:(...) errorStr: ...` 扩展信息，那才是根因。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_nJf4wT4hiqUpDRxhFipo3066.result",
+      "evidence_quote": "If the first reported error contains an error code (except E*9*** errors, which are internal system error codes), rectify the fault by referring to the solution in Error Code Reference.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；答案完整覆盖原题的定位与排查请求，且各子环节均有官方来源支撑：(1) EZ9999属E*9***内部错误码、应查第一条真实报错及extend info——由9.0.X官方页原文证实（call_00_nJf4wT4hiqUpDRxhFipo3066.result）；(2) AI Core Error判定标准（EZ9999+aivec/aicore error exception）与信息收集（msnpureport -f、ASCEND_WORK_PATH/ASCEND_PROCESS_LOG_PATH/NPU_COLLECT_PATH、默认路径、asys及集群/容器限制）——由8.5.0 troubleshooting_0006正文证实（call_00_El06dthQm9SAzxX9v6BG3013.result）；(3) RAS/NPU/软件三步定位（event_id关键字、ECC/chipId、ascend-dmi --dg -i aicore -s、索引类算子0x800000、msaicerr）——由8.5.0 troubleshooting_0005正文证实（call_00_1QbTBhWNSxsZ50945lYL6779.result）；(4) 通用进程中断判读（acl***/[drv api]/rt***、fault kernel_name、Device lost heartbeat+HEARTBEAT EXCEPTION、fatal panic、RESOURCE_ALLOC_FAIL）——由8.0.RC3现象描述页证实（call_00_lVhb7tpqCFwDkC1GARW72057.result）；(5) msaicerr用法、-p/-out约束与info.txt关键信息表——由9.2.0-beta.1 troubleshooting_0007正文证实（call_00_pRGzidMPoWLw4aogCYJF9229.result）。答案还如实列出未取得正文的页面与未验证项（第7节），未将推测冒充证据。未发现与来源矛盾的内容。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "答案对所引用的每个文档/命令均标注了明确版本分册（8.0.0、8.0.RC3、8.5.0、9.0.X、9.2.0-beta.1 等），msaicerr 路径含 CANN 版本号并提示按实际替换，ascend-dmi/asys 与 CANN 的独立配套关系也有说明，并给出确认本机版本的方法（version.cfg / ascend-toolkit/latest 软链）。但用户现场 CANN 版本未知，答案只能给出按版本分册的条件范围，且 asys/ascend-dmi 所属 MindCluster ToolBox 的具体版本'需要另行确认'，未定到具体版本，属'部分所需组件有明确版本依据，其余仍未确定'。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "操作前先确认现场的 `CANN` 版本（如 `cat /usr/local/Ascend/ascend-toolkit/latest/version.cfg` 或 `ascend-toolkit/latest` 软链指向），再选对应分册；`msaicerr` 位于 `${Toolkit包安装路径}/tools/msaicerr`，`asys`/`ascend-dmi` 属 MindCluster ToolBox，与 CANN 有**独立配套关系**，需要另行确认。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "答案给出完整可照抄的命令与前置条件：mkdir、环境变量 export、msnpureport -f（注明 root、在可写目录执行）、grep 检索、ascend-dmi --dg -i aicore -s（注明需单独安装于 MindCluster ToolBox）、msaicerr.py -p/-out 完整命令及关键约束（不得在 -p 目录内执行、-out 不能为其子目录）、asys collect/launch 及不支持场景。需替换的仅为明确标识的环境参数（${HOME}、${Toolkit包安装路径}、aic_err_info_timestamp、CANN 版本号），且均有替换说明，无需修正内容错误。答案已声明未实际运行验证，按内容核查评4分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "cd ${Toolkit包安装路径}/tools/msaicerr\npython3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result\n# 查看 info.txt / debug_info.txt"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "# 4) 导出 Device 侧日志（root）\nmsnpureport -f"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "官方文档把这类带末位 `9999` 的码（`E*9***`）明确定义为**系统内部错误码**，不通过错误码参考表直接给出修复方案。……要在日志里找到**第一条真正的报错**和它后面附带的 `The extend info: errorcode:(...) errorStr: ...` 扩展信息，那才是根因。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "cd ${Toolkit包安装路径}/tools/msaicerr\npython3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result\n# 查看 info.txt / debug_info.txt"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-d4702abc1bd7",
+  "task_id": "E",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "官方文档把这类带末位 `9999` 的码（`E*9***`）明确定义为**系统内部错误码**，不通过错误码参考表直接给出修复方案。……要在日志里找到**第一条真正的报错**和它后面附带的 `The extend info: errorcode:(...) errorStr: ...` 扩展信息，那才是根因。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_nJf4wT4hiqUpDRxhFipo3066.result",
+        "evidence_quote": "If the first reported error contains an error code (except E*9*** errors, which are internal system error codes), rectify the fault by referring to the solution in Error Code Reference.",
+        "verification": "source",
+        "reason": "答案完整覆盖原题的定位与排查请求，且各子环节均有官方来源支撑：(1) EZ9999属E*9***内部错误码、应查第一条真实报错及extend info——由9.0.X官方页原文证实（call_00_nJf4wT4hiqUpDRxhFipo3066.result）；(2) AI Core Error判定标准（EZ9999+aivec/aicore error exception）与信息收集（msnpureport -f、ASCEND_WORK_PATH/ASCEND_PROCESS_LOG_PATH/NPU_COLLECT_PATH、默认路径、asys及集群/容器限制）——由8.5.0 troubleshooting_0006正文证实（call_00_El06dthQm9SAzxX9v6BG3013.result）；(3) RAS/NPU/软件三步定位（event_id关键字、ECC/chipId、ascend-dmi --dg -i aicore -s、索引类算子0x800000、msaicerr）——由8.5.0 troubleshooting_0005正文证实（call_00_1QbTBhWNSxsZ50945lYL6779.result）；(4) 通用进程中断判读（acl***/[drv api]/rt***、fault kernel_name、Device lost heartbeat+HEARTBEAT EXCEPTION、fatal panic、RESOURCE_ALLOC_FAIL）——由8.0.RC3现象描述页证实（call_00_lVhb7tpqCFwDkC1GARW72057.result）；(5) msaicerr用法、-p/-out约束与info.txt关键信息表——由9.2.0-beta.1 troubleshooting_0007正文证实（call_00_pRGzidMPoWLw4aogCYJF9229.result）。答案还如实列出未取得正文的页面与未验证项（第7节），未将推测冒充证据。未发现与来源矛盾的内容。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "partial",
+        "reason": "答案对所引用的每个文档/命令均标注了明确版本分册（8.0.0、8.0.RC3、8.5.0、9.0.X、9.2.0-beta.1 等），msaicerr 路径含 CANN 版本号并提示按实际替换，ascend-dmi/asys 与 CANN 的独立配套关系也有说明，并给出确认本机版本的方法（version.cfg / ascend-toolkit/latest 软链）。但用户现场 CANN 版本未知，答案只能给出按版本分册的条件范围，且 asys/ascend-dmi 所属 MindCluster ToolBox 的具体版本'需要另行确认'，未定到具体版本，属'部分所需组件有明确版本依据，其余仍未确定'。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "操作前先确认现场的 `CANN` 版本（如 `cat /usr/local/Ascend/ascend-toolkit/latest/version.cfg` 或 `ascend-toolkit/latest` 软链指向），再选对应分册；`msaicerr` 位于 `${Toolkit包安装路径}/tools/msaicerr`，`asys`/`ascend-dmi` 属 MindCluster ToolBox，与 CANN 有**独立配套关系**，需要另行确认。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "答案给出完整可照抄的命令与前置条件：mkdir、环境变量 export、msnpureport -f（注明 root、在可写目录执行）、grep 检索、ascend-dmi --dg -i aicore -s（注明需单独安装于 MindCluster ToolBox）、msaicerr.py -p/-out 完整命令及关键约束（不得在 -p 目录内执行、-out 不能为其子目录）、asys collect/launch 及不支持场景。需替换的仅为明确标识的环境参数（${HOME}、${Toolkit包安装路径}、aic_err_info_timestamp、CANN 版本号），且均有替换说明，无需修正内容错误。答案已声明未实际运行验证，按内容核查评4分。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "cd ${Toolkit包安装路径}/tools/msaicerr\npython3 msaicerr.py -p ${HOME}/aic_err_info_timestamp -out $HOME/result\n# 查看 info.txt / debug_info.txt"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "# 4) 导出 Device 侧日志（root）\nmsnpureport -f"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "b6768ea452a341a582519f6eb5dad247",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7072e578c35e88ded97810d45f1e068a",
+        "conversationRequestId": "7072e578c35e88ded97810d45f1e068a",
+        "agent": "cli"
+      },
+      {
+        "messageId": "b6768ea452a341a582519f6eb5dad247",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7072e578c35e88ded97810d45f1e068a",
+        "conversationRequestId": "7072e578c35e88ded97810d45f1e068a",
+        "rawUsage": {
+          "prompt_tokens": 26003,
+          "completion_tokens": 2199,
+          "total_tokens": 28202,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 964,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 26003,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 964,
+          "credit": 5.39,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 26003,
+          "outputTokens": 2199,
+          "totalTokens": 28202,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 964
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "66bf4057b6a8305b62bcb1926f979b3fa51a00437ff28219d8d134746a87206a",
+    "process_sha256": "a06943a08bf0c7cf07b684618eb08b0146781c750063101f183c8a39056b6e21",
+    "elapsed_seconds": 56.25,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-f113b4c7171e4bc5954673b1c47872db",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

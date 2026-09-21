@@ -1,0 +1,246 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt…卷积 → cuDNN…矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_5db26793.result",
+      "evidence_quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；子要求逐项核对：(1)官方库清单——cuBLAS/cuBLASLt 定位由 WebFetch_1 官方原文证实；cuDNN 'Convolution, including cross-correlation' 由 WebFetch_3 证实；cuSPARSE SpMV/SpMM 与稀疏格式由 WebFetch_6 第1.1节、第3章证实。(2)怎么选——答案给出按稠密GEMM/卷积/稀疏场景的选型规则，且明确'稠密 GEMM 不应选 cuSPARSE'，与官方定位一致。(3)怎么调用——cuBLAS 列主序/IDX2C/Tensor Core 16字节对齐规则由 WebFetch_1 完整原文支持；cuDNN graph API 11步工作流与 conv_fprop API 表由 WebFetch_4 官方原文支持；cuSPARSE 稠密端行/列主序及 ld 约束由 WebFetch_6 第3.3.1节原文支持；版本适用关系由 WebFetch_9 support matrix 原文支持。部分函数签名（cublasLtMatmul/cublasSgemm/cusparseSpMM）正文因截断未取得，答案已如实标注'未核实'并区分先验，不构成矛盾。总体上各子要求均有官方来源支撑。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "所有组件均给出有依据的适用范围：cuDNN 9.26.0 for CUDA 12.x（12.0–12.9）与 CUDA 13.x（13.0–13.4）、前端 1.28.0 需后端 ≥8.5.0、cuBLAS 12.9/13.4 与 CUDA 版本对应、Tensor Core CC≥7.0、FP8 需 Hopper/Ada、FP4 需 Blackwell，均有官方 support matrix/文档佐证。但答案呈现的是'适用范围+推荐配置'而非为用户锁定一套具体可执行版本组合（如未给出确定的 cuBLAS 具体安装版本），且部分依赖关系（cusparseSpMM 签名相关版本行为）未核实。未发现关键定版与证据矛盾。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "cuDNN 9.26.0 for CUDA 12.x：CUDA 12.0–12.9（12.7 未列）…官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
+        },
+        {
+          "event_id": "final",
+          "quote": "本次抓取文档为 cuBLAS 13.4 / cuSPARSE 13.4，对应 CUDA 13.4；cuBLAS 12.9 随 CUDA 12.9（官方博客）；Tensor Core 需 CC ≥7.0"
+        }
+      ],
+      "raw_status": "partially_locked"
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "存在具体操作方案：cuBLAS Sgemm、cuBLASLt、cuDNN graph、cuSPARSE SpMM 四条调用路线均有代码/步骤，前置条件（列主序映射、16字节对齐、workspace 分配、CC 要求）明确。但三处关键代码（cublasLtMatmul、cusparseSpMM、cublasSgemm 签名）明确标注为'模型先验，未逐字核实'（官方页截断），cudnnConvolutionForward legacy 签名 404 未核实——具体缺口：这些先验签名与调用序列需与官方文档核对修正后方可照抄运行；答案自身也声明'以上代码未实际运行'。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "函数签名正文因页面截断未取得，以下流程为模型先验 + 官方博客佐证，标注未逐字核实"
+        },
+        {
+          "event_id": "final",
+          "quote": "以下为模型先验，标注未核实：```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(..."
+        }
+      ],
+      "raw_status": "executable_with_gaps"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt…卷积 → cuDNN…矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。"
+        }
+      ]
+    },
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "cuDNN 9.26.0 for CUDA 12.x：CUDA 12.0–12.9（12.7 未列）…官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "函数签名正文因页面截断未取得，以下流程为模型先验 + 官方博客佐证，标注未逐字核实"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-7cedd4ab7a0a",
+  "task_id": "C",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt…卷积 → cuDNN…矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_5db26793.result",
+        "evidence_quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API.",
+        "verification": "source",
+        "reason": "子要求逐项核对：(1)官方库清单——cuBLAS/cuBLASLt 定位由 WebFetch_1 官方原文证实；cuDNN 'Convolution, including cross-correlation' 由 WebFetch_3 证实；cuSPARSE SpMV/SpMM 与稀疏格式由 WebFetch_6 第1.1节、第3章证实。(2)怎么选——答案给出按稠密GEMM/卷积/稀疏场景的选型规则，且明确'稠密 GEMM 不应选 cuSPARSE'，与官方定位一致。(3)怎么调用——cuBLAS 列主序/IDX2C/Tensor Core 16字节对齐规则由 WebFetch_1 完整原文支持；cuDNN graph API 11步工作流与 conv_fprop API 表由 WebFetch_4 官方原文支持；cuSPARSE 稠密端行/列主序及 ld 约束由 WebFetch_6 第3.3.1节原文支持；版本适用关系由 WebFetch_9 support matrix 原文支持。部分函数签名（cublasLtMatmul/cublasSgemm/cusparseSpMM）正文因截断未取得，答案已如实标注'未核实'并区分先验，不构成矛盾。总体上各子要求均有官方来源支撑。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "partially_locked",
+        "reason": "所有组件均给出有依据的适用范围：cuDNN 9.26.0 for CUDA 12.x（12.0–12.9）与 CUDA 13.x（13.0–13.4）、前端 1.28.0 需后端 ≥8.5.0、cuBLAS 12.9/13.4 与 CUDA 版本对应、Tensor Core CC≥7.0、FP8 需 Hopper/Ada、FP4 需 Blackwell，均有官方 support matrix/文档佐证。但答案呈现的是'适用范围+推荐配置'而非为用户锁定一套具体可执行版本组合（如未给出确定的 cuBLAS 具体安装版本），且部分依赖关系（cusparseSpMM 签名相关版本行为）未核实。未发现关键定版与证据矛盾。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "cuDNN 9.26.0 for CUDA 12.x：CUDA 12.0–12.9（12.7 未列）…官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
+          },
+          {
+            "event_id": "final",
+            "quote": "本次抓取文档为 cuBLAS 13.4 / cuSPARSE 13.4，对应 CUDA 13.4；cuBLAS 12.9 随 CUDA 12.9（官方博客）；Tensor Core 需 CC ≥7.0"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "executable_with_gaps",
+        "reason": "存在具体操作方案：cuBLAS Sgemm、cuBLASLt、cuDNN graph、cuSPARSE SpMM 四条调用路线均有代码/步骤，前置条件（列主序映射、16字节对齐、workspace 分配、CC 要求）明确。但三处关键代码（cublasLtMatmul、cusparseSpMM、cublasSgemm 签名）明确标注为'模型先验，未逐字核实'（官方页截断），cudnnConvolutionForward legacy 签名 404 未核实——具体缺口：这些先验签名与调用序列需与官方文档核对修正后方可照抄运行；答案自身也声明'以上代码未实际运行'。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "函数签名正文因页面截断未取得，以下流程为模型先验 + 官方博客佐证，标注未逐字核实"
+          },
+          {
+            "event_id": "final",
+            "quote": "以下为模型先验，标注未核实：```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(..."
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "643d02f4188d4b80b4041fa3e8a96905",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "86637546391a8094f2ef7e9b3996a1e4",
+        "conversationRequestId": "86637546391a8094f2ef7e9b3996a1e4",
+        "agent": "cli"
+      },
+      {
+        "messageId": "643d02f4188d4b80b4041fa3e8a96905",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "86637546391a8094f2ef7e9b3996a1e4",
+        "conversationRequestId": "86637546391a8094f2ef7e9b3996a1e4",
+        "rawUsage": {
+          "prompt_tokens": 24631,
+          "completion_tokens": 1412,
+          "total_tokens": 26043,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 306,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 21623,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 306,
+          "credit": 4.37,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 24631,
+          "outputTokens": 1412,
+          "totalTokens": 26043,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 306
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "a2e3d21b3352f61f88a2bb809d019debda1f6c7379d2641b4a062d2725e5bf56",
+    "process_sha256": "fa1f59cda377e4e33dadb0bd928a881691da2a5a948e9acf5649d1892edccc2a",
+    "elapsed_seconds": 31.03,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-09b9e6425524424d8928d3993a13a2ab",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

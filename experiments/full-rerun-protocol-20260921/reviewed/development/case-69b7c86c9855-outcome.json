@@ -1,0 +1,189 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "msopgen gen -i ./op_dev/add_custom.json -f <framework> -c ai_core-<soc_version> -lan cpp -out ./custom_op",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_7872088a1ec54df1ba8a3a94.result",
+      "evidence_quote": "msopgen gen -i ./add_custom.json -c ai_core-kirin9020 -f ONNX -out ./AddCustom",
+      "verification": "source",
+      "reason": "原题要求给出用 Ascend C 开发自定义算子并经 msOpGen/aclnn 集成进 PyTorch 的完整步骤。最终答案逐项覆盖：(1)环境准备与版本前提(source set_env.sh、npu-smi info 定 soc_version，与 call_b40fc11fe3634317a8a90228 中 'source ${install_path}/cann/set_env.sh' 及 npu-smi 说明一致)；(2)算子原型 JSON(与 call_7872088a1ec54df1ba8a3a94 的 add_custom.json 样例一致)；(3)msopgen 生成命令及参数(与官方 CANN Kit 文档命令逐参数对应)；(4)Kernel 侧核函数模板与参数顺序'输入、输出、workspace、tiling'(与 call_8bca4ef972cb43b08fa82795 '参数的顺序按照\"输入、输出、workspace、tiling\"的顺序排布'一致)；(5)Host 侧 Tiling 与 OpDef 注册(与 call_b40fc11fe3634317a8a90228 的 TilingFunc/OpAdd 代码一致)；(6)build.sh 编译与 .run 安装、aclnn 头文件/库路径(同上来源第六/八节)；(7)PyTorch C++ extensions 集成(registration.cpp schema、EXEC_NPU_CMD(aclnnAddCustom)、PrivateUse1 注册、setup.py bdist_wheel、torchair 入图，与 call_ffb2664abdac4bca920084f9 官方 TorchNPU 7.1.0 文档逐段对应)。各子步骤均有官方或样例来源支撑，且答案如实披露未核实项，无凭空编造。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "最终答案给出了 TorchNPU 7.1.0 与 CANN 商用版/社区版 8.2.RC1 的明确配套单点信息，soc_version 给出了通过 npu-smi info 查询并加 Ascend 前缀的确定方法，PyTorch 2.1+ 与 PrivateUse1/XLA 的版本分界也有说明。但答案自述 'torch_npu 与 CANN 的逐版本配套表未取得，仅有…单点信息'，且 soc_version 未定到具体型号(依赖用户硬件)，msopgen/aclnn 流程所依赖的 CANN 具体版本(样例声明 9.x 系列)仅来自第三方转述未直接核对。部分组件有明确版本依据，其余仍未确定，符合 3 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "torch_npu 与 CANN 的逐版本配套表未取得，仅有 TorchNPU 7.1.0 要求商用版/社区版 CANN 8.2.RC1 的单点信息"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "确认 `soc_version`:在装好昇腾 AI 处理器的服务器上执行 `npu-smi info`,在查询到的 \"Name\" 前加 `Ascend` 前缀"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "操作指导完整：环境变量 source 命令、原型 JSON 全文、msopgen gen 完整命令行、cp 回填命令、build.sh 编译、.run 安装、cmake 验证程序构建运行、PyTorch 侧 registration/add_custom/function.h/setup.py 代码及安装命令均齐备，前置条件(CANN 安装、torch_npu、环境变量)明确。占位符如 <framework>、<soc_version>、${install_path} 均为用户环境参数且有获取方法说明(npu-smi info)，仅需替换环境值即可执行，符合 4 档。未达 5 档因环境值仍需按用户硬件替换，且 EXEC_NPU_CMD 宏内部细节未取得、答案自述仅做内容核查未实际运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "msopgen gen -i ./op_dev/add_custom.json -f <framework> -c ai_core-<soc_version> -lan cpp -out ./custom_op"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cd custom_op\nbash build.sh                    # 产物在 build_out/\ncd build_out\n./custom_opp_<target_os>_<target_architecture>.run"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "python3 setup.py build bdist_wheel   # wheel包生成在dist目录,安装后即用"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-69b7c86c9855",
+  "task_id": "D",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "885c273fd8f943849df5754c2996470a",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "fe60e6663dd0826e6682ff4aa5044ffc",
+        "conversationRequestId": "fe60e6663dd0826e6682ff4aa5044ffc",
+        "agent": "cli"
+      },
+      {
+        "messageId": "885c273fd8f943849df5754c2996470a",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "fe60e6663dd0826e6682ff4aa5044ffc",
+        "conversationRequestId": "fe60e6663dd0826e6682ff4aa5044ffc",
+        "rawUsage": {
+          "prompt_tokens": 27712,
+          "completion_tokens": 2413,
+          "total_tokens": 30125,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1203,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 27712,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1203,
+          "credit": 5.79,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 27712,
+          "outputTokens": 2413,
+          "totalTokens": 30125,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1203
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "ed140d039f9ebe827aea5e014a5d857c5e0008d7d9ca23091aec144c0536145b",
+    "process_sha256": "b4f0832f7f647a6127aa5a4c4d1d7b6f330da1b6bb0455fb21bfd4174b3f8f6b",
+    "elapsed_seconds": 63.57,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-732dbd9d91814437bef25dcb336ba436",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-69b7c86c9855-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

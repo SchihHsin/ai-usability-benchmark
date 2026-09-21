@@ -3,9 +3,9 @@
     {
       "id": 1,
       "status": "unverified",
-      "answer_quote": "**定位**：CANN 内置的通用高性能算子库，覆盖 NN 基础算子（MatMul、Convolution、Softmax 等）……**定位**：专门为 Transformer 模型训练/推理设计的加速库……做整网 Transformer/LLM 训练或推理加速……→ 用 **ATB**……自己开发算子/在网络里调单个 matmul、conv 等基础或融合算子……→ 用 **AOL**",
+      "answer_quote": "**定位**：CANN 内置的通用高性能算子库，覆盖 NN 基础算子（MatMul、Convolution、Softmax 等）、融合算子（FlashAttention、MC2 通信计算融合）、DVPP 预处理算子。本质是一套 **C 语言 API**，调用前缀为 `aclnnXxx`（如 `aclnnMatmul`），采用\"单算子 API 执行\"方式，**无需提供 IR 定义、无需编译算子**——直接调用算子二进制包（Ascend-cann-kernels）中已编译好的算子。\n\n**库文件结构**（头文件在 `${INSTALL_DIR}/include/`，库在 `${INSTALL_DIR}/lib64/`，如 `/usr/local/Ascend/ascend-toolkit/latest`）：\n\n- NN 算子：头文件 `aclnnop/aclnn_*.h`，动态库 `libopapi.so`（可按需选装 `libaclnn_ops_infer.so`、`libaclnn_ops_train.so`、`libaclnn_math.so`、`libaclnn_rand.so`）\n- 融合算子：同样 `aclnnXxx` 前缀；另有代码开放的融合算子仓 Gitee `ascend/cann-ops-adv`\n- 公共接口：`aclnn/acl_meta.h`、`aclnn/aclnn_base.h`，库 `libnnopbase.so`（创建 aclTensor/aclScalar 等）\n- DVPP：`acldvppop/acldvpp_base.h` 等，库 `libacl_dvpp_op.so`\n\n**产品支持**（官方表，部分摘录，见来源[3]）：Atlas A2 训练系列 / Atlas 800I A2 推理产品 / A200I A2 Box 对 NN 算子\"√\"、融合算子\"√（部分支持）\"；Atlas A3 训练/推理系列 NN\"√（部分）\"、融合\"√（部分）\"；Atlas 推理系列（310 等）NN 部分支持、融合部分支持；Atlas 200/300/500 推理产品对 NN 算子接口\"x\"。融合算子不支持昇腾虚拟化实例。\n\n**调用方式**：C/C++ 单算子调用流程为 aclInit → aclrtSetDevice → 创建 aclTensor → `aclnnXxxGetWorkspaceSize` / `aclnnXxx`（两段式接口）→ 同步 → 释放。具体到每个算子的参数与约束，查 AOL API 文档对应算子页。\n\n### 2. ATB（Ascend Transformer Boost）\n\n**定位**：专门为 Transformer 模型训练/推理设计的加速库，优化矩阵乘法与注意力机制等核心算子，提供三类接口：原生/融合算子（Operation）、图算子（GraphOperation）、插件算子（PluginOperation）；上层对接 PyTorch、MindSpore、Paddle。\n\n**获取与安装**：\n- ATB 集成在 **CANN NNAL（神经网络加速库）包**中（官方安装页原文：\"ATB（Ascend Transformer Boost）加速库集成在CANN神经网络加速库NNAL包中\"，见来源[4]的搜索摘要；该页正文抓取仅返回页面标题与评分控件，未取得直接正文，安装细节未能核实）。\n- 也可源码编译（gitcode 仓 README，见来源[2]）：\n\n```sh\ngit clone https://gitcode.com/cann/ascend-transformer-boost.git\ncd ascend-transformer-boost\nbash scripts/build.sh\nsource output/atb/set_env.sh\n```\n\n前置：CANN toolkit 安装（README 示例为 `Ascend-cann-toolkit_8.2.RC1`，`./Ascend-cann-toolkit_8.2.RC1_linux-$(arch).run --install` 后 `source ${HOME}/Ascend/ascend-toolkit/set_env.sh`），Python 3.7.x–3.11.4。\n\n**Python 调用**（依赖 PyTorch 与 torch_npu）：\n\n```python\nimport torch\nimport torch_atb  # 导入ATB Python API模块\n\nlinear_param = torch_atb.LinearParam()\nlinear_param.has_bias = False\nop = torch_atb.Operation(linear_param)\n\nx = torch.randn(2, 3, dtype=torch.float16).npu()\ny = torch.randn(2, 3, dtype=torch.float16).npu()\noutputs = op.forward([x, y])\ntorch.npu.synchronize()\n```\n\n**C++ 调用**（`example/op_demo/` 下有可直接编译运行的 Demo）：aclInit → aclrtSetDevice → `atb::CreateContext` → 创建 Operation（如 `CreateFaUpdateOperation`）→ 构造 `atb::VariantPack`（inTensors/outTensors）→ `op->Setup(...)` 算 workspace → `op->Execute(...)` → `atb::DestroyOperation` / `DestroyContext`。进入 `example/op_demo/faupdate` 执行 `bash build.sh` 即可编译运行。\n\n### 3. 怎么选\n\n- **做整网 Transformer/LLM 训练或推理加速**（attention、KV Cache、量化等成套融合能力）→ 用 **ATB**；Python 侧经 `torch_atb` + torch_npu，性能敏感部分用其图算子/插件机制。\n- **自己开发算子/在网络里调单个 matmul、conv 等基础或融合算子**（C/C++ 单算子 API、无需 IR）→ 用 **AOL**",
       "answer_event_id": "run-end",
-      "evidence_id": "call_7f4a2222ba3c40d4a5394c22",
+      "evidence_id": "call_7f4a2222ba3c40d4a5394c22.result",
       "evidence_quote": "为加速模型算力释放，CANN（Compute Architecture for Neural Networks）提供了算子加速库（Ascend Operator Library，简称AOL）……例如常见的Softmax、MatMul、Convolution等",
       "verification": "source",
       "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案完整覆盖原题三个子要求：(1) 有哪些官方加速库——AOL 与 ATB 均有官方来源证据（AOL 见 call_7f4a2222ba3c40d4a5394c22『提供了算子加速库（Ascend Operator Library，简称AOL）』；ATB 见 call_905c6948ed454f4abc6683a2『Ascend Transformer Boost加速库……专门为Transformer模型的训练和推理而设计』）；(2) 怎么选——答案给出明确选择准则（整网 Transformer 用 ATB、单算子 C/C++ 调用用 AOL），与两库官方定位一致；(3) 怎么调用——AOL 给出 aclnnXxx 两段式调用流程（与 call_7f4a2222ba3c40d4a5394c22『单算子API执行方式』调用算子（基于C语言的API，无需提供IR）一致），ATB 给出 Python/C++ 可运行代码与编译步骤（与 call_b8bcc505e1024b8f84f03863 README 逐字对应）。产品支持表、库文件结构均与来源[3]一致。ATB 安装页正文未取得已在答案中如实标注，不影响已核实部分的正确性。",
@@ -59,13 +59,8 @@
       "requirement": 1,
       "bad_refs": [
         {
-          "field": "answer_quote",
-          "event_id": "run-end",
-          "quote": "**定位**：CANN 内置的通用高性能算子库，覆盖 NN 基础算子（MatMul、Convolution、Softmax 等）……**定位**：专门为 Transformer 模型训练/推理设计的加速库……做整网 Transformer/LLM 训练或推理加速……→ 用 **ATB**……自己开发算子/在网络里调单个 matmul、conv 等基础或融合算子……→ 用 **AOL**"
-        },
-        {
           "field": "evidence_quote",
-          "event_id": "call_7f4a2222ba3c40d4a5394c22",
+          "event_id": "call_7f4a2222ba3c40d4a5394c22.result",
           "quote": "为加速模型算力释放，CANN（Compute Architecture for Neural Networks）提供了算子加速库（Ascend Operator Library，简称AOL）……例如常见的Softmax、MatMul、Convolution等"
         }
       ]
@@ -181,7 +176,19 @@
   },
   "review": {
     "raw_file": "assessments/development/case-5f58bbc82a34-outcome.json",
-    "repairs": [],
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "**定位**：CANN 内置的通用高性能算子库，覆盖 NN 基础算子（MatMul、Convolution、Softmax 等）……**定位**：专门为 Transformer 模型训练/推理设计的加速库……做整网 Transformer/LLM 训练或推理加速……→ 用 **ATB**……自己开发算子/在网络里调单个 matmul、conv 等基础或融合算子……→ 用 **AOL**",
+        "replacement": "**定位**：CANN 内置的通用高性能算子库，覆盖 NN 基础算子（MatMul、Convolution、Softmax 等）、融合算子（FlashAttention、MC2 通信计算融合）、DVPP 预处理算子。本质是一套 **C 语言 API**，调用前缀为 `aclnnXxx`（如 `aclnnMatmul`），采用\"单算子 API 执行\"方式，**无需提供 IR 定义、无需编译算子**——直接调用算子二进制包（Ascend-cann-kernels）中已编译好的算子。\n\n**库文件结构**（头文件在 `${INSTALL_DIR}/include/`，库在 `${INSTALL_DIR}/lib64/`，如 `/usr/local/Ascend/ascend-toolkit/latest`）：\n\n- NN 算子：头文件 `aclnnop/aclnn_*.h`，动态库 `libopapi.so`（可按需选装 `libaclnn_ops_infer.so`、`libaclnn_ops_train.so`、`libaclnn_math.so`、`libaclnn_rand.so`）\n- 融合算子：同样 `aclnnXxx` 前缀；另有代码开放的融合算子仓 Gitee `ascend/cann-ops-adv`\n- 公共接口：`aclnn/acl_meta.h`、`aclnn/aclnn_base.h`，库 `libnnopbase.so`（创建 aclTensor/aclScalar 等）\n- DVPP：`acldvppop/acldvpp_base.h` 等，库 `libacl_dvpp_op.so`\n\n**产品支持**（官方表，部分摘录，见来源[3]）：Atlas A2 训练系列 / Atlas 800I A2 推理产品 / A200I A2 Box 对 NN 算子\"√\"、融合算子\"√（部分支持）\"；Atlas A3 训练/推理系列 NN\"√（部分）\"、融合\"√（部分）\"；Atlas 推理系列（310 等）NN 部分支持、融合部分支持；Atlas 200/300/500 推理产品对 NN 算子接口\"x\"。融合算子不支持昇腾虚拟化实例。\n\n**调用方式**：C/C++ 单算子调用流程为 aclInit → aclrtSetDevice → 创建 aclTensor → `aclnnXxxGetWorkspaceSize` / `aclnnXxx`（两段式接口）→ 同步 → 释放。具体到每个算子的参数与约束，查 AOL API 文档对应算子页。\n\n### 2. ATB（Ascend Transformer Boost）\n\n**定位**：专门为 Transformer 模型训练/推理设计的加速库，优化矩阵乘法与注意力机制等核心算子，提供三类接口：原生/融合算子（Operation）、图算子（GraphOperation）、插件算子（PluginOperation）；上层对接 PyTorch、MindSpore、Paddle。\n\n**获取与安装**：\n- ATB 集成在 **CANN NNAL（神经网络加速库）包**中（官方安装页原文：\"ATB（Ascend Transformer Boost）加速库集成在CANN神经网络加速库NNAL包中\"，见来源[4]的搜索摘要；该页正文抓取仅返回页面标题与评分控件，未取得直接正文，安装细节未能核实）。\n- 也可源码编译（gitcode 仓 README，见来源[2]）：\n\n```sh\ngit clone https://gitcode.com/cann/ascend-transformer-boost.git\ncd ascend-transformer-boost\nbash scripts/build.sh\nsource output/atb/set_env.sh\n```\n\n前置：CANN toolkit 安装（README 示例为 `Ascend-cann-toolkit_8.2.RC1`，`./Ascend-cann-toolkit_8.2.RC1_linux-$(arch).run --install` 后 `source ${HOME}/Ascend/ascend-toolkit/set_env.sh`），Python 3.7.x–3.11.4。\n\n**Python 调用**（依赖 PyTorch 与 torch_npu）：\n\n```python\nimport torch\nimport torch_atb  # 导入ATB Python API模块\n\nlinear_param = torch_atb.LinearParam()\nlinear_param.has_bias = False\nop = torch_atb.Operation(linear_param)\n\nx = torch.randn(2, 3, dtype=torch.float16).npu()\ny = torch.randn(2, 3, dtype=torch.float16).npu()\noutputs = op.forward([x, y])\ntorch.npu.synchronize()\n```\n\n**C++ 调用**（`example/op_demo/` 下有可直接编译运行的 Demo）：aclInit → aclrtSetDevice → `atb::CreateContext` → 创建 Operation（如 `CreateFaUpdateOperation`）→ 构造 `atb::VariantPack`（inTensors/outTensors）→ `op->Setup(...)` 算 workspace → `op->Execute(...)` → `atb::DestroyOperation` / `DestroyContext`。进入 `example/op_demo/faupdate` 执行 `bash build.sh` 即可编译运行。\n\n### 3. 怎么选\n\n- **做整网 Transformer/LLM 训练或推理加速**（attention、KV Cache、量化等成套融合能力）→ 用 **ATB**；Python 侧经 `torch_atb` + torch_npu，性能敏感部分用其图算子/插件机制。\n- **自己开发算子/在网络里调单个 matmul、conv 等基础或融合算子**（C/C++ 单算子 API、无需 IR）→ 用 **AOL**",
+        "basis": "exact source substring; verified escaping/whitespace alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "original_event_id": "call_7f4a2222ba3c40d4a5394c22",
+        "replacement_event_id": "call_7f4a2222ba3c40d4a5394c22.result",
+        "basis": "unique exact tool-result ID suffix; quote still separately checked"
+      }
+    ],
     "semantic_validation": false
   }
 }

@@ -1,0 +1,246 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+      "answer_event_id": "WebFetch_5_16b8a122.result",
+      "evidence_id": "WebFetch_2_81ec6f55.result",
+      "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；criteria包含两部分：采集命令和分析步骤。采集命令部分：final给出完整可用的nsys profile命令及关键参数（--trace、--capture-range、--cuda-memory-usage、--pytorch=autograd-nvtx），与官方User Guide抓取正文逐项对应（trace默认值cuda,opengl,nvtx,osrt、cudnn不支持Windows、capture-range参数cudaProfilerApi/nvtx/hotkey、cuda-memory-usage警告显著开销、pytorch参数表autograd-nvtx等），PyTorch插桩torch.cuda.profiler.start/stop与nvtx.range_push/pop在PyTorch 2.14官方cuda.html中得到确认。分析步骤部分：nsys stats/analyze及gpu_time_util、gpu_gaps规则在官方User Guide正文中有原文支持；GUI timeline空隙分析、HtoD memcpy对应DataLoader瓶颈、同步API检查属于合理的领域方法论，官方NVTX投影到GPU timeline的叙述也有正文支持。个别项（--gpu-metrics-devices完整语法、--pytorch行为细节）在final中已明确标注未能核实，不构成错误主张。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "所需定版组件为Nsight Systems工具版本与PyTorch版本。PyTorch侧已定到具体版本2.14并经官方文档核实；但Nsight Systems User Guide在线版未标注具体版本号，final明确承认'本次抓取未标注具体版本号'，仅能依据CUDA driver 13.0等内容推断属近期主线，nsys工具本身未定到具体版本。部分组件有明确版本依据、其余未确定，符合档3。",
+      "evidence": [
+        {
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+        },
+        {
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实"
+        }
+      ],
+      "raw_status": "scored"
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+      "evidence": [
+        {
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+        },
+        {
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+        }
+      ],
+      "raw_status": "scored"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py"
+        }
+      ]
+    },
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "WebFetch_5_16b8a122.result",
+          "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-e4f2307e1049",
+  "task_id": "B",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\\n  --cuda-memory-usage=true \\\n  python train.py",
+        "answer_event_id": "WebFetch_5_16b8a122.result",
+        "evidence_id": "WebFetch_2_81ec6f55.result",
+        "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+        "verification": "source",
+        "reason": "criteria包含两部分：采集命令和分析步骤。采集命令部分：final给出完整可用的nsys profile命令及关键参数（--trace、--capture-range、--cuda-memory-usage、--pytorch=autograd-nvtx），与官方User Guide抓取正文逐项对应（trace默认值cuda,opengl,nvtx,osrt、cudnn不支持Windows、capture-range参数cudaProfilerApi/nvtx/hotkey、cuda-memory-usage警告显著开销、pytorch参数表autograd-nvtx等），PyTorch插桩torch.cuda.profiler.start/stop与nvtx.range_push/pop在PyTorch 2.14官方cuda.html中得到确认。分析步骤部分：nsys stats/analyze及gpu_time_util、gpu_gaps规则在官方User Guide正文中有原文支持；GUI timeline空隙分析、HtoD memcpy对应DataLoader瓶颈、同步API检查属于合理的领域方法论，官方NVTX投影到GPU timeline的叙述也有正文支持。个别项（--gpu-metrics-devices完整语法、--pytorch行为细节）在final中已明确标注未能核实，不构成错误主张。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "所需定版组件为Nsight Systems工具版本与PyTorch版本。PyTorch侧已定到具体版本2.14并经官方文档核实；但Nsight Systems User Guide在线版未标注具体版本号，final明确承认'本次抓取未标注具体版本号'，仅能依据CUDA driver 13.0等内容推断属近期主线，nsys工具本身未定到具体版本。部分组件有明确版本依据、其余未确定，符合档3。",
+        "evidence": [
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "quote": "Nsight Systems User Guide 在线版（本次抓取未标注具体版本号，内容提到 CUDA driver 13.0、`--cuda-graph-trace` 需 driver ≥ 11.7，属近期主线）。"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "quote": "PyTorch 侧 API 以 PyTorch 2.14 文档核实"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
+        "evidence": [
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "1997ddfa74d849678907371429824d58",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "331260323f512a73fc92d5e13c0cc7ff",
+        "conversationRequestId": "331260323f512a73fc92d5e13c0cc7ff",
+        "agent": "cli"
+      },
+      {
+        "messageId": "1997ddfa74d849678907371429824d58",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "331260323f512a73fc92d5e13c0cc7ff",
+        "conversationRequestId": "331260323f512a73fc92d5e13c0cc7ff",
+        "rawUsage": {
+          "prompt_tokens": 16372,
+          "completion_tokens": 1560,
+          "total_tokens": 17932,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 644,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 16372,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 644,
+          "credit": 3.49,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 16372,
+          "outputTokens": 1560,
+          "totalTokens": 17932,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 644
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "c31346eaae101bc2d13f842202c3ed36baced50ad1bed37bb7654b2d8c452e53",
+    "process_sha256": "a3a29971e3e5bcf81abbc4d756e208be2335e0c4e023d7894b59d443b5a4e43c",
+    "elapsed_seconds": 36.65,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-f2804502840948459fab40d4344c8c36",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

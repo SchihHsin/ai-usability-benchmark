@@ -1,0 +1,166 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "nsys profile \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas,nccl \\\n  --cuda-memory-usage=true \\\n  --python-sampling=true \\\n  --capture-range=cudaProfilerApi \\\n  --capture-range-end=stop \\\n  --force-overwrite=true \\\n  --output=/tmp/train_prof \\\n  python train.py --epochs 1",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_Qklj1y8EzB6Gc36q5UaU7910.result",
+      "evidence_quote": "nsys [global-options] profile [options] [application] [application-arguments]",
+      "verification": "source",
+      "reason": "原题含三个子要求，均在最终答案中有据可查：(1) 采集命令——给出完整 nsys profile 命令，usage 行与各参数取值（--capture-range 取值 none/cudaProfilerApi/hotkey/nvtx、--capture-range-end 取值、--trace 取值 cudnn/cublas/nccl 等、--cudabacktrace、--pytorch、--force-overwrite）与官方 User Guide 抓取内容逐字对应（call_00_Qklj1y8EzB6Gc36q5UaU7910.result、call_00_nkRjBLVUVQnMj0TuCGqI7715.result）；(2) 分析步骤——nsys stats 报表（报告名 cuda_gpu_kern_sum、cuda_api_sum 等来自官方 Analysis Guide，call_00_uNvY1BpZB2hx43Mczt5j2623.result）、nsys analyze 专家规则（gpu_gaps、gpu_time_util）及 GUI timeline 人工定位步骤均有官方原文支撑；(3) 针对 PyTorch GPU 利用率低的定位——GPU Starvation/Low Utilization 规则原文、NVTX 打点 PyTorch 代码（第三方 caijizhuo 来源 call_00_95ji3cGMqNczs1RCekKa3341.result 交叉印证）、根因与对策（DataLoader、同步点、小 kernel、NCCL 重叠）均覆盖。答案还诚实单列未核实项（如 nsys stats 逐字 usage 行、profile 的 -o 条目），不影响已给出采集命令与分析步骤的成立。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "适用范围为 Nsight Systems 与采集环境。所需定版的核心组件 Nsight Systems 已定到具体版本 2026.5.1（含安装包字符串 2026.5.1.161-3889610），依据官方 Get Started 实抓页（call_00_2ZiUeAMxFcuCEF3xJbxI8048.result）；配套环境约束（CUDA 12.0+ for CUDA trace、Driver 418 or newer、Turing or newer）均给出官方依据；答案还明确消解了搜索快照 2025.1.1 与实抓 2026.5.1 的版本冲突（以实抓为准），无未解决冲突。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "当前版本：**Nsight Systems 2026.5.1**（安装包字符串 `2026.5.1.161-3889610`）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "Target Software：**64-bit applications only**；**CUDA 12.0+ for CUDA trace**；**Driver 418 or newer**"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "操作可执行性：采集命令为完整命令行，所有参数（--trace、--capture-range、--capture-range-end、--force-overwrite 等）取值与官方 User Guide 选项表一致；分析步骤给出可直接运行的 nsys stats/analyze 命令与报告名；代码侧打点给出完整可粘贴的 Python 片段（cudaProfilerStart/Stop + NVTX range_push/pop）；适用前提明确（Nsight Systems 2026.5.1、CUDA 12.0+、Driver 418+、Turing+、macOS 仅查看）。仅需替换 train.py、/tmp/train_prof 等用户环境值，且答案明确标注这些与未核实项（nsys stats 逐字 usage、profile 的 -o 条目为先验知识），无需修正即可执行。仅内容核查，未实际运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "nsys profile \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas,nccl \\\n  --cuda-memory-usage=true \\\n  --python-sampling=true \\\n  --capture-range=cudaProfilerApi \\\n  --capture-range-end=stop \\\n  --force-overwrite=true \\\n  --output=/tmp/train_prof \\\n  python train.py --epochs 1"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "nsys stats --report cuda_gpu_kern_sum,cuda_api_sum,cuda_gpu_mem_time_sum,osrt_sum \\\n           --timeunit=msec /tmp/train_prof.nsys-rep"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-ff1f024ad1d0",
+  "task_id": "B",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "1692d4a01fa54af088981bdd4332fcb6",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "238a76d00ecaca0d07d2f055c7feb79d",
+        "conversationRequestId": "238a76d00ecaca0d07d2f055c7feb79d",
+        "agent": "cli"
+      },
+      {
+        "messageId": "1692d4a01fa54af088981bdd4332fcb6",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "238a76d00ecaca0d07d2f055c7feb79d",
+        "conversationRequestId": "238a76d00ecaca0d07d2f055c7feb79d",
+        "rawUsage": {
+          "prompt_tokens": 23299,
+          "completion_tokens": 2877,
+          "total_tokens": 26176,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1639,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 23299,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1639,
+          "credit": 5.34,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 23299,
+          "outputTokens": 2877,
+          "totalTokens": 26176,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1639
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "eec4802c022bb138d1fad7689bb5e5824a4ba6296f77e983fa3f969a8b2d7094",
+    "process_sha256": "6f0246863341de6075c079e68aabab8cd390b777acfc87af45a771527892965f",
+    "elapsed_seconds": 81.47,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-c3f00e58dfba4689b2f2970f1f028baf",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-ff1f024ad1d0-outcome.json",
+    "repairs": [],
+    "semantic_validation": false
+  }
+}

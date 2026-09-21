@@ -1,0 +1,206 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "初始化进程组，backend 为 hccl（init_method 只支持 env://）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_6e047f42d5ee4dde98582e05.result",
+      "evidence_quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+      "verification": "source",
+      "reason": "原题含两个子要求，均满足：(a) 初始化方式——最终答案给出完整 DDP 初始化代码（LOCAL_RANK 获取、npu device、MASTER_ADDR/MASTER_PORT、backend=hccl、DistributedSampler、DDP 包装），与官方 RC1 主文档逐条对应（local_rank=int(os.environ[\"LOCAL_RANK\"])、init_process_group(backend=\"hccl\")、DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)），且 init_method 只支持 env:// 的说法与附录原文\"昇腾AI处理器初始化进程组时initmethod只支持env://\"一致；(b) 启动方式——最终答案列出 shell/mp.spawn/torch.distributed.launch/torchrun/torch_npu_run 五种拉起命令（均含 export HCCL_WHITELIST_DISABLE=1），与 RC1 附录拉起命令示例逐字对应（如 torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=8 --nproc_per_node=8）。多机环境准备（端口预留、hccn_tool 配 IP、netdetect/net_health/lldp、关防火墙、somaxconn 调优）与 RC1/RC2 主文档一致。答案对未核实项（RC2 附录无正文、多机 torchrun 为推展、ASCEND_RT_VISIBLE_DEVICES 未核实）作了透明披露，不影响两个核心子要求的满足。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "原题需要定版的组件为 PyTorch 版本与 torch_npu/CANN 版本。最终答案锚定 TorchNPU 6.0.RC1/RC2 官方文档并给出 torchrun 需 PyTorch 1.11.0 及以上、torch_npu_run 标注\"仅在 PyTorch 1.11.0 版本支持使用\"，但未把 torch_npu/CANN 本身定到具体软件包版本，且答案自述 1.11.0 表述\"疑为 1.11.0 及以上，未在其他页面核实\"，故属部分组件有明确依据、其余未定到具体版本，判 3 档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "torch_npu_run 方式在主文档中标注\"仅在 PyTorch 1.11.0 版本支持使用\"（原文如此，疑为 1.11.0 及以上，未在其他页面核实）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "五种拉起方式的命令行完整（HCCL_WHITELIST_DISABLE、torch.distributed.launch、torchrun、torch_npu_run 等参数齐全），环境准备命令（sysctl、hccn_tool、ufw disable/systemctl stop firewalld）可直接照抄，待替换项（<rank0节点IP>、<空闲端口>、MASTER_IP_ADDR=**）均明确标识并有说明，符合 4 档。未给 5 档：多机 shell 脚本仅给单机段示例并说明\"多机时各节点循环本机 8 卡\"，多机 torchrun 完整命令为答案自认的\"标准 torchrun 参数推展\"，执行多机场景需用户按说明自行扩展，超出纯环境参数替换。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "shell 脚本方式（推荐，单机段示例如下，多机时各节点循环本机 8 卡并统一 MASTER_ADDR/MASTER_PORT）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "多机：标准 torchrun 多机用法，各节点分别执行并指定 --node_rank（官方附录未给出多机 torchrun 完整示例，此行为标准 torchrun 参数推展）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-be61a1653efc",
+  "task_id": "F",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "初始化进程组，backend 为 hccl（init_method 只支持 env://）",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_6e047f42d5ee4dde98582e05.result",
+        "evidence_quote": "torch.distributed.init_process_group(backend=\"hccl\",rank=local_rank)",
+        "verification": "source",
+        "reason": "原题含两个子要求，均满足：(a) 初始化方式——最终答案给出完整 DDP 初始化代码（LOCAL_RANK 获取、npu device、MASTER_ADDR/MASTER_PORT、backend=hccl、DistributedSampler、DDP 包装），与官方 RC1 主文档逐条对应（local_rank=int(os.environ[\"LOCAL_RANK\"])、init_process_group(backend=\"hccl\")、DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)），且 init_method 只支持 env:// 的说法与附录原文\"昇腾AI处理器初始化进程组时initmethod只支持env://\"一致；(b) 启动方式——最终答案列出 shell/mp.spawn/torch.distributed.launch/torchrun/torch_npu_run 五种拉起命令（均含 export HCCL_WHITELIST_DISABLE=1），与 RC1 附录拉起命令示例逐字对应（如 torch_npu_run --rdzv_backend=parallel --master_addr=$MASTER_IP_ADDR --master_port=$MASTER_PORT --nnodes=8 --nproc_per_node=8）。多机环境准备（端口预留、hccn_tool 配 IP、netdetect/net_health/lldp、关防火墙、somaxconn 调优）与 RC1/RC2 主文档一致。答案对未核实项（RC2 附录无正文、多机 torchrun 为推展、ASCEND_RT_VISIBLE_DEVICES 未核实）作了透明披露，不影响两个核心子要求的满足。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "原题需要定版的组件为 PyTorch 版本与 torch_npu/CANN 版本。最终答案锚定 TorchNPU 6.0.RC1/RC2 官方文档并给出 torchrun 需 PyTorch 1.11.0 及以上、torch_npu_run 标注\"仅在 PyTorch 1.11.0 版本支持使用\"，但未把 torch_npu/CANN 本身定到具体软件包版本，且答案自述 1.11.0 表述\"疑为 1.11.0 及以上，未在其他页面核实\"，故属部分组件有明确依据、其余未定到具体版本，判 3 档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "torch_npu_run 方式在主文档中标注\"仅在 PyTorch 1.11.0 版本支持使用\"（原文如此，疑为 1.11.0 及以上，未在其他页面核实）"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "五种拉起方式的命令行完整（HCCL_WHITELIST_DISABLE、torch.distributed.launch、torchrun、torch_npu_run 等参数齐全），环境准备命令（sysctl、hccn_tool、ufw disable/systemctl stop firewalld）可直接照抄，待替换项（<rank0节点IP>、<空闲端口>、MASTER_IP_ADDR=**）均明确标识并有说明，符合 4 档。未给 5 档：多机 shell 脚本仅给单机段示例并说明\"多机时各节点循环本机 8 卡\"，多机 torchrun 完整命令为答案自认的\"标准 torchrun 参数推展\"，执行多机场景需用户按说明自行扩展，超出纯环境参数替换。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "shell 脚本方式（推荐，单机段示例如下，多机时各节点循环本机 8 卡并统一 MASTER_ADDR/MASTER_PORT）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "多机：标准 torchrun 多机用法，各节点分别执行并指定 --node_rank（官方附录未给出多机 torchrun 完整示例，此行为标准 torchrun 参数推展）"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "2092b5b8b10c448690d9aca42f70ea27",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "98d52427eb163c10887445f70f5e94d8",
+        "conversationRequestId": "98d52427eb163c10887445f70f5e94d8",
+        "agent": "cli"
+      },
+      {
+        "messageId": "2092b5b8b10c448690d9aca42f70ea27",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "98d52427eb163c10887445f70f5e94d8",
+        "conversationRequestId": "98d52427eb163c10887445f70f5e94d8",
+        "rawUsage": {
+          "prompt_tokens": 20829,
+          "completion_tokens": 2003,
+          "total_tokens": 22832,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1053,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 17821,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1053,
+          "credit": 4.09,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 20829,
+          "outputTokens": 2003,
+          "totalTokens": 22832,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1053
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "8de14d880a38f2efa86a035a9d5d2ed5d7f422865f87e5333dbc006109dafc2d",
+    "process_sha256": "9befad8ce2e476a5b1c3f839aeaa6aaf1f3e49c82418c48f2a810cb054e225d1",
+    "elapsed_seconds": 42.48,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-95d6369e199145d097a1e8e2b642856c",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

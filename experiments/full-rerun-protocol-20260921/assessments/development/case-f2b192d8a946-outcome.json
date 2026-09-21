@@ -1,0 +1,246 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "dist.init_process_group(backend=\"nccl\") ... torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py ... MASTER_ADDR | 必需（rank 0 除外）；rank 0 节点地址",
+      "answer_event_id": "final",
+      "evidence_id": "call_fb5ac436917e417ea8a83c69.result",
+      "evidence_quote": "torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 elastic_ddp.py",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；输入无 run-end 事件，answer_event_id 以 final 标识最终答案。三个子要求均有官方正文支撑：(1) 初始化——final 给出 set_device + init_process_group(backend=\"nccl\") + DDP(device_ids=[local_rank]) 完整代码，与官方教程一致（call_8f9ea7856cb64c49ba4d8274：\"torch.cuda.set_device(rank)\"、\"init_process_group(backend=\"nccl\", rank=rank, world_size=world_size)\"；call_bd9718bf01cf4060949cdffa：\"local_rank = int(os.environ[\"LOCAL_RANK\"]); model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)\"）。(2) 启动命令——多机 torchrun 命令逐字取自官方 DDP 教程（call_fb5ac436917e417ea8a83c69），含 SLURM 示例与多节点执行说明（\"user also needs to apply cluster management tools like slurm to actually run this command on 2 nodes\"），与 call_bd9718bf01cf4060949cdffa 的 Deployment 节（\"Start torchrun with the same arguments on all the nodes\"）一致。(3) 环境变量——env:// 的 4 个必需变量与 torchrun 注入的完整变量列表分别由 call_c5cf1ca2ef5749d5a767a888（\"MASTER_PORT - required; has to be a free port on machine with rank 0\" 等）和 call_bd9718bf01cf4060949cdffa 的 Environment Variables 节（01. LOCAL_RANK ... 13. PYTHON_EXEC）证实；NCCL 调优变量（NCCL_DEBUG、NCCL_SOCKET_IFNAME 等）亦见 call_c5cf1ca2ef5749d5a767a888。技术正确的替代路线（device_id 写法、elastic 模式、etcd-v2）被接受，不构成矛盾。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "以下内容依据 PyTorch 2.14 官方文档（tutorial 与 API 文档正文均已取得）。"
+        },
+        {
+          "event_id": "final",
+          "quote": "NCCL 库自身版本要求（与 PyTorch 捆绑的 NCCL 具体版本号）未在所取正文中出现，无法核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "命令与代码完整：torchrun 多机命令、SLURM 示例、init_process_group 调用、环境变量表均可照抄；前置条件明确（需在所有节点执行相同命令、需集群管理工具如 SLURM、$MASTER_ADDR 须一致、含 BatchNorm 时转 SyncBatchNorm）。需替换的仅为用户环境值（$MASTER_ADDR、节点数、脚本名、train_dataset/model 等用户自有对象），均有说明，无需修正内容错误。答案自身声明未实际运行，仅内容核查，按约定不影响 4/5 分界；但训练脚本主体为模板（model、train_dataset 未定义属用户侧对象），不构成内容错误，评 4。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py"
+        },
+        {
+          "event_id": "final",
+          "quote": "$MASTER_ADDR 必须在所有节点上一致（通常是 rank 0 所在机器的地址）；--rdzv-endpoint 不写端口时默认 29400。"
+        },
+        {
+          "event_id": "final",
+          "quote": "各命令未实际运行（无本机执行；仅文档内容核查）。"
+        }
+      ],
+      "raw_status": "operable_with_env_substitution"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "dist.init_process_group(backend=\"nccl\") ... torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py ... MASTER_ADDR | 必需（rank 0 除外）；rank 0 节点地址"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "$MASTER_ADDR 必须在所有节点上一致（通常是 rank 0 所在机器的地址）；--rdzv-endpoint 不写端口时默认 29400。"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-f2b192d8a946",
+  "task_id": "F",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "dist.init_process_group(backend=\"nccl\") ... torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py ... MASTER_ADDR | 必需（rank 0 除外）；rank 0 节点地址",
+        "answer_event_id": "final",
+        "evidence_id": "call_fb5ac436917e417ea8a83c69.result",
+        "evidence_quote": "torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 elastic_ddp.py",
+        "verification": "source",
+        "reason": "输入无 run-end 事件，answer_event_id 以 final 标识最终答案。三个子要求均有官方正文支撑：(1) 初始化——final 给出 set_device + init_process_group(backend=\"nccl\") + DDP(device_ids=[local_rank]) 完整代码，与官方教程一致（call_8f9ea7856cb64c49ba4d8274：\"torch.cuda.set_device(rank)\"、\"init_process_group(backend=\"nccl\", rank=rank, world_size=world_size)\"；call_bd9718bf01cf4060949cdffa：\"local_rank = int(os.environ[\"LOCAL_RANK\"]); model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)\"）。(2) 启动命令——多机 torchrun 命令逐字取自官方 DDP 教程（call_fb5ac436917e417ea8a83c69），含 SLURM 示例与多节点执行说明（\"user also needs to apply cluster management tools like slurm to actually run this command on 2 nodes\"），与 call_bd9718bf01cf4060949cdffa 的 Deployment 节（\"Start torchrun with the same arguments on all the nodes\"）一致。(3) 环境变量——env:// 的 4 个必需变量与 torchrun 注入的完整变量列表分别由 call_c5cf1ca2ef5749d5a767a888（\"MASTER_PORT - required; has to be a free port on machine with rank 0\" 等）和 call_bd9718bf01cf4060949cdffa 的 Environment Variables 节（01. LOCAL_RANK ... 13. PYTHON_EXEC）证实；NCCL 调优变量（NCCL_DEBUG、NCCL_SOCKET_IFNAME 等）亦见 call_c5cf1ca2ef5749d5a767a888。技术正确的替代路线（device_id 写法、elastic 模式、etcd-v2）被接受，不构成矛盾。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "partial",
+        "reason": "答案将文档依据定到 PyTorch 2.14（2.14.0+cu130），torchrun --local-rank 行为定到 2.0.0 起的变更，这部分有依据；但捆绑的 NCCL 具体版本自认未取得（'无法核实'），且原题本身为 how-to 题、未要求定版到具体库版本，所需组件中仅 PyTorch 侧有明确版本锚点，NCCL 侧未定到具体版本，属部分组件有依据、其余未确定。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "以下内容依据 PyTorch 2.14 官方文档（tutorial 与 API 文档正文均已取得）。"
+          },
+          {
+            "event_id": "final",
+            "quote": "NCCL 库自身版本要求（与 PyTorch 捆绑的 NCCL 具体版本号）未在所取正文中出现，无法核实。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "operable_with_env_substitution",
+        "reason": "命令与代码完整：torchrun 多机命令、SLURM 示例、init_process_group 调用、环境变量表均可照抄；前置条件明确（需在所有节点执行相同命令、需集群管理工具如 SLURM、$MASTER_ADDR 须一致、含 BatchNorm 时转 SyncBatchNorm）。需替换的仅为用户环境值（$MASTER_ADDR、节点数、脚本名、train_dataset/model 等用户自有对象），均有说明，无需修正内容错误。答案自身声明未实际运行，仅内容核查，按约定不影响 4/5 分界；但训练脚本主体为模板（model、train_dataset 未定义属用户侧对象），不构成内容错误，评 4。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py"
+          },
+          {
+            "event_id": "final",
+            "quote": "$MASTER_ADDR 必须在所有节点上一致（通常是 rank 0 所在机器的地址）；--rdzv-endpoint 不写端口时默认 29400。"
+          },
+          {
+            "event_id": "final",
+            "quote": "各命令未实际运行（无本机执行；仅文档内容核查）。"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "10c68f616bd14811b7e6c45de0cd8c4e",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "a157fc51f90cd8d02a5774e4fefa805b",
+        "conversationRequestId": "a157fc51f90cd8d02a5774e4fefa805b",
+        "agent": "cli"
+      },
+      {
+        "messageId": "10c68f616bd14811b7e6c45de0cd8c4e",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "a157fc51f90cd8d02a5774e4fefa805b",
+        "conversationRequestId": "a157fc51f90cd8d02a5774e4fefa805b",
+        "rawUsage": {
+          "prompt_tokens": 21817,
+          "completion_tokens": 2123,
+          "total_tokens": 23940,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 867,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 18809,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 867,
+          "credit": 4.32,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21817,
+          "outputTokens": 2123,
+          "totalTokens": 23940,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 867
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "82af2f88d87a07c2654dff8cd75af6c36e14927209fd7990a5c9c623f5bd2ecb",
+    "process_sha256": "022da91fb9580267182e6f42147261c7a8ee770db48f0c2cb71741e68d0a2aa8",
+    "elapsed_seconds": 45.21,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-97ac96de1ac84688b622f55ab4dbff21",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}
