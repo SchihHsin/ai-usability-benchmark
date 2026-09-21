@@ -1,0 +1,230 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "GE 内置融合 pass 编译在 CANN 二进制里，用户侧官方开放的路径有三条（按侵入性排序）",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_2_1f57bc72.result",
+      "evidence_quote": "系统内置了一些图融合和UB融合规则，均为默认开启且能关闭的（如有其他情况，会特殊说明）。",
+      "verification": "source",
+      "reason": "答案覆盖原题两个子问题。怎么看：图融合/UB融合定义、fusion_switch.cfg开关配置（ATC --fusion_switch_file / IR FUSION_SWITCH_FILE / 训练参数三种入口）及日志查看命令（grep GraphId effected_times、Run buffer fusion pass successfully）均与官方hiascend CANN 8.5.0.alpha002文档（WebFetch_2_1f57bc72.result）逐字对应。怎么自定义：路径A开关配置（WebFetch_2证实含JSON格式）；路径B graph-autofusion开源仓（WebFetch_5_4081367f.result证实SuperKernel/Autofuse组件及GE/Inductor双路径，WebFetch_7_e04850ca.result证实torch.compile npu_backend=ascendc用法及AUTOFUSE_DFX_FLAGS调试变量）；路径C修改ops-nn融合pass源码（WebFetch_8_c6dc2be1.result证实op_graph/fusion_pass/目录结构，WebFetch_9_207c5fe7.result证实LayerNormRemoveBroadcastFusionPass.md及Ascend 950PR/950DT约束）。UB融合与图融合均有覆盖。答案还正确标注了第三方XML规则说法与官方仓库矛盾不建议照抄（WebFetch_6_8b8383ae.result对比WebFetch_5官方README）。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "applicable",
+      "reason": "所需版本组件均给出有依据的适用范围但至少一项未定到具体版本。CANN融合规则文档已定到8.5.0.alpha002社区版（具体版本，有官方URL依据）；ops-nn给出分支范围9.0.0/9.1/9.2.0（有依据的范围但未锁定到单一版本）；graph-autofusion定为master分支（具体分支）但配套CANN包版本仅表述为'需配套'未指定具体版本号，torch_npu仅到daily变体级别未给版本号。符合第4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "融合规则开关/日志查看：取自 CANN **8.5.0.alpha002 社区版**文档"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "graph-autofusion：master 分支，SuperKernel 2025/10、Autofuse 2026/04 开源，需配套 CANN 包 + torch_npu daily"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "ops-nn 融合 pass：随 CANN release（9.0.0/9.1/9.2.0 等分支），示例 pass 限定 Ascend 950PR/950DT"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "applicable",
+      "reason": "主要操作命令完整可直接执行：ATC的--fusion_switch_file参数及cfg完整JSON格式、C++ IR构建global_options代码、日志查看完整grep命令链、graph-autofusion环境搭建完整步骤（source setenv.sh/set_env.sh、export ASCEND_DEVICE_ID=0、bash setup_torch_npu_daily.sh）、torch.compile完整Python代码、AUTOFUSE_DFX_FLAGS调试环境变量及取值。所需替换的仅为明确标识的用户环境参数（/home/fusion_switch.cfg文件路径、ASCEND_DEVICE_ID设备号、debug_dir输出路径）。答案明确标注4项未核实内容（fusion_result.json路径、debug日志级别开启方式、融合pass构建指引、SuperKernel配置细节）均属次要细节且已声明不影响主流程可执行性，无需修正内容错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "atc ... --fusion_switch_file=/home/fusion_switch.cfg"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cat * | grep \"GraphId\" | grep -v \"effected_times=0\" | grep \"effected_times=\""
+        },
+        {
+          "event_id": "run-end",
+          "quote": "bash scripts/env_install/pytorch/setup_torch_npu_daily.sh   # 配套 torch_npu daily"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-16dad13dc330",
+  "task_id": "N",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "GE 内置融合 pass 编译在 CANN 二进制里，用户侧官方开放的路径有三条（按侵入性排序）",
+        "answer_event_id": "run-end",
+        "evidence_id": "WebFetch_2_1f57bc72.result",
+        "evidence_quote": "系统内置了一些图融合和UB融合规则，均为默认开启且能关闭的（如有其他情况，会特殊说明）。",
+        "verification": "source",
+        "reason": "答案覆盖原题两个子问题。怎么看：图融合/UB融合定义、fusion_switch.cfg开关配置（ATC --fusion_switch_file / IR FUSION_SWITCH_FILE / 训练参数三种入口）及日志查看命令（grep GraphId effected_times、Run buffer fusion pass successfully）均与官方hiascend CANN 8.5.0.alpha002文档（WebFetch_2_1f57bc72.result）逐字对应。怎么自定义：路径A开关配置（WebFetch_2证实含JSON格式）；路径B graph-autofusion开源仓（WebFetch_5_4081367f.result证实SuperKernel/Autofuse组件及GE/Inductor双路径，WebFetch_7_e04850ca.result证实torch.compile npu_backend=ascendc用法及AUTOFUSE_DFX_FLAGS调试变量）；路径C修改ops-nn融合pass源码（WebFetch_8_c6dc2be1.result证实op_graph/fusion_pass/目录结构，WebFetch_9_207c5fe7.result证实LayerNormRemoveBroadcastFusionPass.md及Ascend 950PR/950DT约束）。UB融合与图融合均有覆盖。答案还正确标注了第三方XML规则说法与官方仓库矛盾不建议照抄（WebFetch_6_8b8383ae.result对比WebFetch_5官方README）。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "applicable",
+        "reason": "所需版本组件均给出有依据的适用范围但至少一项未定到具体版本。CANN融合规则文档已定到8.5.0.alpha002社区版（具体版本，有官方URL依据）；ops-nn给出分支范围9.0.0/9.1/9.2.0（有依据的范围但未锁定到单一版本）；graph-autofusion定为master分支（具体分支）但配套CANN包版本仅表述为'需配套'未指定具体版本号，torch_npu仅到daily变体级别未给版本号。符合第4档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "融合规则开关/日志查看：取自 CANN **8.5.0.alpha002 社区版**文档"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "graph-autofusion：master 分支，SuperKernel 2025/10、Autofuse 2026/04 开源，需配套 CANN 包 + torch_npu daily"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "ops-nn 融合 pass：随 CANN release（9.0.0/9.1/9.2.0 等分支），示例 pass 限定 Ascend 950PR/950DT"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "applicable",
+        "reason": "主要操作命令完整可直接执行：ATC的--fusion_switch_file参数及cfg完整JSON格式、C++ IR构建global_options代码、日志查看完整grep命令链、graph-autofusion环境搭建完整步骤（source setenv.sh/set_env.sh、export ASCEND_DEVICE_ID=0、bash setup_torch_npu_daily.sh）、torch.compile完整Python代码、AUTOFUSE_DFX_FLAGS调试环境变量及取值。所需替换的仅为明确标识的用户环境参数（/home/fusion_switch.cfg文件路径、ASCEND_DEVICE_ID设备号、debug_dir输出路径）。答案明确标注4项未核实内容（fusion_result.json路径、debug日志级别开启方式、融合pass构建指引、SuperKernel配置细节）均属次要细节且已声明不影响主流程可执行性，无需修正内容错误。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "atc ... --fusion_switch_file=/home/fusion_switch.cfg"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "cat * | grep \"GraphId\" | grep -v \"effected_times=0\" | grep \"effected_times=\""
+          },
+          {
+            "event_id": "run-end",
+            "quote": "bash scripts/env_install/pytorch/setup_torch_npu_daily.sh   # 配套 torch_npu daily"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "795208f96b4f4bfdaec08fcefb4b0a1b",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "abb5733aec0f511dd891e93e6b416ebf",
+        "conversationRequestId": "abb5733aec0f511dd891e93e6b416ebf",
+        "agent": "cli"
+      },
+      {
+        "messageId": "795208f96b4f4bfdaec08fcefb4b0a1b",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "abb5733aec0f511dd891e93e6b416ebf",
+        "conversationRequestId": "abb5733aec0f511dd891e93e6b416ebf",
+        "rawUsage": {
+          "prompt_tokens": 26264,
+          "completion_tokens": 16412,
+          "total_tokens": 42676,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 15370,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 24950
+          },
+          "prompt_cache_hit_tokens": 24950,
+          "prompt_cache_miss_tokens": 1314,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 15370,
+          "credit": 10.4,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 26264,
+          "outputTokens": 16412,
+          "totalTokens": 42676,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 24950
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 15370
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "068fd2dcbe1a6a61ff5d62d265d916e488a57c596b192e9d1ec6b2f528bfad9e",
+    "process_sha256": "48d843065d3db99d6bc94089452e5a3aa173951d173213ba1cde44b46213fb27",
+    "elapsed_seconds": 208.28,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-be7b12e758f14d8d85180d7020ef5633",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

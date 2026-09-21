@@ -1,0 +1,195 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "动态 shape 分两端处理——**构建期**用 optimization profile 声明每个输入的维度范围（MIN/OPT/MAX），**运行期**在 execution context 上设置实际输入 shape（必须落在 profile 范围内），然后 enqueue。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_cad01039e9a64718a3c88973.result",
+      "evidence_quote": "运行时，**必须先设置 optimization profile，再设置输入维度**。Profile 按添加顺序编号，从 `0` 开始。",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题含两侧子要求，均满足：(1) TensorRT optimization profile 创建——答案给出 MIN/OPT/MAX 概念与 C++/Python 双语 API（createOptimizationProfile/setDimensions/addOptimizationProfile），与官方 Core Concepts 文档一致（来源含 'MIN：该 profile 允许的最小输入维度…OPT…MAX' 及同名 API 调用示例）；(2) TensorRT 运行时 shape 设置——答案给出 setOptimizationProfileAsync→setInputShape→enqueueV3 流程及整网一致性校验（getTensorShape 输出 nbDims==-1 检查），均见于来源正文；(3) 层限制与 shape tensor 说明见于 Advanced Topics 来源（'IConvolutionLayer and IDeconvolutionLayer require that the channel dimension be a build time constant' 等）；(4) CUDA kernel 侧动态 shape——答案给出 grid/block 运行时计算、执行配置第三参数与 extern __shared__ 动态共享内存，与 CUDA 官方指南摘录一致（'dynamic_smem_bytes is an optional size_t argument…This memory is used by extern __shared__ arrays'）。cudaFuncSetAttribute 48KB opt-in 一项答案已如实标注未核实，不构成错误。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案对所选路线的 API 集给出了有依据的版本关系：TensorRT 侧明确 setInputShape/enqueueV3/setOptimizationProfileAsync 为现行 API、setOptimizationProfile/enqueueV2/binding 索引已废弃（有官方文档依据），并说明旧版对应 setBindingDimensions（标注为先验、时间线未取得原文）；CUDA 侧 extern __shared__ + 第三启动参数说明为跨版本稳定机制。但 TensorRT 文档仅以 'latest（2026-09 更新）与 10.x' 指称，未定到具体版本号（如 10.x 中的某一版），属有依据的适用范围而非具体版本，故为 4 而非 5。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "本轮取得的官方文档为 TensorRT \"latest\"（2026-09 更新）与 10.x 文档，二者内容一致：`setInputShape` / `set_input_shape`、`enqueueV3`、`setOptimizationProfileAsync` 为现行 API；`setOptimizationProfile`、`enqueueV2`/binding 索引接口已废弃。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案给出可直接照抄的完整代码：TensorRT 构建期 profile 创建、运行期选 profile→设 shape→enqueue 的 C++/Python 完整调用序列，含必要前置条件（shape 须落在 profile 范围内、stream 一致性、切换 profile 须在 enqueueV3 完成后）；CUDA 侧 grid/block 计算公式、执行配置语法、动态共享内存示例均为完整可运行片段。仅需替换明确的环境值（输入名 \"foo\"、维度值、N、d_data、stream 等）即可执行，符合 4 分。未给 5 分因片段为示例性质（如 builder/config 上下文未完整给出），且答案自身声明所有代码未实际运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "context.setOptimizationProfileAsync(0, stream);\n\n// 2. 设置实际输入 shape（须在 profile 范围内）\ncontext.setInputShape(\"foo\", Dims{3, {3, 150, 250}});\n\n// 3. 所有输入 shape 设置完后 enqueue\ncontext.enqueueV3(stream);"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "int blockSize = 256;                                  // 或经启发式选择\nint numBlocks = (N + blockSize - 1) / blockSize;      // N 为运行时实际元素数\nmyKernel<<<numBlocks, blockSize, 0, stream>>>(d_data, N);"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_cad01039e9a64718a3c88973.result",
+          "quote": "运行时，**必须先设置 optimization profile，再设置输入维度**。Profile 按添加顺序编号，从 `0` 开始。"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a254397dde74",
+  "task_id": "M",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "178548f447554e1bb7c19689c60869f0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "2fc75c162a5ec1948537b701ccd726c7",
+        "conversationRequestId": "2fc75c162a5ec1948537b701ccd726c7",
+        "agent": "cli"
+      },
+      {
+        "messageId": "178548f447554e1bb7c19689c60869f0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "2fc75c162a5ec1948537b701ccd726c7",
+        "conversationRequestId": "2fc75c162a5ec1948537b701ccd726c7",
+        "rawUsage": {
+          "prompt_tokens": 21500,
+          "completion_tokens": 1736,
+          "total_tokens": 23236,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 664,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 18492,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 664,
+          "credit": 4.05,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21500,
+          "outputTokens": 1736,
+          "totalTokens": 23236,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 664
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "15ff557a84721ed1aa60558f6d40cbe585ef5e89aee1141ca6d29d528d5684e4",
+    "process_sha256": "3f6a3e14a164e262f48078b5f116021d98fd796f2efb5d8e995237058a093469",
+    "elapsed_seconds": 39.94,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-5ab21daa78544e16ab7d40852b44abc0",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a254397dde74-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "动态 shape 分两端处理——构建期用 optimization profile 声明每个输入的维度范围（MIN/OPT/MAX），运行期在 execution context 上设置实际输入 shape（必须落在 profile 范围内），然后 enqueue。",
+        "replacement": "动态 shape 分两端处理——**构建期**用 optimization profile 声明每个输入的维度范围（MIN/OPT/MAX），**运行期**在 execution context 上设置实际输入 shape（必须落在 profile 范围内），然后 enqueue。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

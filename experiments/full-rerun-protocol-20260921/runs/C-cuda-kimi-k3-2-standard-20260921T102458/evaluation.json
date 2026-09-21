@@ -7753,6 +7753,867 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 11,
+      "recorded_at": "2026-09-21T05:04:19.234310+00:00",
+      "process_sha256": "fa1f59cda377e4e33dadb0bd928a881691da2a5a948e9acf5649d1892edccc2a",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "- 稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt（需要 FP8/FP4 块缩放、算法启发式、epilogue 融合时；cuBLAS 12.9 官方博客确认 Hopper FP8 channel/block scaling、Blackwell FP4/FP8 block-scaled 类型均通过 cuBLASLt API 暴露）。\n- 卷积 → cuDNN（内部以 implicit GEMM 等方式实现，graph API 支持算子融合）。\n- 矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_5db26793.result",
+            "evidence_quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API.",
+            "verification": "source",
+            "reason": "子要求逐项核对：(1)官方库清单——cuBLAS/cuBLASLt 定位由 WebFetch_1 官方原文证实；cuDNN 'Convolution, including cross-correlation' 由 WebFetch_3 证实；cuSPARSE SpMV/SpMM 与稀疏格式由 WebFetch_6 第1.1节、第3章证实。(2)怎么选——答案给出按稠密GEMM/卷积/稀疏场景的选型规则，且明确'稠密 GEMM 不应选 cuSPARSE'，与官方定位一致。(3)怎么调用——cuBLAS 列主序/IDX2C/Tensor Core 16字节对齐规则由 WebFetch_1 完整原文支持；cuDNN graph API 11步工作流与 conv_fprop API 表由 WebFetch_4 官方原文支持；cuSPARSE 稠密端行/列主序及 ld 约束由 WebFetch_6 第3.3.1节原文支持；版本适用关系由 WebFetch_9 support matrix 原文支持。部分函数签名（cublasLtMatmul/cublasSgemm/cusparseSpMM）正文因截断未取得，答案已如实标注'未核实'并区分先验，不构成矛盾。总体上各子要求均有官方来源支撑。",
+            "evidence_refs": [
+              "ev-30",
+              "ev-31"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为官方来源（docs.nvidia.com/cuda/cublas，cuBLAS 13.4 官方文档），后续各库首次查询也均在前5条命中官方文档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_91b072fc.result",
+                "quote": "1. Introduction — cuBLAS 13.4 documentation"
+              },
+              {
+                "event_id": "WebSearch_2_73a77569.result",
+                "quote": "NVIDIA cuDNN - NVIDIA Docs - NVIDIA Documentation Hub"
+              },
+              {
+                "event_id": "WebSearch_5_33c55102.result",
+                "quote": "1. Introduction — cuSPARSE 13.4 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2",
+              "ev-3"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.375,
+            "upper": 3.875,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_5db26793.result",
+                "quote": "正文在 **2.4.13. cublasGetVector()** 一节中途截断"
+              },
+              {
+                "event_id": "WebFetch_6_1d64c8bd.result",
+                "quote": "文档在 **第 5.3.9 节 `cusparseSetMatDiagType()`** 处中断"
+              },
+              {
+                "event_id": "WebFetch_10_c52de6b1.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+                "quote": "Refer to the Operations section for APIs of different operation types."
+              }
+            ],
+            "evidence_refs": [
+              "ev-4",
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得完整解释/操作段落：cuDNN graph 构建执行11步流程与API表、cuBLAS列主序与Tensor Core约束（逐字原文）、cuSPARSE稀疏/稠密格式与数据类型CC门槛、cuDNN支持矩阵。但原题调用所需关键签名/步骤缺失：cublasSgemm与cublasLtMatmul签名（cuBLAS文档截断）、cudnnConvolutionForward及卷积算法说明（404/未取得）、cusparseSpMM签名（Generic API章节缺失）。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_5db26793.result",
+                "quote": "在所提供内容的截断点之后，无法提取"
+              },
+              {
+                "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+                "quote": "01. Create a cuDNN graph and specify the global properties."
+              },
+              {
+                "event_id": "WebFetch_6_1d64c8bd.result",
+                "quote": "其中**不包含 cusparseSpMM 章节正文**"
+              },
+              {
+                "event_id": "WebFetch_10_c52de6b1.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "cuDNN有直接支持矩阵（9.26.0↔CUDA 13.x/12.x↔驱动↔架构/CC），cuBLAS文档以CUDA版本命名（13.4）并给出Tensor Core需CC 7.0+，cuSPARSE给出数据类型CC门槛（half CC≥53、bf16 CC≥80），cuDNN frontend/backend接口选择有官方指引；三库合并官方约束才能确定整体适用关系，故为合并档而非直接查表档。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_9_8ecb4d18.result",
+                "quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4."
+              },
+              {
+                "event_id": "WebFetch_1_5db26793.result",
+                "quote": "Tensor cores were first introduced with Volta GPUs (compute capability 7.0 and above)"
+              },
+              {
+                "event_id": "WebFetch_6_1d64c8bd.result",
+                "quote": "If a specific GPU model does not provide *native* support for a given data type, the routine returns `CUSPARSE_STATUS_ARCH_MISMATCH` error."
+              },
+              {
+                "event_id": "WebFetch_3_e7ba3dac.result",
+                "quote": "Use the [NVIDIA cuDNN backend API](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html#api-overview \"(in NVIDIA cuDNN Backend)\") only if you want to use the legacy fixed-function routines that are not graph-based interfaces and are not exposed by the frontend API layers, or if you need a C-only interface."
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内去重后相关独立第三方来源≥6条：知乎p/683341920、wenku.csdn、aidoczh镜像、cnblogs、知乎p/24010163868、jishuzhan与CSDN同一文章（计1条）、知乎p/1929943281552330961，共7条。首次第三方发现于第1次查询第3条。官方仓库(NVIDIA/cudnn-frontend)与NVIDIA官方页面已排除。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_91b072fc.result",
+                "quote": "【CUDA编程】使用 cuBLASLt 中的 cublasLtMatmul API ..."
+              },
+              {
+                "event_id": "WebSearch_7_8a8597c4.result",
+                "quote": "Nvidia计算优化系列CUDNN、CUTLASS和CUBLAS - 知乎"
+              },
+              {
+                "event_id": "WebSearch_7_8a8597c4.result",
+                "quote": "一文读懂CUDA常用库: CUBLAS、CUDNN、CUTLASS - 知乎"
+              },
+              {
+                "event_id": "WebSearch_5_33c55102.result",
+                "quote": "1. Introduction — cuSPARSE 12.8 documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "存在第三方材料（非N/A），但均未抓取正文，关键操作性说法（如cublasSgemm参数顺序颠倒技巧）仅以搜索摘要形式出现，无可追溯的核对依据，也未与官方文档交叉印证；未发现已确证的关键矛盾。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_7_8a8597c4.result",
+                "quote": "正确做法是颠倒参数顺序调用cublasSgemm (B,A)，这样既避免了显式转置，又能直接获得行主序结果。"
+              },
+              {
+                "event_id": "WebSearch_2_73a77569.result",
+                "quote": "NVIDIA cuDNN开发者指南中文版：深度学习加速库编程模型"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出三库正确选择逻辑、cuBLAS完整调用骨架（含列主序说明）、cuDNN legacy描述符流程与v8 graph API方向、cuSPARSE适用边界。经sources事后核对：列主序、cross-correlation、cuBLASLt定位、cuDNN graph API、cuSPARSE SpMV/SpMM均与官方一致，无被否定主张；但具体参数（cublasLt参数、v8 frontend细节、版本对应表）自认不足，属'完整流程已有、参数约束待补'档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "纯稠密 GEMM → cuBLAS（或 cublasLt）；卷积 → cuDNN（卷积本质是 implicit GEMM，cuDNN 针对深度学习布局调优）；稀疏 → cuSPARSE。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "具体版本对应关系不确定。"
+              },
+              {
+                "event_id": "WebFetch_1_5db26793.result",
+                "quote": "the cuBLAS library uses column-major storage, and 1-based indexing"
+              },
+              {
+                "event_id": "WebFetch_3_e7ba3dac.result",
+                "quote": "Convolution, including cross-correlation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_91b072fc.dispatch",
+              "WebFetch_1_5db26793.dispatch",
+              "WebSearch_2_73a77569.dispatch",
+              "WebFetch_3_e7ba3dac.dispatch",
+              "WebFetch_4_52983056_bc8ed60e.dispatch",
+              "WebSearch_5_33c55102.dispatch",
+              "WebFetch_6_1d64c8bd.dispatch",
+              "WebSearch_7_8a8597c4.dispatch",
+              "WebFetch_8_d92621d8.dispatch",
+              "WebFetch_9_8ecb4d18.dispatch",
+              "WebFetch_10_c52de6b1.dispatch",
+              "WebFetch_11_5f860cef.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "partially_locked",
+            "reason": "所有组件均给出有依据的适用范围：cuDNN 9.26.0 for CUDA 12.x（12.0–12.9）与 CUDA 13.x（13.0–13.4）、前端 1.28.0 需后端 ≥8.5.0、cuBLAS 12.9/13.4 与 CUDA 版本对应、Tensor Core CC≥7.0、FP8 需 Hopper/Ada、FP4 需 Blackwell，均有官方 support matrix/文档佐证。但答案呈现的是'适用范围+推荐配置'而非为用户锁定一套具体可执行版本组合（如未给出确定的 cuBLAS 具体安装版本），且部分依赖关系（cusparseSpMM 签名相关版本行为）未核实。未发现关键定版与证据矛盾。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "- **cuDNN 9.26.0 for CUDA 12.x**：CUDA 12.0–12.9（12.7 未列）；动态链接兼容所有 CUDA 12.x（含未来版本）；Linux 驱动 ≥525.60.13、Windows ≥527.41；支持 CC 7.5–12.x（Turing/Ampere/Ada/Hopper/Blackwell，Blackwell 需 CUDA ≥12.8 + 驱动 ≥570.26/570.65）\n- **cuDNN 9.26.0 for CUDA 13.x**：CUDA 13.0–13.4；驱动 ≥615.71.09（Linux）；官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "- **cuBLAS / cuSPARSE**：随 CUDA Toolkit 发布（本次抓取文档为 cuBLAS 13.4 / cuSPARSE 13.4，对应 CUDA 13.4）；cuBLAS 12.9 随 CUDA 12.9（官方博客）；Tensor Core 需 CC ≥7.0；FP8 特性需 Hopper/Ada（CC 8.9/9.0+），FP4 块缩放需 Blackwell"
+              }
+            ],
+            "evidence_refs": [
+              "ev-26",
+              "ev-27"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "executable_with_gaps",
+            "reason": "存在具体操作方案：cuBLAS Sgemm、cuBLASLt、cuDNN graph、cuSPARSE SpMM 四条调用路线均有代码/步骤，前置条件（列主序映射、16字节对齐、workspace 分配、CC 要求）明确。但三处关键代码（cublasLtMatmul、cusparseSpMM、cublasSgemm 签名）明确标注为'模型先验，未逐字核实'（官方页截断），cudnnConvolutionForward legacy 签名 404 未核实——具体缺口：这些先验签名与调用序列需与官方文档核对修正后方可照抄运行；答案自身也声明'以上代码未实际运行'。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "函数签名正文因页面截断未取得**，以下流程为模型先验 + 官方博客佐证，标注未逐字核实"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "以下为模型先验，标注未核实：\n\n```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(h, opA, opB, alpha, matA, matB, beta, matC,\n                        CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT, &bufSize); // 先验签名"
+              }
+            ],
+            "evidence_refs": [
+              "ev-28",
+              "ev-29"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 80.305328,
+            "upper": 80.927984,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              80.3,
+              81.0
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 80.305328,
+          "upper": 80.927984,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            80.3,
+            81.0
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_91b072fc.result",
+            "field": "response",
+            "sha256": "c82b93a618509b273e9272b3e94d574b253651169d7c56131091bd93ccd7a90b",
+            "start": 111,
+            "end": 154,
+            "quote": "1. Introduction — cuBLAS 13.4 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_2_73a77569.result",
+            "field": "response",
+            "sha256": "70d0ff3f96b949e0b4ecfa28378c715b9169e66bd4d72d813d4cca7e57ed62a8",
+            "start": 120,
+            "end": 173,
+            "quote": "NVIDIA cuDNN - NVIDIA Docs - NVIDIA Documentation Hub",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebSearch_5_33c55102.result",
+            "field": "response",
+            "sha256": "d15ea49ed1f79f42084d97fd1071defdaee6932b8e96b7b4cbb4eaef11cb7a08",
+            "start": 96,
+            "end": 141,
+            "quote": "1. Introduction — cuSPARSE 13.4 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_1_5db26793.result",
+            "field": "response",
+            "sha256": "5e940003e9eed947f4d3a1517a9daca9458010c2c4f2b4031ee9939b4a7e8951",
+            "start": 57,
+            "end": 97,
+            "quote": "正文在 **2.4.13. cublasGetVector()** 一节中途截断",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_1d64c8bd.result",
+            "field": "response",
+            "sha256": "9b79f4d2f68fc081eb95e6b22cfdf02fd1e1772125503578264ba9d922b8994e",
+            "start": 108,
+            "end": 156,
+            "quote": "文档在 **第 5.3.9 节 `cusparseSetMatDiagType()`** 处中断",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_10_c52de6b1.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 40,
+            "end": 97,
+            "quote": "This page no longer exists. It is a non-supported format.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+            "field": "response",
+            "sha256": "49b927827540f4de090ba74888544ec54c6945dd30970b04396ecbb3e6fbbc03",
+            "start": 6149,
+            "end": 6219,
+            "quote": "Refer to the Operations section for APIs of different operation types.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_1_5db26793.result",
+            "field": "response",
+            "sha256": "5e940003e9eed947f4d3a1517a9daca9458010c2c4f2b4031ee9939b4a7e8951",
+            "start": 4782,
+            "end": 4799,
+            "quote": "在所提供内容的截断点之后，无法提取",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+            "field": "response",
+            "sha256": "49b927827540f4de090ba74888544ec54c6945dd30970b04396ecbb3e6fbbc03",
+            "start": 769,
+            "end": 828,
+            "quote": "01. Create a cuDNN graph and specify the global properties.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_6_1d64c8bd.result",
+            "field": "response",
+            "sha256": "9b79f4d2f68fc081eb95e6b22cfdf02fd1e1772125503578264ba9d922b8994e",
+            "start": 80,
+            "end": 107,
+            "quote": "其中**不包含 cusparseSpMM 章节正文**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_10_c52de6b1.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 8,
+            "end": 22,
+            "quote": "Page Not Found",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_9_8ecb4d18.result",
+            "field": "response",
+            "sha256": "0f268c854b2948b9bfa13e70f2b189a529e4781aa995b237a8f305507e2f3b33",
+            "start": 2635,
+            "end": 2718,
+            "quote": "For best performance, the recommended configuration is cuDNN 9.26.0 with CUDA 13.4.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebFetch_1_5db26793.result",
+            "field": "response",
+            "sha256": "5e940003e9eed947f4d3a1517a9daca9458010c2c4f2b4031ee9939b4a7e8951",
+            "start": 1924,
+            "end": 2009,
+            "quote": "Tensor cores were first introduced with Volta GPUs (compute capability 7.0 and above)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebFetch_6_1d64c8bd.result",
+            "field": "response",
+            "sha256": "9b79f4d2f68fc081eb95e6b22cfdf02fd1e1772125503578264ba9d922b8994e",
+            "start": 3913,
+            "end": 4052,
+            "quote": "If a specific GPU model does not provide *native* support for a given data type, the routine returns `CUSPARSE_STATUS_ARCH_MISMATCH` error.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebFetch_3_e7ba3dac.result",
+            "field": "response",
+            "sha256": "6bf42832269f46ca388bcfd55ae2227c2ab5a2e773aaa1fa7e281584ee4690f8",
+            "start": 1288,
+            "end": 1618,
+            "quote": "Use the [NVIDIA cuDNN backend API](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/overview.html#api-overview \"(in NVIDIA cuDNN Backend)\") only if you want to use the legacy fixed-function routines that are not graph-based interfaces and are not exposed by the frontend API layers, or if you need a C-only interface.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_0_91b072fc.result",
+            "field": "response",
+            "sha256": "c82b93a618509b273e9272b3e94d574b253651169d7c56131091bd93ccd7a90b",
+            "start": 597,
+            "end": 642,
+            "quote": "【CUDA编程】使用 cuBLASLt 中的 cublasLtMatmul API ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_7_8a8597c4.result",
+            "field": "response",
+            "sha256": "f939d345097e15df48a65c28b30b5e51eb8fb73970aefc374c0b88734dc301b4",
+            "start": 318,
+            "end": 355,
+            "quote": "Nvidia计算优化系列CUDNN、CUTLASS和CUBLAS - 知乎",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebSearch_7_8a8597c4.result",
+            "field": "response",
+            "sha256": "f939d345097e15df48a65c28b30b5e51eb8fb73970aefc374c0b88734dc301b4",
+            "start": 1031,
+            "end": 1069,
+            "quote": "一文读懂CUDA常用库: CUBLAS、CUDNN、CUTLASS - 知乎",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "WebSearch_5_33c55102.result",
+            "field": "response",
+            "sha256": "d15ea49ed1f79f42084d97fd1071defdaee6932b8e96b7b4cbb4eaef11cb7a08",
+            "start": 685,
+            "end": 730,
+            "quote": "1. Introduction — cuSPARSE 12.8 documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "WebSearch_7_8a8597c4.result",
+            "field": "response",
+            "sha256": "f939d345097e15df48a65c28b30b5e51eb8fb73970aefc374c0b88734dc301b4",
+            "start": 885,
+            "end": 939,
+            "quote": "正确做法是颠倒参数顺序调用cublasSgemm (B,A)，这样既避免了显式转置，又能直接获得行主序结果。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "WebSearch_2_73a77569.result",
+            "field": "response",
+            "sha256": "70d0ff3f96b949e0b4ecfa28378c715b9169e66bd4d72d813d4cca7e57ed62a8",
+            "start": 1285,
+            "end": 1317,
+            "quote": "NVIDIA cuDNN开发者指南中文版：深度学习加速库编程模型",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "bf0a932b378c9dbe6101408c34dff388cfaec7352ce8a89bf49c89e886c97995",
+            "start": 797,
+            "end": 890,
+            "quote": "纯稠密 GEMM → cuBLAS（或 cublasLt）；卷积 → cuDNN（卷积本质是 implicit GEMM，cuDNN 针对深度学习布局调优）；稀疏 → cuSPARSE。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "bf0a932b378c9dbe6101408c34dff388cfaec7352ce8a89bf49c89e886c97995",
+            "start": 1375,
+            "end": 1387,
+            "quote": "具体版本对应关系不确定。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_1_5db26793.result",
+            "field": "response",
+            "sha256": "5e940003e9eed947f4d3a1517a9daca9458010c2c4f2b4031ee9939b4a7e8951",
+            "start": 645,
+            "end": 711,
+            "quote": "the cuBLAS library uses column-major storage, and 1-based indexing",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_3_e7ba3dac.result",
+            "field": "response",
+            "sha256": "6bf42832269f46ca388bcfd55ae2227c2ab5a2e773aaa1fa7e281584ee4690f8",
+            "start": 439,
+            "end": 479,
+            "quote": "Convolution, including cross-correlation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e7eac5a9135073659857052e2408fae1d3cbba3446e8e794f72ae015b939d08b",
+            "start": 5546,
+            "end": 5863,
+            "quote": "- **cuDNN 9.26.0 for CUDA 12.x**：CUDA 12.0–12.9（12.7 未列）；动态链接兼容所有 CUDA 12.x（含未来版本）；Linux 驱动 ≥525.60.13、Windows ≥527.41；支持 CC 7.5–12.x（Turing/Ampere/Ada/Hopper/Blackwell，Blackwell 需 CUDA ≥12.8 + 驱动 ≥570.26/570.65）\n- **cuDNN 9.26.0 for CUDA 13.x**：CUDA 13.0–13.4；驱动 ≥615.71.09（Linux）；官方推荐 cuDNN 9.26.0 + CUDA 13.4（调优配置）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e7eac5a9135073659857052e2408fae1d3cbba3446e8e794f72ae015b939d08b",
+            "start": 5912,
+            "end": 6106,
+            "quote": "- **cuBLAS / cuSPARSE**：随 CUDA Toolkit 发布（本次抓取文档为 cuBLAS 13.4 / cuSPARSE 13.4，对应 CUDA 13.4）；cuBLAS 12.9 随 CUDA 12.9（官方博客）；Tensor Core 需 CC ≥7.0；FP8 特性需 Hopper/Ada（CC 8.9/9.0+），FP4 块缩放需 Blackwell",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e7eac5a9135073659857052e2408fae1d3cbba3446e8e794f72ae015b939d08b",
+            "start": 1986,
+            "end": 2029,
+            "quote": "函数签名正文因页面截断未取得**，以下流程为模型先验 + 官方博客佐证，标注未逐字核实",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e7eac5a9135073659857052e2408fae1d3cbba3446e8e794f72ae015b939d08b",
+            "start": 4925,
+            "end": 5150,
+            "quote": "以下为模型先验，标注未核实：\n\n```c\n// C = alpha * opA(A_sparse) * opB(B_dense) + beta * C\ncusparseSpMM_bufferSize(h, opA, opB, alpha, matA, matB, beta, matC,\n                        CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT, &bufSize); // 先验签名",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e7eac5a9135073659857052e2408fae1d3cbba3446e8e794f72ae015b939d08b",
+            "start": 713,
+            "end": 997,
+            "quote": "- 稠密 GEMM → cuBLAS（简单场景）或 cuBLASLt（需要 FP8/FP4 块缩放、算法启发式、epilogue 融合时；cuBLAS 12.9 官方博客确认 Hopper FP8 channel/block scaling、Blackwell FP4/FP8 block-scaled 类型均通过 cuBLASLt API 暴露）。\n- 卷积 → cuDNN（内部以 implicit GEMM 等方式实现，graph API 支持算子融合）。\n- 矩阵高度稀疏（nnz 占比低）→ cuSPARSE SpMM；否则稠密 GEMM 走 cuBLAS。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "WebFetch_1_5db26793.result",
+            "field": "response",
+            "sha256": "5e940003e9eed947f4d3a1517a9daca9458010c2c4f2b4031ee9939b4a7e8951",
+            "start": 4097,
+            "end": 4224,
+            "quote": "The cuBLASLt is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_10_c52de6b1.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_10_c52de6b1.result",
+            "alternative_body_event_ids": [
+              "WebFetch_11_5f860cef.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-7cedd4ab7a0a-predictors.json": "5b90cb070ab77b597bc93c97c443cd555095110af3aa481a70bca9a04c9268cd",
+          "reviewed/development/case-7cedd4ab7a0a-outcome.json": "8c0f50ec647f78262a4a3e8f9a8506182f3bb0cb13357e3a732d48f194644886",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_5db26793.result",
+            "url": "https://docs.nvidia.com/cuda/cublas/index.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_5db26793.result",
+                "quote": "所提供的网页内容**并非完整文档**"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_5db26793.result",
+                "quote": "正文在 **2.4.13. cublasGetVector()** 一节中途截断"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cublas/index.html"
+          },
+          {
+            "event_id": "WebFetch_3_e7ba3dac.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/latest/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_e7ba3dac.result",
+                "quote": "The NVIDIA CUDA Deep Neural Network library (cuDNN) is a GPU-accelerated library of primitives for deep neural networks."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_e7ba3dac.result",
+                "quote": "or if you need a C-only interface."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/latest/index.html"
+          },
+          {
+            "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/latest/developer/overview.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+                "quote": "01. Create a cuDNN graph and specify the global properties."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_4_52983056_bc8ed60e.result",
+                "quote": "Refer to the Operations section for APIs of different operation types."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/latest/developer/overview.html"
+          },
+          {
+            "event_id": "WebFetch_6_1d64c8bd.result",
+            "url": "https://docs.nvidia.com/cuda/cusparse/index.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_1d64c8bd.result",
+                "quote": "所提供的网页内容是被截断的文档片段"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_1d64c8bd.result",
+                "quote": "文档在 **第 5.3.9 节 `cusparseSetMatDiagType()`** 处中断"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/cuda/cusparse/index.html"
+          },
+          {
+            "event_id": "WebFetch_8_d92621d8.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_8_d92621d8.result",
+                "quote": "cuDNN Frontend 1.28.0 is supported by cuDNN backend versions starting with v8.5.0."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_8_d92621d8.result",
+                "quote": "[v8.x archives](https://docs.nvidia.com/deeplearning/cudnn/archives/)"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html"
+          },
+          {
+            "event_id": "WebFetch_9_8ecb4d18.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_9_8ecb4d18.result",
+                "quote": "The following sections highlight the compatibility of NVIDIA cuDNN versions with the various supported NVIDIA CUDA Toolkit, CUDA driver, and NVIDIA hardware versions."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_9_8ecb4d18.result",
+                "quote": "Requires CUDA >=13.4 and Linux driver >=615.71.09."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/reference/support-matrix.html"
+          },
+          {
+            "event_id": "WebFetch_10_c52de6b1.result",
+            "url": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/ops/convolution.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_10_c52de6b1.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_10_c52de6b1.result",
+                "quote": "This page no longer exists. It is a non-supported format."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/ops/convolution.html"
+          },
+          {
+            "event_id": "WebFetch_11_5f860cef.result",
+            "url": "https://developer.nvidia.cn/blog/boosting-matrix-multiplication-speed-and-flexibility-with-nvidia-cublas-12-9/",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_11_5f860cef.result",
+                "quote": "NVIDIA CUDA 工具包 12.9 中新推出的 cuBLAS 支持进一步优化 cuBLAS matmul 性能的新功能。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_11_5f860cef.result",
+                "quote": "以提供有关模拟 FP32 matmuls 的更多背景信息。"
+              }
+            ],
+            "reference": "https://developer.nvidia.cn/blog/boosting-matrix-multiplication-speed-and-flexibility-with-nvidia-cublas-12-9/"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

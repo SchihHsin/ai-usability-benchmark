@@ -1,0 +1,194 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "TensorRT 在 **engine build 阶段**对网络做图优化。第一阶段就是\"layers are fused whenever possible\"。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_ddeeb5d8f53e4287a688bc34.result",
+      "evidence_quote": "In the first phase, layers are fused whenever possible.",
+      "verification": "source",
+      "reason": "原题含三个子要求，final 逐项覆盖且均有官方来源支撑。(1) 发生机制：final 称融合发生在 build 阶段、builder 检测受支持模式并合并多层，与 Layer Fusion Catalog 原文 \"TensorRT attempts to perform many different optimizations in a network during the build phase. In the first phase, layers are fused whenever possible\" 及 \"the fusion optimization step detects supported patterns of operations and fuses multiple layers into one layer\" 一致；Conv+ReLU 例子、融合模式表（Conv+GELU 需 FP16/INT8 且 Turing+、DepSepConv 需 INT8 且计算能力≥7.2）均逐字对应同源正文；pointwise 融合命名 fusedPointwiseNode(add1, relu1) 亦见原文。(2) 观察：final 给出 builder kINFO 日志（源文 \"Optimization steps are at the kINFO log level\"）、trtexec --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile（benchmarking 源文有同参数完整命令及 Metadata 多算子对应说明）、IEngineInspector API（engine-tools 源文有相同 C++ 代码与 kDETAILED JSON 示例）、Nsight Systems（User Guide 源文确认 nsys profile -t cuda 与 NVTX）、debug tensors 两种标记方式（engine-tools 源文逐字支持 markUnfusedTensorsAsDebugTensors 与 markDebug 的语义区别）。(3) 控制：final 说明融合 build 时自动、无 runtime API 开启（optimization 源文 \"Fusion happens automatically at build time (there is no runtime API to \\\"turn it on\\\")\"），并列出精度影响、markDebug 打断融合（源文 \"This method can disable some fusion optimizations\"）、setBuilderOptimizationLevel（源文同代码，默认 3）、DISABLE_COMPILATION_CACHE（源文同代码）、cuDNN 侧 g1/g2/virtual 张量/Support Surface 显式控制点（cuDNN Graph API 源文支持，如 \"runtime fusion engines generate the kernel (or kernels) at runtime based on the graph pattern\"、\"All intermediate tensors must be virtual\"、Support Surface 90/80/70 计算能力表）。final 对未核实内容（nsys 报告名拼写、nvcc 不做跨 kernel 融合、CUDA Graphs 定性）已如实标注为自带知识/未核实，未冒充证据。三个子问题均有真实官方正文支撑，判 supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "N/A",
+      "reason": "原题为概念性问题（融合如何发生/观察/控制），不要求锁定到具体库版本、工具链版本或 soc_version。final 虽给出有依据的条件范围（Conv+GELU 需 Turing+、DepSepConv 需计算能力≥7.2、cuDNN Graph API 8.0 引入、Support Surface 对应 CC 9.0/8.0/7.0+），但原题本身无定版要求，按约定记 N/A，不给分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "cuDNN Graph API（8.0 引入）提供运行时融合"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "按 Support Surface 90/80/70 匹配计算能力（9.0+/8.0+/7.0+）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "supported",
+      "reason": "final 提供完整可照抄的命令与代码：trtexec 命令含全部参数及示例模型名/形状，与官方 benchmarking 文档逐字一致；nsys profile -t cuda、IEngineInspector C++ 代码、markUnfusedTensorsAsDebugTensors/markDebug、setTensorDebugState、setBuilderOptimizationLevel(0)、DISABLE_COMPILATION_CACHE 均为文档原文级别的完整调用；trtexec 路径（NGC 容器 /opt/tensorrt/bin/trtexec）已给出。仅需替换用户环境值（ONNX 文件路径、应用名），无需修正内容错误。次要扣分点：nsys analyze/stats 具体报告名未从官方正文确认（final 已自曝并以 nsys stats --help 为准），但该处 final 已如实声明且给出核实途径，不构成需修正的内容错误，故 4 分而非 5 分（5 分要求所有指导及前提完全无需补写）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "trtexec --onnx=resnet50-v1-12-quantized.onnx --shapes=data:4x3x224x224 \\\n  --stronglyTyped --noDataTransfers --useCudaGraph --useSpinWait \\\n  --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());\nstd::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON);"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "nsys profile -t cuda [application]"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "networkDefinition->markUnfusedTensorsAsDebugTensors(); // 不阻止融合，保留调试"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-d7a78cbdef79",
+  "task_id": "N",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "f3168ec356424e2bb4c53dbedfe9de7a",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c5ea83d94c97d33b58b807a33cfbdc51",
+        "conversationRequestId": "c5ea83d94c97d33b58b807a33cfbdc51",
+        "agent": "cli"
+      },
+      {
+        "messageId": "f3168ec356424e2bb4c53dbedfe9de7a",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c5ea83d94c97d33b58b807a33cfbdc51",
+        "conversationRequestId": "c5ea83d94c97d33b58b807a33cfbdc51",
+        "rawUsage": {
+          "prompt_tokens": 29784,
+          "completion_tokens": 1832,
+          "total_tokens": 31616,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 517,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 26776,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 517,
+          "credit": 5.43,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 29784,
+          "outputTokens": 1832,
+          "totalTokens": 31616,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 517
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "6088285a839da29589f6ca7b289821a49ab0804170f7b41151c77b3fadee5504",
+    "process_sha256": "714a7839509278e3371cde0069c313238ce02ca863e73fd494d4c5b160019dad",
+    "elapsed_seconds": 32.37,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-7a3db19119d2426c90dc93f3326ef839",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-d7a78cbdef79-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

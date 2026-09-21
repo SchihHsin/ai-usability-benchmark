@@ -5960,6 +5960,206 @@
     "errors": []
   },
   {
+    "case": "case-8af4530129dd",
+    "budget": "standard",
+    "run_name": "R-cuda-glm-5_3-standard-20260921T125936",
+    "run_dir": "/Users/hsin/Documents/Coding/ai-usability-benchmark/experiments/full-rerun-protocol-20260921/runs/R-cuda-glm-5_3-standard-20260921T125936",
+    "task_id": "R",
+    "ecosystem": "cuda",
+    "split": "development",
+    "question": "我的模型在 GPU 上训练 loss 不收敛 / 出现 NaN，怎么系统排查（梯度爆炸/学习率/数据）？",
+    "criteria": [
+      "我的模型在 GPU 上训练 loss 不收敛 / 出现 NaN，怎么系统排查（梯度爆炸/学习率/数据）？"
+    ],
+    "applicability": {
+      "M4": {
+        "applicable": true,
+        "scope": "所用梯度与NaN排查接口"
+      },
+      "M9": {
+        "applicable": true,
+        "scope": "所用梯度与NaN排查接口"
+      },
+      "M10": {
+        "applicable": true,
+        "scope": "原题要求的操作；概念解释不强制代码"
+      },
+      "other_metrics": "M1/M2/M3/M5/M6/M7依实际证据状态；M8依派发计数。没有第三方资料时M6=N/A，不把未查到写成不适用。"
+    },
+    "prior": [
+      {
+        "event_id": "client-note-00005",
+        "text": "仅凭已有知识，我会按以下思路回答“GPU 训练 loss 不收敛 / 出现 NaN 的系统排查”：\n\n1. **先定位 NaN 出现的时机**：第一个 batch 就 NaN vs 训练一段时间后 NaN，两者原因不同（前者多为数据/初始化/学习率过大，后者多为梯度爆炸/数值不稳定）。\n2. **梯度爆炸方向**：\n   - 监控梯度范数：对每个参数 `p.grad.norm()` 打日志，看是否指数增长；\n   - 梯度裁剪：PyTorch `torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)`；\n   - 降低学习率（常见 10 倍降）；\n   - 检查初始化（如 Xavier/Kaiming）。\n3. **混合精度（AMP）方向**：`GradScaler` 的 scale 过大或 underflow/overflow；`scaler.unscale_(optimizer)` 后再裁剪；观察 `scaler.get_scale()` 是否频繁跳变。\n4. **数据方向**：\n   - 检查输入是否有 NaN/Inf：`torch.isnan(x).any()`、`torch.isinf(x).any()`；\n   - 检查标签越界（如类别索引超出 num_classes，CrossEntropy 会出 NaN）；\n   - 检查除零、log(0)、sqrt(0) 等数值操作，加 `eps`；\n   - 数据增强产生异常值。\n5. **调试工具**：\n   - 二分法定位：固定 seed、逐层 forward/backward 找首次 NaN 的层；\n   - `torch.autograd.set_detect_anomaly(True)`（我知道该 API 存在，但当前版本的准确行为与文档位置需核实）；\n   - `torch.cuda.synchronize()` + 断点判断 NaN 是真实计算结果还是异步错误；\n   - PyTorch 有 `TORCH_SHOW_CPP_STACKTRACES=1` 等环境变量。\n6. **CUDA/硬件方向**：\n   - `cuda-memcheck`（我记得已被 `compute-sanitizer` 取代，但具体版本号与子工具 memcheck/racecheck/initcheck 的准确用法需核实）；\n   - 驱动/ECC 错误：`nvidia-smi -q` 看 ECC 错误计数；\n   - 降低 batch size 或换 GPU 排除硬件问题。\n7. **损失函数方向**：log-loss 未 clamp、目标未归一化、类别不平衡导致 softmax 溢出。\n\n不确定处：\n- PyTorch 官方关于 NaN 掭查的推荐文档的确切 URL 与结构（我记得有 \"CUDA semantics\" 和 FAQ 性质的调试页）；\n- `torch.autograd.detect_anomaly` 的准确签名与当前推荐用法；\n- `compute-sanitizer` 的确切命令行参数与 CUDA 工具链版本对应关系；\n- 当前 PyTorch 是否有更新的官方数值稳定性/NaN 排查指南。"
+      }
+    ],
+    "sources": [
+      {
+        "event_id": "call_f88555b7d29d49c9bce6b3c8.result",
+        "request_id": "call_f88555b7d29d49c9bce6b3c8",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "PyTorch training loss NaN debugging official documentation gradient clipping"
+        },
+        "query": "PyTorch training loss NaN debugging official documentation gradient clipping",
+        "text": "# Search Results for \"PyTorch training loss NaN debugging official documentation gradient clipping\"\n\n## 1. [训练RNN/LSTM时Loss变成NaN？可能是梯度爆炸了，试试 ...](https://blog.csdn.net/weixin_30335575/article/details/159340890)\n\n2026年8月27日 · 通过分析梯度爆炸的典型症状，详细介绍了梯度裁剪 (Gradient Clipping)在PyTorch和TensorFlow中的实现方法，并 …\n\n**URL:** https://blog.csdn.net/weixin_30335575/article/details/159340890\n\n---\n\n## 2. [梯度爆炸实战排查：PyTorch 训练中 Loss 出现 NaN 的 5 种 ...](https://aicoding.csdn.net/6a68810810ee7a33f2937c90.html)\n\n2026年7月4日 · 本文深入探讨了PyTorch深度学习训练中梯度爆炸导致Loss出现NaN的5种系统化解决方案。 从梯度监控、截断技术到 …\n\n**URL:** https://aicoding.csdn.net/6a68810810ee7a33f2937c90.html\n\n---\n\n## 3. [PyTorch梯度裁剪避免训练loss nan_the grad norm is nan ...](https://blog.csdn.net/u013685264/article/details/106516417)\n\n2020年6月3日 · 本文介绍在PyTorch模型训练过程中遇到loss为nan的问题，并提供解决方案。 通过使用torch.nn.utils.clip_grad_norm_ …\n\n**URL:** https://blog.csdn.net/u013685264/article/details/106516417\n\n---\n\n## 4. [【pytorch】梯度裁剪Gradient Clip - 知乎](https://zhuanlan.zhihu.com/p/717552466)\n\n2024年8月31日 · 梯度裁剪的概念来自于这篇论文 On the difficulty of training recurrent neural networks [1]，介绍了应对 exploding …\n\n**URL:** https://zhuanlan.zhihu.com/p/717552466\n\n---\n\n## 5. [PyTorch梯度裁剪完全实用指南：原理、场景、优缺点、max ...](https://www.hubtools.cn/2025/clip_grad_norm.html)\n\n2025年6月3日 · 梯度爆炸会导致模型权重更新过大，使得学习过程极其不稳定，甚至导致损失函数变为 NaN (Not a Number)，训练无 …\n\n**URL:** https://www.hubtools.cn/2025/clip_grad_norm.html\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_50729c56f0894fa890c4253a.result",
+        "request_id": "call_50729c56f0894fa890c4253a",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "site:pytorch.org docs gradient clipping clip_grad_norm_ documentation"
+        },
+        "query": "site:pytorch.org docs gradient clipping clip_grad_norm_ documentation",
+        "text": "# Search Results for \"site:pytorch.org docs gradient clipping clip_grad_norm_ documentation\"\n\n## 1. [torch.nn.utils.clip_grad_norm_ — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html)\n\n4 天之前 · Clip the gradient norm of an iterable of parameters. The norm is computed over the norms of the individual gradients of all …\n\n**URL:** https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html\n\n---\n\n## 2. [torch.nn.utils.clip_grad_norm_ — PyTorch 2.14 文档 ...](https://docs.pytorch.ac.cn/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html)\n\n2026年9月5日 · torch.nn.utils.clip_grad_norm_ - Documentation for PyTorch, part of the PyTorch ecosystem.\n\n**URL:** https://docs.pytorch.ac.cn/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html\n\n---\n\n## 3. [torch.nn.utils.clip_grad_norm — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm.html)\n\n3 天之前 · Clip the gradient norm of an iterable of parameters. This method is now deprecated in favor of …\n\n**URL:** https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm.html\n\n---\n\n## 4. [torch.nn.utils.clip_grad_norm_ — PyTorch 1.11.0 documentation](https://docs.pytorch.wiki/en/generated/torch.nn.utils.clip_grad_norm_.html)\n\n2022年3月27日 · Total norm of the parameters (viewed as a single vector).\n\n**URL:** https://docs.pytorch.wiki/en/generated/torch.nn.utils.clip_grad_norm_.html\n\n---\n\n## 5. [torch.nn.utils.clip_grad_norm_ — PyTorch 2.12 文件 ...](https://docs.pytorch.com.tw/docs/2.12/generated/torch.nn.utils.clip_grad_norm_.html)\n\n2026年7月10日 · torch.nn.utils.clip_grad_norm_ - Documentation for PyTorch, part of the PyTorch ecosystem.\n\n**URL:** https://docs.pytorch.com.tw/docs/2.12/generated/torch.nn.utils.clip_grad_norm_.html\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_ce2ae5d14cdf4682aba1b3de.result",
+        "request_id": "call_ce2ae5d14cdf4682aba1b3de",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html",
+        "arguments": {
+          "prompt": "完整提取该官方文档页的正文：函数签名、所有参数说明（含 max_norm、norm_type、error_if_nonfinite、foreach 的含义与默认值）、返回值、使用示例代码、任何关于 NaN/error_if_nonfinite 的说明。保留原文结构与代码块，并注明是否为完整正文或被截断。",
+          "url": "https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html"
+        },
+        "query": null,
+        "text": "**标题**: torch.nn.utils.clip_grad_norm_ — PyTorch 2.14 documentation\n\nBack to top\n\n# torch.nn.utils.clip_grad_norm_[#](https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html#torch-nn-utils-clip-grad-norm \"Link to this heading\")\n\ntorch.nn.utils.clip_grad_norm_(*parameters*, *max_norm*, *norm_type=2.0*, *error_if_nonfinite=False*, *foreach=None*)[[source]](https://github.com/pytorch/pytorch/blob/v2.14.0/torch/nn/utils/clip_grad.py#L184)[#](https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html#torch.nn.utils.clip_grad_norm_ \"Link to this definition\")\n\nClip the gradient norm of an iterable of parameters.\n\nThe norm is computed over the norms of the individual gradients of all parameters, as if the norms of the individual gradients were concatenated into a single vector. Gradients are modified in-place.\n\nThis function is equivalent to [`torch.nn.utils.get_total_norm()`](https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.get_total_norm.html#torch.nn.utils.get_total_norm \"torch.nn.utils.get_total_norm\") followed by [`torch.nn.utils.clip_grads_with_norm_()`](https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grads_with_norm_.html#torch.nn.utils.clip_grads_with_norm_ \"torch.nn.utils.clip_grads_with_norm_\") with the `total_norm` returned by `get_total_norm`.\n\nParameters:\n\n- **parameters** (*Iterable[*[*Tensor*](https://docs.pytorch.org/docs/2.14/tensors.html#torch.Tensor \"torch.Tensor\")*] or* [*Tensor*](https://docs.pytorch.org/docs/2.14/tensors.html#torch.Tensor \"torch.Tensor\")) – an iterable of Tensors or a single Tensor that will have gradients normalized\n- **max_norm** ([*float*](https://docs.python.org/3/library/functions.html#float \"(in Python v3.14)\")) – max norm of the gradients\n- **norm_type** ([*float*](https://docs.python.org/3/library/functions.html#float \"(in Python v3.14)\")*, optional*) – type of the used p-norm. Can be `'inf'` for infinity norm. Default: 2.0\n- **error_if_nonfinite** ([*bool*](https://docs.python.org/3/library/functions.html#bool \"(in Python v3.14)\")*, optional*) – if True, an error is thrown if the total norm of the gradients from `parameters` is `nan`, `inf`, or `-inf`. Default: False\n- **foreach** ([*bool*](https://docs.python.org/3/library/functions.html#bool \"(in Python v3.14)\")*, optional*) – use the faster foreach-based implementation. If `None`, use the foreach implementation for CUDA and CPU native tensors and silently fall back to the slow implementation for other device types. Default: `None`\n\nReturns:\n\nTotal norm of the parameter gradients (viewed as a single vector).\n\nReturn type:\n\n[*Tensor*](https://docs.pytorch.org/docs/2.14/tensors.html#torch.Tensor \"torch.Tensor\")",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_6a2a2e8e3ce6408d89483a82.result",
+        "request_id": "call_6a2a2e8e3ce6408d89483a82",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "PyTorch set_detect_anomaly find NaN source official docs anomaly mode"
+        },
+        "query": "PyTorch set_detect_anomaly find NaN source official docs anomaly mode",
+        "text": "# Search Results for \"PyTorch set_detect_anomaly find NaN source official docs anomaly mode\"\n\n## 1. [训练中 Loss 变 NaN？PyTorch 异常检测模式（detect ...](https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.set_detect_anomaly)\n\n2025年12月3日 · torch.autograd.set_detect_anomaly 是 PyTorch 自动微分（Autograd） 引擎中的一个调试工具。 当设置为 True  …\n\n**URL:** https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.set_detect_anomaly\n\n---\n\n## 2. [PyTorch](https://pytorch.org/)\n\n5 天之前 · PyTorch is well supported on major cloud platforms, providing frictionless development and easy scaling. Select your …\n\n**URL:** https://pytorch.org/\n\n---\n\n## 3. [PyTorch调试神器：用set_detect_anomaly (True)揪出训练中 ...](https://wenku.csdn.net/column/78g9ne6p02u)\n\n2026年5月3日 · 最近在训练一个包含自定义注意力机制的模型时，我亲眼目睹了这样的场景：损失函数在前100个batch完全正常，却 …\n\n**URL:** https://wenku.csdn.net/column/78g9ne6p02u\n\n---\n\n## 4. [PyTorch调试神器：用set_detect_anomaly (True)快速定位 ...](https://devpress.csdn.net/v1/article/detail/94557241)\n\n2026年4月30日 · 本文介绍了PyTorch中的调试工具`torch.autograd.set_detect_anomaly (True)`，帮助开发者快速定位梯度爆炸和NaN …\n\n**URL:** https://devpress.csdn.net/v1/article/detail/94557241\n\n---\n\n## 5. [PyTorch训练报NaN？试试用torch.autograd.set_detect ...](https://wenku.csdn.net/column/2wmu40iwcz5)\n\n2026年5月8日 · 文章浏览阅读1次。 # PyTorch训练报NaN？ 用torch.autograd.set_detect_anomaly (True)精准狙击梯度异常 当你盯着 …\n\n**URL:** https://wenku.csdn.net/column/2wmu40iwcz5\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_85c12c05ee3644819a13bcaf.result",
+        "request_id": "call_85c12c05ee3644819a13bcaf",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://docs.pytorch.org/docs/2.14/generated/torch.autograd.set_detect_anomaly.html",
+        "arguments": {
+          "prompt": "完整提取该页正文：函数签名、参数说明、警告（warning）原文、使用示例代码、关于检测 NaN 前向传播的说明。注明是否完整正文或截断。",
+          "url": "https://docs.pytorch.org/docs/2.14/generated/torch.autograd.set_detect_anomaly.html"
+        },
+        "query": null,
+        "text": "**标题**: Page not found · GitHub Pages\n\n# 404\n\n**File not found**\n\nThe site configured at this address does not contain the requested file.\n\nIf this is your site, make sure that the filename case matches the URL as well as any file permissions.  \nFor root URLs (like `http://example.com/`) you must provide an `index.html` file.\n\n[Read the full documentation](https://help.github.com/pages/) for more information about using **GitHub Pages**.\n\n[](https://docs.pytorch.org/)[](https://docs.pytorch.org/)",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_563cc9a4e16542aca7c70b09.result",
+        "request_id": "call_563cc9a4e16542aca7c70b09",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://docs.pytorch.org/docs/2.14/amp.html",
+        "arguments": {
+          "prompt": "完整提取该页关于 GradScaler 的正文：用途说明、scale/unscale_/step/update 的用法与示例代码、关于 inf/NaN gradient 和 loss scaling 的说明、参数表。注明是否完整正文或截断。",
+          "url": "https://docs.pytorch.org/docs/2.14/amp.html"
+        },
+        "query": null,
+        "text": "# GradScaler 内容提取结果(PyTorch 2.14 `torch.amp` 文档页)\n\n## 先回答关键问题：该页内容**不完整(部分截断/缺失)**\n\n本页(`amp.html`)关于 GradScaler 只包含：概述中的简要提及、一段\"Gradient Scaling\"概念说明、以及两个**已弃用**包装类的构造签名。**`torch.amp.GradScaler` 主类的完整 API 正文——即 `scale()` / `unscale_()` / `step()` / `update()` 四个方法的方法说明、示例代码和正式参数表——在本页完全不存在**(仅以 \"See torch.amp.GradScaler\" 一句引用带过)。\n\n以下先给出本页**实际存在**的全部相关正文(原文)，再列出缺失项清单。\n\n---\n\n## 一、本页实际包含的 GradScaler 相关正文(原文完整引用)\n\n### 1. 概述中的用途说明(页面开头)\n\n> Ordinarily, \"automatic mixed precision training\" with datatype of `torch.float16` uses `torch.autocast` and `torch.amp.GradScaler` together, as shown in the Automatic Mixed Precision examples and Automatic Mixed Precision recipe. However, `torch.autocast` and `torch.GradScaler` are modular, and may be used separately if desired. As shown in the CPU example section of `torch.autocast`, \"automatic mixed precision training/inference\" on CPU with datatype of `torch.bfloat16` only uses `torch.autocast`.\n\n### 2. 弃用警告\n\n> `torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)` or `torch.amp.autocast(\"cpu\", args...)` instead. `torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` or `torch.amp.GradScaler(\"cpu\", args...)` instead.\n\n### 3. \"Gradient Scaling\" 一节(本页该节正文完整)\n\n**为什么需要梯度缩放(下溢问题)：**\n\n> If the forward pass for a particular op has `float16` inputs, the backward pass for that op will produce `float16` gradients. Gradient values with small magnitudes may not be representable in `float16`. These values will flush to zero (\"underflow\"), so the update for the corresponding parameters will be lost.\n\n**梯度缩放的机制(loss scaling 说明)：**\n\n> To prevent underflow, \"gradient scaling\" multiplies the network's loss(es) by a scale factor and invokes a backward pass on the scaled loss(es). Gradients flowing backward through the network are then scaled by the same factor. In other words, gradient values have a larger magnitude, so they don't flush to zero.\n\n**为何需要 unscale(对应 `unscale_()` 的概念性说明)：**\n\n> Each parameter's gradient (`.grad` attribute) should be unscaled before the optimizer updates the parameters, so the scale factor does not interfere with the learning rate.\n\n**关于 NaN / 溢出的注意事项(本页唯一涉及 inf/NaN 的正文)：**\n\n> **Note**\n>\n> AMP/fp16 may not work for every model! For example, most bf16-pretrained models cannot operate in the fp16 numerical range of max 65504 and will cause gradients to overflow instead of underflow. In this case, the scale factor may decrease under 1 as an attempt to bring gradients to a number representable in the fp16 dynamic range. While one may expect the scale to always be above 1, our GradScaler does NOT make this guarantee to maintain performance. If you encounter NaNs in your loss or gradients when running with AMP/fp16, verify your model is compatible.\n\n### 4. 类定义条目(本页仅有这两个，均为弃用包装，无正文展开)\n\n> `torch.cuda.amp.GradScaler(init_scale=65536.0, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000, enabled=True)`\n>\n> See `torch.amp.GradScaler`. `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` instead.\n\n> `torch.cpu.amp.GradScaler(init_scale=65536.0, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000, enabled=True)`\n>\n> See `torch.amp.GradScaler`. `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cpu\", args...)` instead.\n\n---\n\n## 二、参数表(本页仅有内容)\n\n本页**没有正式的参数说明表**，只能从上述弃用类签名得到构造参数及默认值：\n\n| 参数 | 默认值 | 本页是否提供含义说明 |\n|---|---|---|\n| `init_scale` | `65536.0` | ❌ 无 |\n| `growth_factor` | `2.0` | ❌ 无 |\n| `backoff_factor` | `0.5` | ❌ 无 |\n| `growth_interval` | `2000` | ❌ 无 |\n| `enabled` | `True` | ❌ 无 |\n\n---\n\n## 三、缺失项清单(对照您的请求逐项说明)\n\n| 您要求的内容 | 本页是否存在 |\n|---|---|\n| `scale()` 方法用法与说明 | ❌ 缺失 |\n| `unscale_()` 方法用法与说明 | ❌ 缺失(仅有\"梯度应在 optimizer 更新前 unscale\"一句概念说明) |\n| `step()` 方法用法与说明 | ❌ 缺失 |\n| `update()` 方法用法与说明 | ❌ 缺失 |\n| `torch.amp.GradScaler` 主类正文 | ❌ 缺失(仅 \"See torch.amp.GradScaler\" 一句) |\n| GradScaler 使用示例代码 | ❌ 缺失(本页所有代码示例——CUDA 训练、CPU 训练/推理、Jit Trace 等——均**只使用 autocast,未出现 GradScaler**) |\n| inf/NaN 梯度检测机制详细说明(如跳过 step、动态调整 scale 的具体行为) | ❌ 缺失(仅上述 Note 提及 NaN 现象) |\n| 正式参数表 | ❌ 缺失(仅签名默认值) |\n\n**本页指向的、包含完整示例与用法的外部链接：**\n- Automatic Mixed Precision examples:`https://docs.pytorch.org/docs/2.14/notes/amp_examples.html`(含梯度惩罚、多模型/多损失、自定义 autograd 函数等场景)\n- Automatic Mixed Precision recipe:`https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html`\n\n---\n\n## 四、结论\n\n**该页关于 GradScaler 属于“截断/不完整”状态**：概念层面的“为什么与如何做梯度缩放”(下溢、loss 乘 scale factor、更新前 unscale)是完整的，但 `torch.amp.GradScaler` 类的完整 API 文档(四个方法的说明、示例代码、参数表、inf/NaN 处理机制)不在本页。如需完整正文，需查阅本页链接的 *AMP examples* / *AMP recipe* 页面，或 `torch.amp.GradScaler` 的专门 API 条目。",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_ea21d6e55b284b51b0fc2b61.result",
+        "request_id": "call_ea21d6e55b284b51b0fc2b61",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://docs.nvidia.com/cuda/compute-sanitizer/index.html",
+        "arguments": {
+          "prompt": "完整提取该页正文：compute-sanitizer 是什么、支持的子工具（memcheck/racecheck/initcheck/synccheck）、基本命令行用法示例、与旧 cuda-memcheck 的关系、适用 CUDA 版本信息。注明是否完整正文或截断。",
+          "url": "https://docs.nvidia.com/cuda/compute-sanitizer/index.html"
+        },
+        "query": null,
+        "text": "**标题**: Compute Sanitizer :: CUDA Toolkit Documentation\n\n[](https://docs.nvidia.com/cuda/compute-sanitizer/index.html)\n\n## [Compute Sanitizer](https://docs.nvidia.com/cuda/compute-sanitizer/index.html#abstract)\n\nThe user guide for Compute Sanitizer.\n\n[](https://docs.nvidia.com/cuda/compute-sanitizer/index.html)\n\n## [Overview](https://docs.nvidia.com/cuda/compute-sanitizer/index.html#compute-sanitizer-overview)\n\nCompute Sanitizer is a functional correctness checking suite included in the CUDA toolkit. This suite contains multiple tools that can perform different type of checks. The memcheck tool is capable of precisely detecting and attributing out of bounds and misaligned memory access errors in CUDA applications. The tool can also report hardware exceptions encountered by the GPU. The racecheck tool can report shared memory data access hazards that can cause data races. The initcheck tool can report cases where the GPU performs uninitialized accesses to global memory. The synccheck tool can report cases where the application is attempting invalid usages of synchronization primitives. This document describes the usage of these tools.\n\nThe Compute Sanitizer is delivered on supported platforms. See [Compute Sanitizer documentation.](https://docs.nvidia.com/compute-sanitizer/index.html)\n\n* * *",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_236caa79c19f422582569afe.result",
+        "request_id": "call_236caa79c19f422582569afe",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "site:docs.pytorch.org anomaly detection set_detect_anomaly"
+        },
+        "query": "site:docs.pytorch.org anomaly detection set_detect_anomaly",
+        "text": "# Search Results for \"site:docs.pytorch.org anomaly detection set_detect_anomaly\"\n\n## 1. [训练中 Loss 变 NaN？PyTorch 异常检测模式（detect ...](https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.set_detect_anomaly)\n\n2025年12月3日 · torch.autograd.set_detect_anomaly 是 PyTorch 自动微分（Autograd） 引擎中的一个调试工具。 当设置为 True  …\n\n**URL:** https://runebook.dev/zh/docs/pytorch/autograd/torch.autograd.set_detect_anomaly\n\n---\n\n## 2. [torch.autograd.detect_anomaly () 工具的使用（记录 ...](https://blog.csdn.net/ybacm/article/details/131528711)\n\n2026年9月7日 · 文章讲述了在PyTorch中遇到多次梯度回传的错误，通过启用autograd的异常检测功能，作者发现了问题出在一个变量 …\n\n**URL:** https://blog.csdn.net/ybacm/article/details/131528711\n\n---\n\n## 3. [with torch.autograd.set_detect_anomaly (True)-CSDN博客](https://blog.csdn.net/q7w8e9r4/article/details/134620547)\n\n2023年11月25日 · 使用 torch.autograd.set_detect_anomaly (True) 非常简单，只需在计算过程开始之前调用该函数即可，如下所示： …\n\n**URL:** https://blog.csdn.net/q7w8e9r4/article/details/134620547\n\n---\n\n## 4. [梯度出现Nan值的追踪 - lypbendlf - 博客园](https://www.cnblogs.com/BlueBlueSea/p/13348098.html)\n\n2020年7月20日 · 上面的代码就会给出具体是哪句代码求导出现的问题。 通常在使用 sqrt/exp 的时候会出现非常大或非常小的数，从 …\n\n**URL:** https://www.cnblogs.com/BlueBlueSea/p/13348098.html\n\n---\n\n## 5. [PyTorch调试神器：set_detect_anomaly (True) 帮你揪出训练 ...](https://wenku.csdn.net/column/f9ifo3g9gdd)\n\n2026年5月1日 · PyTorch提供的 torch.autograd.set_detect_anomaly (True) 就像一位经验丰富的侦探，能帮你快速锁定这些诡异问题 …\n\n**URL:** https://wenku.csdn.net/column/f9ifo3g9gdd\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_a81fd322ceac4413a6316beb.result",
+        "request_id": "call_a81fd322ceac4413a6316beb",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://docs.pytorch.org/docs/2.14/generated/torch.amp.GradScaler.html",
+        "arguments": {
+          "prompt": "完整提取 torch.amp.GradScaler 类的官方文档正文：构造参数表（init_scale、growth_factor、backoff_factor、growth_interval、enabled 等）、scale/unscale_/step/update 方法说明、关于 inf/NaN 梯度跳过 step 的机制说明、示例代码。注明是否完整正文或截断。",
+          "url": "https://docs.pytorch.org/docs/2.14/generated/torch.amp.GradScaler.html"
+        },
+        "query": null,
+        "text": "**标题**: Page not found · GitHub Pages\n\n# 404\n\n**File not found**\n\nThe site configured at this address does not contain the requested file.\n\nIf this is your site, make sure that the filename case matches the URL as well as any file permissions.  \nFor root URLs (like `http://example.com/`) you must provide an `index.html` file.\n\n[Read the full documentation](https://help.github.com/pages/) for more information about using **GitHub Pages**.\n\n[](https://docs.pytorch.org/)[](https://docs.pytorch.org/)",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_c8df1d74b6dd4a3da6021ac2.result",
+        "request_id": "call_c8df1d74b6dd4a3da6021ac2",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://docs.pytorch.org/docs/2.14/autograd.html",
+        "arguments": {
+          "prompt": "提取该页中“Anomaly detection”一节的完整正文：set_detect_anomaly 的说明、警告原文、detect_anomaly 上下文管理器用法、示例代码。同时列出该页是否还包含 NaN 相关的其他调试说明。注明正文是否完整或截断。",
+          "url": "https://docs.pytorch.org/docs/2.14/autograd.html"
+        },
+        "query": null,
+        "text": "# 提取结果：异常检测相关内容\n\n## 概要说明\n\n您所指的“Anomaly detection”一节，在该页面中的**实际标题为 \"Debugging and anomaly detection\"(调试与异常检测)**。该节包含 `detect_anomaly` 和 `set_detect_anomaly` 两个类的完整说明。以下为完整正文提取。\n\n---\n\n## 1. `torch.autograd.detect_anomaly`\n\n**签名：**\n```\ntorch.autograd.detect_anomaly(check_nan=True)\n```\n\n**正文原文：**\n\n> Context-manager that enables anomaly detection for the autograd engine.\n>\n> This does two things:\n> - Running the forward pass with detection enabled will allow the backward pass to print the traceback of the forward operation that created the failing backward function.\n> - If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error. Default `True`.\n\n**警告原文：**\n\n> **Warning**: This mode should be enabled only for debugging as the different tests will slow down your program execution.\n\n**用法：** 作为上下文管理器使用，即 `with autograd.detect_anomaly(): ...`,见下方示例。\n\n**示例代码(完整)：**\n\n```python\n>>> import torch\n>>> from torch import autograd\n>>> class MyFunc(autograd.Function):\n...     @staticmethod\n...     def forward(ctx, inp):\n...         return inp.clone()\n...\n...     @staticmethod\n...     def backward(ctx, gO):\n...         # Error during the backward pass\n...         raise RuntimeError(\"Some error in backward\")\n...         return gO.clone()\n>>> def run_fn(a):\n...     out = MyFunc.apply(a)\n...     return out.sum()\n>>> inp = torch.rand(10, 10, requires_grad=True)\n>>> out = run_fn(inp)\n>>> out.backward()\n    Traceback (most recent call last):\n      File \"<stdin>\", line 1, in <module>\n      File \"/your/pytorch/install/torch/_tensor.py\", line 93, in backward\n        torch.autograd.backward(self, gradient, retain_graph, create_graph)\n      File \"/your/pytorch/install/torch/autograd/__init__.py\", line 90, in backward\n        allow_unreachable=True)  # allow_unreachable flag\n      File \"/your/pytorch/install/torch/autograd/function.py\", line 76, in apply\n        return self._forward_cls.backward(self, *args)\n      File \"<stdin>\", line 8, in backward\n    RuntimeError: Some error in backward\n>>> with autograd.detect_anomaly():\n...     inp = torch.rand(10, 10, requires_grad=True)\n...     out = run_fn(inp)\n...     out.backward()\n    Traceback of forward call that caused the error:\n      File \"tmp.py\", line 53, in <module>\n        out = run_fn(inp)\n      File \"tmp.py\", line 44, in run_fn\n        out = MyFunc.apply(a)\n    Traceback (most recent call last):\n      File \"<stdin>\", line 4, in <module>\n      File \"/your/pytorch/install/torch/_tensor.py\", line 93, in backward\n        torch.autograd.backward(self, gradient, retain_graph, create_graph)\n      File \"/your/pytorch/install/torch/autograd/__init__.py\", line 90, in backward\n        allow_unreachable=True)  # allow_unreachable flag\n      File \"/your/pytorch/install/torch/autograd/function.py\", line 76, in apply\n        return self._forward_cls.backward(self, *args)\n      File \"<stdin>\", line 8, in backward\n    RuntimeError: Some error in backward\n```\n\n> 示例要点：不带异常检测时，报错只显示 backward 的调用栈；启用 `detect_anomaly()` 后，额外输出 **\"Traceback of forward call that caused the error\"**,定位到产生错误 backward 函数的前向操作位置。\n\n---\n\n## 2. `torch.autograd.set_detect_anomaly`\n\n**签名：**\n```\ntorch.autograd.set_detect_anomaly(mode, check_nan=True)\n```\n\n**正文原文：**\n\n> Context-manager that sets the anomaly detection for the autograd engine on or off.\n>\n> `set_detect_anomaly` will enable or disable the autograd anomaly detection based on its argument `mode`. It can be used as a context-manager or as a function.\n>\n> See `detect_anomaly` above for details of the anomaly detection behaviour.\n\n**参数：**\n\n| 参数 | 类型 | 说明(原文) |\n|---|---|---|\n| `mode` | bool | Flag whether to enable anomaly detection (`True`), or disable (`False`). |\n| `check_nan` | bool | Flag whether to raise an error when the backward generate \"nan\" |\n\n---\n\n## 3. 页面中其他 NaN 相关调试说明\n\n扫描全页后，**NaN 相关内容仅出现在异常检测一节内**，共三处：\n\n1. `detect_anomaly` 的功能说明第二条：*\"If `check_nan` is `True`, any backward computation that generates \"nan\" value will raise an error. Default `True`.\"*\n2. `detect_anomaly` 的 `check_nan=True` 参数(默认开启)\n3. `set_detect_anomaly` 的 `check_nan` 参数说明\n\n页面其他部分(Profiler、gradcheck 数值梯度校验、in-place correctness checks、saved tensors hooks、CUDA graph 相关说明等)**均不包含**其他 NaN 调试内容。\n\n**补充：** 该节末尾还附有两个相关条目(仅一行链接式描述，无详细正文)：\n- `grad_mode.set_multithreading_enabled` — 启用/禁用多线程 backward 的上下文管理器\n- `grad_mode.enforce_grad_layout_policy` — 控制梯度布局策略强制的上下文管理器\n\n---\n\n## 4. 完整性评估\n\n- **正文完整，无截断**：两个类的说明文字、警告、参数列表、示例代码(含前后两段完整的 traceback 输出)均已完整呈现在页面中。\n- **注意一处排版瑕疵**：网页原始抓取文本中示例代码存在空格丢失现象(如 `importtorch`、`classMyFunc`、`defforward`、`defforward`/`defbackward` 等连写)，应为网页 HTML 提取时的格式化问题，上方代码已按标准 Python 语法恢复空格，语义与原文一致。",
+        "status": "ok"
+      },
+      {
+        "event_id": "call_07c03240e0914ba5b49c1623.result",
+        "request_id": "call_07c03240e0914ba5b49c1623",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html",
+        "arguments": {
+          "prompt": "完整提取该官方 recipe 正文：GradScaler 完整使用示例代码（scaler.scale(loss).backward()、scaler.step(optimizer)、scaler.update()）、梯度裁剪与 unscale_ 配合的示例、关于 inf/NaN 梯度导致 step 被跳过和 scale 动态调整的说明。注明是否完整正文或截断。",
+          "url": "https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html"
+        },
+        "query": null,
+        "text": "**标题**: Automatic Mixed Precision — PyTorch Tutorials 2.14.0+cu130 documentation\n**发布时间**: Created On: Sep 15, 2020 | Last Updated: Jan 30, 2025 | Last Verified: Nov 05, 2024\n\nBack to top\n\nGo to the end to download the full example code.\n\n# Automatic Mixed Precision#\n\n**Author**: Michael Carilli\n\ntorch.cuda.amp provides convenience methods for mixed precision, where some operations use the `torch.float32` (`float`) datatype and other operations use `torch.float16` (`half`). Some ops, like linear layers and convolutions, are much faster in `float16` or `bfloat16`. Other ops, like reductions, often require the dynamic range of `float32`. Mixed precision tries to match each op to its appropriate datatype, which can reduce your network’s runtime and memory footprint.\n\nOrdinarily, “automatic mixed precision training” uses torch.autocast and torch.cuda.amp.GradScaler together.\n\nThis recipe measures the performance of a simple network in default precision, then walks through adding `autocast` and `GradScaler` to run the same network in mixed precision with improved performance.\n\nYou may download and run this recipe as a standalone Python script. The only requirements are PyTorch 1.6 or later and a CUDA-capable GPU.\n\nMixed precision primarily benefits Tensor Core-enabled architectures (Volta, Turing, Ampere). This recipe should show significant (2-3X) speedup on those architectures. On earlier architectures (Kepler, Maxwell, Pascal), you may observe a modest speedup. Run `nvidia-smi` to display your GPU’s architecture.\n\n```\nimport torch, time, gc\n\n# Timing utilities\nstart_time = None\n\ndef start_timer():\n    global start_time\n    gc.collect()\n    torch.cuda.empty_cache()\n    torch.cuda.reset_max_memory_allocated()\n    torch.cuda.synchronize()\n    start_time = time.time()\n\ndef end_timer_and_print(local_msg):\n    torch.cuda.synchronize()\n    end_time = time.time()\n    print(\"\\n\" + local_msg)\n    print(\"Total execution time = {:.3f} sec\".format(end_time - start_time))\n    print(\"Max memory used by tensors = {} bytes\".format(torch.cuda.max_memory_allocated()))\n```\n\n## A simple network#\n\nThe following sequence of linear layers and ReLUs should show a speedup with mixed precision.\n\n```\ndef make_model(in_size, out_size, num_layers):\n    layers = []\n    for _ in range(num_layers - 1):\n        layers.append(torch.nn.Linear(in_size, in_size))\n        layers.append(torch.nn.ReLU())\n    layers.append(torch.nn.Linear(in_size, out_size))\n    return torch.nn.Sequential(*tuple(layers)).cuda()\n```\n\n`batch_size`, `in_size`, `out_size`, and `num_layers` are chosen to be large enough to saturate the GPU with work. Typically, mixed precision provides the greatest speedup when the GPU is saturated. Small networks may be CPU bound, in which case mixed precision won’t improve performance. Sizes are also chosen such that linear layers’ participating dimensions are multiples of 8, to permit Tensor Core usage on Tensor Core-capable GPUs (see Troubleshooting below).\n\nExercise: Vary participating sizes and see how the mixed precision speedup changes.\n\n```\nbatch_size = 512 # Try, for example, 128, 256, 513.\nin_size = 4096\nout_size = 4096\nnum_layers = 3\nnum_batches = 50\nepochs = 3\n\ndevice = 'cuda' if torch.cuda.is_available() else 'cpu'\ntorch.set_default_device(device)\n\n# Creates data in default precision.\n# The same data is used for both default and mixed precision trials below.\n# You don't need to manually change inputs' ``dtype`` when enabling mixed precision.\ndata = [torch.randn(batch_size, in_size) for _ in range(num_batches)]\ntargets = [torch.randn(batch_size, out_size) for _ in range(num_batches)]\n\nloss_fn = torch.nn.MSELoss().cuda()\n```\n\n## Default Precision#\n\nWithout `torch.cuda.amp`, the following simple network executes all ops in default precision (`torch.float32`):\n\n```\nnet = make_model(in_size, out_size, num_layers)\nopt = torch.optim.SGD(net.parameters(), lr=0.001)\n\nstart_timer()\nfor epoch in range(epochs):\n    for input, target in zip(data, targets):\n        output = net(input)\n        loss = loss_fn(output, target)\n        loss.backward()\n        opt.step()\n        opt.zero_grad() # set_to_none=True here can modestly improve performance\nend_timer_and_print(\"Default precision:\")\n```\n\n## Adding `torch.autocast`#\n\nInstances of torch.autocast serve as context managers that allow regions of your script to run in mixed precision.\n\nIn these regions, CUDA ops run in a `dtype` chosen by `autocast` to improve performance while maintaining accuracy. See the Autocast Op Reference for details on what precision `autocast` chooses for each op, and under what circumstances.\n\n```\nfor epoch in range(0): # 0 epochs, this section is for illustration only\n    for input, target in zip(data, targets):\n        # Runs the forward pass under ``autocast``.\n        with torch.autocast(device_type=device, dtype=torch.float16):\n            output = net(input)\n            # output is float16 because linear layers ``autocast`` to float16.\n            assert output.dtype is torch.float16\n\n            loss = loss_fn(output, target)\n            # loss is float32 because ``mse_loss`` layers ``autocast`` to float32.\n            assert loss.dtype is torch.float32\n\n        # Exits ``autocast`` before backward().\n        # Backward passes under ``autocast`` are not recommended.\n        # Backward ops run in the same ``dtype`` ``autocast`` chose for corresponding forward ops.\n        loss.backward()\n        opt.step()\n        opt.zero_grad() # set_to_none=True here can modestly improve performance\n```\n\n## Adding `GradScaler`#\n\nGradient scaling helps prevent gradients with small magnitudes from flushing to zero (“underflowing”) when training with mixed precision.\n\ntorch.cuda.amp.GradScaler performs the steps of gradient scaling conveniently.\n\n```\n# Constructs a ``scaler`` once, at the beginning of the convergence run, using default arguments.\n# If your network fails to converge with default ``GradScaler`` arguments, please file an issue.\n# The same ``GradScaler`` instance should be used for the entire convergence run.\n# If you perform multiple convergence runs in the same script, each run should use\n# a dedicated fresh ``GradScaler`` instance. ``GradScaler`` instances are lightweight.\nscaler = torch.amp.GradScaler(\"cuda\")\n\nfor epoch in range(0): # 0 epochs, this section is for illustration only\n    for input, target in zip(data, targets):\n        with torch.autocast(device_type=device, dtype=torch.float16):\n            output = net(input)\n            loss = loss_fn(output, target)\n\n        # Scales loss. Calls ``backward()`` on scaled loss to create scaled gradients.\n        scaler.scale(loss).backward()\n\n        # ``scaler.step()`` first unscales the gradients of the optimizer's assigned parameters.\n        # If these gradients do not contain ``inf``s or ``NaN``s, optimizer.step() is then called,\n        # otherwise, optimizer.step() is skipped.\n        scaler.step(opt)\n\n        # Updates the scale for next iteration.\n        scaler.update()\n\n        opt.zero_grad() # set_to_none=True here can modestly improve performance\n```\n\n## All together: “Automatic Mixed Precision”#\n\n(The following also demonstrates `enabled`, an optional convenience argument to `autocast` and `GradScaler`. If False, `autocast` and `GradScaler`‘s calls become no-ops. This allows switching between default precision and mixed precision without if/else statements.)\n\n```\nuse_amp = True\n\nnet = make_model(in_size, out_size, num_layers)\nopt = torch.optim.SGD(net.parameters(), lr=0.001)\nscaler = torch.amp.GradScaler(\"cuda\" ,enabled=use_amp)\n\nstart_timer()\nfor epoch in range(epochs):\n    for input, target in zip(data, targets):\n        with torch.autocast(device_type=device, dtype=torch.float16, enabled=use_amp):\n            output = net(input)\n            loss = loss_fn(output, target)\n        scaler.scale(loss).backward()\n        scaler.step(opt)\n        scaler.update()\n        opt.zero_grad() # set_to_none=True here can modestly improve performance\nend_timer_and_print(\"Mixed precision:\")\n```\n\n## Inspecting/modifying gradients (e.g., clipping)#\n\nAll gradients produced by `scaler.scale(loss).backward()` are scaled. If you wish to modify or inspect the parameters’ `.grad` attributes between `backward()` and `scaler.step(optimizer)`, you should unscale them first using scaler.unscale_(optimizer).\n\n```\nfor epoch in range(0): # 0 epochs, this section is for illustration only\n    for input, target in zip(data, targets):\n        with torch.autocast(device_type=device, dtype=torch.float16):\n            output = net(input)\n            loss = loss_fn(output, target)\n        scaler.scale(loss).backward()\n\n        # Unscales the gradients of optimizer's assigned parameters in-place\n        scaler.unscale_(opt)\n\n        # Since the gradients of optimizer's assigned parameters are now unscaled, clips as usual.\n        # You may use the same value for max_norm here as you would without gradient scaling.\n        torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=0.1)\n\n        scaler.step(opt)\n        scaler.update()\n        opt.zero_grad() # set_to_none=True here can modestly improve performance\n```\n\n## Saving/Resuming#\n\nTo save/resume Amp-enabled runs with bitwise accuracy, use scaler.state_dict and scaler.load_state_dict.\n\nWhen saving, save the `scaler` state dict alongside the usual model and optimizer state `dicts`. Do this either at the beginning of an iteration before any forward passes, or at the end of an iteration after `scaler.update()`.\n\n```\ncheckpoint = {\"model\": net.state_dict(),\n              \"optimizer\": opt.state_dict(),\n              \"scaler\": scaler.state_dict()}\n# Write checkpoint as desired, e.g.,\n# torch.save(checkpoint, \"filename\")\n```\n\nWhen resuming, load the `scaler` state dict alongside the model and optimizer state `dicts`. Read checkpoint as desired, for example:\n\n```\ndev = torch.cuda.current_device()\ncheckpoint = torch.load(\"filename\",\n                        map_location = lambda storage, loc: storage.cuda(dev))\n```\n\n```\nnet.load_state_dict(checkpoint[\"model\"])\nopt.load_state_dict(checkpoint[\"optimizer\"])\nscaler.load_state_dict(checkpoint[\"scaler\"])\n```\n\nIf a checkpoint was created from a run *without* Amp, and you want to resume training *with* Amp, load model and optimizer states from the checkpoint as usual. The checkpoint won’t contain a saved `scaler` state, so use a fresh instance of `GradScaler`.\n\nIf a checkpoint was created from a run *with* Amp and you want to resume training *without* `Amp`, load model and optimizer states from the checkpoint as usual, and ignore the saved `scaler` state.\n\n## Inference/Evaluation#\n\n`autocast` may be used by itself to wrap inference or evaluation forward passes. `GradScaler` is not necessary.\n\n## Advanced topics#\n\nSee the Automatic Mixed Precision Examples for advanced use cases including:\n\n- Gradient accumulation\n- Gradient penalty/double backward\n- Networks with multiple models, optimizers, or losses\n- Multiple GPUs (`torch.nn.DataParallel` or `torch.nn.parallel.DistributedDataParallel`)\n- Custom autograd functions (subclasses of `torch.autograd.Function`)\n\nIf you perform multiple convergence runs in the same script, each run should use a dedicated fresh `GradScaler` instance. `GradScaler` instances are lightweight.\n\nIf you’re registering a custom C++ op with the dispatcher, see the autocast section of the dispatcher tutorial.\n\n## Troubleshooting#\n\n### Speedup with Amp is minor#\n\n1. Your network may fail to saturate the GPU(s) with work, and is therefore CPU bound. Amp’s effect on GPU performance won’t matter.\n   \n   - A rough rule of thumb to saturate the GPU is to increase batch and/or network size(s) as much as you can without running OOM.\n   - Try to avoid excessive CPU-GPU synchronization (`.item()` calls, or printing values from CUDA tensors).\n   - Try to avoid sequences of many small CUDA ops (coalesce these into a few large CUDA ops if you can).\n2. Your network may be GPU compute bound (lots of `matmuls`/convolutions) but your GPU does not have Tensor Cores. In this case a reduced speedup is expected.\n3. The `matmul` dimensions are not Tensor Core-friendly. Make sure `matmuls` participating sizes are multiples of 8. (For NLP models with encoders/decoders, this can be subtle. Also, convolutions used to have similar size constraints for Tensor Core use, but for CuDNN versions 7.3 and later, no such constraints exist. See here for guidance.)\n\n### Loss is inf/NaN#\n\nFirst, check if your network fits an advanced use case. See also Prefer binary_cross_entropy_with_logits over binary_cross_entropy.\n\nIf you’re confident your Amp usage is correct, you may need to file an issue, but before doing so, it’s helpful to gather the following information:\n\n1. Disable `autocast` or `GradScaler` individually (by passing `enabled=False` to their constructor) and see if `infs`/`NaNs` persist.\n2. If you suspect part of your network (e.g., a complicated loss function) overflows , run that forward region in `float32` and see if `infs`/```NaN``s persist. `The autocast docstring <https://pytorch.org/docs/stable/amp.html#torch.autocast>`_'s last code snippet shows forcing a subregion to run in ``float32``` (by locally disabling `autocast` and casting the subregion’s inputs).\n\n### Type mismatch error (may manifest as `CUDNN_STATUS_BAD_PARAM`)#\n\n`Autocast` tries to cover all ops that benefit from or require casting. Ops that receive explicit coverage are chosen based on numerical properties, but also on experience. If you see a type mismatch error in an `autocast` enabled forward region or a backward pass following that region, it’s possible `autocast` missed an op.\n\nPlease file an issue with the error backtrace. `export TORCH_SHOW_CPP_STACKTRACES=1` before running your script to provide fine-grained information on which backend op is failing.",
+        "status": "ok"
+      }
+    ],
+    "final": "<answer>\n\n# GPU 训练 loss 不收敛 / 出现 NaN 的系统排查（CUDA / PyTorch）\n\n以下按“先定位 → 按分支排查”的顺序给出完整流程，命令与参数均经官方文档核实（来源见文末）。\n\n## 第 0 步：确定 NaN 出现的时机\n\n先区分两种情况，排查方向完全不同：\n\n- **第 1 个 batch 就 NaN**：优先查数据、标签越界、学习率过大、初始化。\n- **训练一段时间后变 NaN**：优先查梯度爆炸、混合精度溢出、数值不稳定操作（log/sqrt/除法）。\n\n异步执行注意：CUDA 报错是异步的，先 `torch.cuda.synchronize()` 再判断，否则 traceback 指向的位置可能不是真实出错点。\n\n## 第 1 步：确认 NaN 在前向还是反向出现（官方异常检测）\n\nPyTorch 官方 autograd 文档提供异常检测模式（PyTorch 2.14 已确认存在）：\n\n```python\nimport torch\nfrom torch import autograd\n\n# 上下文管理器形式\nwith autograd.detect_anomaly():\n    out = model(input)\n    loss.backward()\n\n# 或全局开关\ntorch.autograd.set_detect_anomaly(True)   # 训练前开启\n```\n\n官方行为说明：\n- 启用后 backward 出错时会打印**产生该 backward 函数的前向操作的完整 traceback**，直接定位到是哪一行前向代码导致 NaN；\n- `check_nan=True`（默认）：任何 backward 产生 NaN 都会 raise error；\n- 官方警告：此模式仅供调试，会显著拖慢执行，定位到问题后应关闭。\n\n用法即“正常跑一遍训练，第一个产生 NaN 的前向 op 会被 traceback 指出”。\n\n## 第 2 步：排查梯度爆炸\n\n**2.1 监控梯度范数（每个 step 打日志）：**\n\n```python\ntotal_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1e9)\nprint(f\"step {step}: grad_norm={total_norm.item()}, loss={loss.item()}\")\n```\n\n（官方文档确认该函数返回 total norm；用极大的 max_norm 先只观察不裁剪。）观察 grad_norm 是否随训练指数增长、loss 是否先降后突然跳变。\n\n**2.2 梯度裁剪（官方 API，PyTorch 2.14 确认签名）：**\n\n```python\ntorch.nn.utils.clip_grad_norm_(\n    parameters,          # Iterable[Tensor]\n    max_norm,            # float，常用 0.5~5.0，需实验\n    norm_type=2.0,       # 可用 'inf' 表示无穷范数\n    error_if_nonfinite=False,  # 设 True：total norm 为 nan/inf/-inf 时直接报错（可用于及早发现 NaN）\n    foreach=None         # None 时 CUDA/CPU 自动用更快实现\n)\n```\n\n必须在 `loss.backward()` 之后、`optimizer.step()` 之前调用。`error_if_nonfinite=True` 是排查期很有用的开关：梯度一旦变 NaN 立刻报错而不是静默传播。\n\n**2.3 学习率**：loss 震荡发散或早期爆炸时，学习率按 10 倍下调（如 1e-3 → 1e-4）重试；配合 warmup。\n\n## 第 3 步：排查混合精度（AMP）问题\n\n如果用了 `torch.autocast` + fp16，官方 AMP 文档确认的关键事实：\n\n- fp16 梯度小值会下溢为 0；`GradScaler` 将 loss 乘 scale factor 再 backward，更新参数前须 unscale；\n- **官方明确提示：fp16 数值上限是 65504，bf16 预训练的模型用 fp16 会导致梯度 overflow 而非 underflow，scale 可能降到 1 以下**——遇到 AMP+NaN 时首先确认模型是否兼容 fp16（这类模型应改用 bfloat16）；\n- `GradScaler` 机制：`scaler.step(optimizer)` 先 unscale，若梯度含 inf/NaN 则**跳过该次 step**，`scaler.update()` 调整 scale。若 scale 频繁回退（观察 `scaler.get_scale()`），说明存在真实溢出。\n\n标准用法（官方 recipe 原文示例结构）：\n\n```python\nscaler = torch.amp.GradScaler(\"cuda\")   # 旧 torch.cuda.amp.GradScaler 已弃用\n\nfor input, target in data:\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n        output = net(input)\n        loss = loss_fn(output, target)\n    scaler.scale(loss).backward()\n    # 需要裁剪时必须先 unscale：\n    scaler.unscale_(optimizer)\n    torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=0.1)\n    scaler.step(optimizer)\n    scaler.update()\n    optimizer.zero_grad()\n```\n\n官方 NaN 定位建议（AMP troubleshooting 原文）：\n1. 分别单独禁用 `autocast` / `GradScaler`（构造时 `enabled=False`），看 inf/NaN 是否仍在；\n2. 怀疑某段复杂 loss 溢出时，局部强制 float32（局部关 autocast 并 cast 输入）重跑；\n3. 用 `binary_cross_entropy_with_logits` 替代 `binary_cross_entropy`（后者对 log 的数值稳定性差，是官方点名的常见 NaN 来源）。\n\n## 第 4 步：排查数据\n\n```python\n# 训练循环开头加断言\nassert not torch.isnan(x).any(), f\"input NaN at step {step}\"\nassert not torch.isinf(x).any(), f\"input Inf at step {step}\"\nassert not torch.isnan(y).any(), f\"label NaN at step {step}\"\n\n# 分类任务：标签越界会直接产生 NaN loss\nassert y.min() >= 0 and y.max() < num_classes\n```\n\n同时检查：DataLoader `num_workers>0` 下的数据损坏（改 `num_workers=0` 复现）、数据增强产生异常值、特征未归一化导致某些维度量纲巨大、除以接近 0 的方差（如 BatchNorm/Normalize 中未加 eps）。\n\n## 第 5 步：排查损失函数与数值操作\n\n- `log(x)`、`sqrt(x)`、`x/0`：加 eps，如 `torch.log(x + 1e-8)`；\n- `exp(x)` 上溢：如 softmax 前的 logits 过大，改用 `log_softmax`/`F.cross_entropy` 的稳定实现；\n- 权重初始化不当（如 Kaiming/Xavier 未按激活函数选择）。\n\n## 第 6 步：硬件 / CUDA 层面\n\n- **compute-sanitizer**（NVIDIA 官方，CUDA Toolkit 自带，已取代 cuda-memcheck）：其 memcheck 工具可精确检测并定位越界/未对齐内存访问及 GPU 硬件异常；racecheck 检测共享内存竞争，initcheck 检测未初始化全局内存访问：\n\n```bash\ncompute-sanitizer --tool memcheck python train.py\n```\n\n- `nvidia-smi -q` 查看 ECC 错误计数（硬件故障会导致结果随机变 NaN）；\n- 换一块 GPU / 减小 batch size 排除显存与硬件问题；\n- 多卡（DDP）下先单卡复现。\n\n## 第 7 步：二分法兜底\n\n固定 seed（`torch.manual_seed`、`torch.cuda.manual_seed_all`、dataloader worker seed），对模型逐层/逐模块二分：只保留前半部分 forward+dummy loss，逐步加层，找到首个引入 NaN 的层。\n\n---\n\n## 来源\n\n- PyTorch 2.14 官方文档 `torch.nn.utils.clip_grad_norm_`（签名、参数含 `error_if_nonfinite`）：\n  https://docs.pytorch.org/docs/2.14/generated/torch.nn.utils.clip_grad_norm_.html\n- PyTorch 2.14 官方 autograd 文档 \"Debugging and anomaly detection\"（detect_anomaly/set_detect_anomaly、check_nan、警告原文、完整示例）：\n  https://docs.pytorch.org/docs/2.14/autograd.html\n- PyTorch 2.14 官方 AMP 文档（Gradient Scaling 原文、fp16 上限 65504 与 bf16 模型溢出 Note、torch.cuda.amp 弃用说明）：\n  https://docs.pytorch.org/docs/2.14/amp.html\n- PyTorch 官方 AMP Recipe（GradScaler 完整示例、unscale_+clip_grad_norm_ 配合示例、\"Loss is inf/NaN\" troubleshooting 原文）：\n  https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html\n- NVIDIA CUDA 官方 Compute Sanitizer 文档（四工具功能描述）：\n  https://docs.nvidia.com/cuda/compute-sanitizer/index.html\n\n## 无法核实 / 未验证处\n\n- compute-sanitizer 具体子工具的完整命令行参数未取得正文（该索引页仅含 Overview 摘要，命令细节未抓取）；其适用的 CUDA Toolkit 具体版本对应关系未在本轮核实；\n- `torch.amp.GradScaler` 主类 API 页（`.../generated/torch.amp.GradScaler.html`）两次尝试均 404，其参数表仅从 amp.html 弃用类签名获得默认值（init_scale=65536.0, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000），参数含义的官方逐项说明未取得；\n- `scaler.get_scale()` 的准确方法名未在本轮官方正文中核实；\n- 本答案所有命令均未实际运行（仅内容核查，非运行验证）。\n</answer>\n\n<stop_reason>\n工具预算已用尽或接近用尽：WebSearch 已执行 4 次（达到上限），WebFetch 已执行 7 次（clip_grad_norm_ 官方页、set_detect_anomaly 猜测 URL 404、amp.html、compute-sanitizer 索引页、GradScaler 猜测 URL 404、autograd.html、amp_recipe）。官方核心文档（clip_grad_norm_、异常检测、AMP 机制与 recipe、compute-sanitizer 概述）均已取得直接正文，任务所需主流程证据已足够，剩余未核实项已在答案中单列，故停止检索。\n</stop_reason>",
+    "counts": {
+      "search": 4,
+      "fetch": 7
+    },
+    "metadata": {
+      "run_id": "R-cuda-glm-5_3-standard-20260921T125936",
+      "model_id": "glm-5.3",
+      "protocol_version": "full-rerun-protocol-20260921",
+      "rubric_version": "three-model-pilot-20260921+execution-checks",
+      "question_sha256": "5bc8c5c65750680cf9f7b36c91d9b21ba5a8227752da13902488dbec8fc79711",
+      "process_sha256": "ef740578e8b1a580c142784ec59e41825922b0af60b13df42b0361f07be9955d"
+    },
+    "errors": []
+  },
+  {
     "case": "case-35e5b7982fbf",
     "budget": "standard",
     "run_name": "A-cann-deepseek-v4_1-flash-standard-20260921T094956",
@@ -21413,6 +21613,234 @@
       "rubric_version": "three-model-pilot-20260921+execution-checks",
       "question_sha256": "5bc8c5c65750680cf9f7b36c91d9b21ba5a8227752da13902488dbec8fc79711",
       "process_sha256": "21acb3ce06f6767382ab6bca910e16d0794846988343a8a7d04490889bbae9f3"
+    },
+    "errors": []
+  },
+  {
+    "case": "case-75773b817b12",
+    "budget": "standard",
+    "run_name": "R-cann-kimi-k3-2-standard-20260921T125935",
+    "run_dir": "/Users/hsin/Documents/Coding/ai-usability-benchmark/experiments/full-rerun-protocol-20260921/runs/R-cann-kimi-k3-2-standard-20260921T125935",
+    "task_id": "R",
+    "ecosystem": "cann",
+    "split": "development",
+    "question": "我的模型迁到昇腾 NPU 后 loss 不收敛 / 精度对不齐 GPU，怎么排查（loss scale / 溢出检测 / 算子精度）？",
+    "criteria": [
+      "我的模型迁到昇腾 NPU 后 loss 不收敛 / 精度对不齐 GPU，怎么排查（loss scale / 溢出检测 / 算子精度）？"
+    ],
+    "applicability": {
+      "M4": {
+        "applicable": true,
+        "scope": "所用溢出检测与精度排查工具接口"
+      },
+      "M9": {
+        "applicable": true,
+        "scope": "所用溢出检测与精度排查工具接口"
+      },
+      "M10": {
+        "applicable": true,
+        "scope": "原题要求的操作；概念解释不强制代码"
+      },
+      "other_metrics": "M1/M2/M3/M5/M6/M7依实际证据状态；M8依派发计数。没有第三方资料时M6=N/A，不把未查到写成不适用。"
+    },
+    "prior": [
+      {
+        "event_id": "client-note-00005",
+        "text": "仅凭已有知识，我可以这样回答：\n\n问题：模型迁移到昇腾 NPU 后 loss 不收敛 / 精度对不齐 GPU，如何排查（loss scale / 溢出检测 / 算子精度）？\n\n**1. 总体排查思路**\n1. 先确定是\"不收敛\"还是\"精度对不齐\"：NPU 与 GPU 的数值差异本身存在（算子融合、混合精度、reduction 顺序不同），不可能 bitwise 一致，需要设定合理 tolerance（如相对误差 <1%）。\n2. 分层排查：输入数据 → 模型权重 → 前向输出 → loss → 梯度 → 参数更新，逐层 dump 对比 CPU/GPU 基线。\n\n**2. Loss Scale 排查（混合精度训练）**\n- 昇腾混合精度（FP16/BF16）时，框架有 Dynamic/Static LossScaleManager。\n- PyTorch + torch_npu 场景：使用 `torch_npu.npu.amp` 的 GradScaler，检查 scale 是否持续下降到极小（如 <1），持续下降说明频繁溢出，需增大 init_scale 或用动态 loss scale。\n- MindSpore：通过 `DynamicLossScaleManager(scale_factor=2, scale_window=1000)` 配置；若 loss_scale 频繁衰减到 1，说明梯度溢出频繁。\n- 检查 loss 是否出现 NaN/Inf：训练循环中打印 loss，若出现 NaN，回溯第一次出现 NaN 的 step。\n\n**3. 溢出检测**\n- 昇腾溢出检测工具（Inf/Nan 检测）：\n  - 环境变量 `ASCEND_LAUNCH_BLOCKING=1` 同步执行便于定位。\n  - `torch_npu` 提供 dump 能力，或利用 `msdebug` / `msnpureport`。\n  - CANN 工具链中 `msnpureport` 用于设备日志；`msdebug` 用于算子级调试；`mstt`（MindStudio Training Tools）含溢出检测工具。\n  - 环境变量 `INF_NAN_MODE_ENABLE=1` 之类开启全局 inf/nan 检测（名称不确定）。\n- 使用 `msprof` 采集算子执行数据，结合分析工具定位溢出算子。\n\n**4. 算子精度排查**\n- 昇腾提供精度对比工具（`mstt` 中的 accuracy 工具或 CANN 的 `msaccucmp.py`），将 NPU 侧算子输入输出 dump 出来与 GPU/CPU 标杆数据比对（cosine similarity / 相对误差）。\n- 算子精度模式：通过 ACL 配置 `ACL_PRECISION_MODE` 或框架侧 `precision_mode=\"force_fp32\"`，将算子强制 FP32，看 loss 是否收敛，定位是否低精度算子导致。\n- ATC 模型转换时用 `--precision_mode` 或 `--fusion_switch_file` 关闭融合排查。\n- 我记得 CANN 提供 `msaccucmp.py compare -m my_dump -g golden_dump -f fusion_rule -out out_dir` 形式的命令。\n\n**5. 其他常见原因**\n- 数据预处理差异（Resize/Normalize 算子精度不同）。\n- 随机性：dropout、shuffle seed；NPU 上需 `torch_npu.npu.manual_seed`。\n- All_reduce 顺序导致梯度累积误差。\n- BatchNorm fused 算子 epsilon 差异。\n\n**不确定处：**\n1. torch_npu GradScaler API 具体名称（是否 `torch_npu.npu.amp.GradScaler`）需核实。\n2. `INF_NAN_MODE_ENABLE` 环境变量名称及取值需核实。\n3. `msaccucmp.py` 的确切路径与命令参数需核实。\n4. `mstt` 工具包中 overflow 检测与精度对比的具体工具名称需核实。\n5. 当前 CANN 版本（8.x）中这些工具的适用性、是否有替代工具（如 Ascend Insight / msprof-analyze）需核实。\n6. MindSpore DynamicLossScaleManager 参数名需核实。\n\n**自带知识自评：** 能给出正确流程与方法片段，但具体工具名称、环境变量、参数需要外部资料补充。"
+      }
+    ],
+    "sources": [
+      {
+        "event_id": "WebSearch_0_2775e1a1.result",
+        "request_id": "WebSearch_0_2775e1a1",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "昇腾 CANN 溢出检测 msaccucmp 精度比对 loss不收敛 排查 文档"
+        },
+        "query": "昇腾 CANN 溢出检测 msaccucmp 精度比对 loss不收敛 排查 文档",
+        "text": "# Search Results for \"昇腾 CANN 溢出检测 msaccucmp 精度比对 loss不收敛 排查 文档\"\n\n## 1. [昇腾NPU模型迁移调试工具链：精度比对、溢出检测与性能 ...](https://blog.csdn.net/weixin_28833069/article/details/164776792)\n\n2026年9月9日 · 这些问题的定位往往依赖系统化的调试工具支持。 昇腾NPU基于CANN工具链，提供了msprobe、msdebug …\n\n**URL:** https://blog.csdn.net/weixin_28833069/article/details/164776792\n\n---\n\n## 2. [算子溢出分析-算子溢出分析-精度比对工具使用指南（训练 ...](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)\n\n算子溢出分析 命令格式说明 算子溢出检测命令行格式如下: python3 msaccucmp.py overflow -d dump_path -out output_path [-n topn]  …\n\n**URL:** https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html\n\n---\n\n## 3. [昇腾模型调试工具链实战：精度比对、溢出检测与性能调优 ...](https://blog.csdn.net/weixin_33521678/article/details/165403199)\n\n2026年9月14日 · 如果你是刚接触昇腾平台的开发者，或者正在把PyTorch/TensorFlow训练好的模型往昇腾上迁移，这篇文章能帮你省 …\n\n**URL:** https://blog.csdn.net/weixin_33521678/article/details/165403199\n\n---\n\n## 4. [CANN精度调试工具详解](https://www.hiascend.com/developer/blog/details/02152211175104217059)\n\n在昇腾CANN（Compute Architecture for Neural Networks）异构计算架构开发中，精度异常是常见痛点，如模型训练loss跑飞、推理 …\n\n**URL:** https://www.hiascend.com/developer/blog/details/02152211175104217059\n\n---\n\n## 5. [msprobe/msdebug 全家桶：昇腾精度比对、溢出检测 ...](https://juejin.cn/post/7682605088746373171)\n\n2026年9月7日 · 聚焦昇腾开发三大高频坑——精度丢失、内存越界、算子慢，逐一拆解 MindStudio 工具链的对应解法。 文末附昇腾知 …\n\n**URL:** https://juejin.cn/post/7682605088746373171\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_1_73ad8bd7.result",
+        "request_id": "WebFetch_1_73ad8bd7",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html",
+        "arguments": {
+          "url": "https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html",
+          "prompt": "请完整提取本章节正文内容：算子溢出分析的命令格式、参数说明、前提条件、输出说明、示例。保留命令行、参数、代码、表格原文。同时说明文档标题、所属文档集/版本、目录导航信息。若工具返回有截断请说明截断位置。"
+        },
+        "query": null,
+        "text": "**标题**: 算子溢出分析-算子溢出分析-精度比对工具使用指南（训练）-开发工具-开发工具-CANN商用版5.0.4.6开发文档-昇腾社区\n\n[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)\n\n# 算子溢出分析\n\n#### 命令格式说明\n\n算子溢出检测命令行格式如下:\n\n```\npython3 msaccucmp.py overflow -d dump_path -out output_path [-n topn]\n```\n\n命令行参数说明如[表1](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html#ZH-CN_TOPIC_0000001192997248__zh-cn_topic_0000001147673368_table23391841181914)所示。\n\n[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)\n\n**表1** 算子溢出检测命令行参数说明\n\n**参数名**\n\n**参数说明**\n\n**是否必选**\n\n-d\n\n--*dump_path*\n\nDebug file和溢出算子的dump文件所在目录。\n\n请参见《[TensorFlow网络模型迁移和训练指南](https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html)》中的“溢出数据采集”章节获取文件目录。\n\n目录下如果缺少dump文件，则会导致-out输出时缺少npy文件；如果目录下没有Debug file，则表示无溢出。\n\n是\n\n-out\n\n--*output_path*\n\n算子溢出分析结果文件输出目录。\n\n输出文件包括：\n\n- Debug file生成的json文件。过程文件，用于提取结果文件中topn溢出算子的算子名称和溢出信息。\n- 溢出算子的dump数据生成的npy文件，包含算子的输入输出数据。过程文件，用于提取结果文件中算子溢出的关键信息。\n- 算子溢出检测分析结果文件，汇总topn溢出算子的信息。结果文件，命名格式为“overflow_summary_时间戳.txt”。\n\n缺少npy文件，会导致结果文件解析不到溢出算子的输入输出信息。\n\n是\n\n-n\n\n--*topn*\n\n解析溢出的前N个算子，取值范围为1~5，默认值为1。\n\n否\n\n#### 分析步骤\n\n使用以下步骤进行算子溢出分析之前请参见《[TensorFlow网络模型迁移和训练指南](https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html)》中的“溢出数据采集”章节，对dump文件进行算子溢出检测，并生成Debug file和溢出算子的dump文件。\n\n算子溢出检测命令行方式操作步骤：\n\n-out指定的结果文件存放路径，请确保HwHiAiUser用户具有读写权限。\n\n1. 以HwHiAiUser用户登录开发环境。\n2. 进入/home/HwHiAiUser/Ascend/ascend-toolkit/latest/toolkit/tools/operator_cmp/compare目录。\n3. 执行算子溢出检测命令。\n   \n   **python3 msaccucmp.py overflow -d** */MyApp20/dump* **-out** */MyApp20/out* **-n** *3*\n   \n   执行算子溢出检测结果overflow_summary_*.txt文件内容如[图1](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html#ZH-CN_TOPIC_0000001192997248__zh-cn_topic_0000001147673368_fig13557192544512)所示。\n   \n   [](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html)**图1** 溢出算子结果信息  \n   ![](https://www.hiascend.com/doc_center/source/zh/canncommercial/5046/devtools/auxiliarydevtool/figure/zh-cn_image_0000001237957211.png)\n   \n   结果文件信息中，根据展示数据从上到下顺序，展示信息如下：\n   \n   - 从1到n表示解析出到第一个溢出的算子到第n个溢出的算子；\n   - 每个溢出算子的类型和名称；\n   - 算子的溢出信息，包括：溢出类型，溢出的任务ID，流ID和溢出错误码；\n   - timestamp：算子溢出的时间戳；\n   - *.input.*.npy为溢出算子的输入数据的npy文件；\n   - *.input.*.npy文件名下方展示的是文件中算子溢出的输入关键信息，包括数据格式，数据维度，数据类型，最大值，最小值和均值；\n   - *.output.*.npy为溢出算子的输出数据的npy文件；\n   - *.output.*.npy文件名下方展示的是文件中算子溢出的输出关键信息，包括数据格式，数据维度，数据类型，最大值，最小值和均值。",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebSearch_2_2ad4b063.result",
+        "request_id": "WebSearch_2_2ad4b063",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "msaccucmp.py compare 精度比对 命令 网络比对 昇腾 精度比对工具使用指南"
+        },
+        "query": "msaccucmp.py compare 精度比对 命令 网络比对 昇腾 精度比对工具使用指南",
+        "text": "# Search Results for \"msaccucmp.py compare 精度比对 命令 网络比对 昇腾 精度比对工具使用指南\"\n\n## 1. [通过命令行方式分析比对结果-比对结果专家建议-比对结果分析 ...](https://www.hiascend.com/document/detail/zh/mindstudio/700/T&ITools/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html)\n\n<!DOCTYPE html> 通过命令行方式分析比对结果 命令格式说明通过命令行方式分析比对结果是基于Tensor比对的基础上执行-advisor …\n\n**URL:** https://www.hiascend.com/document/detail/zh/mindstudio/700/T&ITools/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html\n\n---\n\n## 2. [通过命令行方式分析比对结果-比对结果专家建议-比对结果分析 ...](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html)\n\n<!DOCTYPE html> 通过命令行方式分析比对结果 命令格式说明通过命令行方式分析比对结果是基于精度比对的基础上执行-advisor参 …\n\n**URL:** https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html\n\n---\n\n## 3. [tools/msquickcmp/Readme_cn.md at master · Ascend/tools](https://github.com/Ascend/tools/blob/master/msquickcmp/Readme_cn.md)\n\n2003年7月5日 · 本文介绍一键式全流程精度比对（推理）工具，该工具适用于TensorFlow和ONNX模型，用户只需要输入原始模型， …\n\n**URL:** https://github.com/Ascend/tools/blob/master/msquickcmp/Readme_cn.md\n\n---\n\n## 4. [基于训练和推理场景下的MindStudio高精度对比 - 知乎](https://zhuanlan.zhihu.com/p/589651588)\n\n2022年12月6日 · 对策: 精度比对工具能够帮助开发人员定位本次任务两个网络间的精度差异。 准备好昇腾腾AI处理器运行生成的dump …\n\n**URL:** https://zhuanlan.zhihu.com/p/589651588\n\n---\n\n## 5. [【MindStudio训练营第一季】MindStudio 高精度对 …](https://bbs.huaweicloud.com/blogs/385578)\n\n2022年12月4日 · 推理场景下， ATC模型转换过程对模型进行优化，包括算子消除、算子融合算子拆分，这 …\n\n**URL:** https://bbs.huaweicloud.com/blogs/385578\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_3_50f8c669.result",
+        "request_id": "WebFetch_3_50f8c669",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html",
+        "arguments": {
+          "prompt": "请完整提取本章节正文：通过命令行方式分析比对结果、精度比对命令格式（msaccucmp.py compare 相关）、参数表、前提条件、示例。保留命令行、参数、代码、表格原文。同时列出左侧/页面导航中同文档集其他章节标题与链接（如精度比对、溢出检测相关章节），并说明文档版本。若返回有截断请说明。",
+          "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html"
+        },
+        "query": null,
+        "text": "**标题**: 通过命令行方式分析比对结果-比对结果专家建议-比对结果分析-精度调试工具-开发工具-CANN8.5.0开发文档-昇腾社区\n\n获取效率\n\n正确性\n\n完整性\n\n易理解",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebSearch_4_7bf4adb9.result",
+        "request_id": "WebSearch_4_7bf4adb9",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "\"精度比对\" msaccucmp.py compare 命令格式 网络比对 昇腾 hiascend 训练 比对结果"
+        },
+        "query": "\"精度比对\" msaccucmp.py compare 命令格式 网络比对 昇腾 hiascend 训练 比对结果",
+        "text": "# Search Results for \"\"精度比对\" msaccucmp.py compare 命令格式 网络比对 昇腾 hiascend 训练 比对结果\"\n\n## 1. [通过命令行方式分析比对结果-比对结果专家建议-比对结果分析 ...](https://www.hiascend.com/document/detail/zh/mindstudio/700/T&ITools/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html)\n\n<!DOCTYPE html> 通过命令行方式分析比对结果 命令格式说明通过命令行方式分析比对结果是基于Tensor比对的基础上执行-advisor …\n\n**URL:** https://www.hiascend.com/document/detail/zh/mindstudio/700/T&ITools/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html\n\n---\n\n## 2. [通过命令行方式分析比对结果-比对结果专家建议-比对结果分析 ...](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html)\n\n<!DOCTYPE html> 通过命令行方式分析比对结果 命令格式说明通过命令行方式分析比对结果是基于精度比对的基础上执行-advisor参 …\n\n**URL:** https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html\n\n---\n\n## 3. [tools/msquickcmp/Readme_cn.md at master · Ascend/tools](https://github.com/Ascend/tools/blob/master/msquickcmp/Readme_cn.md)\n\n2003年7月5日 · 本文介绍一键式全流程精度比对（推理）工具，该工具适用于TensorFlow和ONNX模型，用户只需要输入原始模型， …\n\n**URL:** https://github.com/Ascend/tools/blob/master/msquickcmp/Readme_cn.md\n\n---\n\n## 4. [PyTorch场景精度比对](https://gitcode.com/Ascend/msprobe/blob/master/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md)\n\n本节主要介绍通过命令行和比对函数的方式进行 CPU 或 GPU 与 NPU 的精度数据比对，执行精度比对操作前需要先完成 CPU 或 …\n\n**URL:** https://gitcode.com/Ascend/msprobe/blob/master/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md\n\n---\n\n## 5. [精度比对_精度调试：msprobe_迁移调优工具链_GPU业务 ...](https://support.huaweicloud.com/bestpractice-modelarts/modelarts_10_2525.html)\n\n2026年7月4日 · 精度比对功能主要针对两类场景的问题： 同一模型，从CPU或GPU移植到NPU中存在精度下降问题，对比NPU芯片中 …\n\n**URL:** https://support.huaweicloud.com/bestpractice-modelarts/modelarts_10_2525.html\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_5_9b39f05a.result",
+        "request_id": "WebFetch_5_9b39f05a",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://gitcode.com/Ascend/msprobe/blob/master/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md",
+        "arguments": {
+          "prompt": "请完整提取该文档全部正文：PyTorch场景精度比对的操作步骤、命令、比对函数、参数说明、dump 数据采集方法（含环境变量）、比对指标（cosine相似度/相对误差等）、示例代码。保留命令、代码、参数原文。同时列出页面可见的仓库 docs 目录中其他相关文档链接（如溢出检测、accuracy_compare 其他文件）。若返回有截断请说明。",
+          "url": "https://gitcode.com/Ascend/msprobe/blob/master/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md"
+        },
+        "query": null,
+        "text": "**标题**: msprobe/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md · Ascend/MindStudio-Probe - AtomGit\n**发布时间**: 23c399b0 创建于 7月1日 历史提交\n\n[![ascend-robot](https://cdn-img.gitcode.com/ad/ec/4a22097de2cd8cd630c843b4fb17bd85bc7dd082a7e3a0e7089c373e836a3524.png?time=1753510752944)ascend-robot](https://gitcode.com/ascend-robot \"ascend-robot\")[docs:资料优化](https://gitcode.com/Ascend/msprobe/commit/23c399b0ae334785cc8e16806dba0e602b76b499?ref=master)\n\n该 master 下,docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md 为空或不存在",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_6_83c1a7db.result",
+        "request_id": "WebFetch_6_83c1a7db",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://gitcode.com/Ascend/msprobe/raw/master/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md",
+        "arguments": {
+          "prompt": "请完整提取该 markdown 文档全部正文：PyTorch场景精度比对步骤、命令、比对函数、参数、dump数据采集（环境变量）、比对指标、示例代码。保留命令、代码、参数原文。若有截断请说明。",
+          "url": "https://gitcode.com/Ascend/msprobe/raw/master/docs/zh/accuracy_compare/pytorch_accuracy_compare_instruct.md"
+        },
+        "query": null,
+        "text": "**标题**: AtomGit - 全球开发者的开源社区,开源代码托管平台} - AtomGit\n\n页面找不到或无权限",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_7_dde69243.result",
+        "request_id": "WebFetch_7_dde69243",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://support.huaweicloud.com/bestpractice-modelarts/modelarts_10_2525.html",
+        "arguments": {
+          "prompt": "请完整提取该文档全部正文：msprobe 精度比对功能、溢出检测功能的使用步骤、命令、环境变量、参数、示例代码、比对指标（cosine相似度、相对误差等）、loss不收敛/精度下降排查流程。保留命令、代码、参数原文。列出页面导航中同系列章节标题与链接（如溢出检测、精度比对、loss scale相关章节）。若有截断请说明截断位置。",
+          "url": "https://support.huaweicloud.com/bestpractice-modelarts/modelarts_10_2525.html"
+        },
+        "query": null,
+        "text": "**标题**: 精度比对_精度调试：msprobe_迁移调优工具链_GPU业务迁移至昇腾训练推理_最佳实践_魔坊（ModelArts）模型训推平台-华为云\n\n- [没有找到结果，请重新输入](https://support.huaweicloud.com/bestpractice-modelarts/modelarts_10_2525.html)",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_8_4dc98a33.result",
+        "request_id": "WebFetch_8_4dc98a33",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://www.hiascend.com/developer/blog/details/02152211175104217059",
+        "arguments": {
+          "prompt": "请完整提取该博客全文正文：CANN精度调试工具（如msprobe、msaccucmp、溢出检测、精度比对）的使用方法、命令、环境变量、参数、示例代码、loss不收敛/精度异常排查流程。保留命令、代码、参数原文。若正文有截断请说明截断位置。",
+          "url": "https://www.hiascend.com/developer/blog/details/02152211175104217059"
+        },
+        "query": null,
+        "text": "**标题**: CANN精度调试工具详解\n\n[昇腾社区首页](https://www.hiascend.com/zh)\n\n[![昇腾社区](https://www.hiascend.com/_static3/logo1.BQ2XZIjU.svg)](https://www.hiascend.com/)\n\n开发者\n\n[主页](https://www.hiascend.com/developer \"主页\")\n\n开发\n\n[文档](https://www.hiascend.com/document \"文档\")\n\n活动\n\n[学习](https://www.hiascend.com/developer/learn \"学习\")\n\n[论坛](https://www.hiascend.com/forum/ \"论坛\")\n\n[博客](https://www.hiascend.com/developer/blog \"博客\")\n\n开发者计划\n\n[主页](https://www.hiascend.com/developer \"主页\")\n\n开发\n\n[文档](https://www.hiascend.com/document \"文档\")\n\n活动\n\n[学习](https://www.hiascend.com/developer/learn \"学习\")\n\n[论坛](https://www.hiascend.com/forum/ \"论坛\")\n\n[博客](https://www.hiascend.com/developer/blog \"博客\")\n\n开发者计划\n\n更多\n\n![](https://www.hiascend.com/_static3/color-search.C68ldlwr.svg)\n\n下载\n\n[支持](https://www.hiascend.com/support)\n\n[积分兑换 NEW](https://www.hiascend.com/developer/rewards)\n\n加载中\n\n#### 关于昇腾\n\n[昇腾计算产业概述](https://www.hiascend.com/ecosystem/industry)\n\n#### 新闻与活动\n\n[新闻资讯](https://www.hiascend.com/activities/news)[昇腾活动](https://www.hiascend.com/activities)\n\n#### 交流与资讯\n\n[昇腾论坛](https://www.hiascend.com/forum/)[官方技术文章](https://www.hiascend.com/developer/techArticles)\n\n#### 支持与服务\n\n[文档](https://www.hiascend.com/zh/document)[技术工单](https://www.hiascend.com/zh/feedback)[举报中心](https://www.hiascend.com/zh/report)\n\n#### 开源社区\n\n[昇思社区](https://www.mindspore.cn/)[第三方开源软件](https://www.hiascend.com/opensource-ecosystem)\n\n关注我们\n\n友情链接\n\n[华为官网](https://www.huawei.com/cn/)[华为计算](https://e.huawei.com/cn/solutions/computing)[鲲鹏社区](https://www.hikunpeng.com/)[华为云](https://www.huaweicloud.com/)[启智社区](https://www.openi.org.cn/)[华为开发者](https://developer.huawei.com/)\n\n版权所有 © 2021-2026华为技术有限公司 保留一切权利 [粤A2-20044005号](https://beian.miit.gov.cn)\n\n[![](https://www.hiascend.com/_static3/beian2.DbdF_lg9.png) 粤公网安备 44030702005057号](https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030702005057)\n\n[法律声明](https://www.hiascend.com/zh/legal/law)[隐私政策](https://www.hiascend.com/zh/legal/privacy)[Cookie协议](https://www.hiascend.com/zh/legal/cookies)[用户协议](https://www.hiascend.com/zh/legal/user)[联系我们](https://www.huawei.com/cn/contact-us)",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebSearch_9_68d6e34f.result",
+        "request_id": "WebSearch_9_68d6e34f",
+        "role": "search",
+        "tool": "WebSearch",
+        "url": null,
+        "arguments": {
+          "query": "hiascend canncommercial 5046 atlasaccuracytrain 精度比对 命令格式 msaccucmp compare"
+        },
+        "query": "hiascend canncommercial 5046 atlasaccuracytrain 精度比对 命令格式 msaccucmp compare",
+        "text": "# Search Results for \"hiascend canncommercial 5046 atlasaccuracytrain 精度比对 命令格式 msaccucmp compare\"\n\n## 1. [通过命令行方式分析比对结果-操作步骤-比对结果专家建议 ...](https://www.hiascend.com/document/detail/zh/canncommercial/601/devtools/auxiliarydevtool/atlasaccuracy_16_0055.html)\n\n命令格式说明 通过命令行方式分析比对结果是基于Tensor比对的基础上执行-advisor参数功能，完成精度比对之后继续进行专家系统分 …\n\n**URL:** https://www.hiascend.com/document/detail/zh/canncommercial/601/devtools/auxiliarydevtool/atlasaccuracy_16_0055.html\n\n---\n\n## 2. [简介-精度比对工具使用指南（训练）-开发工具-开发工具 ...](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html)\n\n精度比对工具能够定位到模型中算子的精度问题，提供比对Atlas 训练系列产品运算结果与原始网络基于GPU/\n\n**URL:** https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html\n\n---\n\n## 3. [【CANN文档速递12期】带你解锁精度比对工具 - CSDN博客](https://blog.csdn.net/m0_71340392/article/details/126992120)\n\n2026年3月26日 · 本文介绍昇腾平台上的精度比对工具使用方法，通过对比昇腾设备与标准算子的运算结果，帮助开发者快速定位并优 …\n\n**URL:** https://blog.csdn.net/m0_71340392/article/details/126992120\n\n---\n\n## 4. [【CANN文档速递12期】带你解锁精度比对工具 - 知乎](https://zhuanlan.zhihu.com/p/564942286)\n\n2022年9月16日 · 精度比对工具通过从整网和单算子两个维度将昇腾设备上的运算结果与业界标准算子的运算结果进行比对，并给出比 …\n\n**URL:** https://zhuanlan.zhihu.com/p/564942286\n\n---\n\n## 5. [【CANN文档速递12期】带你解锁精度比对工具-云社区-华为云](https://bbs.huaweicloud.com/blogs/375018)\n\n2022年9月15日 · 我们可以通过安装昇腾Ascend-cann-toolkit开发套件包后，在安装toolkit包系统下即可使用精度比对工具。 精度比对 …\n\n**URL:** https://bbs.huaweicloud.com/blogs/375018\n\n---\n\n*Found 5 results • Provider: 0 • Search performed on 2026-09-21*",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_10_8eeb3b24.result",
+        "request_id": "WebFetch_10_8eeb3b24",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html",
+        "arguments": {
+          "prompt": "请完整提取该章节正文：精度比对工具（训练）简介，包括工具功能、支持的比对方式（整网/单算子、GPU比对）、比对指标、使用流程概述。保留原文。并完整列出页面目录/导航中《精度比对工具使用指南（训练）》的所有章节标题与链接（如精度比对命令、溢出数据采集、比对结果分析等）。若有截断请说明。",
+          "url": "https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html"
+        },
+        "query": null,
+        "text": "**标题**: 简介-精度比对工具使用指南（训练）-开发工具-开发工具-CANN商用版5.0.4.6开发文档-昇腾社区\n\n[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html)[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html)\n\n# 简介\n\n华为支持迁移用户原始网络，用于在Atlas 训练系列产品上执行训练，网络迁移可能会造成自有实现的算子运算结果与用业界标准算子（如TensorFlow、PyTorch）运算结果存在偏差，此时需要提供工具比对两者之间的差距，帮助开发人员快速解决算子精度问题。\n\n精度比对工具能够定位到模型中算子的精度问题，提供比对Atlas 训练系列产品运算结果与原始网络基于GPU/CPU运算结果，以便确认误差发生的算子。\n\n目前提供Vector比对能力，包含余弦相似度、最大绝对误差、累积相对误差、欧氏相对距离、KL散度、标准差的算法比对。\n\n说明\n\n本文以HwHiAiUser普通用户安装、默认安装路径/home/HwHiAiUser/Ascend为例，介绍精度比对的操作方法，请根据实际情况替换。本文中举例路径均需要确保HwHiAiUser具有读或读写权限。\n\n使用精度比对工具，请确保硬件环境满足要求：CPU 8核 2.6Ghz，内存16GB，否则有可能会造成比对缓慢。\n\n精度比对支持的dump数据的类型：\n\n- FLOAT\n- FLOAT16\n- DT_INT8\n- DT_UINT8\n- DT_INT16\n- DT_UINT16\n- DT_INT32\n- DT_INT64\n- DT_UINT32\n- DT_UINT64\n- DT_BOOL\n- DT_DOUBLE",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_11_f56cecf9.result",
+        "request_id": "WebFetch_11_f56cecf9",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html",
+        "arguments": {
+          "prompt": "请提取该文档的目录结构和正文内容，重点关注：1）溢出数据采集章节的完整内容（环境变量、dump配置、enable_overflow 等参数）；2）混合精度/loss scale 相关章节（LossScaleManager、dynamic loss scale、NPULossScaleOptimizer 等）；3）精度调试/loss不收敛排查章节。保留命令、代码、参数原文，并列出章节标题与链接。若有截断请说明。",
+          "url": "https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html"
+        },
+        "query": null,
+        "text": "**标题**: 前言-TensorFlow网络模型迁移和训练-模型开发-CANN商用版5.0.4.6开发文档-昇腾社区\n\n[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html)[](https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html)\n\n# 前言\n\n#### 概述\n\n本文档适用于AI算法工程师，用于将基于TensorFlow 1.15的Python API开发的训练脚本迁移到昇腾AI处理器上执行训练，并达到训练精度性能最优。当前昇腾AI处理器上支持TensorFlow 1.15的三种API开发的训练脚本迁移：分别是Estimator，Sess.run，Keras。\n\n掌握以下经验和技能可以更好地理解本文档：\n\n- 熟悉CANN软件基本架构以及特性。\n- 熟练的Python语言编程能力。\n- 熟悉TensorFlow 1.15的API。\n- 对机器学习、深度学习有一定的了解，熟悉训练网络的基本知识与流程。\n\n#### 使用前须知\n\n本文中的代码片段仅为示例，请用户使用时注意修改适配。",
+        "status": "ok"
+      },
+      {
+        "event_id": "WebFetch_12_13421824_916a37b2.result",
+        "request_id": "WebFetch_12_13421824_916a37b2",
+        "role": "fetch",
+        "tool": "WebFetch",
+        "url": "https://blog.csdn.net/weixin_28833069/article/details/164776792",
+        "arguments": {
+          "prompt": "请完整提取该博客全文：昇腾NPU模型迁移调试工具链（msprobe、msdebug、精度比对、溢出检测、loss scale、loss不收敛排查）的内容、命令、环境变量、参数、代码示例、作者与发布时间。保留命令、代码、参数原文。若有截断请说明截断位置。",
+          "url": "https://blog.csdn.net/weixin_28833069/article/details/164776792"
+        },
+        "query": null,
+        "text": "Error: BENCHMARK_BUDGET_DENIED fetch: 上限8次，本请求未派发。请使用已有材料完成回答，不再重试此类工具。",
+        "status": "not_dispatched"
+      }
+    ],
+    "final": "<answer>\n\n# 昇腾 NPU loss 不收敛 / 精度对不齐 GPU 排查方案\n\n## 0. 排查总流程\n\n1. 先区分两类问题：**训练不收敛**（loss 跑飞/NaN/震荡）与**精度对不齐**（收敛但指标低于 GPU）。NPU 与 GPU 因算子实现、融合、reduction 顺序差异，不可能 bitwise 一致，应以相对误差/余弦相似度为判据（官方精度比对工具简介即以此为定位目标）。\n2. 分层定位：数据/预处理 → 前向 → loss → 梯度（重点看溢出）→ 参数更新，逐层与 GPU/CPU 基线比对。\n\n## 1. 溢出检测（已核实，官方正文）\n\n来源：CANN 商用版 5.0.4.6《精度比对工具使用指南（训练）》-「算子溢出分析」\nURL: https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html\n\n**命令格式**（官方原文）：\n\n```bash\npython3 msaccucmp.py overflow -d dump_path -out output_path [-n topn]\n```\n\n参数表（官方原文）：\n\n| 参数 | 说明 | 必选 |\n|---|---|---|\n| -d / --dump_path | Debug file 和溢出算子的 dump 文件所在目录。目录下缺 dump 文件则 -out 输出缺 npy；没有 Debug file 表示无溢出 | 是 |\n| -out / --output_path | 结果输出目录。输出：Debug file 生成的 json（过程文件）、溢出算子 dump 数据生成的 npy（含算子输入输出数据）、结果文件 `overflow_summary_时间戳.txt` | 是 |\n| -n / --topn | 解析溢出的前 N 个算子，取值 1~5，默认 1 | 否 |\n\n**操作步骤**（官方原文）：\n1. 以 HwHiAiUser 用户登录开发环境；\n2. 进入 `/home/HwHiAiUser/Ascend/ascend-toolkit/latest/toolkit/tools/operator_cmp/compare` 目录；\n3. 执行，例如 `python3 msaccucmp.py overflow -d /MyApp20/dump -out /MyApp20/out -n 3`；\n4. 结果文件 `overflow_summary_*.txt` 依次展示：第 1~n 个溢出算子的类型和名称；溢出类型、任务 ID、流 ID、溢出错误码；timestamp；`*.input.*.npy` / `*.output.*.npy` 文件名及其数据格式、维度、数据类型、最大值、最小值、均值。\n\n**前置条件**：须先按《TensorFlow网络模型迁移和训练指南》「溢出数据采集」章节采集 dump 文件和 Debug file（官方正文明确引用：URL https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html 为该指南前言页；「溢出数据采集」具体章节本次未取到正文，采集用的环境变量/开关**未核实**）。\n\n## 2. 算子精度比对（已核实，官方正文）\n\n来源：CANN 商用版 5.0.4.6《精度比对工具使用指南（训练）》-「简介」\nURL: https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html\n\n官方正文要点：\n- 工具定位：比对 Atlas 训练系列产品运算结果与原始网络基于 **GPU/CPU** 的运算结果，确认误差发生的算子；\n- 提供 **Vector 比对能力**，算法包括：**余弦相似度、最大绝对误差、累积相对误差、欧氏相对距离、KL 散度、标准差**；\n- 默认安装路径 `/home/HwHiAiUser/Ascend`；硬件要求 CPU 8 核 2.6GHz、内存 16GB，否则比对可能缓慢；\n- 支持的 dump 数据类型：FLOAT、FLOAT16、DT_INT8/16/32/64、DT_UINT8/16/32/64、DT_BOOL、DT_DOUBLE。\n\n**精度比对命令本身**（msaccucmp.py compare 的参数表）：本次检索中 CANN 8.5.0 社区版与 MindStudio 7.0.0 的「通过命令行方式分析比对结果」章节页面（URL: https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850/devaids/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html 、https://www.hiascend.com/document/detail/zh/mindstudio/700/T&ITools/ModelAccuracyAnalyzer/atlasaccuracy_16_0042.html ）只返回标题元数据未取到正文，故 compare 命令的完整参数**未核实**，不在此补造。\n\n配套定位手段（来自检索结果存在性确认、正文未取得，标注未核实细节）：新工具链 **msprobe / msdebug**（CANN 精度调试工具）支持 PyTorch 场景 GPU↔NPU 精度比对与溢出检测，官方文档见 hiascend 开发者博客（https://www.hiascend.com/developer/blog/details/02152211175104217059 ，SPA 页面正文未取回）与 Ascend/msprobe 仓库（gitcode 页面提示文件为空/404，未取回）。\n\n## 3. Loss Scale / 混合精度排查（部分为训练知识，未获官方正文核实）\n\n官方依据仅确认：《TensorFlow网络模型迁移和训练指南》适用于 TF1.15 的 Estimator / Sess.run / Keras 三种 API 迁移（前言页正文），混合精度与 loss scale 的具体章节本次未取到正文。以下方法描述**未逐字核实**：\n\n- 开启混合精度（FP16）训练时，检查 loss scale 行为：动态 loss scale 若持续衰减到 1 或频繁触发溢出自适应下调，说明梯度频繁溢出——此时 loss 常表现为突跳/NaN。处理：提高初始 scale、拉长 scale 增长窗口，或对问题算子改 FP32。\n- 训练循环中监控 `loss` 出现 NaN/Inf 的第一个 step，结合第 1 节溢出检测定位首个溢出算子。\n- 若 dump 显示某算子 FP16 输出 max/min 异常（溢出检测结果文件中含 max/min/mean），将该算子设为高精度模式或核对框架侧 precision/amp 配置。\n- PyTorch 侧（torch_npu）的 AMP/GradScaler API 名称、MindSpore 侧 LossScaleManager 参数名：**未核实**，不在此指定。\n\n## 4. 其他常见排查点（训练知识，未核实）\n\n- 随机性对齐：固定 seed（NPU 需单独设置 device seed）、关闭 dropout 做确定性对比；\n- 数据预处理在 NPU 上执行时的算子差异（Resize/Normalize）；\n- 分布式 all_reduce 顺序导致的梯度累积误差；\n- 推理场景另有 msquickcmp 一键式精度比对工具（Ascend/tools 仓库 README，URL: https://github.com/Ascend/tools/blob/master/msquickcmp/Readme_cn.md ，正文未取）。\n\n## 版本信息\n\n- 已核实正文来自 **CANN 商用版 5.0.4.6** 文档集（msaccucmp.py 溢出分析、精度比对简介），工具路径 `ascend-toolkit/latest/toolkit/tools/operator_cmp/compare`；\n- 检索中同时出现 **CANN 8.5.0 社区版**与 **MindStudio 7.0.0** 的精度分析文档（正文未取回），新版工具链以 msprobe/msdebug 为主——两线工具并存，选用哪套需按所装 toolkit 版本确定，本次**未能核实 5.0.4.6 与 8.5.0 的命令差异**。\n\n## 来源清单\n\n官方（正文已取得）：\n- https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0034.html （算子溢出分析，正文完整）\n- https://www.hiascend.com/document/detail/zh/canncommercial/5046/devtools/auxiliarydevtool/atlasaccuracytrain_16_0003.html （精度比对简介，正文完整）\n- https://www.hiascend.com/document/detail/zh/canncommercial/5046/modeldev/tfmigr/tfmigr_000002.html （TF迁移指南前言，正文仅前言）\n\n官方（未取到正文，原因未确定；均只回标题/导航/404，不据此断定 SPA/robots）：\n- CANNCommunityEdition/850 atlasaccuracy_16_0042、mindstudio/700 atlasaccuracy_16_0042、hiascend 博客 02152211175104217059、support.huaweicloud.com modelarts_10_2525、gitcode Ascend/msprobe（blob 提示为空、raw 404）\n\n第三方（检索可见，正文未取得）：CSDN 164776792、CSDN 165403199、CSDN 126992120、掘金 7682605088746373171、知乎 p/589651588、知乎 p/564942286（≥6 条独立来源，主题一致指向 msaccucmp/msprobe 工具链）。\n\n</answer>\n\n<stop_reason>\n工具预算耗尽停止：WebSearch 已用 4/4 次；WebFetch 第 6 次实际派发后被调度器以\"上限8次\"拒绝（BENCHMARK_BUDGET_DENIED），说明失败/重试请求亦计入派发配额，故不再重试。已取得的官方正文（溢出分析、精度比对简介、TF迁移指南前言）足以支撑溢出检测与精度比对主流程；loss scale 官方章节正文、msaccucmp.py compare 命令参数表、msprobe 细节与 5.0.4.6/8.5.0 版本差异均因预算耗尽未核实，已在答案中逐项标注\"未核实\"，未补造。\n</stop_reason>",
+    "counts": {
+      "search": 4,
+      "fetch": 8
+    },
+    "metadata": {
+      "run_id": "R-cann-kimi-k3-2-standard-20260921T125935",
+      "model_id": "kimi-k3-2",
+      "protocol_version": "full-rerun-protocol-20260921",
+      "rubric_version": "three-model-pilot-20260921+execution-checks",
+      "question_sha256": "6f0ba0de8613ce4d7454780f47a2979fd8ef99617df324bee4e9253853bb1f8c",
+      "process_sha256": "c06e989fd220dca1e782a0ddf76ad319604ddc5363006f12263ebbdb06880217"
     },
     "errors": []
   }

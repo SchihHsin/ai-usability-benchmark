@@ -1,0 +1,225 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "纯 Python 用 `torch.library`，C++/CUDA 扩展用 `TORCH_LIBRARY`/`TORCH_LIBRARY_IMPL`（或 Stable ABI 的 `STABLE_*`）",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_4_cc7b12a4.result",
+      "evidence_quote": "注册是**两步过程**：① 定义算子（schema）→ ② 注册后端实现。",
+      "verification": "source",
+      "reason": "原题包含三条主线，最终答案均覆盖且与官方来源一致：(1) torch.ops 调用——答案给出 torch.ops.load_library 与 torch.ops.myops.add 调用，WebFetch_4 中『torch.ops.extension_cpp.mymuladd(a, b, c)』及 load_library 三种加载方式印证；(2) TORCH_LIBRARY/dispatcher 注册——答案给出 TORCH_LIBRARY 定义 schema、TORCH_LIBRARY_IMPL 按 CPU/CUDA/Autograd key 注册、同 namespace 只能一个 TORCH_LIBRARY、跨文件用 TORCH_LIBRARY_FRAGMENT、IMPL 内只能 impl 不能 def，均被 WebFetch_3（『同一命名空间中只能有一个 TORCH_LIBRARY()』『在此上下文中不允许调用 torch::Library::def()』）与 WebFetch_4（『TORCH_LIBRARY_IMPL(extension_cpp, CPU, m) { m.impl(\"mymuladd\", &mymuladd_cpu); }』）逐条印证；(3) autograd 注册——答案给出 torch.library.register_autograd 及 setup_context/backward 结构、优先 register_autograd 而非 torch.autograd.Function 的建议，WebFetch_5 原文『Prefer this over directly using `torch.autograd.Function`』及 WebFetch_4『✅ 优先使用此 API，而非直接使用 `torch.autograd.Function`』直接印证。fake/meta kernel 与 opcheck 建议亦与 WebFetch_2/4/5 一致。注：输入未提供 run-end 事件，answer_event_id 以 final 标注。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "版本锁定建议：普通 CUDA C++ 扩展按 PyTorch 2.4+ 教程；需要稳定 wheel/跨 LibTorch 版本用 Stable ABI，PyTorch ≥2.10；要用 tagged in-place/`out=` Python custom ops 则需 ≥2.13"
+        },
+        {
+          "event_id": "final",
+          "quote": "未核实处：你本地 PyTorch/CUDA 具体小版本、是否启用 Stable ABI、算子是否 in-place/`out=`/需要 `torch.compile`，会影响宏选择、schema `Tensor(a!)` 标注和 fake kernel 严格度。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M10: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "torch.ops.load_library(\"/path/to/libmyops.so\")  # 或先 import 扩展模块触发静态注册"
+        },
+        {
+          "event_id": "final",
+          "quote": "mod = load(name=\"myops\", sources=[\"myops.cpp\", \"myops_cuda.cu\"], extra_cuda_cflags=[\"-O3\"])"
+        },
+        {
+          "event_id": "final",
+          "quote": "  // launch kernel on at::cuda::getCurrentCUDAStream()"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation",
+      "M10: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-61bfabb6e440",
+  "task_id": "O",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "纯 Python 用 `torch.library`，C++/CUDA 扩展用 `TORCH_LIBRARY`/`TORCH_LIBRARY_IMPL`（或 Stable ABI 的 `STABLE_*`）",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_4_cc7b12a4.result",
+        "evidence_quote": "注册是**两步过程**：① 定义算子（schema）→ ② 注册后端实现。",
+        "verification": "source",
+        "reason": "原题包含三条主线，最终答案均覆盖且与官方来源一致：(1) torch.ops 调用——答案给出 torch.ops.load_library 与 torch.ops.myops.add 调用，WebFetch_4 中『torch.ops.extension_cpp.mymuladd(a, b, c)』及 load_library 三种加载方式印证；(2) TORCH_LIBRARY/dispatcher 注册——答案给出 TORCH_LIBRARY 定义 schema、TORCH_LIBRARY_IMPL 按 CPU/CUDA/Autograd key 注册、同 namespace 只能一个 TORCH_LIBRARY、跨文件用 TORCH_LIBRARY_FRAGMENT、IMPL 内只能 impl 不能 def，均被 WebFetch_3（『同一命名空间中只能有一个 TORCH_LIBRARY()』『在此上下文中不允许调用 torch::Library::def()』）与 WebFetch_4（『TORCH_LIBRARY_IMPL(extension_cpp, CPU, m) { m.impl(\"mymuladd\", &mymuladd_cpu); }』）逐条印证；(3) autograd 注册——答案给出 torch.library.register_autograd 及 setup_context/backward 结构、优先 register_autograd 而非 torch.autograd.Function 的建议，WebFetch_5 原文『Prefer this over directly using `torch.autograd.Function`』及 WebFetch_4『✅ 优先使用此 API，而非直接使用 `torch.autograd.Function`』直接印证。fake/meta kernel 与 opcheck 建议亦与 WebFetch_2/4/5 一致。注：输入未提供 run-end 事件，answer_event_id 以 final 标注。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "partial_version_lock",
+        "reason": "答案对关键接口给出有依据的版本范围（C++/CUDA 教程要求 PyTorch 2.4+，Stable ABI 2.10+，tagged in-place/out= 2.13 起），但最终未定到用户环境的具体版本，且自认『未核实处：你本地 PyTorch/CUDA 具体小版本』，属部分组件有明确范围、未锁定具体版本，对应第3档。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "版本锁定建议：普通 CUDA C++ 扩展按 PyTorch 2.4+ 教程；需要稳定 wheel/跨 LibTorch 版本用 Stable ABI，PyTorch ≥2.10；要用 tagged in-place/`out=` Python custom ops 则需 ≥2.13"
+          },
+          {
+            "event_id": "final",
+            "quote": "未核实处：你本地 PyTorch/CUDA 具体小版本、是否启用 Stable ABI、算子是否 in-place/`out=`/需要 `torch.compile`，会影响宏选择、schema `Tensor(a!)` 标注和 fake kernel 严格度。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "executable_with_env_params",
+        "reason": "答案给出完整的 TORCH_LIBRARY/TORCH_LIBRARY_IMPL C++ 骨架、Python 加载调用、JIT load 命令、register_autograd/register_fake 代码及 opcheck/gradcheck 验证命令，前置条件（先加载库再调 torch.library、版本要求）说明明确；需用户替换的仅为路径、算子名等环境值，且 CUDA kernel 启动处留为示意注释（『// launch kernel on at::cuda::getCurrentCUDAStream()』），属骨架内核需用户填入自身 kernel，未达5分但无需修正错误，对应第4档。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "torch.ops.load_library(\"/path/to/libmyops.so\")  # 或先 import 扩展模块触发静态注册"
+          },
+          {
+            "event_id": "final",
+            "quote": "mod = load(name=\"myops\", sources=[\"myops.cpp\", \"myops_cuda.cu\"], extra_cuda_cflags=[\"-O3\"])"
+          },
+          {
+            "event_id": "final",
+            "quote": "  // launch kernel on at::cuda::getCurrentCUDAStream()"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "b56d54a7100d40769f2600f388c99382",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "8937ed79bff924f2e5cbe1a6290598e6",
+        "conversationRequestId": "8937ed79bff924f2e5cbe1a6290598e6",
+        "agent": "cli"
+      },
+      {
+        "messageId": "b56d54a7100d40769f2600f388c99382",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "8937ed79bff924f2e5cbe1a6290598e6",
+        "conversationRequestId": "8937ed79bff924f2e5cbe1a6290598e6",
+        "rawUsage": {
+          "prompt_tokens": 20621,
+          "completion_tokens": 1437,
+          "total_tokens": 22058,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 406,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 17613,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 406,
+          "credit": 3.74,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 20621,
+          "outputTokens": 1437,
+          "totalTokens": 22058,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 406
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "9ac37d1f493c146b6556acaf8c5064da93adb9d4428429a2c4018fc9be7bcf4f",
+    "process_sha256": "df641162ef9e7a4f3ff3769c7be1d7970a5bdafc09e50982faa18aa19f3d8443",
+    "elapsed_seconds": 30.91,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-942a3c92098044e8832e1896daa294f0",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

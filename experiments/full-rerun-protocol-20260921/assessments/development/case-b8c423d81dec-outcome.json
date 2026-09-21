@@ -1,0 +1,198 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "scaler = torch.amp.GradScaler(\"cuda\")\n\nfor data, target in dataloader:\n    optimizer.zero_grad()\n    # autocast 只包前向 + loss\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n        output = model(data)\n        loss = loss_fn(output, target)\n\n    scaler.scale(loss).backward()   # 缩放 loss 并反向\n    scaler.step(optimizer)          # 内部 unscale + 检查 inf/NaN，异常则跳过 step\n    scaler.update()                 # 更新 scale 因子",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_75dd9582.result",
+      "evidence_quote": "scaler = torch.amp.GradScaler(\"cuda\")\n\nfor epoch in range(0): # 0 epochs, this section is for illustration only\n    for input, target in zip(data, targets):\n        with torch.autocast(device_type=device, dtype=torch.float16):\n            output = net(input)\n            loss = loss_fn(output, target)\n\n        # Scales loss. Calls ``backward()`` on scaled loss to create scaled gradients.\n        scaler.scale(loss).backward()\n\n        # ``scaler.step()`` first unscales the gradients of the optimizer's assigned parameters.\n        # If these gradients do not contain ``inf``s or ``NaN``s, optimizer.step() is then called,\n        # otherwise, optimizer.step() is skipped.\n        scaler.step(opt)\n\n        # Updates the scale for next iteration.\n        scaler.update()",
+      "verification": "source",
+      "reason": "原题要求解释PyTorch AMP开启方式及autocast/GradScaler用法。答案逐项覆盖：(1)autocast包裹前向+loss、不包backward——WebFetch_1原文'Exits autocast before backward(). Backward passes under autocast are not recommended.'及WebFetch_2 'Should wrap only the forward pass(es), including loss computation'；(2)GradScaler完整用法scale/step/update——WebFetch_1完整训练循环代码直接对应；(3)旧版torch.cuda.amp API及弃用说明——WebFetch_2/3原文'torch.cuda.amp.autocast(args...) ... is deprecated. Please use torch.amp.autocast(\"cuda\", args...) instead'；(4)梯度裁剪先unscale_——WebFetch_1 'you should unscale them first using scaler.unscale_(optimizer)'；(5)GradScaler默认参数——WebFetch_2/3参数表init_scale=65536.0等一致；(6)注意事项（不手动half、推理无需Scaler、保存state_dict、BCEWithLogits）均有来源支撑。版本要求PyTorch>=1.6与WebFetch_1 'The only requirements are PyTorch 1.6 or later and a CUDA-capable GPU'一致。子要求均有真实来源引文，判定supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": 3,
+      "upper": 4,
+      "status": "partial",
+      "reason": "答案给出了部分组件的明确版本依据：PyTorch>=1.6（recipe确认）、torch.autocast自1.10引入（文档确认）、torch.cuda.amp签名在2.14文档标记deprecated。但新版torch.amp.autocast(\"cuda\")/GradScaler(\"cuda\")签名的具体引入版本答案自述未核实（'新签名具体引入版本号本次抓取页面未直接标注（未核实，大约 2.x 早期）'），该项未定到具体版本，存在部分组件未确定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "要求 **PyTorch ≥ 1.6** + CUDA GPU（recipe 明确要求）。\n- `torch.autocast` / `torch.cpu.amp.autocast` 自 **1.10** 引入。\n- `torch.amp.autocast(\"cuda\")` / `torch.amp.GradScaler(\"cuda\")` 新签名：旧 `torch.cuda.amp` 签名已标记 deprecated（当前 stable 文档 2.14.0 页面）；新签名具体引入版本号本次抓取页面未直接标注（未核实，大约 2.x 早期）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 5,
+      "status": "supported",
+      "reason": "答案提供完整可执行训练循环代码：autocast上下文、scaler.scale/step/update调用顺序、zero_grad位置、GradScaler构造均完整，前置条件明确（PyTorch>=1.6+CUDA GPU、模型需.cuda()）。梯度裁剪、checkpoint保存等扩展场景也给出具体代码。仅需替换用户环境参数（MyModel、dataloader、lr、max_norm等），这些是明确标识的用户环境值，无需修正内容错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "scaler = torch.amp.GradScaler(\"cuda\")\n\nfor data, target in dataloader:\n    optimizer.zero_grad()\n    # autocast 只包前向 + loss\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n        output = model(data)\n        loss = loss_fn(output, target)\n\n    scaler.scale(loss).backward()   # 缩放 loss 并反向\n    scaler.step(optimizer)          # 内部 unscale + 检查 inf/NaN，异常则跳过 step\n    scaler.update()                 # 更新 scale 因子"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-b8c423d81dec",
+  "task_id": "P",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "scaler = torch.amp.GradScaler(\"cuda\")\n\nfor data, target in dataloader:\n    optimizer.zero_grad()\n    # autocast 只包前向 + loss\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n        output = model(data)\n        loss = loss_fn(output, target)\n\n    scaler.scale(loss).backward()   # 缩放 loss 并反向\n    scaler.step(optimizer)          # 内部 unscale + 检查 inf/NaN，异常则跳过 step\n    scaler.update()                 # 更新 scale 因子",
+        "answer_event_id": "run-end",
+        "evidence_id": "WebFetch_1_75dd9582.result",
+        "evidence_quote": "scaler = torch.amp.GradScaler(\"cuda\")\n\nfor epoch in range(0): # 0 epochs, this section is for illustration only\n    for input, target in zip(data, targets):\n        with torch.autocast(device_type=device, dtype=torch.float16):\n            output = net(input)\n            loss = loss_fn(output, target)\n\n        # Scales loss. Calls ``backward()`` on scaled loss to create scaled gradients.\n        scaler.scale(loss).backward()\n\n        # ``scaler.step()`` first unscales the gradients of the optimizer's assigned parameters.\n        # If these gradients do not contain ``inf``s or ``NaN``s, optimizer.step() is then called,\n        # otherwise, optimizer.step() is skipped.\n        scaler.step(opt)\n\n        # Updates the scale for next iteration.\n        scaler.update()",
+        "verification": "source",
+        "reason": "原题要求解释PyTorch AMP开启方式及autocast/GradScaler用法。答案逐项覆盖：(1)autocast包裹前向+loss、不包backward——WebFetch_1原文'Exits autocast before backward(). Backward passes under autocast are not recommended.'及WebFetch_2 'Should wrap only the forward pass(es), including loss computation'；(2)GradScaler完整用法scale/step/update——WebFetch_1完整训练循环代码直接对应；(3)旧版torch.cuda.amp API及弃用说明——WebFetch_2/3原文'torch.cuda.amp.autocast(args...) ... is deprecated. Please use torch.amp.autocast(\"cuda\", args...) instead'；(4)梯度裁剪先unscale_——WebFetch_1 'you should unscale them first using scaler.unscale_(optimizer)'；(5)GradScaler默认参数——WebFetch_2/3参数表init_scale=65536.0等一致；(6)注意事项（不手动half、推理无需Scaler、保存state_dict、BCEWithLogits）均有来源支撑。版本要求PyTorch>=1.6与WebFetch_1 'The only requirements are PyTorch 1.6 or later and a CUDA-capable GPU'一致。子要求均有真实来源引文，判定supported。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": 3,
+        "upper": 4,
+        "status": "partial",
+        "reason": "答案给出了部分组件的明确版本依据：PyTorch>=1.6（recipe确认）、torch.autocast自1.10引入（文档确认）、torch.cuda.amp签名在2.14文档标记deprecated。但新版torch.amp.autocast(\"cuda\")/GradScaler(\"cuda\")签名的具体引入版本答案自述未核实（'新签名具体引入版本号本次抓取页面未直接标注（未核实，大约 2.x 早期）'），该项未定到具体版本，存在部分组件未确定。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "要求 **PyTorch ≥ 1.6** + CUDA GPU（recipe 明确要求）。\n- `torch.autocast` / `torch.cpu.amp.autocast` 自 **1.10** 引入。\n- `torch.amp.autocast(\"cuda\")` / `torch.amp.GradScaler(\"cuda\")` 新签名：旧 `torch.cuda.amp` 签名已标记 deprecated（当前 stable 文档 2.14.0 页面）；新签名具体引入版本号本次抓取页面未直接标注（未核实，大约 2.x 早期）。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": 4,
+        "upper": 5,
+        "status": "supported",
+        "reason": "答案提供完整可执行训练循环代码：autocast上下文、scaler.scale/step/update调用顺序、zero_grad位置、GradScaler构造均完整，前置条件明确（PyTorch>=1.6+CUDA GPU、模型需.cuda()）。梯度裁剪、checkpoint保存等扩展场景也给出具体代码。仅需替换用户环境参数（MyModel、dataloader、lr、max_norm等），这些是明确标识的用户环境值，无需修正内容错误。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "scaler = torch.amp.GradScaler(\"cuda\")\n\nfor data, target in dataloader:\n    optimizer.zero_grad()\n    # autocast 只包前向 + loss\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n        output = model(data)\n        loss = loss_fn(output, target)\n\n    scaler.scale(loss).backward()   # 缩放 loss 并反向\n    scaler.step(optimizer)          # 内部 unscale + 检查 inf/NaN，异常则跳过 step\n    scaler.update()                 # 更新 scale 因子"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "98a132c204bf4c899d1d53ef308c4007",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "0dc6412f18f4438f138cf80d3fda6669",
+        "conversationRequestId": "0dc6412f18f4438f138cf80d3fda6669",
+        "agent": "cli"
+      },
+      {
+        "messageId": "98a132c204bf4c899d1d53ef308c4007",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "0dc6412f18f4438f138cf80d3fda6669",
+        "conversationRequestId": "0dc6412f18f4438f138cf80d3fda6669",
+        "rawUsage": {
+          "prompt_tokens": 16843,
+          "completion_tokens": 2066,
+          "total_tokens": 18909,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 812,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 13835,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 812,
+          "credit": 3.49,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 16843,
+          "outputTokens": 2066,
+          "totalTokens": 18909,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 812
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "f616b2ea5ecf78e1c57fcb0cc0b81a9f470ebd8b28cccb27931336afb58bf90a",
+    "process_sha256": "ee834a9a33f247a5a5d59571412d33eb27092d5cfd40b5c76f816513bee75661",
+    "elapsed_seconds": 32.45,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-17c6036c15074b2e99fd2f3d9dfcd580",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}
