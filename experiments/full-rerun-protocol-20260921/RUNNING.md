@@ -129,3 +129,12 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Collection closed:155/156 valid (GLM51, DeepSeek52, Kimi52). U-CUDA GLM exhausted two technical attempts; no third attempt. All collected runs ended.
 - Assessment308 phases complete, one GLM Z-CUDA predictor in progress (root session99058), one DeepSeek R-CUDA predictor exhausted two900s attempts. Final GLM Z-CANN assessed.
 - Restored exact final/source Markdown quotations for final X/Z cases; raw assessor outputs retained. Ownership unknowns remain unresolved.31 focused tests pass. No changes to paper, installed skill, frozen rules or coefficients.
+
+
+## 2026-09-21 17:35 execution closed
+
+- No pending requests remain: collection155/156 valid; GLM U-CUDA exhausted two technical attempts. Assessment309/310 collected-case phases complete; DeepSeek R-CUDA predictors exhausted two900s timeouts.154 cases have both assessment phases.
+- 154 complete assessments have no unmatched evidence quotations;146 pass structural gates. Eight retain unresolved source-ownership / M4 conflict / missing official-document gates. Passing gates is not semantic validation.
+- M11:27 point results,105 evidence-bounded results,22 incomplete-input results,2 without complete assessment. Bounds are not confidence intervals or calibrated probabilities. No imputation.
+- Independent arithmetic verified132 computable cases without differences;29 frozen hashes unchanged;31 focused tests passed. Results and paired-summary include exclusions and original evidence links.
+- Collection and post-assessment retry allowances are exhausted only for the two documented cells above; no third retries. Paper and installed Skill untouched.

@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "| 软件概念 | 硬件落点 |\\n|---|---|\\n| Grid | 整个 GPU（所有 SM）；块由调度器以任意顺序分发 |\\n| Block | **恰好一个 SM**，生命周期内不迁移 |\\n| Warp | SM 内的调度单位，由 warp scheduler 发射 |\\n| Thread | 执行上下文（PC + 寄存器），驻留 SM 的片上寄存器堆 |",
-      "answer_event_id": "final",
+      "status": "supported",
+      "answer_quote": "| 软件概念 | 硬件落点 |\n|---|---|\n| Grid | 整个 GPU（所有 SM）；块由调度器以任意顺序分发 |\n| Block | **恰好一个 SM**，生命周期内不迁移；一个 SM 可同时驻留多个块（受资源限制） |\n| Warp | SM 内的调度单位，由 warp scheduler 发射 |\n| Thread | 执行上下文（PC + 寄存器），驻留 SM 的片上寄存器堆 |",
+      "answer_event_id": "run-end",
       "evidence_id": "call_6736d4b01ec34eda83340b28.result",
       "evidence_quote": "When an SM is given one or more thread blocks to execute, it partitions them into warps and each warp gets scheduled for execution by a *warp scheduler*.",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案完整覆盖题目全部子概念并给出软硬件映射：①thread/block/grid/cluster 层次与内建变量（来源 call_38485ac0f786441e92bd3fca.result 逐字给出 threadIdx/blockIdx/blockDim/gridDim 与线性化规则）；②block→单一 SM 的映射由 call_d23e03eff60849279da75459.result 支持：\"All threads of a thread block are executed by a single SM\"，且明确块间无调度保证、须可任意顺序执行；③SM/GPC 结构由 call_d23e03eff60849279da75459.result 支持：\"the GPU can be considered to be a collection of Streaming Multiprocessors (SMs) which are organized into groups called Graphics Processing Clusters (GPCs)\"；④warp 定义与 SIMT 由 call_6736d4b01ec34eda83340b28.result 支持：\"Each SM creates, manages, schedules, and executes threads in groups of 32 parallel threads called *warps*\"，并含分支分歧、ITS、warp scheduler 零开销切换；⑤存储层次 register/shared/global 由 call_d23e03eff60849279da75459.result（\"Each SM has its own register file and shared memory\"、寄存器超限 kernel 不可启动）与 call_a39201341c154808acb52ef4.result Table 31（64K 寄存器/SM、255/线程、shared memory 各 CC 容量、>48KB 需动态分配 opt-in）及 call_38485ac0f786441e92bd3fca.result（Table 1 内存空间作用域、32 字节事务与 12.5%–100% 合并访问利用率、32 bank）支持。答案同时如实标注保留项（12.x 列逐列对应未核对、warp 到 sub-partition 分配未在编程指南取得），不影响题目所要求的核心概念讲解。",
-      "raw_status": "supported"
+      "reason": "最终答案完整覆盖题目全部子概念并给出软硬件映射：①thread/block/grid/cluster 层次与内建变量（来源 call_38485ac0f786441e92bd3fca.result 逐字给出 threadIdx/blockIdx/blockDim/gridDim 与线性化规则）；②block→单一 SM 的映射由 call_d23e03eff60849279da75459.result 支持：\"All threads of a thread block are executed by a single SM\"，且明确块间无调度保证、须可任意顺序执行；③SM/GPC 结构由 call_d23e03eff60849279da75459.result 支持：\"the GPU can be considered to be a collection of Streaming Multiprocessors (SMs) which are organized into groups called Graphics Processing Clusters (GPCs)\"；④warp 定义与 SIMT 由 call_6736d4b01ec34eda83340b28.result 支持：\"Each SM creates, manages, schedules, and executes threads in groups of 32 parallel threads called *warps*\"，并含分支分歧、ITS、warp scheduler 零开销切换；⑤存储层次 register/shared/global 由 call_d23e03eff60849279da75459.result（\"Each SM has its own register file and shared memory\"、寄存器超限 kernel 不可启动）与 call_a39201341c154808acb52ef4.result Table 31（64K 寄存器/SM、255/线程、shared memory 各 CC 容量、>48KB 需动态分配 opt-in）及 call_38485ac0f786441e92bd3fca.result（Table 1 内存空间作用域、32 字节事务与 12.5%–100% 合并访问利用率、32 bank）支持。答案同时如实标注保留项（12.x 列逐列对应未核对、warp 到 sub-partition 分配未在编程指南取得），不影响题目所要求的核心概念讲解。"
     }
   ],
   "m9_m10": [
@@ -42,18 +41,7 @@
       "upper": null
     }
   ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "| 软件概念 | 硬件落点 |\\n|---|---|\\n| Grid | 整个 GPU（所有 SM）；块由调度器以任意顺序分发 |\\n| Block | **恰好一个 SM**，生命周期内不迁移 |\\n| Warp | SM 内的调度单位，由 warp scheduler 发射 |\\n| Thread | 执行上下文（PC + 寄存器），驻留 SM 的片上寄存器堆 |"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -165,6 +153,15 @@
   "review": {
     "raw_file": "assessments/development/case-132fccafe105-outcome.json",
     "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "| 软件概念 | 硬件落点 |\\n|---|---|\\n| Grid | 整个 GPU（所有 SM）；块由调度器以任意顺序分发 |\\n| Block | **恰好一个 SM**，生命周期内不迁移 |\\n| Warp | SM 内的调度单位，由 warp scheduler 发射 |\\n| Thread | 执行上下文（PC + 寄存器），驻留 SM 的片上寄存器堆 |",
+        "replacement": "| 软件概念 | 硬件落点 |\n|---|---|\n| Grid | 整个 GPU（所有 SM）；块由调度器以任意顺序分发 |\n| Block | **恰好一个 SM**，生命周期内不迁移；一个 SM 可同时驻留多个块（受资源限制） |\n| Warp | SM 内的调度单位，由 warp scheduler 发射 |\n| Thread | 执行上下文（PC + 寄存器），驻留 SM 的片上寄存器堆 |",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
       {
         "basis": "final alias maps to frozen final answer"
       },
