@@ -24,6 +24,23 @@ for run in (R/'runs').iterdir():
    value['m2_documents']=[d for d in value.get('m2_documents',[]) if d.get('event_id') not in denied]
   def walk(x):
    if isinstance(x,dict):
+    old_id=x.get('event_id')
+    if old_id=='final':
+     x['event_id']='run-end';old_id='run-end';repairs.append({'basis':'final alias maps to frozen final answer'})
+    if isinstance(old_id,str) and old_id not in texts and old_id+'.result' in texts:
+     x['event_id']=old_id+'.result';repairs.append({'original_event_id':old_id,'replacement_event_id':x['event_id'],'basis':'unique exact tool-result ID suffix; quote still separately checked'})
+    for evidence_key in ('evidence','boundary_evidence'):
+     if isinstance(x.get(evidence_key),dict):
+      x[evidence_key]=[x[evidence_key]];repairs.append({'field':evidence_key,'basis':'single evidence object normalized to list without content change'})
+    if x.get('event_id') in texts:
+     for evidence_key in ('evidence','boundary_evidence'):
+      val=x.get(evidence_key)
+      if isinstance(val,str) and val.strip() and val in texts[x['event_id']]:
+       x[evidence_key]=[{'event_id':x['event_id'],'quote':val}];repairs.append({'field':evidence_key,'basis':'verbatim boundary string attached to its document event'})
+      elif isinstance(val,list):
+       for ev in val:
+        if isinstance(ev,dict) and 'event_id' not in ev and isinstance(ev.get('quote'),str) and ev['quote'] in texts[x['event_id']]:
+         ev['event_id']=x['event_id'];repairs.append({'field':evidence_key,'basis':'verbatim quote matched to parent document event'})
     if isinstance(x.get('quote'),str) and x.get('event_id') in texts:
      q=x['quote'];source=texts[x['event_id']]
      if q not in source:
