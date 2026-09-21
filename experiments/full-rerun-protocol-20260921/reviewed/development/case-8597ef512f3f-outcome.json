@@ -14,18 +14,17 @@
   "m9_m10": [
     {
       "id": "M9",
-      "score": null,
+      "score": 3,
       "lower": null,
       "upper": null,
-      "status": "insufficient_evidence",
+      "status": "scored",
       "reason": "部分所需组件有明确版本依据：CUDA_LAUNCH_BLOCKING 由 PyTorch 2.14 文档确认（来源标题 \"CUDA semantics — PyTorch 2.14 documentation\"）；compute-sanitizer 给出 \"must be from the same CUDA toolkit version\" 与 \"Starting from CUDA 11.6\" 的适用关系。但关键组件 DSA 的运行时开关 PYTORCH_USE_CUDA_DSA 重命名及自动编译标志的确切入版本未确定（答案自述 v1.13.0 源文件 404、预算用尽无法核实），即所需组件之一仅有源码 main 分支证据而定不到具体 PyTorch 版本，符合第 3 档。",
       "evidence": [
         {
-          "event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
-          "quote": "DSA 运行时环境变量重命名/自动编译标志的确切引入版本未核实（v1.13.0 源文件 404；预算内无法再查）。"
+          "event_id": "run-end",
+          "quote": "- **DSA**：当前 main 分支在 `USE_CUDA` 下**自动**定义 `TORCH_USE_CUDA_DSA`，运行时用 `PYTORCH_USE_CUDA_DSA`。**未核实点**：该自动定义与 `PYTORCH_USE_CUDA_DSA` 重命名发生在哪个 PyTorch 版本（我尝试取 `v1.13.0` 对应源码返回 `404: Not Found`，说明该文件在 1.13 不存在或路径不同，无法据此定版）。因此旧版本可能仍需 `USE_CUDA_DSA=1` 自行编译、且运行时开关名可能是 `TORCH_USE_CUDA_DSA`。\n"
         }
-      ],
-      "raw_status": "scored"
+      ]
     },
     {
       "id": "M10",
@@ -42,17 +41,7 @@
       ]
     }
   ],
-  "quote_audit": [
-    {
-      "metric": "M9",
-      "bad_refs": [
-        {
-          "event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
-          "quote": "DSA 运行时环境变量重命名/自动编译标志的确切引入版本未核实（v1.13.0 源文件 404；预算内无法再查）。"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -164,6 +153,29 @@
   "review": {
     "raw_file": "assessments/development/case-8597ef512f3f-outcome.json",
     "repairs": [
+      {
+        "case": "case-8597ef512f3f",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          0,
+          "evidence"
+        ],
+        "original": [
+          {
+            "event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
+            "quote": "DSA 运行时环境变量重命名/自动编译标志的确切引入版本未核实（v1.13.0 源文件 404；预算内无法再查）。"
+          }
+        ],
+        "replacement": [
+          {
+            "event_id": "run-end",
+            "quote": "- **DSA**：当前 main 分支在 `USE_CUDA` 下**自动**定义 `TORCH_USE_CUDA_DSA`，运行时用 `PYTORCH_USE_CUDA_DSA`。**未核实点**：该自动定义与 `PYTORCH_USE_CUDA_DSA` 重命名发生在哪个 PyTorch 版本（我尝试取 `v1.13.0` 对应源码返回 `404: Not Found`，说明该文件在 1.13 不存在或路径不同，无法据此定版）。因此旧版本可能仍需 `USE_CUDA_DSA=1` 自行编译、且运行时开关名可能是 `TORCH_USE_CUDA_DSA`。\n"
+          }
+        ],
+        "basis": "M9 concerns final-answer version locking; exact final DSA caveat replaces misattributed source paraphrase, original grade retained."
+      },
       {
         "basis": "answer_quote verified against frozen final; normalize answer event alias"
       },

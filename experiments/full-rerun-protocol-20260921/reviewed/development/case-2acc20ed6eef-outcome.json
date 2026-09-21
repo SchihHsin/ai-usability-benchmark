@@ -3,8 +3,8 @@
     {
       "id": 1,
       "status": "unverified",
-      "answer_quote": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。",
-      "answer_event_id": "final",
+      "answer_quote": "即：\n- 用 **TensorRT Model Optimizer（ModelOpt）** 做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 `QuantizeLinear`/`DequantizeLinear` 的 ONNX。\n- 对 PyTorch，官方建议流程：`train PyTorch model → int8 with Model Optimizer → export ONNX → compile with TensorRT`（issue #4095 中 NVIDIA 工程师确认：“yes, if you're using PyTorch then Model Optimizer can automate more parts of that flow”）。\n\n",
+      "answer_event_id": "run-end",
       "evidence_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
       "evidence_quote": "构建 INT8 引擎时，构建器执行以下步骤：1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。2. 从直方图构建一个校准表，为每个张量提供一个比例值。3. 根据校准表和网络定义构建 INT8 引擎。",
       "verification": "source",
@@ -15,10 +15,10 @@
   "m9_m10": [
     {
       "id": "M9",
-      "score": null,
+      "score": 4,
       "lower": null,
       "upper": null,
-      "status": "insufficient_evidence",
+      "status": "assessed",
       "reason": "答案对所需组件给出有依据的适用范围：TensorRT目标10.x（10.3及以上，基于10.3.0 Release Notes弃用说明）、隐式校准器路线限定10.0.x（基于issue #4095的10.1起弃用警告）、ONNX opset 13（每通道量化必需）、PyTorch 1.8+（opset 13导出）。各范围均有官方来源支撑且无冲突。但最新具体版本号未取得（答案自述'本轮只取到10.3.0 Release Notes页，未抓取最新版'），故未能定到确切具体版本，且弃用API是否已实际移除属未知，锁定粒度为范围而非具体版本。",
       "evidence": [
         {
@@ -27,30 +27,21 @@
         },
         {
           "event_id": "run-end",
-          "quote": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。"
+          "quote": "- **TensorRT 当前最新具体版本号未取得**：本轮只取到 `10.3.0` Release Notes 页，未抓取最新版 Release Notes 页，故不指定“最新版本”。"
         }
-      ],
-      "raw_status": "assessed"
+      ]
     },
     {
       "id": "M10",
-      "score": 4,
-      "lower": null,
-      "upper": null,
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
       "status": "assessed",
-      "reason": "校准路线给出可照抄的完整Python实现（EntropyCalibrator类、get_batch_size/get_batch/read/write_calibration_cache四接口、config.set_flag(trt.BuilderFlag.INT8)、int8_calibrator赋值、build_serialized_network），接口契约与官方资料一致；显式路线给出trtexec --onnx=model.quant.onnx --best（issue #4095原文）；C++给出setInt8Calibrator调用。需替换的仅为环境参数（模型路径、校准数据迭代器、输入shape、缓存文件名），均有明确标识。部署节为骨架（'绑定 I/O、分配 device 缓冲后'为注释占位），且答案自述pycuda样板与部署API未逐字核实，略低于5分；未实际运行已如实声明，不影响本项评分。",
+      "reason": "原题明确要求INT8推理部署；最终部署代码用注释代替I/O绑定与device缓冲分配，d_input/d_output/stream_handle未构造，runtime亦未在该部署流程初始化，需补写操作内容，不能归仅替换环境参数的4分。依原M10档位判3分；未做硬件运行。",
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "config = builder.create_builder_config()\nconfig.set_flag(trt.BuilderFlag.INT8)                 # 关键 flag\nconfig.int8_calibrator = EntropyCalibrator(iter_calib, \"calib.cache\", (3, 224, 224))"
-        },
-        {
-          "event_id": "run-end",
-          "quote": "trtexec --onnx=model.quant.onnx --best"
-        },
-        {
-          "event_id": "run-end",
-          "quote": "这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。"
+          "quote": "## 3. 部署（反序列化 + 推理）\n```python\nwith open(\"model.int8.plan\", \"rb\") as f:\n    engine = runtime.deserialize_cuda_engine(f.read())\ncontext = engine.create_execution_context()\n# 绑定 I/O、分配 device 缓冲后：\ncontext.set_tensor_address(\"input\",  int(d_input))\ncontext.set_tensor_address(\"output\", int(d_output))\ncontext.execute_async_v3(stream_handle)\n```\n> 这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。\n\n---\n\n"
         }
       ]
     }
@@ -60,23 +51,9 @@
       "requirement": 1,
       "bad_refs": [
         {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。"
-        },
-        {
           "field": "evidence_quote",
           "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
           "quote": "构建 INT8 引擎时，构建器执行以下步骤：1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。2. 从直方图构建一个校准表，为每个张量提供一个比例值。3. 根据校准表和网络定义构建 INT8 引擎。"
-        }
-      ]
-    },
-    {
-      "metric": "M9",
-      "bad_refs": [
-        {
-          "event_id": "run-end",
-          "quote": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。"
         }
       ]
     }
@@ -193,6 +170,61 @@
     "raw_file": "assessments/development/case-2acc20ed6eef-outcome.json",
     "repairs": [
       {
+        "case": "case-2acc20ed6eef",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          1
+        ],
+        "original": {
+          "id": "M10",
+          "score": 4,
+          "lower": null,
+          "upper": null,
+          "status": "assessed",
+          "reason": "校准路线给出可照抄的完整Python实现（EntropyCalibrator类、get_batch_size/get_batch/read/write_calibration_cache四接口、config.set_flag(trt.BuilderFlag.INT8)、int8_calibrator赋值、build_serialized_network），接口契约与官方资料一致；显式路线给出trtexec --onnx=model.quant.onnx --best（issue #4095原文）；C++给出setInt8Calibrator调用。需替换的仅为环境参数（模型路径、校准数据迭代器、输入shape、缓存文件名），均有明确标识。部署节为骨架（'绑定 I/O、分配 device 缓冲后'为注释占位），且答案自述pycuda样板与部署API未逐字核实，略低于5分；未实际运行已如实声明，不影响本项评分。",
+          "evidence": [
+            {
+              "event_id": "final",
+              "quote": "config = builder.create_builder_config()\nconfig.set_flag(trt.BuilderFlag.INT8)                 # 关键 flag\nconfig.int8_calibrator = EntropyCalibrator(iter_calib, \"calib.cache\", (3, 224, 224))"
+            },
+            {
+              "event_id": "final",
+              "quote": "trtexec --onnx=model.quant.onnx --best"
+            },
+            {
+              "event_id": "final",
+              "quote": "这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。"
+            }
+          ]
+        },
+        "replacement": {
+          "id": "M10",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "assessed",
+          "reason": "原题明确要求INT8推理部署；最终部署代码用注释代替I/O绑定与device缓冲分配，d_input/d_output/stream_handle未构造，runtime亦未在该部署流程初始化，需补写操作内容，不能归仅替换环境参数的4分。依原M10档位判3分；未做硬件运行。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "## 3. 部署（反序列化 + 推理）\n```python\nwith open(\"model.int8.plan\", \"rb\") as f:\n    engine = runtime.deserialize_cuda_engine(f.read())\ncontext = engine.create_execution_context()\n# 绑定 I/O、分配 device 缓冲后：\ncontext.set_tensor_address(\"input\",  int(d_input))\ncontext.set_tensor_address(\"output\", int(d_output))\ncontext.execute_async_v3(stream_handle)\n```\n> 这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。\n\n---\n\n"
+            }
+          ]
+        },
+        "basis": "Root checked original deployment request and final code. Assessor itself called deployment a skeleton but incorrectly used grade4; unchanged grade3 covers missing implementation."
+      },
+      {
+        "event_id": "run-end",
+        "original": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。",
+        "replacement": "即：\n- 用 **TensorRT Model Optimizer（ModelOpt）** 做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 `QuantizeLinear`/`DequantizeLinear` 的 ONNX。\n- 对 PyTorch，官方建议流程：`train PyTorch model → int8 with Model Optimizer → export ONNX → compile with TensorRT`（issue #4095 中 NVIDIA 工程师确认：“yes, if you're using PyTorch then Model Optimizer can automate more parts of that flow”）。\n\n",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
         "original_event_id": "call_01_XcwNmTGam5bwX8aBdQM62451",
         "replacement_event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
         "basis": "unique exact tool-result ID suffix; quote still separately checked"
@@ -210,13 +242,10 @@
         "basis": "final alias maps to frozen final answer"
       },
       {
-        "basis": "final alias maps to frozen final answer"
-      },
-      {
-        "basis": "final alias maps to frozen final answer"
-      },
-      {
-        "basis": "final alias maps to frozen final answer"
+        "event_id": "run-end",
+        "original": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。",
+        "replacement": "- **TensorRT 当前最新具体版本号未取得**：本轮只取到 `10.3.0` Release Notes 页，未抓取最新版 Release Notes 页，故不指定“最新版本”。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
       }
     ],
     "semantic_validation": false,

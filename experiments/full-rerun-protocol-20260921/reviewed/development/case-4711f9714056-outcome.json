@@ -1,0 +1,185 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "由 **host 侧的 Tiling 函数在运行时根据真实 shape 计算**，得到 **TilingData**（结构体），连同 **block_dim**、**TilingKey**（可选）、**workspace size**（可选）一起写入上下文，框架再传给 kernel 侧指导数据切分",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_5_107e4189.result",
+      "evidence_quote": "经过Tiling计算后，获取到TilingData数据结构（切分算法相关参数）、block_dim变量、用于选择不同的kernel实现分支的TilingKey、算子workspace的大小，也就是**Tiling实现的输出**，并将这些输出设置到上下文结构中",
+      "verification": "source",
+      "reason": "原题包含三个子要求，均得到官方来源证实。(1) Tiling 怎么写：答案给出 host 侧 TilingFunc 完整代码（GetInputTensor(0)->GetShapeSize() 获取动态 shape、SetBlockDim、SaveToBuffer 序列化），与 WebFetch_5（CANN商用版7.0.0官方Tiling实现页）逐行一致；非对齐 formerNum/tailLength 等公式也与该来源相同。(2) TilingData 怎么定义：答案的 BEGIN_TILING_DATA_DEF/TILING_DATA_FIELD_DEF/REGISTER_TILING_DATA_CLASS 宏注册方式与 WebFetch_5 完全一致。(3) 怎么传递：答案说明框架将 RawTilingData buffer 作为核函数最后一个入参 GM_ADDR tiling 传入、kernel 侧用 GET_TILING_DATA 解析，核函数参数顺序固定'输入、输出、workspace、tiling'，与 WebFetch_8（CANN商用版8.0.RC1官方kernel侧实现页）原文'注意这里参数的顺序按照\"输入、输出、workspace、tiling\"的顺序排布，开发者不要调整其顺序'及 GET_TILING_DATA 样例一致。答案与来源无冲突。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "答案明确给出所依据的版本：官方 CANN 商用版 7.0.0 与 8.0.RC1 的《Ascend C算子开发指南》，并声明两版本接口（BEGIN_TILING_DATA_DEF/TILING_DATA_FIELD_DEF/REGISTER_TILING_DATA_CLASS/SaveToBuffer/GET_TILING_DATA/TilingContext）完全一致，可视为 CANN 7.x–8.x 通用。所需组件（tiling 注册与解析接口）均给出有依据的适用范围，但结论落在 7.x–8.x 范围而非定到单一具体版本，且 9.0.0-beta1 与 8.0.RC2.2 未核实，属于范围级而非具体版本级锁定，符合4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "以上接口（`BEGIN_TILING_DATA_DEF`/`TILING_DATA_FIELD_DEF`/`REGISTER_TILING_DATA_CLASS`/`SaveToBuffer`/`GET_TILING_DATA`/`TilingContext`）在官方 **CANN 商用版 7.0.0** 与 **8.0.RC1** 文档中完全一致，可视为 CANN 7.x–8.x 通用。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "另检索到 **CANN 社区版 9.0.0-beta1**《Ascend C算子开发指南》PDF（hiascend 官方），但本任务工具不支持抓取 PDF，该版本正文内容未核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 5,
+      "lower": 5,
+      "upper": 5,
+      "status": "scored",
+      "reason": "答案提供了可直接照抄执行的完整内容：TilingData 定义头文件完整代码（含 include guard 与注册宏）、host 侧 TilingFunc 完整函数（GetShapeSize/SetBlockDim/SaveToBuffer/SetDataSize 全链路）、kernel 侧核函数与 Init 完整代码，并给出文件位置（op_host/算子名称_tiling.h、op_host/算子名称.cpp、op_kernel/xxx.cpp）、工程生成工具 msopgen、参数顺序约束、非对齐场景的对齐公式与分支偏移逻辑。代码语法完整、前置条件明确，除算子名/数据类型等必然的用户环境值外无需补写或修正，符合5档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "在算子工程 `op_host` 目录下新建 `算子名称_tiling.h`，包含 `register/tilingdata_base.h`，用注册宏定义"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "tiling.SaveToBuffer(context->GetRawTilingData()->GetData(),\n                        context->GetRawTilingData()->GetCapacity());\n    context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "GET_TILING_DATA(tilingData, tiling);   // 自动按注册的TilingData类型解析"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-4711f9714056",
+  "task_id": "M",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "c4660912b83348d19a8c29c20f718e64",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "98907ccdb26a5bff5b91aee231401fb1",
+        "conversationRequestId": "98907ccdb26a5bff5b91aee231401fb1",
+        "agent": "cli"
+      },
+      {
+        "messageId": "c4660912b83348d19a8c29c20f718e64",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "98907ccdb26a5bff5b91aee231401fb1",
+        "conversationRequestId": "98907ccdb26a5bff5b91aee231401fb1",
+        "rawUsage": {
+          "prompt_tokens": 21975,
+          "completion_tokens": 2343,
+          "total_tokens": 24318,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1180,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 18967,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1180,
+          "credit": 4.47,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21975,
+          "outputTokens": 2343,
+          "totalTokens": 24318,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1180
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "0d859c835564b48a45add0a0317030263729f806c29a1f862c1fb3d039d4135b",
+    "process_sha256": "cc09c2459d18fe88c608accef86cbbbc63ad50830245d321d9333ab9dfbf4cef",
+    "elapsed_seconds": 49.28,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-54a220453a8b46989b0f22871c9d0b39",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-4711f9714056-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "由 host 侧的 Tiling 函数在运行时根据真实 shape 计算，得到 TilingData（结构体），连同 block_dim、TilingKey（可选）、workspace size（可选）一起写入上下文，框架再传给 kernel 侧指导数据切分",
+        "replacement": "由 **host 侧的 Tiling 函数在运行时根据真实 shape 计算**，得到 **TilingData**（结构体），连同 **block_dim**、**TilingKey**（可选）、**workspace size**（可选）一起写入上下文，框架再传给 kernel 侧指导数据切分",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "WebFetch_5_107e4189.result",
+        "original": "经过Tiling计算后，获取到TilingData数据结构（切分算法相关参数）、block_dim变量、用于选择不同的kernel实现分支的TilingKey、算子workspace的大小，也就是Tiling实现的输出，并将这些输出设置到上下文结构中",
+        "replacement": "经过Tiling计算后，获取到TilingData数据结构（切分算法相关参数）、block_dim变量、用于选择不同的kernel实现分支的TilingKey、算子workspace的大小，也就是**Tiling实现的输出**，并将这些输出设置到上下文结构中",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

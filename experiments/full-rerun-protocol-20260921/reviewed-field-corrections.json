@@ -1034,5 +1034,239 @@
       ]
     },
     "basis": "Root checked actual final placeholder model = MyModel().to(local_rank); original assessor judged remaining content complete. Correct 4/5 anchor application without changing rubric; full final retained for review."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      1
+    ],
+    "original": {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "校准路线给出可照抄的完整Python实现（EntropyCalibrator类、get_batch_size/get_batch/read/write_calibration_cache四接口、config.set_flag(trt.BuilderFlag.INT8)、int8_calibrator赋值、build_serialized_network），接口契约与官方资料一致；显式路线给出trtexec --onnx=model.quant.onnx --best（issue #4095原文）；C++给出setInt8Calibrator调用。需替换的仅为环境参数（模型路径、校准数据迭代器、输入shape、缓存文件名），均有明确标识。部署节为骨架（'绑定 I/O、分配 device 缓冲后'为注释占位），且答案自述pycuda样板与部署API未逐字核实，略低于5分；未实际运行已如实声明，不影响本项评分。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "config = builder.create_builder_config()\nconfig.set_flag(trt.BuilderFlag.INT8)                 # 关键 flag\nconfig.int8_calibrator = EntropyCalibrator(iter_calib, \"calib.cache\", (3, 224, 224))"
+        },
+        {
+          "event_id": "final",
+          "quote": "trtexec --onnx=model.quant.onnx --best"
+        },
+        {
+          "event_id": "final",
+          "quote": "这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。"
+        }
+      ]
+    },
+    "replacement": {
+      "id": "M10",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "assessed",
+      "reason": "原题明确要求INT8推理部署；最终部署代码用注释代替I/O绑定与device缓冲分配，d_input/d_output/stream_handle未构造，runtime亦未在该部署流程初始化，需补写操作内容，不能归仅替换环境参数的4分。依原M10档位判3分；未做硬件运行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "## 3. 部署（反序列化 + 推理）\n```python\nwith open(\"model.int8.plan\", \"rb\") as f:\n    engine = runtime.deserialize_cuda_engine(f.read())\ncontext = engine.create_execution_context()\n# 绑定 I/O、分配 device 缓冲后：\ncontext.set_tensor_address(\"input\",  int(d_input))\ncontext.set_tensor_address(\"output\", int(d_output))\ncontext.execute_async_v3(stream_handle)\n```\n> 这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。\n\n---\n\n"
+        }
+      ]
+    },
+    "basis": "Root checked original deployment request and final code. Assessor itself called deployment a skeleton but incorrectly used grade4; unchanged grade3 covers missing implementation."
+  },
+  {
+    "case": "case-8597ef512f3f",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      0,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_00_JwGrEwT35h3UtXrzqCGU8024.result",
+        "quote": "DSA 运行时环境变量重命名/自动编译标志的确切引入版本未核实（v1.13.0 源文件 404；预算内无法再查）。"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "run-end",
+        "quote": "- **DSA**：当前 main 分支在 `USE_CUDA` 下**自动**定义 `TORCH_USE_CUDA_DSA`，运行时用 `PYTORCH_USE_CUDA_DSA`。**未核实点**：该自动定义与 `PYTORCH_USE_CUDA_DSA` 重命名发生在哪个 PyTorch 版本（我尝试取 `v1.13.0` 对应源码返回 `404: Not Found`，说明该文件在 1.13 不存在或路径不同，无法据此定版）。因此旧版本可能仍需 `USE_CUDA_DSA=1` 自行编译、且运行时开关名可能是 `TORCH_USE_CUDA_DSA`。\n"
+      }
+    ],
+    "basis": "M9 concerns final-answer version locking; exact final DSA caveat replaces misattributed source paraphrase, original grade retained."
+  },
+  {
+    "case": "case-dc98aac8c77d",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents",
+      0,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_2387e106cc4744ff887d6e41.result",
+        "quote": "msaccucmp.py脚本精度比对工具支持多种比对方式，因此dump、npy文件命名需满足以下要求"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "call_2387e106cc4744ff887d6e41.result",
+        "quote": "**msaccucmp.py**脚本精度比对工具支持多种比对方式，因此dump、npy文件命名需满足以下要求："
+      }
+    ],
+    "basis": "Root verified actual return text for this specific dispatch; restores original paragraph instead of paraphrase or quotation attributed to another retry/search. No completeness upgrade."
+  },
+  {
+    "case": "case-ca2e05a37737",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents",
+      1,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "WebFetch_2_2b91987c.result",
+        "quote": "msaccucmp.py脚本精度比对工具支持多种比对方式"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "WebFetch_2_2b91987c.result",
+        "quote": "**msaccucmp.py**脚本精度比对工具支持多种比对方式，因此dump、npy数据文件命名需满足以下要求："
+      }
+    ],
+    "basis": "Root verified actual return text for this specific dispatch; restores original paragraph instead of paraphrase or quotation attributed to another retry/search. No completeness upgrade."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents",
+      4,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+        "quote": "# TensorRT 10.3.0 Release Notes#\n\n[...]"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+        "quote": "# TensorRT 10.3.0 Release Notes#\n\nThese Release Notes apply to x86 Linux and Windows users, ARM-based CPU cores for Server Base System Architecture (SBSA) users on Linux, and JetPack users. This release includes several fixes from the previous TensorRT releases and additional changes."
+      }
+    ],
+    "basis": "Root verified actual return text for this specific dispatch; restores original paragraph instead of paraphrase or quotation attributed to another retry/search. No completeness upgrade."
+  },
+  {
+    "case": "case-bc40ff67d07b",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents",
+      4,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_00_aJ31A3o1fcDaSFDAWXen0393.result",
+        "quote": "# 比对结果说明\n\n## 简介"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "call_00_aJ31A3o1fcDaSFDAWXen0393.result",
+        "quote": "本节以非量化昇腾AI处理器运行生成的dump数据与非量化ONNX模型npy数据比对为例，介绍比对结果分析步骤，下文中参数说明均以该示例介绍，请根据您的实际情况进行替换。"
+      }
+    ],
+    "basis": "Root verified actual return text for this specific dispatch; restores original paragraph instead of paraphrase or quotation attributed to another retry/search. No completeness upgrade."
+  },
+  {
+    "case": "case-7dbd03cb51f1",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents",
+      0,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_1fc3480817c444e39290fe41.result",
+        "quote": "The following table displays the default `rtol` and `atol` for different `dtype`'s."
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "call_1fc3480817c444e39290fe41.result",
+        "quote": "The following table displays the default `rtol` and `atol` for different `dtype`’s. In case of mismatching `dtype`’s, the maximum of both tolerances is used."
+      }
+    ],
+    "basis": "Root verified actual return text for this specific dispatch; restores original paragraph instead of paraphrase or quotation attributed to another retry/search. No completeness upgrade."
+  },
+  {
+    "case": "case-7dbd03cb51f1",
+    "kind": "predictors",
+    "phase": "before_quote",
+    "path": [
+      "m2_documents",
+      6,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "call_e178eab6c68c4f209ce8bf2d.result",
+        "quote": "The guide is broken into five primary parts:"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "call_e178eab6c68c4f209ce8bf2d.result",
+        "quote": "The guide is broken down into five primary parts:"
+      }
+    ],
+    "basis": "Root verified actual return text for this specific dispatch; restores original paragraph instead of paraphrase or quotation attributed to another retry/search. No completeness upgrade."
+  },
+  {
+    "case": "case-e4f2307e1049",
+    "kind": "outcome",
+    "phase": "before_quote",
+    "path": [
+      "m9_m10",
+      1,
+      "evidence"
+    ],
+    "original": [
+      {
+        "event_id": "WebFetch_5_16b8a122.result",
+        "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+      },
+      {
+        "event_id": "WebFetch_5_16b8a122.result",
+        "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+      }
+    ],
+    "replacement": [
+      {
+        "event_id": "run-end",
+        "quote": "1. **命令行快速统计**：`nsys stats report.nsys-rep`（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`——`gpu_time_util`、`gpu_gaps` 是官方 analyze 内置规则，直接对应\"GPU 利用率低\"的定位（另有 `cuda_api_sync`、`cuda_memcpy_sync/async`、`cuda_memset_sync` 等规则）。"
+      }
+    ],
+    "basis": "M10 final-answer citation corrected from source event to actual final stats/analyze passage; all cited commands retained."
   }
 ]

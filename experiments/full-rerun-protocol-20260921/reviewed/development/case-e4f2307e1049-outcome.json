@@ -32,35 +32,20 @@
     },
     {
       "id": "M10",
-      "score": null,
+      "score": 4,
       "lower": null,
       "upper": null,
-      "status": "insufficient_evidence",
+      "status": "scored",
       "reason": "采集命令为完整可直接运行的命令行，参数语法与官方User Guide核实一致（长选项用等号、--sample=process-tree等）；nsys stats report.nsys-rep与nsys analyze -r gpu_time_util -r gpu_gaps均为完整命令，规则名经官方核实存在；PyTorch插桩代码段（profiler.start/stop、nvtx.range_push/pop）语法正确且API经官方文档确认。用户仅需替换train.py、report等自身环境值即可执行。未核实项（--gpu-metrics-devices完整语法）为可选辅助路径且final已明确标注，不影响主流程的完整可执行性；答案自述未实测，按约定不影响档位。",
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
-        },
-        {
-          "event_id": "WebFetch_5_16b8a122.result",
-          "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
-        }
-      ],
-      "raw_status": "scored"
-    }
-  ],
-  "quote_audit": [
-    {
-      "metric": "M10",
-      "bad_refs": [
-        {
-          "event_id": "WebFetch_5_16b8a122.result",
-          "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+          "quote": "1. **命令行快速统计**：`nsys stats report.nsys-rep`（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`——`gpu_time_util`、`gpu_gaps` 是官方 analyze 内置规则，直接对应\"GPU 利用率低\"的定位（另有 `cuda_api_sync`、`cuda_memcpy_sync/async`、`cuda_memset_sync` 等规则）。"
         }
       ]
     }
   ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -173,12 +158,34 @@
     "raw_file": "assessments/development/case-e4f2307e1049-outcome.json",
     "repairs": [
       {
-        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+        "case": "case-e4f2307e1049",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          1,
+          "evidence"
+        ],
+        "original": [
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "quote": "nsys profile -o report \\\n  --trace=cuda,nvtx,osrt,cudnn,cublas \\\n  --sample=process-tree \\"
+          },
+          {
+            "event_id": "WebFetch_5_16b8a122.result",
+            "quote": "nsys stats report.nsys-rep（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`"
+          }
+        ],
+        "replacement": [
+          {
+            "event_id": "run-end",
+            "quote": "1. **命令行快速统计**：`nsys stats report.nsys-rep`（官方：`stats` 对 .nsys-rep 或 SQLite 生成统计报告）。另可用专家系统规则 `nsys analyze -r gpu_time_util -r gpu_gaps report.nsys-rep`——`gpu_time_util`、`gpu_gaps` 是官方 analyze 内置规则，直接对应\"GPU 利用率低\"的定位（另有 `cuda_api_sync`、`cuda_memcpy_sync/async`、`cuda_memset_sync` 等规则）。"
+          }
+        ],
+        "basis": "M10 final-answer citation corrected from source event to actual final stats/analyze passage; all cited commands retained."
       },
       {
-        "original_event_id": "WebFetch_5_16b8a122.result",
-        "replacement_event_id": "run-end",
-        "basis": "M9/M10 evidence is an exact frozen final-answer substring"
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
       },
       {
         "original_event_id": "WebFetch_5_16b8a122.result",

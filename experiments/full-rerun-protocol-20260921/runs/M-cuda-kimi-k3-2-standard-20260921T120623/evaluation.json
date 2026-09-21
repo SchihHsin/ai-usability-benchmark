@@ -147,6 +147,675 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T04:54:41.606995+00:00",
+      "process_sha256": "91925e6f35dc09994bd9389c33a8d12e49a958fe82353ce3dae3629b86b7c649",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "**构建期必须至少创建一个 optimization profile**，为每个动态输入指定 min/opt/max",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_1_da457e0b.result",
+            "evidence_quote": "使用运行时维度时，构建期必须至少创建一个 optimization profile",
+            "verification": "source",
+            "reason": "原题要求解释TensorRT/CUDA kernel处理动态shape输入的方法（optimization profile/运行时shape）。TensorRT核心部分（-1标记动态维度、createOptimizationProfile、setDimensions min/opt/max、setOptimizationProfileAsync、setInputShape、IOutputAllocator、多profile切换规则、shape tensor限制）均被三篇官方文档（WebFetch_1、WebFetch_3、WebFetch_4）完整支撑。trtexec参数由WebFetch_6（CSDN）部分支撑，答案诚实标注为二手来源。纯CUDA kernel部分（运行时传入shape参数、grid计算、边界判断、CUDA Graph shape固化问题）无来源支撑，但答案明确标注'无官方单一来源，基于通行做法'，且内容技术正确。主要问题焦点（optimization profile/运行时shape）已被官方来源充分覆盖，故整体判定supported。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（NVIDIA TensorRT 官方文档 dynamic-shapes-basics），符合第5档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_341562e9.result",
+                "quote": "## 1. [Dynamic Shapes: Core Concepts — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "✅ **已取得完整正文**：所提供内容覆盖了该文档页面（Dynamic Shapes: Core Concepts）的全部小节"
+              },
+              {
+                "event_id": "WebFetch_4_608e1f32.result",
+                "quote": "# Dynamic Shapes: Advanced Topics[#"
+              },
+              {
+                "event_id": "WebFetch_3_d82ee742.result",
+                "quote": "*Dynamic Shapes* is the ability to defer specifying some or all tensor dimensions until runtime."
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方正文已完整说明主流程及参数与前提：-1 运行时维度、profile min/opt/max 设置（C++/Python 代码）、setInputShape、setOptimizationProfileAsync、输出 shape 查询与 IOutputAllocator、多条约束（tactic 需 MIN=OPT=MAX、profile 唯一性、顺序要求）。但原题明确涉及的分支未从官方正文取得：trtexec 命令行参数（work-with 页未返回，仅第三方 CSDN 截断内容）、自定义 CUDA kernel 层面处理动态 shape 的官方说明缺失。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "profile->setDimensions(\"foo\", OptProfileSelector::kMIN, Dims3(3,100,200));"
+              },
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "context.setInputShape(\"foo\", Dims{3, {3, 150, 250}})"
+              },
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "使用运行时维度时，构建期必须至少创建一个 optimization profile"
+              },
+              {
+                "event_id": "WebFetch_3_d82ee742.result",
+                "quote": "Specify one or more *optimization profiles* at build time."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得的官方正文明确部分适用关系（latest 文档内 setOptimizationProfileAsync 替代废弃 setOptimizationProfile、enqueueV2/binding 为遗留路径、TRT8.5 消除 execution/shape tensor 区分），但缺少完成版本选择所需的版本对应关系（如 setInputShape vs setBindingDimensions 在 8.x/9.x/10.x 的适用表；latest/10.x/RTX 文档分支选择），存在缺失关系不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "setOptimizationProfileAsync()` 替代了已废弃的 `setOptimizationProfile()"
+              },
+              {
+                "event_id": "WebFetch_4_608e1f32.result",
+                "quote": "TensorRT 8.5 largely erased the distinctions between execution tensors and shape tensors."
+              },
+              {
+                "event_id": "WebSearch_2_e7d72616.result",
+                "quote": "## 2. [Working with Dynamic Shapes — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-dynamic-shapes.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "status": "bounded",
+            "reason": "统一预算内可确认的相关独立第三方来源至少5条（Torch-TensorRT 用户指南、Torch-TensorRT contributors 设计文档、CSDN 两篇、博客园一篇），另有 devpress.csdn.net 两篇因无法确认是否为 CSDN 转载镜像而计入0—2条，合计5—7条，跨第4/5档，保留区间。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_341562e9.result",
+                "quote": "## 4. [Torch-TensorRT 的动态形状 — Torch-TensorRT v2.12.0 ...](https://docs.pytorch.ac.cn/TensorRT/user_guide/dynamic_shapes.html)"
+              },
+              {
+                "event_id": "WebSearch_5_1d3ff680.result",
+                "quote": "## 3. [trtexec 参数笔记 - qinchaojie - 博客园](https://www.cnblogs.com/qinchaojie/p/18884161)"
+              },
+              {
+                "event_id": "WebSearch_5_1d3ff680.result",
+                "quote": "## 2. [TensorRT - 自带工具trtexec的参数使用说明-CSDN 博客](https://blog.csdn.net/HW140701/article/details/120360642)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "唯一取得正文的第三方来源（CSDN trtexec 文章）其关键说法（--optShapes 为 autotune 基准、输入不得小于 --minShapes）与官方文档一致、有可追溯核对依据；但该文在 --maxShapes 处截断，其余关键说法（--shapes 运行时参数、完整命令示例）尚未核验，其他第三方来源仅见摘要未取得正文。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_e4572cd8.result",
+                "quote": "TensorRT的优化器（Builder）会以这个形状作为基准来进行大部分层的优化和内核（Kernel）选择"
+              },
+              {
+                "event_id": "WebFetch_3_d82ee742.result",
+                "quote": "They also specify the dimensions for which the auto-tuner will optimize."
+              },
+              {
+                "event_id": "WebFetch_6_e4572cd8.result",
+                "quote": "- **`--maxShapes`**"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确完整流程：ONNX dynamic_axes、IOptimizationProfile min/opt/max、addOptimizationProfile、setInputShape（并注明 TRT8.x setBindingDimensions）、setOptimizationProfileAsync、getTensorShape 查输出、CUDA kernel 运行时 grid/边界处理、版本差异说明；主要 API 经官方正文核对无误。但原题涉及的若干约束未覆盖（须先设 profile 再设输入维度、每 context 独立 profile、数据依赖输出需 IOutputAllocator），setProfileStream 等主张未经核对，属第4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "构建引擎时，通过 `IOptimizationProfile` 为每个动态输入指定 `min / opt / max` 三种 shape"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "推理前必须 `context->setInputShape(name, actualDims)`（TRT 8.x 用 `setBindingDimensions`），否则会报错。"
+              },
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "context.set_input_shape(\"foo\", (3, 150, 250))"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=7",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_341562e9.dispatch",
+              "WebFetch_1_da457e0b.dispatch",
+              "WebSearch_2_e7d72616.dispatch",
+              "WebFetch_3_d82ee742.dispatch",
+              "WebFetch_4_608e1f32.dispatch",
+              "WebSearch_5_1d3ff680.dispatch",
+              "WebFetch_6_e4572cd8.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partially_determined",
+            "reason": "答案标注API为TensorRT 10.x现行接口，识别了'latest'对应10.x线，但未锁定到具体发行号（如10.x.y），且答案自述'具体发行号本页未给出，未核实确切小版本'。部分组件（API适用版本范围）有依据，但未定到具体版本。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "API `setInputShape`/`enqueueV3`/`setOptimizationProfileAsync` 为 10.x 现行接口；8.5+ 已有 execution/shape tensor 区分弱化。具体发行号（如 10.x.y）本页未给出，未核实确切小版本。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "operational",
+            "reason": "答案提供了完整的C++/Python代码片段（profile创建、setDimensions、setOptimizationProfileAsync、setInputShape、IOutputAllocator实现）和完整的trtexec命令行（--minShapes/--optShapes/--maxShapes/--shapes），参数格式、前置条件（必须先设profile再设shape、stream一致性）和注意事项均明确。仅需用户替换张量名、维度值和模型路径即可执行。答案自述'所写代码未实际运行'，但不影响操作完整性评分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "trtexec --onnx=model.onnx \\\n  --minShapes=input0:1x3x224x224 \\\n  --optShapes=input0:8x3x640x640 \\\n  --maxShapes=input0:16x3x1280x1280 \\\n  --shapes=input0:4x3x640x640 \\\n  --saveEngine=model.engine --fp16"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "context.setOptimizationProfileAsync(0, stream);   // stream 必须与后续 enqueueV3 相同\n     context.setInputShape(\"foo\", Dims{3, {3, 150, 250}});"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 79.62296319999999,
+            "upper": 81.39648,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              79.6,
+              81.4
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 79.62296319999999,
+          "upper": 81.39648,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            79.6,
+            81.4
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_341562e9.result",
+            "field": "response",
+            "sha256": "df0083af1b3d65d6b4c3e7b1f853a26f381adffe8f0c9f7ae025397f2c964ccd",
+            "start": 97,
+            "end": 251,
+            "quote": "## 1. [Dynamic Shapes: Core Concepts — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 45,
+            "end": 108,
+            "quote": "✅ **已取得完整正文**：所提供内容覆盖了该文档页面（Dynamic Shapes: Core Concepts）的全部小节",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_4_608e1f32.result",
+            "field": "response",
+            "sha256": "bd2be111d84fce1b0fc493651f66da82a96c775aa20e1a20cbecfba6b60b40da",
+            "start": 72,
+            "end": 107,
+            "quote": "# Dynamic Shapes: Advanced Topics[#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_3_d82ee742.result",
+            "field": "response",
+            "sha256": "98bb29b2e65dc37cee2867b28bdf2a60fa0174739a881415957649b92cbd46c8",
+            "start": 255,
+            "end": 351,
+            "quote": "*Dynamic Shapes* is the ability to defer specifying some or all tensor dimensions until runtime.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 4947,
+            "end": 5021,
+            "quote": "profile->setDimensions(\"foo\", OptProfileSelector::kMIN, Dims3(3,100,200));",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 850,
+            "end": 902,
+            "quote": "context.setInputShape(\"foo\", Dims{3, {3, 150, 250}})",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 4483,
+            "end": 4524,
+            "quote": "使用运行时维度时，构建期必须至少创建一个 optimization profile",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_3_d82ee742.result",
+            "field": "response",
+            "sha256": "98bb29b2e65dc37cee2867b28bdf2a60fa0174739a881415957649b92cbd46c8",
+            "start": 655,
+            "end": 713,
+            "quote": "Specify one or more *optimization profiles* at build time.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 6273,
+            "end": 6337,
+            "quote": "setOptimizationProfileAsync()` 替代了已废弃的 `setOptimizationProfile()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_4_608e1f32.result",
+            "field": "response",
+            "sha256": "bd2be111d84fce1b0fc493651f66da82a96c775aa20e1a20cbecfba6b60b40da",
+            "start": 3348,
+            "end": 3437,
+            "quote": "TensorRT 8.5 largely erased the distinctions between execution tensors and shape tensors.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_2_e7d72616.result",
+            "field": "response",
+            "sha256": "a71e2108924f3d2482bce18eb74e1d01c52c33c9e291f9bd523a5d4556a1cf89",
+            "start": 507,
+            "end": 657,
+            "quote": "## 2. [Working with Dynamic Shapes — NVIDIA TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/inference-library/work-dynamic-shapes.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_0_341562e9.result",
+            "field": "response",
+            "sha256": "df0083af1b3d65d6b4c3e7b1f853a26f381adffe8f0c9f7ae025397f2c964ccd",
+            "start": 1164,
+            "end": 1289,
+            "quote": "## 4. [Torch-TensorRT 的动态形状 — Torch-TensorRT v2.12.0 ...](https://docs.pytorch.ac.cn/TensorRT/user_guide/dynamic_shapes.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_5_1d3ff680.result",
+            "field": "response",
+            "sha256": "db3c7e40a72eb04db3b9cc9fea0df388ca3c1ad668c1a5ac284c66e2b4140598",
+            "start": 812,
+            "end": 898,
+            "quote": "## 3. [trtexec 参数笔记 - qinchaojie - 博客园](https://www.cnblogs.com/qinchaojie/p/18884161)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebFetch_6_e4572cd8.result",
+            "field": "response",
+            "sha256": "8dfe5f1fca7db71a049fabc8b814924c26aa6a3a27e788253cd5ae2453343bb3",
+            "start": 1662,
+            "end": 1716,
+            "quote": "TensorRT的优化器（Builder）会以这个形状作为基准来进行大部分层的优化和内核（Kernel）选择",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebFetch_3_d82ee742.result",
+            "field": "response",
+            "sha256": "98bb29b2e65dc37cee2867b28bdf2a60fa0174739a881415957649b92cbd46c8",
+            "start": 807,
+            "end": 879,
+            "quote": "They also specify the dimensions for which the auto-tuner will optimize.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebFetch_6_e4572cd8.result",
+            "field": "response",
+            "sha256": "8dfe5f1fca7db71a049fabc8b814924c26aa6a3a27e788253cd5ae2453343bb3",
+            "start": 1881,
+            "end": 1900,
+            "quote": "- **`--maxShapes`**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c504e92589a9b6f4232f6b2ccc371e036e6de39e9cf026ea5dd94cf405c2b8a7",
+            "start": 400,
+            "end": 468,
+            "quote": "构建引擎时，通过 `IOptimizationProfile` 为每个动态输入指定 `min / opt / max` 三种 shape",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c504e92589a9b6f4232f6b2ccc371e036e6de39e9cf026ea5dd94cf405c2b8a7",
+            "start": 700,
+            "end": 789,
+            "quote": "推理前必须 `context->setInputShape(name, actualDims)`（TRT 8.x 用 `setBindingDimensions`），否则会报错。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 929,
+            "end": 974,
+            "quote": "context.set_input_shape(\"foo\", (3, 150, 250))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e425d9eb45d52f3b1d083a6fc0b32ee54b4328b4c8262ebad6d33f42621abccc",
+            "start": 3752,
+            "end": 3892,
+            "quote": "API `setInputShape`/`enqueueV3`/`setOptimizationProfileAsync` 为 10.x 现行接口；8.5+ 已有 execution/shape tensor 区分弱化。具体发行号（如 10.x.y）本页未给出，未核实确切小版本。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e425d9eb45d52f3b1d083a6fc0b32ee54b4328b4c8262ebad6d33f42621abccc",
+            "start": 2437,
+            "end": 2639,
+            "quote": "trtexec --onnx=model.onnx \\\n  --minShapes=input0:1x3x224x224 \\\n  --optShapes=input0:8x3x640x640 \\\n  --maxShapes=input0:16x3x1280x1280 \\\n  --shapes=input0:4x3x640x640 \\\n  --saveEngine=model.engine --fp16",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e425d9eb45d52f3b1d083a6fc0b32ee54b4328b4c8262ebad6d33f42621abccc",
+            "start": 1214,
+            "end": 1351,
+            "quote": "context.setOptimizationProfileAsync(0, stream);   // stream 必须与后续 enqueueV3 相同\n     context.setInputShape(\"foo\", Dims{3, {3, 150, 250}});",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "e425d9eb45d52f3b1d083a6fc0b32ee54b4328b4c8262ebad6d33f42621abccc",
+            "start": 389,
+            "end": 447,
+            "quote": "**构建期必须至少创建一个 optimization profile**，为每个动态输入指定 min/opt/max",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_1_da457e0b.result",
+            "field": "response",
+            "sha256": "21525194e67e1bf36e8b007b691b82b7bf942042df10e7b92e14c92b847b0729",
+            "start": 4483,
+            "end": 4524,
+            "quote": "使用运行时维度时，构建期必须至少创建一个 optimization profile",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-fa5b5c8a80b5-predictors.json": "ddf6640b24711a18b24e5c554efd16b22bfd7563d3a0a67158b9f2a15c6f77c0",
+          "reviewed/development/case-fa5b5c8a80b5-outcome.json": "0f9b451a09b585cc9463f50b8232b4d2ff219e1d0cbacd867ec6c070bed7b906",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_da457e0b.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "## 四、Optimization Profiles（min/opt/max 设置方法）"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_da457e0b.result",
+                "quote": "页面从标题开始，到 Legacy binding indices 节的 \"Always omit the suffix for `K=0`.\" 结束，**未发现截断**。"
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-basics.html"
+          },
+          {
+            "event_id": "WebFetch_3_d82ee742.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_d82ee742.result",
+                "quote": "Here is an overview of the steps for building an engine with dynamic shapes:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_d82ee742.result",
+                "quote": "- [Dynamic Shapes: Advanced Topics](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-advanced.html): shape layers, data-dependent shapes, and restrictions for dynamic networks."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-with-dynamic-shapes.html"
+          },
+          {
+            "event_id": "WebFetch_4_608e1f32.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_608e1f32.result",
+                "quote": "## Restrictions for Dynamic Shapes[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_608e1f32.result",
+                "quote": "At runtime, whether a tensor is an I/O shape tensor can be determined using `ICudaEngine::isShapeInferenceIO()`."
+              }
+            ],
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dynamic-shapes-advanced.html"
+          },
+          {
+            "event_id": "WebFetch_6_e4572cd8.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_e4572cd8.result",
+                "quote": "这三个参数定义了模型输入张量在各个维度上的可变范围。它们的格式都是`输入名称:维度序列`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_e4572cd8.result",
+                "quote": "- **`--maxShapes`**\n\n[](https://blog.csdn.net/weixin_29163857/article/details/158554770)"
+              }
+            ],
+            "reference": "https://blog.csdn.net/weixin_29163857/article/details/158554770"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_6_e4572cd8.result",
+                "quote": "提取 trtexec 动态 shape 相关参数 --minShapes --optShapes --maxShapes --shapes 的用法与完整命令示例，保留原文。"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

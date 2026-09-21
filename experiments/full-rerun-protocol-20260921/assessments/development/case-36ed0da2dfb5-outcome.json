@@ -1,0 +1,223 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "Fusion happens automatically at build time (there is no runtime API to \"turn it on\"), but the patterns the builder is willing to fuse are constrained.",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_35I7mnXzoQwRJDDJZqwt3509.result",
+      "evidence_quote": "Fusion happens automatically at build time (there is no runtime API to \"turn it on\"), but the patterns the builder is willing to fuse are constrained.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题三个子要求均有官方正文支撑：(1) 怎么发生——融合在 build 期自动进行、按 pattern 检测融合，fusion-catalog（call_00_rR5HDm9Z21BCQlnd4piH5919.result: \"layers are fused whenever possible... detects supported patterns of operations and fuses multiple layers into one layer\"）给出完整模式与约束表；(2) 怎么观察——kINFO 日志（同源: \"Optimization steps are at the kINFO log level\"）、ProfilingVerbosity、IEngineInspector（call_00_rvuoWV5WwUtUnRgDfscK7273.result: \"Call the createEngineInspector()... getLayerInformation() or getEngineInformation()\"）、trtexec --dumpLayerInfo/--dumpProfile（call_00_QbHmAFOsOi4EAwBgWPL85061.result）；(3) 怎么控制——builder_optimization_level、BuilderFlag、TacticSource、HardwareCompatibilityLevel（call_00_ODGGH98UOcw1NGiFHbKJ0576.result: \"may reduce available tactics per layer, and may prevent some fusions\"）及精度/结构约束；CUDA 侧手动融合/torch.compile/cuda.compute/CUDA Graphs 区分见 call_00_wwz5VzVTRow4JoP0uUTa3423.result。答案同时明确列出未核实项（--exportTimes、FP16/INT8 flag 描述、TRT 11.0 最低 CUDA 版本），未虚构。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "N/A",
+      "reason": "原题为概念/方法解释题（怎么发生、观察、控制），不要求锁定任何库版本、工具链版本或 soc_version。答案虽附版本语境（IBuilderConfig 页 11.3.0、CCCL runtime 接口 CUDA 13.2），但原题无需定版组件，按约定记 N/A。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "TensorRT 文档为 `latest` 主线；Python API 页标注 **11.3.0**；benchmarking 页引用 11.0.0/11.1/11.2.1"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "最终答案给出可照抄执行的完整命令与代码：trtexec 命令含全部必要参数，IEngineInspector 的 Python/C++ 代码完整，cuda.compute 示例含 import 与参数，nsys 组合命令完整，且前置条件（构建时 ProfilingVerbosity、debug tensor 需 build 期标记）均已说明。仅需替换模型路径、输入 shape 等用户环境值即可运行；答案自身声明未实际运行（\"未运行\"），不据此升降档。部分控制项（FP16/INT8 flag 精确语义）待补不影响主要操作路径的完整性。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "trtexec --onnx=vit-quantized.onnx \\\n    --shapes=input:128x3x224x224 \\\n    --profilingVerbosity=detailed \\\n    --dumpLayerInfo \\\n    --dumpProfile"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "inspector = engine.create_engine_inspector()\nprint(inspector.get_layer_information(0, LayerInformationFormat.JSON))"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "Fusion happens automatically at build time (there is no runtime API to \"turn it on\"), but the patterns the builder is willing to fuse are constrained."
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_35I7mnXzoQwRJDDJZqwt3509.result",
+          "quote": "Fusion happens automatically at build time (there is no runtime API to \"turn it on\"), but the patterns the builder is willing to fuse are constrained."
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-36ed0da2dfb5",
+  "task_id": "N",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "Fusion happens automatically at build time (there is no runtime API to \"turn it on\"), but the patterns the builder is willing to fuse are constrained.",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_35I7mnXzoQwRJDDJZqwt3509.result",
+        "evidence_quote": "Fusion happens automatically at build time (there is no runtime API to \"turn it on\"), but the patterns the builder is willing to fuse are constrained.",
+        "verification": "source",
+        "reason": "原题三个子要求均有官方正文支撑：(1) 怎么发生——融合在 build 期自动进行、按 pattern 检测融合，fusion-catalog（call_00_rR5HDm9Z21BCQlnd4piH5919.result: \"layers are fused whenever possible... detects supported patterns of operations and fuses multiple layers into one layer\"）给出完整模式与约束表；(2) 怎么观察——kINFO 日志（同源: \"Optimization steps are at the kINFO log level\"）、ProfilingVerbosity、IEngineInspector（call_00_rvuoWV5WwUtUnRgDfscK7273.result: \"Call the createEngineInspector()... getLayerInformation() or getEngineInformation()\"）、trtexec --dumpLayerInfo/--dumpProfile（call_00_QbHmAFOsOi4EAwBgWPL85061.result）；(3) 怎么控制——builder_optimization_level、BuilderFlag、TacticSource、HardwareCompatibilityLevel（call_00_ODGGH98UOcw1NGiFHbKJ0576.result: \"may reduce available tactics per layer, and may prevent some fusions\"）及精度/结构约束；CUDA 侧手动融合/torch.compile/cuda.compute/CUDA Graphs 区分见 call_00_wwz5VzVTRow4JoP0uUTa3423.result。答案同时明确列出未核实项（--exportTimes、FP16/INT8 flag 描述、TRT 11.0 最低 CUDA 版本），未虚构。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": null,
+        "lower": null,
+        "upper": null,
+        "status": "N/A",
+        "reason": "原题为概念/方法解释题（怎么发生、观察、控制），不要求锁定任何库版本、工具链版本或 soc_version。答案虽附版本语境（IBuilderConfig 页 11.3.0、CCCL runtime 接口 CUDA 13.2），但原题无需定版组件，按约定记 N/A。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "TensorRT 文档为 `latest` 主线；Python API 页标注 **11.3.0**；benchmarking 页引用 11.0.0/11.1/11.2.1"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "supported",
+        "reason": "最终答案给出可照抄执行的完整命令与代码：trtexec 命令含全部必要参数，IEngineInspector 的 Python/C++ 代码完整，cuda.compute 示例含 import 与参数，nsys 组合命令完整，且前置条件（构建时 ProfilingVerbosity、debug tensor 需 build 期标记）均已说明。仅需替换模型路径、输入 shape 等用户环境值即可运行；答案自身声明未实际运行（\"未运行\"），不据此升降档。部分控制项（FP16/INT8 flag 精确语义）待补不影响主要操作路径的完整性。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "trtexec --onnx=vit-quantized.onnx \\\n    --shapes=input:128x3x224x224 \\\n    --profilingVerbosity=detailed \\\n    --dumpLayerInfo \\\n    --dumpProfile"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "inspector = engine.create_engine_inspector()\nprint(inspector.get_layer_information(0, LayerInformationFormat.JSON))"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "dca59396ba7f41c3bce2fdd923078df5",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "cc42c33b61eece3490208c7be100c221",
+        "conversationRequestId": "cc42c33b61eece3490208c7be100c221",
+        "agent": "cli"
+      },
+      {
+        "messageId": "dca59396ba7f41c3bce2fdd923078df5",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "cc42c33b61eece3490208c7be100c221",
+        "conversationRequestId": "cc42c33b61eece3490208c7be100c221",
+        "rawUsage": {
+          "prompt_tokens": 31088,
+          "completion_tokens": 2136,
+          "total_tokens": 33224,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1244,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 31088,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1244,
+          "credit": 6.17,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 31088,
+          "outputTokens": 2136,
+          "totalTokens": 33224,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1244
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "7ffb675812df484793a8a74cf9dc6def93e8ec8c12c39c8ea057658397373b5e",
+    "process_sha256": "b9185f2e777dc085c7354ff827669867abcef00366ea4fdc65147596a86381d6",
+    "elapsed_seconds": 34.04,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-d28f2bf0ac474a19b69f9bf3b0dd8c93",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

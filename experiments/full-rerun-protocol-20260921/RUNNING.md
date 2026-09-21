@@ -51,3 +51,13 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Approved exact transcription fixes for DeepSeek G-CUDA and K-CANN, plus negative-conflict list correction. Rules/formula unchanged.
 - reviewer-kimi-j-inventory.json is an UNAPPROVED proposal: must include third-party event 8, preserve known incomplete states and exact substantive quotes before application.
 - All 26 focused tests pass; batch selected collection issues empty. Paper untouched.
+
+
+## 2026-09-21 12:56 continuation
+
+- Valid collection 118/156 (GLM32, DeepSeek52, Kimi34). New I-CANN Kimi125026 successfully replaces invalid111015; all current technical_attention zero. Queues continue Q/R.
+- Assessment72→74; root GLM snapshot9236 and Kimi61977 active, DeepSeek full52 snapshot under Luna.
+- Exact quotation repairs, J-CUDA per-dispatch inventory repair accepted by root (not the reviewer proposal); original third-party and truncation states preserved.
+- Actual M10 content reviews: GLM A-CUDA tuple.name error reproducible with minimal Python; grade3. DeepSeek H-CUDA deployment lacks buffer/runtime setup; grade3. Several original grade5 judgments requiring environment substitution corrected to original grade4. GLM J-CANN M9 conditional bands→grade4. No rubric/formula changes.
+- Independent M11 expanded-polynomial arithmetic check passed all53 then-computable rows; arithmetic-audit.json. Missing source evidence remains missing rather than fabricated.
+- Recent pushed commits f83bd9f,fc9af6b,5eecbd3; pending next review checkpoint. Paper untouched.

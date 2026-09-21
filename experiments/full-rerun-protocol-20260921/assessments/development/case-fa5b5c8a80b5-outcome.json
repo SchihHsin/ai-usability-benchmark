@@ -1,0 +1,209 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "**构建期必须至少创建一个 optimization profile**，为每个动态输入指定 min/opt/max",
+      "answer_event_id": "final",
+      "evidence_id": "WebFetch_1_da457e0b.result",
+      "evidence_quote": "使用运行时维度时，构建期必须至少创建一个 optimization profile",
+      "verification": "source",
+      "reason": "原题要求解释TensorRT/CUDA kernel处理动态shape输入的方法（optimization profile/运行时shape）。TensorRT核心部分（-1标记动态维度、createOptimizationProfile、setDimensions min/opt/max、setOptimizationProfileAsync、setInputShape、IOutputAllocator、多profile切换规则、shape tensor限制）均被三篇官方文档（WebFetch_1、WebFetch_3、WebFetch_4）完整支撑。trtexec参数由WebFetch_6（CSDN）部分支撑，答案诚实标注为二手来源。纯CUDA kernel部分（运行时传入shape参数、grid计算、边界判断、CUDA Graph shape固化问题）无来源支撑，但答案明确标注'无官方单一来源，基于通行做法'，且内容技术正确。主要问题焦点（optimization profile/运行时shape）已被官方来源充分覆盖，故整体判定supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "API `setInputShape`/`enqueueV3`/`setOptimizationProfileAsync` 为 10.x 现行接口；8.5+ 已有 execution/shape tensor 区分弱化。具体发行号（如 10.x.y）本页未给出，未核实确切小版本。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M10: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "trtexec --onnx=model.onnx \\\n  --minShapes=input0:1x3x224x224 \\\n  --optShapes=input0:8x3x640x640 \\\n  --maxShapes=input0:16x3x1280x1280 \\\n  --shapes=input0:4x3x640x640 \\\n  --saveEngine=model.engine --fp16"
+        },
+        {
+          "event_id": "final",
+          "quote": "context.setOptimizationProfileAsync(0, stream);   // stream 必须与后续 enqueueV3 相同\n     context.setInputShape(\"foo\", Dims{3, {3, 150, 250}});"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation",
+      "M10: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-fa5b5c8a80b5",
+  "task_id": "M",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "**构建期必须至少创建一个 optimization profile**，为每个动态输入指定 min/opt/max",
+        "answer_event_id": "final",
+        "evidence_id": "WebFetch_1_da457e0b.result",
+        "evidence_quote": "使用运行时维度时，构建期必须至少创建一个 optimization profile",
+        "verification": "source",
+        "reason": "原题要求解释TensorRT/CUDA kernel处理动态shape输入的方法（optimization profile/运行时shape）。TensorRT核心部分（-1标记动态维度、createOptimizationProfile、setDimensions min/opt/max、setOptimizationProfileAsync、setInputShape、IOutputAllocator、多profile切换规则、shape tensor限制）均被三篇官方文档（WebFetch_1、WebFetch_3、WebFetch_4）完整支撑。trtexec参数由WebFetch_6（CSDN）部分支撑，答案诚实标注为二手来源。纯CUDA kernel部分（运行时传入shape参数、grid计算、边界判断、CUDA Graph shape固化问题）无来源支撑，但答案明确标注'无官方单一来源，基于通行做法'，且内容技术正确。主要问题焦点（optimization profile/运行时shape）已被官方来源充分覆盖，故整体判定supported。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "partially_determined",
+        "reason": "答案标注API为TensorRT 10.x现行接口，识别了'latest'对应10.x线，但未锁定到具体发行号（如10.x.y），且答案自述'具体发行号本页未给出，未核实确切小版本'。部分组件（API适用版本范围）有依据，但未定到具体版本。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "API `setInputShape`/`enqueueV3`/`setOptimizationProfileAsync` 为 10.x 现行接口；8.5+ 已有 execution/shape tensor 区分弱化。具体发行号（如 10.x.y）本页未给出，未核实确切小版本。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "operational",
+        "reason": "答案提供了完整的C++/Python代码片段（profile创建、setDimensions、setOptimizationProfileAsync、setInputShape、IOutputAllocator实现）和完整的trtexec命令行（--minShapes/--optShapes/--maxShapes/--shapes），参数格式、前置条件（必须先设profile再设shape、stream一致性）和注意事项均明确。仅需用户替换张量名、维度值和模型路径即可执行。答案自述'所写代码未实际运行'，但不影响操作完整性评分。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "trtexec --onnx=model.onnx \\\n  --minShapes=input0:1x3x224x224 \\\n  --optShapes=input0:8x3x640x640 \\\n  --maxShapes=input0:16x3x1280x1280 \\\n  --shapes=input0:4x3x640x640 \\\n  --saveEngine=model.engine --fp16"
+          },
+          {
+            "event_id": "final",
+            "quote": "context.setOptimizationProfileAsync(0, stream);   // stream 必须与后续 enqueueV3 相同\n     context.setInputShape(\"foo\", Dims{3, {3, 150, 250}});"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "cd0c1f9ad9b44cadad7c01023af6a7f9",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "9dab9ef2ca66908ccc84db3691d1892e",
+        "conversationRequestId": "9dab9ef2ca66908ccc84db3691d1892e",
+        "agent": "cli"
+      },
+      {
+        "messageId": "cd0c1f9ad9b44cadad7c01023af6a7f9",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "9dab9ef2ca66908ccc84db3691d1892e",
+        "conversationRequestId": "9dab9ef2ca66908ccc84db3691d1892e",
+        "rawUsage": {
+          "prompt_tokens": 19205,
+          "completion_tokens": 3262,
+          "total_tokens": 22467,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 2462,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 16197,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 2462,
+          "credit": 4.54,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19205,
+          "outputTokens": 3262,
+          "totalTokens": 22467,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 2462
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "4a30d25315c6140aaf652e0502b5ff2f5cc82cdd67f5c1d979dc66624074dcc4",
+    "process_sha256": "91925e6f35dc09994bd9389c33a8d12e49a958fe82353ce3dae3629b86b7c649",
+    "elapsed_seconds": 50.65,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-82622ddbaae64d33a6bc34e6d3a64c59",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}
