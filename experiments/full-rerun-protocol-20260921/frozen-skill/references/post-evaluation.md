@@ -15,7 +15,7 @@
 | M9/M10 | 直接引用最终答案，版本与操作分别评价，实际运行状态另记 |
 | M11 | 输入M1—M8有据且适用时按百分制公式计算；未知状态分别列出 |
 
-状态：scored（已评分）、not_assessed（尚未评价）、insufficient_evidence（评价过但证据不足）、not_applicable（不适用）、blocked（有证据的渠道受阻）。not_assessed不能写成insufficient_evidence。渠道受阻的综合处理须单独核对，不把受阻的M3改造为1分；本计算器对缺项暂拒绝产出点值，防止静默补0。
+状态：scored（已评分）、not_assessed（尚未评价）、insufficient_evidence（评价过但证据不足）、not_applicable（不适用）、blocked（有证据的渠道受阻）。not_assessed不能写成insufficient_evidence。渠道受阻的综合处理须单独核对，不把受阻的M3改造为1分；本计算器对已复核不可用渠道置零，对有据区间传播上下界，M4不适用时版本因子中性；尚未评价或日志缺失仍列明缺项。详见execution-checks.md。
 
 不强制新增模型运行才能后评；优先复用现有原始返回。需要独立全文参照时单独标明它是事后核查，不计入Agent本轮获取成功。没有完整核验就报告具体未完成工作，不声称新版已全面验证。
 

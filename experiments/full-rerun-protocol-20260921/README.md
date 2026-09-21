@@ -4,7 +4,7 @@
 
 使用本目录tasks.json、protocol.json、frozen-skill与runner.py，不能读取旧结论。先运行prepare_assessment.py生成后评输入，再assess.py执行带门禁的后评。协议与评分范围在新采集前固定；旧18次结果不回写。
 
-M2未知完整性、M6无第三方来源及Z不适用可合法导致M11缺失；修复流程不等于补齐所有点分。原公式与五档保持不变。
+M2区间产生M11区间；已确认无支撑渠道记0；Z版本不适用时版本因子中性。未完成评价仍须列明缺项。原公式与五档保持不变。
 
 ## 核验与复用
 
@@ -18,4 +18,4 @@ python3 validate_preparation.py
 
 validation-input只为复用旧日志验证，不能作为新采集结果。后评新批次时用默认runs目录重新生成assessment-input。validation.json记录18份旧日志解析和156个计划组合的预检，live_model_runs=0。
 
-正式安装的Skill仍保留旧版本；全量批次必须显式指定本目录frozen-skill，不能使用默认安装入口。已确认五档和M11公式逐字保留于references/rules.md；仅追加execution-checks.md和机器检查。约束语义、来源主体判定仍须内容复核，自动门禁并不保证评分正确。
+正式安装的Skill仍保留旧版本；全量批次必须显式指定本目录frozen-skill，不能使用默认安装入口。已确认五档、M11公式及系数保留；M11缺失/区间处理更新见execution-checks.md。约束语义、来源主体判定仍须内容复核，自动门禁并不保证评分正确。

@@ -171,8 +171,8 @@ def export_fit(split):
         if any(x.get('status') not in ('supported','absent','contradicted','unverified') for x in req):bad.append('invalid outcome status')
         if bad:
             excluded.append({'case':case,'reason':'; '.join(bad)});continue
-        low=sum(x['status']=='supported' for x in req)/6
-        high=sum(x['status'] in ('supported','unverified') for x in req)/6
+        low=sum(x['status']=='supported' for x in req)/len(req)
+        high=sum(x['status'] in ('supported','unverified') for x in req)/len(req)
         rows.append({'case':case,'group':item['task_id'],'split':split,'budget':item['budget'],'ecosystem':item['ecosystem'],'input_intervals':intervals,'outcome_interval':[low,high]})
         provenance.append({'case':case,'predictors':pp.name,'outcome':op.name,'predictors_sha256':hashlib.sha256(pp.read_bytes()).hexdigest(),'outcome_sha256':hashlib.sha256(op.read_bytes()).hexdigest(),'process_sha256':item['metadata']['process_sha256']})
     for name,value in [(f'{split}-data.json',rows),(f'{split}-data-exclusions.json',excluded),(f'{split}-data-provenance.json',provenance)]:

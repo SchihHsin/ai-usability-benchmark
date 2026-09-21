@@ -1,4 +1,5 @@
-import unittest,copy,json,importlib.util
+import unittest,copy,json,importlib.util,tempfile
+import runner
 from pathlib import Path
 from assessment_gate import check
 ROOT=Path(__file__).resolve().parent
@@ -26,7 +27,24 @@ class Checks(unittest.TestCase):
  def test_na_and_empty_final_citation(self):
   i,v=self.fixture();v={'m9_m10':[{'id':'M9','score':5,'status':'scored','evidence':[]},{'id':'M10','score':5,'status':'scored','evidence':[]}]};i['applicability']['M9']['applicable']=False;r=check(v,i,'outcome');self.assertEqual(r['m9_m10'][0]['status'],'not_applicable');self.assertIsNone(r['m9_m10'][1]['score'])
  def test_m11_no_imputation(self):
-  m={f'M{i}':{'score':5,'status':'scored'} for i in range(1,9)};self.assertEqual(overall.calculate(m)['score'],100);m['M4'].update(score=None,status='not_applicable');self.assertIsNone(overall.calculate(m)['score']);self.assertEqual(overall.calculate(m)['missing_inputs'][0]['metric'],'M4')
+  m={f'M{i}':{'score':5,'status':'scored'} for i in range(1,9)};self.assertEqual(overall.calculate(m)['score'],100);m['M4'].update(score=None,status='not_applicable');self.assertEqual(overall.calculate(m)['score'],100);m['M8'].update(score=None,status='not_assessed');self.assertIsNone(overall.calculate(m)['score'])
+ def test_m11_interval_and_unavailable_channel(self):
+  m={f'M{i}':{'score':4,'status':'scored'} for i in range(1,9)}
+  m['M2']={'status':'bounded','lower':4,'upper':5};r=overall.calculate(m);self.assertLess(r['lower'],r['upper'])
+  m['M3']={'status':'blocked','score':None};r=overall.calculate(m,{'official':{'status':'confirmed_unavailable','reason':'所有官方目标均无正文，已复核','evidence':['event-1']}});self.assertIsNotNone(r['score'])
+  with self.assertRaises(ValueError):overall.calculate(m,{'official':{'status':'confirmed_unavailable'}})
+ def test_budget_denied_without_tool_id(self):
+  class Log:
+   def dispatch(self,*args):raise AssertionError('denied call dispatched')
+   def finish(self,*args):self.status=args[3]
+  with tempfile.TemporaryDirectory() as tmp:
+   d=Path(tmp);ledger=d/'budget';ledger.write_text(json.dumps({'seq':1,'allowed':False,'tool_name':'WebFetch','tool_input':{'url':'u'}})+'\n');log=Log();a=runner.Adapter(d,d,log,ledger);a.requests['id']={'name':'WebFetch','input':{'url':'u'}};a._finish_result({'tool_use_id':'id','content':'denied'},{});self.assertEqual(log.status,'not_dispatched');self.assertFalse(a.errors)
+ def test_budget_ambiguous_fails_closed(self):
+  class Log:
+   def dispatch(self,*args):raise AssertionError('unknown call dispatched')
+   def finish(self,*args):self.status=args[3]
+  with tempfile.TemporaryDirectory() as tmp:
+   d=Path(tmp);ledger=d/'budget';ledger.write_text('');log=Log();a=runner.Adapter(d,d,log,ledger);a.requests['id']={'name':'WebFetch','input':{}};a._finish_result({'tool_use_id':'id','content':'x'},{});self.assertEqual(log.status,'not_dispatched');self.assertTrue(a.errors)
  def test_all_tasks_scoped_and_original_questions(self):
   t=json.loads((ROOT/'tasks.json').read_text())['tasks'];self.assertEqual(len(t),26)
   for key,v in t.items():

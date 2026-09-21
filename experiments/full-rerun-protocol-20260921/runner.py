@@ -125,6 +125,7 @@ class Adapter:
         self.dest, self.scratch, self.log = dest, scratch, log
         self.budget_state = budget_state
         self.requests, self.responses = {}, set()
+        self.used_budget_rows = set()
         self.texts, self.prior_texts, self.models, self.errors = [], [], set(), []
         self.first_tool_id = None
         self.result = None
@@ -184,12 +185,16 @@ class Adapter:
             return
         body = block.get('content', block.get('result', ''))
         body_text = text_content(body)
-        denied = False
+        denied = True
         try:
-            from scripts.budget_hook import rejection_for
-            denied = rejection_for(self.budget_state, ident) is not None
+            rows = [json.loads(line) for line in self.budget_state.read_text().splitlines() if line.strip()]
+            matches = [r for r in rows if r.get('tool_use_id') == ident]
+            if not matches:
+                matches = [r for r in rows if not r.get('tool_use_id') and r.get('seq') not in self.used_budget_rows and r.get('tool_name') == req.get('name') and r.get('tool_input') == req.get('input', {})]
+            if len(matches) != 1: raise ValueError('budget row match not unique: '+ident)
+            row = matches[0]; self.used_budget_rows.add(row['seq']); denied = not row['allowed']
         except Exception as exc:
-            self.errors.append('budget_rejection_lookup:' + repr(exc))
+            self.errors.append('budget_dispatch_lookup:' + repr(exc))
         if not denied:
             self.log.dispatch(self.dest, ident)
         payload = self.scratch / f'tool-{len(self.responses)+1:05}.txt'
@@ -199,7 +204,7 @@ class Adapter:
                         {'client_timestamp': event.get('__timestamp'),
                          'original_blocks': body,
                          'client_tool_meta': block.get('_meta', {}),
-                         'dispatch_evidence': ('hook refusal matched tool_use_id' if denied
+                         'dispatch_evidence': ('hook refusal matched unique ledger row' if denied
                                                else 'matched tool result; exact dispatch time not exposed'),
                          'representation': 'model_visible_text; raw HTML availability follows tool return'})
         self.responses.add(ident)
@@ -300,12 +305,13 @@ def one_run(args, task_id, ecosystem, budget_name, model_arg):
         final = adapter.result.get('result', '') if adapter.result else '\n'.join(adapter.texts)
         answer = scratch / 'answer.txt'; answer.write_text(str(final), encoding='utf-8')
         if adapter.result and adapter.result.get('is_error'): reason = 'client_error'
+        if not adapter.result: reason = 'missing_client_result'
         log.end_run(dest, answer, reason)
         value = log.metric_template(log.events(dest))
         value['rubric_version'] = metadata['rubric_version']
         value['assessor'] = {'id': 'post-run-required', 'method': 'automatic_template_pending_review'}
         value['limitations'] = ['运行完成后须按冻结规则独立后评；本运行器不计算正式分数。']
-        value['execution'] = {'exit_code': code, 'models': sorted(adapter.models), 'adapter_errors': adapter.errors,
+        value['execution'] = {'exit_code': code, 'stop_reason': reason, 'models': sorted(adapter.models), 'adapter_errors': adapter.errors,
                               'requests': len(adapter.requests), 'returned_results': len(adapter.responses),
                               'budget': budget, 'model_requested': model}
         log.save_evaluation(dest, value)
