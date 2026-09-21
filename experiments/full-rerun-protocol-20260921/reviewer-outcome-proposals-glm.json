@@ -1,0 +1,42 @@
+[
+  {
+    "case": "case-588056f170bb",
+    "field": "requirements[1].answer_quote",
+    "event_id": "run-end",
+    "original": "CANN 8.5.0 及以后（含 9.x，如 CANN 9.1.0）：source /usr/local/Ascend/cann/set_env.sh；CANN 8.5.0 之前：source /usr/local/Ascend/ascend-toolkit/set_env.sh",
+    "replacement": "**关键版本差异：CANN 8.5.0 起安装目录名由 `ascend-toolkit` 改为 `cann`。**\n\nCANN 8.5.0 及以后（含 9.x，如 CANN 9.1.0）：\n\n```bash\n# root 用户安装（默认 /usr/local/Ascend）：\nsource /usr/local/Ascend/cann/set_env.sh\n\n# 非 root 用户安装（默认 $HOME/Ascend）：\nsource ${HOME}/Ascend/cann/set_env.sh\n```\n\nCANN 8.5.0 之前（如 8.2.RC1、7.x、6.x）：\n\n```bash\n# root 用户安装：\nsource /usr/local/Ascend/ascend-toolkit/set_env.sh\n\n# 非 root 用户安装：\nsource ${HOME}/Ascend/ascend-toolkit/set_env.sh\n# 官方 samples 文档中的等价写法：. $HOME/Ascend/ascend-toolkit/set_env.sh\n```\n\n若装的是 nnrt 推理包而非 toolkit：`. $HOME/Ascend/nnrt/set_env.sh`。\n若装了 NNAL ATB 加速库（root）：`source /usr/local/Ascend/nnal/atb/set_env.sh`；SiP 加速库：`source /usr/local/Ascend/nnal/asdsip/set_env.sh`。\n",
+    "basis": "assessment-input final exact continuous span; retains version split, root/non-root commands, and legacy equivalent"
+  },
+  {
+    "case": "case-588056f170bb",
+    "field": "m9_m10[M9].evidence[0].quote",
+    "event_id": "call_217331a005e1433c92958c44.result",
+    "original": "CANN 8.5.0+ 目录名为 `cann`，8.5.0 前为 `ascend-toolkit`",
+    "replacement": "CANN 8.5.0+ 目录名为 `cann`，8.5.0 前为 `ascend-toolkit`。按优先级查找：",
+    "basis": "source exact span; includes the sentence and its following search instruction"
+  },
+  {
+    "case": "case-588056f170bb",
+    "field": "m9_m10[M10].evidence[0].quote",
+    "event_id": "call_3e13a745f21c4c1891a79af6.result",
+    "original": "用户也可以通过修改 **~/.bashrc** 文件方式设置永久环境变量",
+    "replacement": "### 4. 持久化（写入 ~/.bashrc）\n\n```bash\nvi ~/.bashrc   # 最后一行添加 source /usr/local/Ascend/cann/set_env.sh\n# :wq! 保存退出\nsource ~/.bashrc",
+    "basis": "final exact continuous span; preserves persistent ~/.bashrc procedure"
+  },
+  {
+    "case": "case-75590c766a78",
+    "field": "requirements[1].answer_quote",
+    "event_id": "run-end",
+    "original": "（待新评估器给出原引文）",
+    "replacement": "`device-side assert triggered` 表示某个 CUDA kernel 内部的 `assert()` 失败（在 PyTorch 中绝大多数是索引越界：`cross_entropy` 的 target ≥ num_classes、`embedding`/`gather`/`scatter`/`index_select` 索引越界或为负）。由于 CUDA kernel 异步执行，错误在之后的某个同步点才被上报，所以 Python traceback 指向的往往不是真正出错的行。PyTorch 官方源码（`c10/cuda/CUDAException.cpp` 的 `c10_cuda_check_implementation`）就是在这个检查点拼接错误信息并检查 device 断言缓存的。\n\n## 定位方法（按推荐顺序）\n\n### 1. 先开同步执行，让栈指对行（NVIDIA 官方）\n\n```bash\nCUDA_LAUNCH_BLOCKING=1 python train.py\n```\n\nNVIDIA CUDA Programming Guide 附录 5.2.3.1 原文：该变量\"specifies whether to disable or enable asynchronous kernel launches… This allows CUDA API errors to be observed at the exact API call that triggered them, rather than later in the execution.\"（取值 `1` 禁用异步，默认 `0`；会变慢，仅用于调试）。",
+    "basis": "final exact continuous span; candidate for E-cuda debugging answer, preserves synchronization method and official-source rationale"
+  },
+  {
+    "case": "case-f2b192d8a946",
+    "field": "requirements[1].answer_quote",
+    "event_id": "run-end",
+    "original": "（待新评估器给出原引文）",
+    "replacement": "每个进程绑定一张 GPU，然后初始化进程组，后端选 `nccl`：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\n# torchrun 会注入 LOCAL_RANK 等环境变量\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\ntorch.cuda.set_device(local_rank)   # 防止所有进程挤占 GPU:0 导致挂起/显存暴涨\n\n# torchrun 已注入 MASTER_ADDR/MASTER_PORT/RANK/WORLD_SIZE，init_method 默认 env://\ndist.init_process_group(backend=\"nccl\")\n\nmodel = model.to(local_rank)\nmodel = DDP(model, device_ids=[local_rank], output_device=local_rank)",
+    "basis": "final exact continuous span; candidate for F-cuda initialization answer, preserves NCCL setup and DDP binding code"
+  }
+]

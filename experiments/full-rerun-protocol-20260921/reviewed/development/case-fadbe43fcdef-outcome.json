@@ -1,0 +1,210 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "是的：**要装 NVIDIA Container Toolkit，且运行时要加 `--gpus`**（Docker ≥ 19.03 时用 `docker run --gpus all`；老时代的 `nvidia-docker` 包装器命令已过时，仅 Docker ≤ 19.02 才需要）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_a8356c17cf764d27adc4c480.result",
+      "evidence_quote": "If you have **Docker 19.03 or later**, a typical command to launch the container is: docker run --gpus all -it --rm -v local_dir:container_dir nvcr.io/nvidia/pytorch:-py3",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题各子要求均有对应且相互一致的官方证据：(1) 是否要装 nvidia-container-toolkit——官方安装指南给出完整 apt/dnf/zypper 安装与 nvidia-ctk runtime configure 配置步骤（call_34222d736f4b4fc6a21d9ec9.result: 'sudo nvidia-ctk runtime configure --runtime=docker'），答案结论'要装'与之相符；(2) 是否加 --gpus——running.html 明确 Docker 19.03+ 用 'docker run --gpus all'，旧命令 nvidia-docker run 仅限 Docker 19.02 及更早，答案的版本区分与来源逐字一致；(3) NGC 镜像运行——catalog 页给出具体 tag '26.08-py3' 与运行命令 'docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:xx.xx-py3'，答案采用 26.08-py3 并保留 -v 挂载、--ipc=host 建议（running.html: 'increase the shared memory size ... --ipc=host'）。答案还如实标注了无法核实处（docker login 必要性、tag 列表截断），无与证据矛盾的内容。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "关键组件中：NVIDIA Container Toolkit 给出有依据的具体版本 1.20.1-1（官方文档示例固定，且答案说明'官方文档示例固定的版本，实际仓库最新版可能更新'，属有依据范围）；NGC PyTorch 镜像给出具体 tag 26.08-py3（catalog 页标注 Latest）。但 Docker 仅给出适用范围（≥19.03），宿主 NVIDIA 驱动版本未定（只说需已安装驱动），按'所有所需组件均给出有依据的适用范围，但至少一项尚未定到具体版本'评 4。原题未指定驱动/Docker 具体版本，故不视为技术错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.20.1-1"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "docker pull nvcr.io/nvidia/pytorch:26.08-py3      # 当前最新 tag（26.08-py3）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "Docker ≥ 19.03 时用 `docker run --gpus all`"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案提供完整可照抄的命令链：前置依赖（驱动、Docker）、apt 仓库配置与 toolkit 安装、nvidia-ctk runtime configure + systemctl restart docker、docker pull 具体 tag、docker run --gpus all 交互/非交互两种形式、验证命令 python -c 'import torch; print(torch.cuda.is_available())'，并覆盖 --ipc=host、rootless 等前提。唯一需用户替换的是明确标识的挂载路径 local_dir:container_dir（属'明确标识且有说明的用户环境参数'），无需修正任何内容错误，故评 4 而非 5（5 要求无需任何替换）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "sudo nvidia-ctk runtime configure --runtime=docker   # 会修改 /etc/docker/daemon.json"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "docker run --gpus all -it --rm -v local_dir:container_dir nvcr.io/nvidia/pytorch:26.08-py3"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "python -c \"import torch; print(torch.cuda.is_available())\"   # 期望输出 True"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_a8356c17cf764d27adc4c480.result",
+          "quote": "If you have **Docker 19.03 or later**, a typical command to launch the container is: docker run --gpus all -it --rm -v local_dir:container_dir nvcr.io/nvidia/pytorch:-py3"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-fadbe43fcdef",
+  "task_id": "K",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "3020e847d2044d53ae82086336d0ca07",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "1bb65d5b5f1af739ce2a6315db3ebe94",
+        "conversationRequestId": "1bb65d5b5f1af739ce2a6315db3ebe94",
+        "agent": "cli"
+      },
+      {
+        "messageId": "3020e847d2044d53ae82086336d0ca07",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "1bb65d5b5f1af739ce2a6315db3ebe94",
+        "conversationRequestId": "1bb65d5b5f1af739ce2a6315db3ebe94",
+        "rawUsage": {
+          "prompt_tokens": 14160,
+          "completion_tokens": 1610,
+          "total_tokens": 15770,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 567,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 11152,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 567,
+          "credit": 2.81,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 14160,
+          "outputTokens": 1610,
+          "totalTokens": 15770,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 567
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "2320564e819905f46391002ecdc6a159c3d28dfde72c3f8a6ce19432b6ddaf83",
+    "process_sha256": "e2921d4d4810ff10b07ec1e99396940d47ae75058fbc01d852b8dba28290132a",
+    "elapsed_seconds": 36.09,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-70060fb7ec4a4af9b38e05bd0de4ce97",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-fadbe43fcdef-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

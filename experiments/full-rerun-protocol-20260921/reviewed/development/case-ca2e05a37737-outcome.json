@@ -1,0 +1,176 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "python3 msaccucmp.py compare -m my_dump_path -g golden_dump_path \\\n  -f fusion_rule_file [-cf close_fusion_rule_file] [-q quant_fusion_rule_file] \\\n  [-out output] [-alg 0,1,8] [-r start,end,step | -s 1,2,3] \\\n  [-overflow_detection] [-max max_bytes]",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_d989d682.result",
+      "evidence_quote": "python3 msaccucmp.py compare -m my_dump_path -g golden_dump_path [-f fusion_rule_file] [-cf close_fusion_rule_file] [-q quant_fusion_rule_file] [-out output] [-map] [-c custom_script_path] [-alg algorithm] [-v version] [-r range] [-overflow_detection] [-max]",
+      "verification": "source",
+      "reason": "原题各子要求均有来源支撑：(1) dump获取——acl.json配置（dump_list/dump_path/dump_mode取值input/output/all、dump_op_switch、单算子仅aclmdlSetDump）逐字对应WebFetch_4（CANN 6.2.RC1官方页'准备离线模型dump数据文件'），落盘路径time/deviceid/model_name/model_id/data_index与不产生dump的算子说明亦一致；(2) golden准备——npy命名'{op_name}.{output_index}.{timestamp}.npy'对应WebFetch_2（CANN 8.2.RC1官方页数据格式要求）；(3) 整网与单算子比对命令及参数（-m/-g/-f/-cf/-q/-alg/-r/-s/-overflow_detection/-op/-o/-i/-n）对应WebFetch_1（CANN 8.0.RC3官方页命令格式说明），-alg 0-9算法表、fp16溢出阈值65504、topn范围[1,10000]默认20、单算子结果文件名均与来源一致；(4) 结果解读与定位——NPUDump/GroundTruth/DataType/Overflow/CompareFailReason/IsPrecisionError等字段、精度阈值表（CosineSimilarity>0.99等）及'先看整网输出是否达标'的分析顺序对应WebFetch_7（msprobe文档，其自述'比对结果的含义与基础精度比对工具完全相同'）；(5) 版本依据与未核实处（16_0064未抓取、16_0035仅返回标题）已在答案中明示。命令为内容核查未实际运行，不构成否定。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "各组件均锚定到有依据的具体CANN版本：命令格式定版CANN社区版8.0.RC3，数据命名规则核对自8.2.RC1且自述'两版一致'，dump获取步骤取自商用版6.2.RC1，结果阈值引用msprobe 1.0。但整体工作流跨三个CANN版本，且答案自述'未逐一核对所有小版本差异'，用户实际环境版本未确定，未锁定到单一确切版本的完整配套关系，故评4而非5。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "命令格式以 CANN 社区版 8.0.RC3 文档为准；数据命名规则核对自 CANN 社区版 8.2.RC1 文档，两版一致；dump 获取步骤取自 CANN 商用版 6.2.RC1 文档。不同 CANN 版本文档章节结构有差异（8.2 起归入\"精度调试工具/ModelAccuracyAnalyzer\"），未逐一核对所有小版本差异。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "结果字段与阈值引用自 MindStudio Probe (msprobe) 1.0 文档，其明确说明字段含义与基础精度比对工具完全相同"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "操作指导完整：整网与单算子msaccucmp命令均给出完整命令行（必选/可选参数、互斥关系、默认值、输出文件名），工具绝对路径给出，acl.json给出可照抄的完整JSON示例及字段说明，-op算子名与-o/-i Index的获取方式明确说明。仅需替换my_dump_path、golden_dump_path、fusion_rule_file、op_name、model_name等明确标识的用户环境参数即可执行。golden生成（GPU/CPU跑原始网络保存npy）与dump接口接入（aclInit/aclmdlSetDump）依赖用户自身网络与工程结构，但命名规则与放置目录已明确，且用户原题中已有标杆与运行中的算子；无需修正内容错误。答案自述'命令均为内容核查，未实际运行'，按内容核查评定，不影响分档。评4。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "工具位置：`$HOME/Ascend/ascend-toolkit/latest/tools/operator_cmp/compare/msaccucmp.py`"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "python3 msaccucmp.py compare -m my_dump_path -g golden_dump_path \\\n  -f fusion_rule_file -op <op_name> [-o index | -i index] \\\n  [-n topn] [-out output]"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "在 GPU/CPU 上用原始网络（Caffe/TF/ONNX）跑同一输入，保存 npy，命名规则 `{op_name}.{output_index}.{timestamp}.npy`，放到同一父目录。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "`-o`/`-i` 指定 output/input 的 Index（取自 csv 的 TensorIndex，如 `trans_Cast_0:input:0` → 0），默认比对 output index 0"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-ca2e05a37737",
+  "task_id": "L",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "ad71d8a159dd426aa5f921edba7f87ed",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "664ed8bfa432faa267e1cf4bb89014f6",
+        "conversationRequestId": "664ed8bfa432faa267e1cf4bb89014f6",
+        "agent": "cli"
+      },
+      {
+        "messageId": "ad71d8a159dd426aa5f921edba7f87ed",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "664ed8bfa432faa267e1cf4bb89014f6",
+        "conversationRequestId": "664ed8bfa432faa267e1cf4bb89014f6",
+        "rawUsage": {
+          "prompt_tokens": 19287,
+          "completion_tokens": 7892,
+          "total_tokens": 27179,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 6506,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 19287,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 6506,
+          "credit": 7.51,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19287,
+          "outputTokens": 7892,
+          "totalTokens": 27179,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 6506
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "637e1cfe0617edeb3e846c8880fca18870d8a9b9a7d027f3364dd11a0e45b4e0",
+    "process_sha256": "847d2484983001be6dcc7d43a5500cf89c17c8c751664a293d3e9c60d741506d",
+    "elapsed_seconds": 119.54,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-253b3cc1a7044a14b531e510c515136f",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-ca2e05a37737-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

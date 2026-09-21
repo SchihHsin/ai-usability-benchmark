@@ -41,3 +41,13 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Root continues assessment snapshots (Kimi session37201; GLM79898; DeepSeek45262 plus worker full52 snapshot).
 - Reviewed quote, repeated-fetch inventory and semantic version corrections remain in reviewed-*-corrections.json. M6 F-CANN GLM=3 from explicit claim-to-official-source review; I-CUDA GLM M4=3 because shared CUDA compatibility does not establish PyTorch/cuDNN ABI compatibility.
 - Protocol and formula unchanged. Paper untouched. No final completeness claim.
+
+
+## 2026-09-21 12:35 continuation
+
+- Valid collection 108/156: DeepSeek 52, GLM 27, Kimi 29. Assessment 62; gate passed 56; quote-clean 39. No claim of full completion.
+- GLM N-CANN first 600s timeout retained; same-protocol retry 123059 active under Luna controller 80013. Kimi queue remains active; invalid I-CANN must be recollected after queue.
+- Root GLM assessment snapshot session 9236 active; Kimi 37201 and DeepSeek full snapshot managed by Luna.
+- Approved exact transcription fixes for DeepSeek G-CUDA and K-CANN, plus negative-conflict list correction. Rules/formula unchanged.
+- reviewer-kimi-j-inventory.json is an UNAPPROVED proposal: must include third-party event 8, preserve known incomplete states and exact substantive quotes before application.
+- All 26 focused tests pass; batch selected collection issues empty. Paper untouched.
