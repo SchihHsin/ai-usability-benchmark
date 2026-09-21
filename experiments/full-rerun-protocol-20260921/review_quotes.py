@@ -41,6 +41,11 @@ for run in (R/'runs').iterdir():
        for ev in val:
         if isinstance(ev,dict) and 'event_id' not in ev and isinstance(ev.get('quote'),str) and ev['quote'] in texts[x['event_id']]:
          ev['event_id']=x['event_id'];repairs.append({'field':evidence_key,'basis':'verbatim quote matched to parent document event'})
+    if isinstance(x.get('quote'),str) and len(x['quote'])>=20 and x['quote'] not in texts.get(x.get('event_id'),''):
+     matches=[eid for eid,txt in texts.items() if eid!='run-end' and x['quote'] in txt]
+     if len(matches)==1:
+      repairs.append({'original_event_id':x.get('event_id'),'replacement_event_id':matches[0],'quote':x['quote'],'basis':'unchanged exact quote occurs in one and only one captured evidence event'})
+      x['event_id']=matches[0]
     if isinstance(x.get('quote'),str) and x.get('event_id') in texts:
      q=x['quote'];source=texts[x['event_id']]
      if q not in source:
