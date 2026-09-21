@@ -71,3 +71,13 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Root restored exact DeepSeek N-CUDA/O-CANN source and final spans; no rule/score change. 28 focused tests pass.
 - paired_summary.py now uses exactly25 tasks excludingG, per-model both-side gate+quote checks, explicit exclusion reasons and source run IDs, cross-endpoint difference bounds. Synthetic denominator/difference/exclusion checks passed. No fitting or inferential claims.
 - Latest preceding push e0b861e verified. Paper and installed skill untouched. Continue through156 and postassessment.
+
+
+## 2026-09-21 13:45 continuation
+
+- Collection136/156 (GLM41, DeepSeek52, Kimi43) last snapshot. GLM U-CUDA, Kimi V sequence active. Keep same Luna collectors; DeepSeek assessor full snapshot/retry still active.
+- Root GLM assessor19523 ended, replaced by67275; Kimi60105 active (recent34f predictors and1a4 outcome technical errors require bounded retries when snapshot ends).
+- Latest consolidated100 assessed,92 gate pass,85 quote-clean; subsequent exact-span corrections pending next pipeline. No final completion claim.
+- Root verified many exact source/final/prior restorations. Reject reviewer substitutions of final for M7 prior and source for answer_quote; decisions recorded reviewer-proposal-decisions-1332.json. Do not auto-apply reviewer proposals.
+- GLM P-CANN repository-migration notice explicitly not version conflict removed from unresolved_conflicts; original record retained. M4 unchanged. GLM J/M/O per-return evidence corrected. GLM N/R official search metadata registered with processSHA, not body credit. DeepSeek O per-return quotes restored. Kimi M-CANN erroneous WebFetch1 reference corrected to actual WebSearch1 official PDF URL metadata, not PDF acquisition.
+- Latest pushed1c5d786 verified. Further corrections after this commit need push. Installed skill/paper unchanged. Continue156 collection+all possible assessments; no fitting.

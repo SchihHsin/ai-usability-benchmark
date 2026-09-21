@@ -773,6 +773,1259 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T05:42:18.468601+00:00",
+      "process_sha256": "e51d6065803dd2c3da9b6ea71583f4e0bf59a1fdd5c0cb4bae0cc25a8b56d157",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "逐元素定位第一个不一致点…逐层/逐子算子分解（二分定位）…torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_c85552f8.result",
+            "evidence_quote": "torch.testing.assert_close(*actual*, *expected*, ***, *allow_subclasses=True*, *rtol=None*, *atol=None*, *equal_nan=False*, *check_device=True*, *check_dtype=True*, *check_layout=True*, *check_stride=False*, *msg=None*)",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求定位自定义CUDA算子与CPU/PyTorch参考不一致的数值精度问题（逐层/逐元素比对）。答案完整覆盖各子方面：(1) 容差比对接口 assert_close 的签名、判据 |actual-expected| ≤ atol + rtol·|expected| 与默认容差表均被 WebFetch_2 官方文档逐字证实；(2) 逐元素定位：isclose/mask/nonzero 找第一个不一致点并给出错误分布定性模式；(3) 逐层分解：复合算子按子步骤拷回中间结果与 PyTorch 原语逐段比对（二分定位）；(4) GPU 特有陷阱（TF32、FP16/BF16 reduced precision reduction、确定性、归约顺序、溢出）被 WebFetch_5 官方 numerical_accuracy 文档证实（如 'only the first 10 bits of the input mantissa are read'、'disabled for matrix multiplications and enabled for convolutions'）；(5) bug 类问题用 compute-sanitizer 四子工具，被 WebFetch_3 证实（memcheck/racecheck/initcheck/synccheck 功能及用法）。逐元素与逐层比对方法均有据可查，判定 supported。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-23"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方PyTorch文档（官方镜像pytorch.ac.cn的torch.testing文档），第3条为docs.pytorch.org本站。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_49c00cc0.result",
+                "quote": "1. [torch.testing — PyTorch 2.3 文档 - PyTorch 框架](https://pytorch.ac.cn/docs/2.3/testing.html)"
+              },
+              {
+                "event_id": "WebSearch_0_49c00cc0.result",
+                "quote": "3. [torch.testing — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/testing.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.333333333333333,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "原始网页内容在文末\"Compute Sanitizer Tool Examples → Example Use of Memcheck → memcheck_demo Output with Memcheck (Release Build)\"一节中途被截断"
+              },
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "For a per-shape characterization of the MI300 vs NVIDIA-TF32 numerical gap, see https://github.com/jeffdaily/tf32_analysis."
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "取得正文对原题主流程覆盖充分：assert_close完整签名、各dtype默认rtol/atol表、check_*参数；TF32及fp16/bf16 reduced precision根因与开关；compute-sanitizer四工具用法与错误解读。但逐层/逐算子二分定位的完整操作流程属通用方法，官方文档未给出成体系的分支说明。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "The following table displays the default `rtol` and `atol` for different `dtype`’s."
+              },
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "By default, TF32 tensor cores are disabled for matrix multiplications and enabled for convolutions"
+              },
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "compute-sanitizer --tool racecheck [sanitizer_options] app_name [app_options]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已明确部分适用关系（assert_allclose自1.12弃用改用assert_close；fp32_precision替代allow_tf32），但fp32_precision新接口的最低引入版本及各版本可用性未在取得文档中说明，版本对应关系缺失，不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "`torch.testing.assert_allclose()` is deprecated since `1.12` and will be removed in a future release."
+              },
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "`torch.backends.cuda.matmul.allow_tf32 = True` is going to be deprecated"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "搜索预算内出现4条相关独立第三方来源（CSDN博客），计数为3—4档。bearneck.github.io为PyTorch官方文档镜像，不计入第三方。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_1_bedfeb1e.result",
+                "quote": "4. [NVIDIA Compute Sanitizer工具链解析与CUDA 13实战 ...](https://blog.csdn.net/weixin_42545503/article/details/164818906)"
+              },
+              {
+                "event_id": "WebSearch_1_bedfeb1e.result",
+                "quote": "5. [NVIDIA Compute Sanitizer与NVTX内存API的CUDA调试 ...](https://blog.csdn.net/weixin_42518874/article/details/160452885)"
+              },
+              {
+                "event_id": "WebSearch_4_20f46a56.result",
+                "quote": "2. [PyTorch TF32开关详解：从allow_tf32到精度工程实践-CSDN博客](https://blog.csdn.net/weixin_28224217/article/details/165637747)"
+              },
+              {
+                "event_id": "WebSearch_4_20f46a56.result",
+                "quote": "3. [PyTorch TF32精度开关全解析：原理、默认值与训练推理 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "第三方来源仅以搜索摘要形式出现（未抓取正文），关键说法（如compute-sanitizer插桩机制、TF32开关行为）未见可核验的核对依据，也未发现与官方文档确证的矛盾。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_1_bedfeb1e.result",
+                "quote": "与传统的cuda-gdb相比，Compute Sanitizer的最大优势在于其非侵入式检测机制。"
+              },
+              {
+                "event_id": "WebSearch_4_20f46a56.result",
+                "quote": "PyTorch通过torch.backends.cudnn.allow_tf32和torch.backends.cuda.matmul.allow_tf32两个开关分别控制"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前答案已给出正确完整流程（输入固定、assert_close逐元素比对、逐层二分、TF32/原子加/竞态等根因、compute-sanitizer四子工具）；具体参数与约束部分自认不确定（默认容差表、fp32_precision新API），与事后取得的官方文档核对方向一致。属第4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.backends.cuda.matmul.allow_tf32=False` 关闭"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处**：\n- `torch.testing.assert_close` 各 dtype 的默认 rtol/atol 精确数值表"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "用二分法定位首个发散的子算子"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_49c00cc0.dispatch",
+              "WebSearch_1_bedfeb1e.dispatch",
+              "WebFetch_2_c85552f8.dispatch",
+              "WebFetch_3_d174f34d.dispatch",
+              "WebSearch_4_20f46a56.dispatch",
+              "WebFetch_5_52609888_59f73812.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "status": "已部分定版：PyTorch API 依据 2.14 文档明确；compute-sanitizer 未定到具体 CUDA Toolkit 版本",
+            "reason": "比对接口（torch.testing.assert_close、fp32_precision、reduced_precision_reduction）均锚定 PyTorch 2.14 文档，且答案明确声明 '以上 API 依据 PyTorch 2.14 文档'，该组件有具体版本依据且来源一致；但 compute-sanitizer 组件仅说明 '随 CUDA Toolkit 版本发布，文档页为当前主线版本（文中未标注单一版本号）'，属有依据的适用范围但未定到具体版本。部分组件已定具体版本、其余未定，符合3档。答案未编造版本，未定版处已如实声明。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "**版本说明**：以上 API 依据 PyTorch 2.14 文档；`fp32_precision` 为当前推荐接口，旧 `allow_tf32` 仍可用但将废弃。Compute Sanitizer 随 CUDA Toolkit 版本发布，文档页为当前主线版本（文中未标注单一版本号，个别特性标注 CUDA 11.6/11.7 起支持）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "操作指导完整，仅需替换用户环境参数（自定义算子名、测试脚本、容差值）即可执行",
+            "reason": "答案给出可直接执行的完整命令与代码：compute-sanitizer 四条完整命令行（--tool memcheck/racecheck/initcheck/synccheck python test_op.py）、nvcc 编译选项（-lineinfo/-G/-fdevice-sanitize=memcheck）、CUDA_LAUNCH_BLOCKING=1、Python 比对代码（assert_close 与逐元素定位代码含必要参数与前置条件如 torch.cuda.synchronize()）。容差数值（rtol=1e-5/atol=1e-6）为用户需按 dtype 调整的环境值且答案已说明调整依据（默认容差表）。命令语法与官方文档一致，无需修正内容错误即可执行，仅替换脚本/算子名等环境值，符合4档；未实际运行验证，不据此升降。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "compute-sanitizer --tool memcheck  python test_op.py   # 越界/未对齐访问（默认工具）\ncompute-sanitizer --tool racecheck python test_op.py   # shared memory 数据竞争（WAW/WAR/RAW）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 79.8572544,
+            "upper": 80.54210559999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              79.8,
+              80.6
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 79.8572544,
+          "upper": 80.54210559999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            79.8,
+            80.6
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_49c00cc0.result",
+            "field": "response",
+            "sha256": "4f0512908a663b3b96beadf2e878942d61ef777c131a26fb1711f59bd72ddd7b",
+            "start": 94,
+            "end": 187,
+            "quote": "1. [torch.testing — PyTorch 2.3 文档 - PyTorch 框架](https://pytorch.ac.cn/docs/2.3/testing.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_0_49c00cc0.result",
+            "field": "response",
+            "sha256": "4f0512908a663b3b96beadf2e878942d61ef777c131a26fb1711f59bd72ddd7b",
+            "start": 615,
+            "end": 711,
+            "quote": "3. [torch.testing — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/testing.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 9531,
+            "end": 9536,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_3_d174f34d.result",
+            "field": "response",
+            "sha256": "263da425ff94321d16b8450ff435b4d2138248f739f0c31e46b90113e338223e",
+            "start": 46,
+            "end": 174,
+            "quote": "原始网页内容在文末\"Compute Sanitizer Tool Examples → Example Use of Memcheck → memcheck_demo Output with Memcheck (Release Build)\"一节中途被截断",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 14592,
+            "end": 14715,
+            "quote": "For a per-shape characterization of the MI300 vs NVIDIA-TF32 numerical gap, see https://github.com/jeffdaily/tf32_analysis.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 5932,
+            "end": 6015,
+            "quote": "The following table displays the default `rtol` and `atol` for different `dtype`’s.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 7381,
+            "end": 7479,
+            "quote": "By default, TF32 tensor cores are disabled for matrix multiplications and enabled for convolutions",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_3_d174f34d.result",
+            "field": "response",
+            "sha256": "263da425ff94321d16b8450ff435b4d2138248f739f0c31e46b90113e338223e",
+            "start": 1048,
+            "end": 1125,
+            "quote": "compute-sanitizer --tool racecheck [sanitizer_options] app_name [app_options]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 10497,
+            "end": 10598,
+            "quote": "`torch.testing.assert_allclose()` is deprecated since `1.12` and will be removed in a future release.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 7721,
+            "end": 7793,
+            "quote": "`torch.backends.cuda.matmul.allow_tf32 = True` is going to be deprecated",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_1_bedfeb1e.result",
+            "field": "response",
+            "sha256": "04030ecc2617d91715fe8951838e7631d6eb0b40f565948d06abf0e9eadb5628",
+            "start": 1040,
+            "end": 1153,
+            "quote": "4. [NVIDIA Compute Sanitizer工具链解析与CUDA 13实战 ...](https://blog.csdn.net/weixin_42545503/article/details/164818906)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_1_bedfeb1e.result",
+            "field": "response",
+            "sha256": "04030ecc2617d91715fe8951838e7631d6eb0b40f565948d06abf0e9eadb5628",
+            "start": 1320,
+            "end": 1435,
+            "quote": "5. [NVIDIA Compute Sanitizer与NVTX内存API的CUDA调试 ...](https://blog.csdn.net/weixin_42518874/article/details/160452885)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_4_20f46a56.result",
+            "field": "response",
+            "sha256": "629e03bb0335597b589b0de9e58158a6856e317aa3482d7a2fb4fc4d77f4f195",
+            "start": 397,
+            "end": 509,
+            "quote": "2. [PyTorch TF32开关详解：从allow_tf32到精度工程实践-CSDN博客](https://blog.csdn.net/weixin_28224217/article/details/165637747)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_4_20f46a56.result",
+            "field": "response",
+            "sha256": "629e03bb0335597b589b0de9e58158a6856e317aa3482d7a2fb4fc4d77f4f195",
+            "start": 696,
+            "end": 735,
+            "quote": "3. [PyTorch TF32精度开关全解析：原理、默认值与训练推理 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_1_bedfeb1e.result",
+            "field": "response",
+            "sha256": "04030ecc2617d91715fe8951838e7631d6eb0b40f565948d06abf0e9eadb5628",
+            "start": 1167,
+            "end": 1216,
+            "quote": "与传统的cuda-gdb相比，Compute Sanitizer的最大优势在于其非侵入式检测机制。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_4_20f46a56.result",
+            "field": "response",
+            "sha256": "629e03bb0335597b589b0de9e58158a6856e317aa3482d7a2fb4fc4d77f4f195",
+            "start": 519,
+            "end": 605,
+            "quote": "PyTorch通过torch.backends.cudnn.allow_tf32和torch.backends.cuda.matmul.allow_tf32两个开关分别控制",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0010dd1175659647f6ca3ed5904ccd0f2d91bcc724a89bdea765d1f8c02820f0",
+            "start": 888,
+            "end": 935,
+            "quote": "torch.backends.cuda.matmul.allow_tf32=False` 关闭",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0010dd1175659647f6ca3ed5904ccd0f2d91bcc724a89bdea765d1f8c02820f0",
+            "start": 1220,
+            "end": 1287,
+            "quote": "不确定处**：\\n- `torch.testing.assert_close` 各 dtype 的默认 rtol/atol 精确数值表",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0010dd1175659647f6ca3ed5904ccd0f2d91bcc724a89bdea765d1f8c02820f0",
+            "start": 730,
+            "end": 744,
+            "quote": "用二分法定位首个发散的子算子",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 3977,
+            "end": 4147,
+            "quote": "**版本说明**：以上 API 依据 PyTorch 2.14 文档；`fp32_precision` 为当前推荐接口，旧 `allow_tf32` 仍可用但将废弃。Compute Sanitizer 随 CUDA Toolkit 版本发布，文档页为当前主线版本（文中未标注单一版本号，个别特性标注 CUDA 11.6/11.7 起支持）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 2793,
+            "end": 2953,
+            "quote": "compute-sanitizer --tool memcheck  python test_op.py   # 越界/未对齐访问（默认工具）\ncompute-sanitizer --tool racecheck python test_op.py   # shared memory 数据竞争（WAW/WAR/RAW）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 469,
+            "end": 535,
+            "quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 145,
+            "end": 364,
+            "quote": "torch.testing.assert_close(*actual*, *expected*, ***, *allow_subclasses=True*, *rtol=None*, *atol=None*, *equal_nan=False*, *check_device=True*, *check_dtype=True*, *check_layout=True*, *check_stride=False*, *msg=None*)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a53640d32110-predictors.json": "3cae88aacb1eed0626c8e30efbb6ec6e6b0119c0f986261e0c181f493e08e560",
+          "reviewed/development/case-a53640d32110-outcome.json": "a2b97155772f58e92fc19b52c226c672a07a65a134281992c776ff3a02784ec7",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_c85552f8.result",
+            "url": "https://docs.pytorch.org/docs/2.14/testing.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "[...]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "make_tensor"
+              }
+            ],
+            "reference": "assert_close正文完整，make_tensor参数段有截断标记"
+          },
+          {
+            "event_id": "WebFetch_3_d174f34d.result",
+            "url": "https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "memcheck_demo Output with Memcheck (Release Build)\"一节中途被截断"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "（后续示例输出内容缺失）"
+              }
+            ],
+            "reference": "主体章节完整，工具示例节被截断"
+          },
+          {
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "url": "https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "For a per-shape characterization of the MI300 vs NVIDIA-TF32 numerical gap, see"
+              }
+            ],
+            "boundary_evidence": [],
+            "reference": null
+          }
+        ],
+        "quote_audit": [
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "run-end",
+                "quote": "逐元素定位第一个不一致点…逐层/逐子算子分解（二分定位）…torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 4,
+      "recorded_at": "2026-09-21T05:49:54.891686+00:00",
+      "process_sha256": "e51d6065803dd2c3da9b6ea71583f4e0bf59a1fdd5c0cb4bae0cc25a8b56d157",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\n```\n\n`torch.testing.assert_close(actual, expected, *, rtol=None, atol=None, equal_nan=False, check_device=True, check_dtype=True, check_stride=False, msg=None)`，判据为 `|actual-expected| ≤ atol + rtol·|expected|`（https://docs.pytorch.org/docs/2.14/testing.html）。默认容差表：float32 rtol=1.3e-6/atol=1e-5，float16 rtol=1e-3/atol=1e-5，bfloat16 rtol=1.6e-2/atol=1e-5，float64 rtol=1e-7/atol=1e-7。失败时报错会给出 mismatched 元素数、最大绝对/相对误差及位置。注意 `torch.testing.assert_allclose` 自 1.12 起已废弃。\n\n## 第二步：逐元素定位第一个不一致点\n\n```python\ndiff = (gpu_out - cpu_out).abs()\nmask = torch.isclose(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\nbad_idx = torch.nonzero(~mask)\nprint(\"mismatch count:\", bad_idx.shape[0])\ni = tuple(bad_idx[0].tolist())\nprint(\"first mismatch at\", i, \"gpu:\", gpu_out[i], \"cpu:\", cpu_out[i])\n# 打印该位置对应的输入切片，缩小到具体输入元素\n```\n\n观察错误分布模式能快速定性：全部元素都有微小偏差 → 累加顺序/TF32 问题；只有个别位置（如某些行/列、边缘）出错 → 索引/边界条件/越界 bug；随机出现且每次不同 → 竞态或未同步；块边界位置出错 → shared memory 同步或 tile 边界问题。\n\n## 第三步：逐层/逐子算子分解（二分定位）\n\n对复合算子，把每个子步骤的中间结果都拷回，与 PyTorch 原语逐一比对：\n\n```python\n# 例：算子 = dequant -> matmul -> bias -> gelu\nq   = my_dequant(w_q).cpu()\nref = x @ q.T + b\ntorch.testing.assert_close(my_stage1_out.cpu(), ref, rtol=1e-5, atol=1e-6)  # 逐段比对\n```\n\n第一个发散的子步骤就是问题所在。对单个 kernel 内部，可用 `printf`（device 端）或将中间结果写入 debug buffer 拷回比对。\n\n",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_c85552f8.result",
+            "evidence_quote": "torch.testing.assert_close(*actual*, *expected*, ***, *allow_subclasses=True*, *rtol=None*, *atol=None*, *equal_nan=False*, *check_device=True*, *check_dtype=True*, *check_layout=True*, *check_stride=False*, *msg=None*)",
+            "verification": "source",
+            "reason": "原题要求定位自定义CUDA算子与CPU/PyTorch参考不一致的数值精度问题（逐层/逐元素比对）。答案完整覆盖各子方面：(1) 容差比对接口 assert_close 的签名、判据 |actual-expected| ≤ atol + rtol·|expected| 与默认容差表均被 WebFetch_2 官方文档逐字证实；(2) 逐元素定位：isclose/mask/nonzero 找第一个不一致点并给出错误分布定性模式；(3) 逐层分解：复合算子按子步骤拷回中间结果与 PyTorch 原语逐段比对（二分定位）；(4) GPU 特有陷阱（TF32、FP16/BF16 reduced precision reduction、确定性、归约顺序、溢出）被 WebFetch_5 官方 numerical_accuracy 文档证实（如 'only the first 10 bits of the input mantissa are read'、'disabled for matrix multiplications and enabled for convolutions'）；(5) bug 类问题用 compute-sanitizer 四子工具，被 WebFetch_3 证实（memcheck/racecheck/initcheck/synccheck 功能及用法）。逐元素与逐层比对方法均有据可查，判定 supported。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方PyTorch文档（官方镜像pytorch.ac.cn的torch.testing文档），第3条为docs.pytorch.org本站。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_49c00cc0.result",
+                "quote": "1. [torch.testing — PyTorch 2.3 文档 - PyTorch 框架](https://pytorch.ac.cn/docs/2.3/testing.html)"
+              },
+              {
+                "event_id": "WebSearch_0_49c00cc0.result",
+                "quote": "3. [torch.testing — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/testing.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.333333333333333,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "原始网页内容在文末\"Compute Sanitizer Tool Examples → Example Use of Memcheck → memcheck_demo Output with Memcheck (Release Build)\"一节中途被截断"
+              },
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "For a per-shape characterization of the MI300 vs NVIDIA-TF32 numerical gap, see https://github.com/jeffdaily/tf32_analysis."
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "取得正文对原题主流程覆盖充分：assert_close完整签名、各dtype默认rtol/atol表、check_*参数；TF32及fp16/bf16 reduced precision根因与开关；compute-sanitizer四工具用法与错误解读。但逐层/逐算子二分定位的完整操作流程属通用方法，官方文档未给出成体系的分支说明。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "The following table displays the default `rtol` and `atol` for different `dtype`’s."
+              },
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "By default, TF32 tensor cores are disabled for matrix multiplications and enabled for convolutions"
+              },
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "compute-sanitizer --tool racecheck [sanitizer_options] app_name [app_options]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已明确部分适用关系（assert_allclose自1.12弃用改用assert_close；fp32_precision替代allow_tf32），但fp32_precision新接口的最低引入版本及各版本可用性未在取得文档中说明，版本对应关系缺失，不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "`torch.testing.assert_allclose()` is deprecated since `1.12` and will be removed in a future release."
+              },
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "`torch.backends.cuda.matmul.allow_tf32 = True` is going to be deprecated"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "搜索预算内出现4条相关独立第三方来源（CSDN博客），计数为3—4档。bearneck.github.io为PyTorch官方文档镜像，不计入第三方。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_1_bedfeb1e.result",
+                "quote": "4. [NVIDIA Compute Sanitizer工具链解析与CUDA 13实战 ...](https://blog.csdn.net/weixin_42545503/article/details/164818906)"
+              },
+              {
+                "event_id": "WebSearch_1_bedfeb1e.result",
+                "quote": "5. [NVIDIA Compute Sanitizer与NVTX内存API的CUDA调试 ...](https://blog.csdn.net/weixin_42518874/article/details/160452885)"
+              },
+              {
+                "event_id": "WebSearch_4_20f46a56.result",
+                "quote": "2. [PyTorch TF32开关详解：从allow_tf32到精度工程实践-CSDN博客](https://blog.csdn.net/weixin_28224217/article/details/165637747)"
+              },
+              {
+                "event_id": "WebSearch_4_20f46a56.result",
+                "quote": "3. [PyTorch TF32精度开关全解析：原理、默认值与训练推理 ..."
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "第三方来源仅以搜索摘要形式出现（未抓取正文），关键说法（如compute-sanitizer插桩机制、TF32开关行为）未见可核验的核对依据，也未发现与官方文档确证的矛盾。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_1_bedfeb1e.result",
+                "quote": "与传统的cuda-gdb相比，Compute Sanitizer的最大优势在于其非侵入式检测机制。"
+              },
+              {
+                "event_id": "WebSearch_4_20f46a56.result",
+                "quote": "PyTorch通过torch.backends.cudnn.allow_tf32和torch.backends.cuda.matmul.allow_tf32两个开关分别控制"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前答案已给出正确完整流程（输入固定、assert_close逐元素比对、逐层二分、TF32/原子加/竞态等根因、compute-sanitizer四子工具）；具体参数与约束部分自认不确定（默认容差表、fp32_precision新API），与事后取得的官方文档核对方向一致。属第4档。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.backends.cuda.matmul.allow_tf32=False` 关闭"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处**：\n- `torch.testing.assert_close` 各 dtype 的默认 rtol/atol 精确数值表"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "用二分法定位首个发散的子算子"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_49c00cc0.dispatch",
+              "WebSearch_1_bedfeb1e.dispatch",
+              "WebFetch_2_c85552f8.dispatch",
+              "WebFetch_3_d174f34d.dispatch",
+              "WebSearch_4_20f46a56.dispatch",
+              "WebFetch_5_52609888_59f73812.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "status": "已部分定版：PyTorch API 依据 2.14 文档明确；compute-sanitizer 未定到具体 CUDA Toolkit 版本",
+            "reason": "比对接口（torch.testing.assert_close、fp32_precision、reduced_precision_reduction）均锚定 PyTorch 2.14 文档，且答案明确声明 '以上 API 依据 PyTorch 2.14 文档'，该组件有具体版本依据且来源一致；但 compute-sanitizer 组件仅说明 '随 CUDA Toolkit 版本发布，文档页为当前主线版本（文中未标注单一版本号）'，属有依据的适用范围但未定到具体版本。部分组件已定具体版本、其余未定，符合3档。答案未编造版本，未定版处已如实声明。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "**版本说明**：以上 API 依据 PyTorch 2.14 文档；`fp32_precision` 为当前推荐接口，旧 `allow_tf32` 仍可用但将废弃。Compute Sanitizer 随 CUDA Toolkit 版本发布，文档页为当前主线版本（文中未标注单一版本号，个别特性标注 CUDA 11.6/11.7 起支持）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "status": "操作指导完整，仅需替换用户环境参数（自定义算子名、测试脚本、容差值）即可执行",
+            "reason": "答案给出可直接执行的完整命令与代码：compute-sanitizer 四条完整命令行（--tool memcheck/racecheck/initcheck/synccheck python test_op.py）、nvcc 编译选项（-lineinfo/-G/-fdevice-sanitize=memcheck）、CUDA_LAUNCH_BLOCKING=1、Python 比对代码（assert_close 与逐元素定位代码含必要参数与前置条件如 torch.cuda.synchronize()）。容差数值（rtol=1e-5/atol=1e-6）为用户需按 dtype 调整的环境值且答案已说明调整依据（默认容差表）。命令语法与官方文档一致，无需修正内容错误即可执行，仅替换脚本/算子名等环境值，符合4档；未实际运行验证，不据此升降。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "compute-sanitizer --tool memcheck  python test_op.py   # 越界/未对齐访问（默认工具）\ncompute-sanitizer --tool racecheck python test_op.py   # shared memory 数据竞争（WAW/WAR/RAW）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 79.8572544,
+            "upper": 80.54210559999999,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              79.8,
+              80.6
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 79.8572544,
+          "upper": 80.54210559999999,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            79.8,
+            80.6
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_49c00cc0.result",
+            "field": "response",
+            "sha256": "4f0512908a663b3b96beadf2e878942d61ef777c131a26fb1711f59bd72ddd7b",
+            "start": 94,
+            "end": 187,
+            "quote": "1. [torch.testing — PyTorch 2.3 文档 - PyTorch 框架](https://pytorch.ac.cn/docs/2.3/testing.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_0_49c00cc0.result",
+            "field": "response",
+            "sha256": "4f0512908a663b3b96beadf2e878942d61ef777c131a26fb1711f59bd72ddd7b",
+            "start": 615,
+            "end": 711,
+            "quote": "3. [torch.testing — PyTorch 2.14 documentation](https://docs.pytorch.org/docs/2.14/testing.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 9531,
+            "end": 9536,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_3_d174f34d.result",
+            "field": "response",
+            "sha256": "263da425ff94321d16b8450ff435b4d2138248f739f0c31e46b90113e338223e",
+            "start": 46,
+            "end": 174,
+            "quote": "原始网页内容在文末\"Compute Sanitizer Tool Examples → Example Use of Memcheck → memcheck_demo Output with Memcheck (Release Build)\"一节中途被截断",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 14592,
+            "end": 14715,
+            "quote": "For a per-shape characterization of the MI300 vs NVIDIA-TF32 numerical gap, see https://github.com/jeffdaily/tf32_analysis.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 5932,
+            "end": 6015,
+            "quote": "The following table displays the default `rtol` and `atol` for different `dtype`’s.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 7381,
+            "end": 7479,
+            "quote": "By default, TF32 tensor cores are disabled for matrix multiplications and enabled for convolutions",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_3_d174f34d.result",
+            "field": "response",
+            "sha256": "263da425ff94321d16b8450ff435b4d2138248f739f0c31e46b90113e338223e",
+            "start": 1048,
+            "end": 1125,
+            "quote": "compute-sanitizer --tool racecheck [sanitizer_options] app_name [app_options]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 10497,
+            "end": 10598,
+            "quote": "`torch.testing.assert_allclose()` is deprecated since `1.12` and will be removed in a future release.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "field": "response",
+            "sha256": "1ff77415a370430a1710d09011afd4fecb3b09820d92a7f36430096078844220",
+            "start": 7721,
+            "end": 7793,
+            "quote": "`torch.backends.cuda.matmul.allow_tf32 = True` is going to be deprecated",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebSearch_1_bedfeb1e.result",
+            "field": "response",
+            "sha256": "04030ecc2617d91715fe8951838e7631d6eb0b40f565948d06abf0e9eadb5628",
+            "start": 1040,
+            "end": 1153,
+            "quote": "4. [NVIDIA Compute Sanitizer工具链解析与CUDA 13实战 ...](https://blog.csdn.net/weixin_42545503/article/details/164818906)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebSearch_1_bedfeb1e.result",
+            "field": "response",
+            "sha256": "04030ecc2617d91715fe8951838e7631d6eb0b40f565948d06abf0e9eadb5628",
+            "start": 1320,
+            "end": 1435,
+            "quote": "5. [NVIDIA Compute Sanitizer与NVTX内存API的CUDA调试 ...](https://blog.csdn.net/weixin_42518874/article/details/160452885)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_4_20f46a56.result",
+            "field": "response",
+            "sha256": "629e03bb0335597b589b0de9e58158a6856e317aa3482d7a2fb4fc4d77f4f195",
+            "start": 397,
+            "end": 509,
+            "quote": "2. [PyTorch TF32开关详解：从allow_tf32到精度工程实践-CSDN博客](https://blog.csdn.net/weixin_28224217/article/details/165637747)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_4_20f46a56.result",
+            "field": "response",
+            "sha256": "629e03bb0335597b589b0de9e58158a6856e317aa3482d7a2fb4fc4d77f4f195",
+            "start": 696,
+            "end": 735,
+            "quote": "3. [PyTorch TF32精度开关全解析：原理、默认值与训练推理 ...",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_1_bedfeb1e.result",
+            "field": "response",
+            "sha256": "04030ecc2617d91715fe8951838e7631d6eb0b40f565948d06abf0e9eadb5628",
+            "start": 1167,
+            "end": 1216,
+            "quote": "与传统的cuda-gdb相比，Compute Sanitizer的最大优势在于其非侵入式检测机制。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_4_20f46a56.result",
+            "field": "response",
+            "sha256": "629e03bb0335597b589b0de9e58158a6856e317aa3482d7a2fb4fc4d77f4f195",
+            "start": 519,
+            "end": 605,
+            "quote": "PyTorch通过torch.backends.cudnn.allow_tf32和torch.backends.cuda.matmul.allow_tf32两个开关分别控制",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0010dd1175659647f6ca3ed5904ccd0f2d91bcc724a89bdea765d1f8c02820f0",
+            "start": 888,
+            "end": 935,
+            "quote": "torch.backends.cuda.matmul.allow_tf32=False` 关闭",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0010dd1175659647f6ca3ed5904ccd0f2d91bcc724a89bdea765d1f8c02820f0",
+            "start": 1220,
+            "end": 1287,
+            "quote": "不确定处**：\\n- `torch.testing.assert_close` 各 dtype 的默认 rtol/atol 精确数值表",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "0010dd1175659647f6ca3ed5904ccd0f2d91bcc724a89bdea765d1f8c02820f0",
+            "start": 730,
+            "end": 744,
+            "quote": "用二分法定位首个发散的子算子",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 3977,
+            "end": 4147,
+            "quote": "**版本说明**：以上 API 依据 PyTorch 2.14 文档；`fp32_precision` 为当前推荐接口，旧 `allow_tf32` 仍可用但将废弃。Compute Sanitizer 随 CUDA Toolkit 版本发布，文档页为当前主线版本（文中未标注单一版本号，个别特性标注 CUDA 11.6/11.7 起支持）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 2793,
+            "end": 2953,
+            "quote": "compute-sanitizer --tool memcheck  python test_op.py   # 越界/未对齐访问（默认工具）\ncompute-sanitizer --tool racecheck python test_op.py   # shared memory 数据竞争（WAW/WAR/RAW）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 469,
+            "end": 535,
+            "quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5fcdf74df060b3e09a0adf67d8b59b361474f53d20d9e9f7217060cc4c5a53aa",
+            "start": 469,
+            "end": 1801,
+            "quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\n```\n\n`torch.testing.assert_close(actual, expected, *, rtol=None, atol=None, equal_nan=False, check_device=True, check_dtype=True, check_stride=False, msg=None)`，判据为 `|actual-expected| ≤ atol + rtol·|expected|`（https://docs.pytorch.org/docs/2.14/testing.html）。默认容差表：float32 rtol=1.3e-6/atol=1e-5，float16 rtol=1e-3/atol=1e-5，bfloat16 rtol=1.6e-2/atol=1e-5，float64 rtol=1e-7/atol=1e-7。失败时报错会给出 mismatched 元素数、最大绝对/相对误差及位置。注意 `torch.testing.assert_allclose` 自 1.12 起已废弃。\n\n## 第二步：逐元素定位第一个不一致点\n\n```python\ndiff = (gpu_out - cpu_out).abs()\nmask = torch.isclose(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\nbad_idx = torch.nonzero(~mask)\nprint(\"mismatch count:\", bad_idx.shape[0])\ni = tuple(bad_idx[0].tolist())\nprint(\"first mismatch at\", i, \"gpu:\", gpu_out[i], \"cpu:\", cpu_out[i])\n# 打印该位置对应的输入切片，缩小到具体输入元素\n```\n\n观察错误分布模式能快速定性：全部元素都有微小偏差 → 累加顺序/TF32 问题；只有个别位置（如某些行/列、边缘）出错 → 索引/边界条件/越界 bug；随机出现且每次不同 → 竞态或未同步；块边界位置出错 → shared memory 同步或 tile 边界问题。\n\n## 第三步：逐层/逐子算子分解（二分定位）\n\n对复合算子，把每个子步骤的中间结果都拷回，与 PyTorch 原语逐一比对：\n\n```python\n# 例：算子 = dequant -> matmul -> bias -> gelu\nq   = my_dequant(w_q).cpu()\nref = x @ q.T + b\ntorch.testing.assert_close(my_stage1_out.cpu(), ref, rtol=1e-5, atol=1e-6)  # 逐段比对\n```\n\n第一个发散的子步骤就是问题所在。对单个 kernel 内部，可用 `printf`（device 端）或将中间结果写入 debug buffer 拷回比对。\n\n",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebFetch_2_c85552f8.result",
+            "field": "response",
+            "sha256": "7c6e2ef1522b589a9d1e724bfb5e217dffd05b82cd2a3ef8413f972b5c357f20",
+            "start": 145,
+            "end": 364,
+            "quote": "torch.testing.assert_close(*actual*, *expected*, ***, *allow_subclasses=True*, *rtol=None*, *atol=None*, *equal_nan=False*, *check_device=True*, *check_dtype=True*, *check_layout=True*, *check_stride=False*, *msg=None*)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-a53640d32110-predictors.json": "3cae88aacb1eed0626c8e30efbb6ec6e6b0119c0f986261e0c181f493e08e560",
+          "reviewed/development/case-a53640d32110-outcome.json": "42867342a63663c9df80f1e891a345409c198756753bb0b23d2c4dd6e462c0de",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_2_c85552f8.result",
+            "url": "https://docs.pytorch.org/docs/2.14/testing.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "[...]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_c85552f8.result",
+                "quote": "make_tensor"
+              }
+            ],
+            "reference": "assert_close正文完整，make_tensor参数段有截断标记"
+          },
+          {
+            "event_id": "WebFetch_3_d174f34d.result",
+            "url": "https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "memcheck_demo Output with Memcheck (Release Build)\"一节中途被截断"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_d174f34d.result",
+                "quote": "（后续示例输出内容缺失）"
+              }
+            ],
+            "reference": "主体章节完整，工具示例节被截断"
+          },
+          {
+            "event_id": "WebFetch_5_52609888_59f73812.result",
+            "url": "https://docs.pytorch.org/docs/2.14/notes/numerical_accuracy.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_52609888_59f73812.result",
+                "quote": "For a per-shape characterization of the MI300 vs NVIDIA-TF32 numerical gap, see"
+              }
+            ],
+            "boundary_evidence": [],
+            "reference": null
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

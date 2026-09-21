@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "先查本机四件套状态（诊断命令）… nvidia-smi … torch.version.cuda … torch.backends.cudnn.version() … nvcc --version",
-      "answer_event_id": "final",
+      "status": "supported",
+      "answer_quote": "## 一、先查本机四件套状态（诊断命令）\n\n```bash\n# 1) 驱动 & 驱动支持的最高 CUDA 版本（注意：右上角 CUDA Version 是驱动上限，不是已装 toolkit）\nnvidia-smi\n\n# 2) PyTorch 实际链接的 CUDA / cuDNN（这是最权威的一项）\npython -c \"import torch; print('torch:', torch.__version__); \\\nprint('CUDA built with:', torch.version.cuda); \\\nprint('cuDNN built with:', torch.backends.cudnn.version()); \\\nprint('cuda available:', torch.cuda.is_available())\"\n\n# 3) 系统 CUDA toolkit（仅源码编译/自定义扩展时才有意义）\nnvcc --version          # 或 cat /usr/local/cuda/version.json\n\n# 4) 系统 cuDNN 头文件版本\ngrep -A2 CUDNN_MAJOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null || \\\ngrep -A2 CUDNN_MAJOR /usr/include/cudnn_version.h\n```",
+      "answer_event_id": "run-end",
       "evidence_id": "WebFetch_1_3c5b61d8.result",
       "evidence_quote": "pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求查明 PyTorch、CUDA toolkit、cuDNN、驱动四者配套关系，最终答案逐项覆盖：(1) 诊断命令（nvidia-smi、torch.version.cuda、torch.backends.cudnn.version()、nvcc --version、grep cudnn_version.h）可直接检查四件套；(2) PyTorch↔CUDA 配套由 WebFetch_1 逐版本 wheel CUDA 选项表支撑（如 2.8.0 对应 cu126/cu128/cu129）；(3) CUDA↔驱动由 WebFetch_3 Table 1 支撑（CUDA 13.x → ≥580，12.x → ≥525，11.x → ≥450，并注明 minor version compatibility 限制）；(4) cuDNN↔CUDA/驱动由 WebFetch_5 支撑（cuDNN 9.26.0 for CUDA 12.x 兼容 12.0–12.9、驱动 ≥525.60.13/≥527.41，Blackwell 需 CUDA ≥12.8 + 驱动 ≥570.26/570.65）；(5) 给出实操决策流程并解释 nvidia-smi 右上角 CUDA Version 是驱动上限。唯一弱项 'wheel 自带 CUDA runtime/cuDNN' 答案自身已如实标注未在官方正文逐字核实且仅作背景说明，不影响原题要求的配套查询方法与表格的成立。",
-      "raw_status": "supported"
+      "reason": "原题要求查明 PyTorch、CUDA toolkit、cuDNN、驱动四者配套关系，最终答案逐项覆盖：(1) 诊断命令（nvidia-smi、torch.version.cuda、torch.backends.cudnn.version()、nvcc --version、grep cudnn_version.h）可直接检查四件套；(2) PyTorch↔CUDA 配套由 WebFetch_1 逐版本 wheel CUDA 选项表支撑（如 2.8.0 对应 cu126/cu128/cu129）；(3) CUDA↔驱动由 WebFetch_3 Table 1 支撑（CUDA 13.x → ≥580，12.x → ≥525，11.x → ≥450，并注明 minor version compatibility 限制）；(4) cuDNN↔CUDA/驱动由 WebFetch_5 支撑（cuDNN 9.26.0 for CUDA 12.x 兼容 12.0–12.9、驱动 ≥525.60.13/≥527.41，Blackwell 需 CUDA ≥12.8 + 驱动 ≥570.26/570.65）；(5) 给出实操决策流程并解释 nvidia-smi 右上角 CUDA Version 是驱动上限。唯一弱项 'wheel 自带 CUDA runtime/cuDNN' 答案自身已如实标注未在官方正文逐字核实且仅作背景说明，不影响原题要求的配套查询方法与表格的成立。"
     }
   ],
   "m9_m10": [
@@ -38,18 +37,7 @@
       ]
     }
   ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "先查本机四件套状态（诊断命令）… nvidia-smi … torch.version.cuda … torch.backends.cudnn.version() … nvcc --version"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -161,6 +149,15 @@
   "review": {
     "raw_file": "assessments/development/case-513a09759dc7-outcome.json",
     "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "先查本机四件套状态（诊断命令）… nvidia-smi … torch.version.cuda … torch.backends.cudnn.version() … nvcc --version",
+        "replacement": "## 一、先查本机四件套状态（诊断命令）\n\n```bash\n# 1) 驱动 & 驱动支持的最高 CUDA 版本（注意：右上角 CUDA Version 是驱动上限，不是已装 toolkit）\nnvidia-smi\n\n# 2) PyTorch 实际链接的 CUDA / cuDNN（这是最权威的一项）\npython -c \"import torch; print('torch:', torch.__version__); \\\nprint('CUDA built with:', torch.version.cuda); \\\nprint('cuDNN built with:', torch.backends.cudnn.version()); \\\nprint('cuda available:', torch.cuda.is_available())\"\n\n# 3) 系统 CUDA toolkit（仅源码编译/自定义扩展时才有意义）\nnvcc --version          # 或 cat /usr/local/cuda/version.json\n\n# 4) 系统 cuDNN 头文件版本\ngrep -A2 CUDNN_MAJOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null || \\\ngrep -A2 CUDNN_MAJOR /usr/include/cudnn_version.h\n```",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
       {
         "basis": "final alias maps to frozen final answer"
       },

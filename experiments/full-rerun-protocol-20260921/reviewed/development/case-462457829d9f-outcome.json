@@ -1,0 +1,191 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "以下流程按\"先定位 → 再分因（梯度爆炸 / 学习率 / 数据 / AMP）\"组织。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+      "evidence_quote": "error_if_nonfinite (bool, optional) – if True, an error is thrown if the total norm of the gradients from parameters is nan, inf, or -inf. Default: False",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求对GPU训练loss不收敛/NaN给出系统排查（梯度爆炸/学习率/数据）。最终答案逐项覆盖：(1)定位NaN：detect_anomaly/check_nan与CUDA_LAUNCH_BLOCKING，均被官方来源证实（call_00_KtBRSXL9Oz2Ucpejr7fq2699.result含detect_anomaly(check_nan=True)正文，call_00_gCUhby4iVzAQLlRfNsih5389.result含\"CUDA_LAUNCH_BLOCKING If set to 1, makes CUDA calls synchronous\"）；(2)梯度爆炸：clip_grad_norm_签名及error_if_nonfinite=True建议由官方页逐字证实（call_00_T4cN1xeJRsAmvJjUiF2X0611.result），AMP下先unscale_再裁剪由call_00_ZrNVkaMWbgWOta7ZD89b0999.result证实；(3)学习率：warmup/小LR sanity check，答案明确标注为通用实践非官方原文，属有依据但无来源的合理建议；(4)数据：isfinite断言、标签越界、log(0)/0分母检查，同样自标注为通用实践。学习率与数据部分缺官方引文，但答案如实披露且内容技术正确，系统排查框架整体由官方文档支撑，故判supported。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案将所用排查接口（detect_anomaly/set_detect_anomaly、clip_grad_norm_、autocast/GradScaler、CUDA环境变量）全部锚定到有依据的官方文档版本（PyTorch 2.14，v2.14.0 stable），并给出明确的API迁移关系（torch.cuda.amp.GradScaler已deprecated，改用torch.amp.GradScaler(\"cuda\")），配套关系无未解决冲突；但用户本机PyTorch版本未确定，属'有依据的适用范围而非定到用户具体版本'，按档为4。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "官方文档版本：**PyTorch 2.14（页面标注 v2.14.0 (stable)）**。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "`torch.cuda.amp.GradScaler` / `torch.cpu.amp.GradScaler` 已 **deprecated**，改用 `torch.amp.GradScaler(\"cuda\"/\"cpu\", ...)`。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "核心排查操作给出可直接照抄的完整命令与代码：CUDA_LAUNCH_BLOCKING=1 python train.py、detect_anomaly上下文用法、clip_grad_norm_(model.parameters(), max_norm=1.0, error_if_nonfinite=True)、完整AMP训练循环与unscale_后裁剪流程，前置条件（仅调试时开启检测、unscale_每optimizer每step仅一次）已说明。仅需替换模型/数据加载器等用户环境值即可执行。学习率/数据部分为原则性指导而非完整命令，但主诊断流程操作完整，不构成需修正的错误，按档为4而非5（部分步骤如warmup、hook断言需用户自行补全适配代码）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "CUDA_LAUNCH_BLOCKING=1 python train.py"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "loss.backward()\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0,\n                               error_if_nonfinite=True)\noptimizer.step()"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "scaler.unscale_(optimizer)\n\n# Since the gradients of optimizer's assigned params are unscaled, clips as usual:\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_T4cN1xeJRsAmvJjUiF2X0611.result",
+          "quote": "error_if_nonfinite (bool, optional) – if True, an error is thrown if the total norm of the gradients from parameters is nan, inf, or -inf. Default: False"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-462457829d9f",
+  "task_id": "R",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "ad962f62617544cba00d1614c7824c40",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7d84b885bd59c478be28b2fd21d28e45",
+        "conversationRequestId": "7d84b885bd59c478be28b2fd21d28e45",
+        "agent": "cli"
+      },
+      {
+        "messageId": "ad962f62617544cba00d1614c7824c40",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "7d84b885bd59c478be28b2fd21d28e45",
+        "conversationRequestId": "7d84b885bd59c478be28b2fd21d28e45",
+        "rawUsage": {
+          "prompt_tokens": 20354,
+          "completion_tokens": 2284,
+          "total_tokens": 22638,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1319,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 20354,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1319,
+          "credit": 4.54,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 20354,
+          "outputTokens": 2284,
+          "totalTokens": 22638,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1319
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "5976e82147b1559aa5508a8805038958623c48d57217d9ab0733b0e6450eb36f",
+    "process_sha256": "e47c70bc5b26ceed8c2a9e4e617027001e5a25274d3e57bbb1a5d78441f7c237",
+    "elapsed_seconds": 48.54,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-ab85be0d488946f291fd773dafe4b734",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-462457829d9f-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "scaler.unscale_(optimizer)\n# Since the gradients of optimizer's assigned params are unscaled, clips as usual:\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)",
+        "replacement": "scaler.unscale_(optimizer)\n\n# Since the gradients of optimizer's assigned params are unscaled, clips as usual:\ntorch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

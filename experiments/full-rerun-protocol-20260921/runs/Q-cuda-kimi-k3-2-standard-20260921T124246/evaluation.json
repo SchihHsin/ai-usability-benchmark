@@ -1154,6 +1154,1007 @@
         ],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T05:42:18.522423+00:00",
+      "process_sha256": "56800fc3919dfceda28826ebaffad0b1a661fb622f9082c8ecf5d6b0a8ea36ee",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "若 `reserved` 远大于 `allocated`，且 `memory_summary()` 中有大量 **inactive split blocks**，说明是碎片化问题 → 用 `max_split_size_mb`（见下）。若 `allocated` 本身就接近卡容量 → 需要真正减少占用（梯度检查点、减 batch、AMP 等）。",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_3_a877736d.result",
+            "evidence_quote": "max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+            "verification": "source",
+            "reason": "原题三个子要求均有官方逐字依据支撑：(1) 排查——memory_allocated/memory_reserved/memory_summary 的监控 API 及 empty_cache 语义见 WebFetch_3_a877736d.result（'You can use memory_allocated() ... use memory_reserved() ...'），OOM 快照定位（_record_memory_history/_dump_snapshot、pytorch.org/memory_viz、NCCL 不可见）见 WebFetch_6_64792e12.result；(2) max_split_size_mb——WebFetch_3 原文逐字给出 'prevents the native allocator from splitting blocks larger than this size'、'only meaningful with backend:native'、'last resort'，与答案一致；(3) 梯度检查点——WebFetch_5_e1afcdd5.result 原文 'It is recommended that you use use_reentrant=False.'、reentrant 需至少一个输入和输出 requires_grad=True 等均与答案一致；(4) empty_cache——WebFetch_3 原文 'releases all **unused** cached memory ... it can not increase the amount of GPU memory available for PyTorch' 与答案'不能解决训练中的 OOM'一致。答案中标注为无法核实的项（HF gradient_checkpointing_enable、20-30% 减速经验值）已如实声明为旁证/经验值，不构成错误。",
+            "evidence_refs": [
+              "ev-43",
+              "ev-44"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第1次查询（WebSearch_0）前5条均为第三方（CSDN×2、devpress转载、百度开发者、知乎），无官方来源；第2次查询（WebSearch_2）第1、2条即为 docs.pytorch.org 官方页（CUDA Environment Variables、CUDA semantics），首次发现官方来源在第2次查询。共3次查询，未超4次预算。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "https://blog.csdn.net/weixin_41338279/article/details/155775829"
+              },
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "https://zhuanlan.zhihu.com/p/652560340"
+              },
+              {
+                "event_id": "WebSearch_2_3b2dd507.result",
+                "quote": "CUDA Environment Variables — PyTorch main documentation"
+              },
+              {
+                "event_id": "WebSearch_2_3b2dd507.result",
+                "quote": "CUDA semantics — PyTorch main documentation"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 2.8,
+            "upper": 3.4,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_588c31d5.result",
+                "quote": "You've reached a dead end"
+              },
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation"
+              },
+              {
+                "event_id": "WebFetch_4_90fc0b34.result",
+                "quote": "You've reached a dead end"
+              },
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "It is recommended that you use `use_reentrant=False`"
+              },
+              {
+                "event_id": "WebFetch_6_64792e12.result",
+                "quote": "To debug CUDA memory use, PyTorch provides a way to generate memory snapshots that record the state of allocated CUDA memory at any point in time"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "原题所需各项均有取得的官方直接正文支撑：排查（memory_allocated/reserved 监控、快照与 memory_viz、OOM 事件解读）、max_split_size_mb 语义/默认值/调优方法/backend:native 约束、PYTORCH_CUDA_ALLOC_CONF 配置格式、empty_cache 行为与限制、梯度检查点 API/use_reentrant=False 推荐/requires_grad 约束/RNG 处理与代码示例。解释、步骤、参数和约束完整，无需另查。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation"
+              },
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch"
+              },
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`"
+              },
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "It is recommended that you use `use_reentrant=False`"
+              },
+              {
+                "event_id": "WebFetch_6_64792e12.result",
+                "quote": "Out of memory errors are reported as OOM events"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已直接给出部分适用关系：PYTORCH_CUDA_ALLOC_CONF 为向后兼容别名、cudaMallocAsync 需 CUDA≥11.4、use_reentrant=False 为官方推荐且未来将强制显式传参；但各 alloc_conf 选项的 PyTorch 版本引入/可用关系及 main（未稳定 v2.15.0）文档对稳定版的适用性未取得，完成版本选择的对应关系缺失。'In version 2.5' 陈旧措辞与 'future release' 横幅不一致，但可由页面自身版本（v2.15.0，2.5 已为过去）上下文消解，不计未消解冲突。存在缺失关系故不高于3。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "`PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility"
+              },
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "`cudaMallocAsync` requires CUDA 11.4 or newer"
+              },
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "In a future release, we will raise an exception if `use_reentrant` is not passed"
+              },
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "In version 2.5 we will raise an exception if `use_reentrant` is not passed."
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "3次查询预算内去重后独立相关第三方来源8条：CSDN-155775829（devpress 同文转载合并）、百度开发者3268904、CSDN-160458699、知乎652560340、ask.csdn 8794703、renrendaima 18762、CSDN-zhangfeng1133（51cto 同题同文转载合并）、raybyte。pytorch.ac.cn 为官方文档中文镜像，不计第三方。8≥6；首次第三方命中在第1次查询第1条。正文取得不是计数前提。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "https://blog.csdn.net/weixin_41338279/article/details/155775829"
+              },
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "https://developer.baidu.com/article/details/3268904"
+              },
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "https://blog.csdn.net/weixin_42701915/article/details/160458699"
+              },
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "https://zhuanlan.zhihu.com/p/652560340"
+              },
+              {
+                "event_id": "WebSearch_7_3e0d424a.result",
+                "quote": "https://ask.csdn.net/questions/8794703"
+              },
+              {
+                "event_id": "WebSearch_7_3e0d424a.result",
+                "quote": "https://www.renrendaima.com/article/18762.html"
+              },
+              {
+                "event_id": "WebSearch_7_3e0d424a.result",
+                "quote": "https://blog.csdn.net/zhangfeng1133/article/details/158501417"
+              },
+              {
+                "event_id": "WebSearch_7_3e0d424a.result",
+                "quote": "https://raybyte.cn/post/2026/7/15/de1bf603"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21",
+              "ev-22",
+              "ev-23",
+              "ev-24",
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "存在第三方材料（搜索摘要），可评。可见关键说法：碎片化导致有空闲仍OOM、max_split_size_mb 缓解碎片化OOM、梯度检查点以时间换空间——均与已抓取官方正文一致、可追溯；碎片化/max_split_size_mb 类说法获知乎/百度/CSDN 等多独立平台摘要级交叉印证，但未抓取任何第三方正文，且存在 devpress/51cto 等转载与单源说法（如'不必急着减batch size'仅 raybyte 一源），独立来源的正文级完整交叉印证缺失。未见未解决矛盾。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_2_3b2dd507.result",
+                "quote": "明明 GPU 还有 180MB 空闲，为什么分配 256MB 就失败了？ 答案是：显存碎片化（Memory Fragmentation）"
+              },
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "当使用PyTorch进行深度学习训练时，显存碎片化可能导致'CUDA: Out of Memory'错误。"
+              },
+              {
+                "event_id": "WebSearch_0_8e209e3b.result",
+                "quote": "通过设置PYTORCH_CUDA_ALLOC_CONF中的max_split_size_mb解决Pytorch的显存碎片化导致"
+              },
+              {
+                "event_id": "WebSearch_7_3e0d424a.result",
+                "quote": "Gradient Checkpointing（梯度检查点技术）是一种“用时间换空间”的显存优化策略"
+              },
+              {
+                "event_id": "WebSearch_7_3e0d424a.result",
+                "quote": "遇到CUDA out of memory错误不必急着减batch size。"
+              },
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory"
+              },
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "Activation checkpointing is a technique that trades compute for memory."
+              }
+            ],
+            "evidence_refs": [
+              "ev-27",
+              "ev-28",
+              "ev-29",
+              "ev-30",
+              "ev-31",
+              "ev-32",
+              "ev-33"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前冻结回答（client-note-00005）已覆盖原题所需：排查流程（memory_allocated/reserved/summary、nvidia-smi、快照与 memory_viz）、max_split_size_mb 语义与示例值、梯度检查点 API 与 use_reentrant=False、empty_cache 行为与误用警示，另有 AMP/梯度累积等。事后与官方正文核对：max_split_size_mb 语义、use_reentrant=False 推荐、empty_cache 不释放张量占用、快照 API 名称均一致；requires_grad 表述对 reentrant 变体成立、对推荐的非 reentrant 路径属过度概括（原回答已加'可能'限定），不构成关键错误。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "通过 `PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128`（或其他值如 64/256/512）限制分配器将大块内存分割的阈值，缓解显存碎片化导致的 OOM"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "PyTorch 2.x 推荐 `torch.utils.checkpoint.checkpoint(fn, *args, use_reentrant=False)`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "`torch.cuda.empty_cache()` 释放 caching allocator 中未使用的缓存显存回给 CUDA；它**不会**释放仍被张量占用的显存"
+              },
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch"
+              },
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "It is recommended that you use `use_reentrant=False`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-34",
+              "ev-35",
+              "ev-36",
+              "ev-37",
+              "ev-38"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=8",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_8e209e3b.dispatch",
+              "WebFetch_1_588c31d5.dispatch",
+              "WebSearch_2_3b2dd507.dispatch",
+              "WebFetch_3_a877736d.dispatch",
+              "WebFetch_4_90fc0b34.dispatch",
+              "WebFetch_5_e1afcdd5.dispatch",
+              "WebFetch_6_64792e12.dispatch",
+              "WebSearch_7_3e0d424a.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "assessed_partial_version_lock",
+            "reason": "答案对所用接口给出部分有依据的版本约束：cudaMallocAsync 后端官方明确要求 CUDA ≥ 11.4（有 WebFetch_3 原文支撑），并说明所引文档为 main 分支 v2.15.0 unstable；但答案自述 '各配置项引入的具体最低稳定版本号未逐项核实'，主要路径（native 后端 + max_split_size_mb / checkpoint / empty_cache）未定到具体 PyTorch 版本。属于第3档：部分所需组件有明确版本依据，其余仍未确定。原题为排查/优化 how-to，未强制要求定版，此为锁定粒度评价而非技术错误。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "所抓官方页为 main 分支（v2.15.0 unstable）文档；各配置项引入的**具体最低稳定版本号**未逐项核实（`cudaMallocAsync` 后端官方明确要求 CUDA ≥ 11.4）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-39"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "assessed_complete_with_placeholders",
+            "reason": "答案给出可直接执行的完整命令：环境变量设置、empty_cache 调用、checkpoint(my_forward_fn, x, use_reentrant=False) 与装饰器形式、_record_memory_history()/_dump_snapshot 快照流程，参数与前置条件（native 后端限制、preserve_rng_state 含义、不要在训练循环每步调 empty_cache）均已说明。需替换的仅为明确标识的用户环境项（my_forward_fn、x、run_your_code()），无需修正内容错误。答案自述 '所有代码未实际运行（未运行）'，按约定不作为 4/5 分界依据，仅内容核查。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "out = checkpoint(my_forward_fn, x, use_reentrant=False)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "torch.cuda.memory._record_memory_history()\nrun_your_code()  # 跑训练，直到 OOM 附近\ntorch.cuda.memory._dump_snapshot(\"my_snapshot.pickle\")"
+              }
+            ],
+            "evidence_refs": [
+              "ev-40",
+              "ev-41",
+              "ev-42"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 82.71999999999998,
+            "lower": 82.71999999999998,
+            "upper": 82.71999999999998,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 82.7
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 82.71999999999998,
+          "lower": 82.71999999999998,
+          "upper": 82.71999999999998,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 82.7
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 153,
+            "end": 216,
+            "quote": "https://blog.csdn.net/weixin_41338279/article/details/155775829",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 1196,
+            "end": 1234,
+            "quote": "https://zhuanlan.zhihu.com/p/652560340",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebSearch_2_3b2dd507.result",
+            "field": "response",
+            "sha256": "6457d3fea51d4802580c09bc0ca8dec5c8d016db03e18920aaa781cf32c9d2d8",
+            "start": 115,
+            "end": 170,
+            "quote": "CUDA Environment Variables — PyTorch main documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebSearch_2_3b2dd507.result",
+            "field": "response",
+            "sha256": "6457d3fea51d4802580c09bc0ca8dec5c8d016db03e18920aaa781cf32c9d2d8",
+            "start": 458,
+            "end": 501,
+            "quote": "CUDA semantics — PyTorch main documentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_1_588c31d5.result",
+            "field": "response",
+            "sha256": "c9ccb5db59e7e7e877381db4e30951964c7a2dc4242fe84dbbd58e069037566f",
+            "start": 39,
+            "end": 64,
+            "quote": "You've reached a dead end",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 3311,
+            "end": 3423,
+            "quote": "prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_4_90fc0b34.result",
+            "field": "response",
+            "sha256": "461268aa3ec405cd102ffbb6431605c52e473280db12b3764a67f58af417d3f0",
+            "start": 39,
+            "end": 64,
+            "quote": "You've reached a dead end",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "field": "response",
+            "sha256": "0d1cb6cf8923618e55b6933b0f080221f6393f36f352a6de665af791026b9bbb",
+            "start": 4824,
+            "end": 4876,
+            "quote": "It is recommended that you use `use_reentrant=False`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_64792e12.result",
+            "field": "response",
+            "sha256": "38b0a6bf0b00ce6a86a0c99a5ba86e5a0598e69ded2be484e9821d7fae03f45c",
+            "start": 542,
+            "end": 687,
+            "quote": "To debug CUDA memory use, PyTorch provides a way to generate memory snapshots that record the state of allocated CUDA memory at any point in time",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 3311,
+            "end": 3423,
+            "quote": "prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 1139,
+            "end": 1261,
+            "quote": "the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 2635,
+            "end": 2708,
+            "quote": "The format is `PYTORCH_ALLOC_CONF=<option>:<value>,<option2>:<value2>...`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "field": "response",
+            "sha256": "0d1cb6cf8923618e55b6933b0f080221f6393f36f352a6de665af791026b9bbb",
+            "start": 4824,
+            "end": 4876,
+            "quote": "It is recommended that you use `use_reentrant=False`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebFetch_6_64792e12.result",
+            "field": "response",
+            "sha256": "38b0a6bf0b00ce6a86a0c99a5ba86e5a0598e69ded2be484e9821d7fae03f45c",
+            "start": 4507,
+            "end": 4554,
+            "quote": "Out of memory errors are reported as OOM events",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 2547,
+            "end": 2633,
+            "quote": "`PYTORCH_CUDA_ALLOC_CONF` is its alias and is provided only for backward compatibility",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 3092,
+            "end": 3137,
+            "quote": "`cudaMallocAsync` requires CUDA 11.4 or newer",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "field": "response",
+            "sha256": "0d1cb6cf8923618e55b6933b0f080221f6393f36f352a6de665af791026b9bbb",
+            "start": 5298,
+            "end": 5378,
+            "quote": "In a future release, we will raise an exception if `use_reentrant` is not passed",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "field": "response",
+            "sha256": "0d1cb6cf8923618e55b6933b0f080221f6393f36f352a6de665af791026b9bbb",
+            "start": 13347,
+            "end": 13422,
+            "quote": "In version 2.5 we will raise an exception if `use_reentrant` is not passed.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 153,
+            "end": 216,
+            "quote": "https://blog.csdn.net/weixin_41338279/article/details/155775829",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 675,
+            "end": 726,
+            "quote": "https://developer.baidu.com/article/details/3268904",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 919,
+            "end": 982,
+            "quote": "https://blog.csdn.net/weixin_42701915/article/details/160458699",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 1196,
+            "end": 1234,
+            "quote": "https://zhuanlan.zhihu.com/p/652560340",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "WebSearch_7_3e0d424a.result",
+            "field": "response",
+            "sha256": "da59cbb2e757defb053995cd7897f4353d54652663ec7bda16d43474bf45bb48",
+            "start": 151,
+            "end": 189,
+            "quote": "https://ask.csdn.net/questions/8794703",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "WebSearch_7_3e0d424a.result",
+            "field": "response",
+            "sha256": "da59cbb2e757defb053995cd7897f4353d54652663ec7bda16d43474bf45bb48",
+            "start": 364,
+            "end": 410,
+            "quote": "https://www.renrendaima.com/article/18762.html",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebSearch_7_3e0d424a.result",
+            "field": "response",
+            "sha256": "da59cbb2e757defb053995cd7897f4353d54652663ec7bda16d43474bf45bb48",
+            "start": 602,
+            "end": 663,
+            "quote": "https://blog.csdn.net/zhangfeng1133/article/details/158501417",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "WebSearch_7_3e0d424a.result",
+            "field": "response",
+            "sha256": "da59cbb2e757defb053995cd7897f4353d54652663ec7bda16d43474bf45bb48",
+            "start": 1109,
+            "end": 1151,
+            "quote": "https://raybyte.cn/post/2026/7/15/de1bf603",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "WebSearch_2_3b2dd507.result",
+            "field": "response",
+            "sha256": "6457d3fea51d4802580c09bc0ca8dec5c8d016db03e18920aaa781cf32c9d2d8",
+            "start": 838,
+            "end": 906,
+            "quote": "明明 GPU 还有 180MB 空闲，为什么分配 256MB 就失败了？ 答案是：显存碎片化（Memory Fragmentation）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 742,
+            "end": 795,
+            "quote": "当使用PyTorch进行深度学习训练时，显存碎片化可能导致'CUDA: Out of Memory'错误。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-29",
+            "event_id": "WebSearch_0_8e209e3b.result",
+            "field": "response",
+            "sha256": "dd00473b41b081c0e8a80c579ecc13006b348bd0f0f8b56d4420726000773437",
+            "start": 1256,
+            "end": 1319,
+            "quote": "通过设置PYTORCH_CUDA_ALLOC_CONF中的max_split_size_mb解决Pytorch的显存碎片化导致",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-30",
+            "event_id": "WebSearch_7_3e0d424a.result",
+            "field": "response",
+            "sha256": "da59cbb2e757defb053995cd7897f4353d54652663ec7bda16d43474bf45bb48",
+            "start": 679,
+            "end": 728,
+            "quote": "Gradient Checkpointing（梯度检查点技术）是一种“用时间换空间”的显存优化策略",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-31",
+            "event_id": "WebSearch_7_3e0d424a.result",
+            "field": "response",
+            "sha256": "da59cbb2e757defb053995cd7897f4353d54652663ec7bda16d43474bf45bb48",
+            "start": 1176,
+            "end": 1214,
+            "quote": "遇到CUDA out of memory错误不必急着减batch size。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-32",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 3394,
+            "end": 3505,
+            "quote": "This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-33",
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "field": "response",
+            "sha256": "0d1cb6cf8923618e55b6933b0f080221f6393f36f352a6de665af791026b9bbb",
+            "start": 4074,
+            "end": 4145,
+            "quote": "Activation checkpointing is a technique that trades compute for memory.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-34",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "36ddc284bae69d1233a9088127117330a75429bd7ad3f4b905bb5b609e591b4c",
+            "start": 709,
+            "end": 807,
+            "quote": "通过 `PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128`（或其他值如 64/256/512）限制分配器将大块内存分割的阈值，缓解显存碎片化导致的 OOM",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-35",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "36ddc284bae69d1233a9088127117330a75429bd7ad3f4b905bb5b609e591b4c",
+            "start": 1038,
+            "end": 1120,
+            "quote": "PyTorch 2.x 推荐 `torch.utils.checkpoint.checkpoint(fn, *args, use_reentrant=False)`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-36",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "36ddc284bae69d1233a9088127117330a75429bd7ad3f4b905bb5b609e591b4c",
+            "start": 1309,
+            "end": 1392,
+            "quote": "`torch.cuda.empty_cache()` 释放 caching allocator 中未使用的缓存显存回给 CUDA；它**不会**释放仍被张量占用的显存",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-37",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 1139,
+            "end": 1261,
+            "quote": "the occupied GPU memory by tensors will not be freed so it can not increase the amount of GPU memory available for PyTorch",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-38",
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "field": "response",
+            "sha256": "0d1cb6cf8923618e55b6933b0f080221f6393f36f352a6de665af791026b9bbb",
+            "start": 4824,
+            "end": 4876,
+            "quote": "It is recommended that you use `use_reentrant=False`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-39",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c91c6ce3f1fc5b9c5aa3746a7398ccee43e5d1ac6c985791e67a205b615c6dc6",
+            "start": 4243,
+            "end": 4344,
+            "quote": "所抓官方页为 main 分支（v2.15.0 unstable）文档；各配置项引入的**具体最低稳定版本号**未逐项核实（`cudaMallocAsync` 后端官方明确要求 CUDA ≥ 11.4）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-40",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c91c6ce3f1fc5b9c5aa3746a7398ccee43e5d1ac6c985791e67a205b615c6dc6",
+            "start": 1336,
+            "end": 1388,
+            "quote": "export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-41",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c91c6ce3f1fc5b9c5aa3746a7398ccee43e5d1ac6c985791e67a205b615c6dc6",
+            "start": 2263,
+            "end": 2318,
+            "quote": "out = checkpoint(my_forward_fn, x, use_reentrant=False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-42",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c91c6ce3f1fc5b9c5aa3746a7398ccee43e5d1ac6c985791e67a205b615c6dc6",
+            "start": 770,
+            "end": 900,
+            "quote": "torch.cuda.memory._record_memory_history()\nrun_your_code()  # 跑训练，直到 OOM 附近\ntorch.cuda.memory._dump_snapshot(\"my_snapshot.pickle\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-43",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "c91c6ce3f1fc5b9c5aa3746a7398ccee43e5d1ac6c985791e67a205b615c6dc6",
+            "start": 468,
+            "end": 641,
+            "quote": "若 `reserved` 远大于 `allocated`，且 `memory_summary()` 中有大量 **inactive split blocks**，说明是碎片化问题 → 用 `max_split_size_mb`（见下）。若 `allocated` 本身就接近卡容量 → 需要真正减少占用（梯度检查点、减 batch、AMP 等）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-44",
+            "event_id": "WebFetch_3_a877736d.result",
+            "field": "response",
+            "sha256": "b80cd4ca45a8fbc4157e0fce7adba31423d7c528896eee21359d603d590fc4e1",
+            "start": 3292,
+            "end": 3506,
+            "quote": "max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB). This can reduce fragmentation and may allow some borderline workloads to complete without running out of memory.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_588c31d5.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_588c31d5.result",
+            "alternative_body_event_ids": [
+              "WebFetch_3_a877736d.result",
+              "WebFetch_5_e1afcdd5.result",
+              "WebFetch_6_64792e12.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-WebFetch_4_90fc0b34.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_4_90fc0b34.result",
+            "alternative_body_event_ids": [
+              "WebFetch_5_e1afcdd5.result",
+              "WebFetch_6_64792e12.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-fda4166800fb-predictors.json": "fdb4d609855964b44f6f972b7b007f64732089f1a2886d07c62052d386b8c6f0",
+          "reviewed/development/case-fda4166800fb-outcome.json": "e0d5ab31ce2aeb4e6600f97b27c46493b2aedc1ff44c1375c235847591395776",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_588c31d5.result",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_588c31d5.result",
+                "quote": "You've reached a dead end"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_588c31d5.result",
+                "quote": "#### Click [here](https://docs.pytorch.org/) to go back to the main page"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/en/stable/notes/cuda.html（CUDA semantics，stable 路径 404 死链；同文档后经 /docs/main/ 路径取得，见 WebFetch_3，最终状态以最后一次派发为准）"
+          },
+          {
+            "event_id": "WebFetch_3_a877736d.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "max_split_size_mb` prevents the native allocator from splitting blocks larger than this size (in MB)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_a877736d.result",
+                "quote": "The section runs uninterrupted from the intro paragraph through the final \"Note\" about `backend:native`-specific stats"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/main/notes/cuda.html（CUDA semantics — Memory management 章节，逐字正文+部分选项为摘要整理的复合返回，按正文证据判定）"
+          },
+          {
+            "event_id": "WebFetch_4_90fc0b34.result",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_90fc0b34.result",
+                "quote": "You've reached a dead end"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_90fc0b34.result",
+                "quote": "#### Click [here](https://docs.pytorch.org/) to go back to the main page"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/en/stable/checkpoint.html（torch.utils.checkpoint，stable 路径 404 死链；同文档后经 /docs/main/ 路径取得，见 WebFetch_5）"
+          },
+          {
+            "event_id": "WebFetch_5_e1afcdd5.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "It is recommended that you use `use_reentrant=False`"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "The provided capture spans the full page"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/main/checkpoint.html（torch.utils.checkpoint，v2.15.0 unstable；完整性仅工具自述，无独立核对）"
+          },
+          {
+            "event_id": "WebFetch_6_64792e12.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_64792e12.result",
+                "quote": "To debug CUDA memory use, PyTorch provides a way to generate memory snapshots that record the state of allocated CUDA memory at any point in time"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_64792e12.result",
+                "quote": "all body sections of the page (Generating a Snapshot, Using the visualizer, Pinned Host Memory, Active Memory Timeline, Allocator State History, Non-PyTorch allocations, and the full Snapshot API Reference) appear complete"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/main/torch_cuda_memory.html（Understanding CUDA Memory Usage；完整性仅工具自述）"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_5_e1afcdd5.result",
+                "quote": "https://docs.pytorch.org/docs/main/checkpoint.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

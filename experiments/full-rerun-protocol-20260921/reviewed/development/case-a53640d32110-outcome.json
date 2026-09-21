@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "逐元素定位第一个不一致点…逐层/逐子算子分解（二分定位）…torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)",
+      "status": "supported",
+      "answer_quote": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\n```\n\n`torch.testing.assert_close(actual, expected, *, rtol=None, atol=None, equal_nan=False, check_device=True, check_dtype=True, check_stride=False, msg=None)`，判据为 `|actual-expected| ≤ atol + rtol·|expected|`（https://docs.pytorch.org/docs/2.14/testing.html）。默认容差表：float32 rtol=1.3e-6/atol=1e-5，float16 rtol=1e-3/atol=1e-5，bfloat16 rtol=1.6e-2/atol=1e-5，float64 rtol=1e-7/atol=1e-7。失败时报错会给出 mismatched 元素数、最大绝对/相对误差及位置。注意 `torch.testing.assert_allclose` 自 1.12 起已废弃。\n\n## 第二步：逐元素定位第一个不一致点\n\n```python\ndiff = (gpu_out - cpu_out).abs()\nmask = torch.isclose(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\nbad_idx = torch.nonzero(~mask)\nprint(\"mismatch count:\", bad_idx.shape[0])\ni = tuple(bad_idx[0].tolist())\nprint(\"first mismatch at\", i, \"gpu:\", gpu_out[i], \"cpu:\", cpu_out[i])\n# 打印该位置对应的输入切片，缩小到具体输入元素\n```\n\n观察错误分布模式能快速定性：全部元素都有微小偏差 → 累加顺序/TF32 问题；只有个别位置（如某些行/列、边缘）出错 → 索引/边界条件/越界 bug；随机出现且每次不同 → 竞态或未同步；块边界位置出错 → shared memory 同步或 tile 边界问题。\n\n## 第三步：逐层/逐子算子分解（二分定位）\n\n对复合算子，把每个子步骤的中间结果都拷回，与 PyTorch 原语逐一比对：\n\n```python\n# 例：算子 = dequant -> matmul -> bias -> gelu\nq   = my_dequant(w_q).cpu()\nref = x @ q.T + b\ntorch.testing.assert_close(my_stage1_out.cpu(), ref, rtol=1e-5, atol=1e-6)  # 逐段比对\n```\n\n第一个发散的子步骤就是问题所在。对单个 kernel 内部，可用 `printf`（device 端）或将中间结果写入 debug buffer 拷回比对。\n\n",
       "answer_event_id": "run-end",
       "evidence_id": "WebFetch_2_c85552f8.result",
       "evidence_quote": "torch.testing.assert_close(*actual*, *expected*, ***, *allow_subclasses=True*, *rtol=None*, *atol=None*, *equal_nan=False*, *check_device=True*, *check_dtype=True*, *check_layout=True*, *check_stride=False*, *msg=None*)",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求定位自定义CUDA算子与CPU/PyTorch参考不一致的数值精度问题（逐层/逐元素比对）。答案完整覆盖各子方面：(1) 容差比对接口 assert_close 的签名、判据 |actual-expected| ≤ atol + rtol·|expected| 与默认容差表均被 WebFetch_2 官方文档逐字证实；(2) 逐元素定位：isclose/mask/nonzero 找第一个不一致点并给出错误分布定性模式；(3) 逐层分解：复合算子按子步骤拷回中间结果与 PyTorch 原语逐段比对（二分定位）；(4) GPU 特有陷阱（TF32、FP16/BF16 reduced precision reduction、确定性、归约顺序、溢出）被 WebFetch_5 官方 numerical_accuracy 文档证实（如 'only the first 10 bits of the input mantissa are read'、'disabled for matrix multiplications and enabled for convolutions'）；(5) bug 类问题用 compute-sanitizer 四子工具，被 WebFetch_3 证实（memcheck/racecheck/initcheck/synccheck 功能及用法）。逐元素与逐层比对方法均有据可查，判定 supported。",
-      "raw_status": "supported"
+      "reason": "原题要求定位自定义CUDA算子与CPU/PyTorch参考不一致的数值精度问题（逐层/逐元素比对）。答案完整覆盖各子方面：(1) 容差比对接口 assert_close 的签名、判据 |actual-expected| ≤ atol + rtol·|expected| 与默认容差表均被 WebFetch_2 官方文档逐字证实；(2) 逐元素定位：isclose/mask/nonzero 找第一个不一致点并给出错误分布定性模式；(3) 逐层分解：复合算子按子步骤拷回中间结果与 PyTorch 原语逐段比对（二分定位）；(4) GPU 特有陷阱（TF32、FP16/BF16 reduced precision reduction、确定性、归约顺序、溢出）被 WebFetch_5 官方 numerical_accuracy 文档证实（如 'only the first 10 bits of the input mantissa are read'、'disabled for matrix multiplications and enabled for convolutions'）；(5) bug 类问题用 compute-sanitizer 四子工具，被 WebFetch_3 证实（memcheck/racecheck/initcheck/synccheck 功能及用法）。逐元素与逐层比对方法均有据可查，判定 supported。"
     }
   ],
   "m9_m10": [
@@ -42,18 +41,7 @@
       ]
     }
   ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "run-end",
-          "quote": "逐元素定位第一个不一致点…逐层/逐子算子分解（二分定位）…torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -165,6 +153,12 @@
   "review": {
     "raw_file": "assessments/development/case-a53640d32110-outcome.json",
     "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "逐元素定位第一个不一致点…逐层/逐子算子分解（二分定位）…torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)",
+        "replacement": "torch.testing.assert_close(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\n```\n\n`torch.testing.assert_close(actual, expected, *, rtol=None, atol=None, equal_nan=False, check_device=True, check_dtype=True, check_stride=False, msg=None)`，判据为 `|actual-expected| ≤ atol + rtol·|expected|`（https://docs.pytorch.org/docs/2.14/testing.html）。默认容差表：float32 rtol=1.3e-6/atol=1e-5，float16 rtol=1e-3/atol=1e-5，bfloat16 rtol=1.6e-2/atol=1e-5，float64 rtol=1e-7/atol=1e-7。失败时报错会给出 mismatched 元素数、最大绝对/相对误差及位置。注意 `torch.testing.assert_allclose` 自 1.12 起已废弃。\n\n## 第二步：逐元素定位第一个不一致点\n\n```python\ndiff = (gpu_out - cpu_out).abs()\nmask = torch.isclose(gpu_out, cpu_out, rtol=1e-5, atol=1e-6)\nbad_idx = torch.nonzero(~mask)\nprint(\"mismatch count:\", bad_idx.shape[0])\ni = tuple(bad_idx[0].tolist())\nprint(\"first mismatch at\", i, \"gpu:\", gpu_out[i], \"cpu:\", cpu_out[i])\n# 打印该位置对应的输入切片，缩小到具体输入元素\n```\n\n观察错误分布模式能快速定性：全部元素都有微小偏差 → 累加顺序/TF32 问题；只有个别位置（如某些行/列、边缘）出错 → 索引/边界条件/越界 bug；随机出现且每次不同 → 竞态或未同步；块边界位置出错 → shared memory 同步或 tile 边界问题。\n\n## 第三步：逐层/逐子算子分解（二分定位）\n\n对复合算子，把每个子步骤的中间结果都拷回，与 PyTorch 原语逐一比对：\n\n```python\n# 例：算子 = dequant -> matmul -> bias -> gelu\nq   = my_dequant(w_q).cpu()\nref = x @ q.T + b\ntorch.testing.assert_close(my_stage1_out.cpu(), ref, rtol=1e-5, atol=1e-6)  # 逐段比对\n```\n\n第一个发散的子步骤就是问题所在。对单个 kernel 内部，可用 `printf`（device 端）或将中间结果写入 debug buffer 拷回比对。\n\n",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
       {
         "event_id": "WebFetch_2_c85552f8.result",
         "original": "torch.testing.assert_close(*actual*, *expected*, *, *allow_subclasses=True*, *rtol=None*, *atol=None*, *equal_nan=False*, *check_device=True*, *check_dtype=True*, *check_layout=True*, *check_stride=False*, *msg=None*)",

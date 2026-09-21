@@ -1,0 +1,191 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "完整流程分三步：**生成 TensorRT engine → 搭 model repository → 起服务并验证**。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_438a631ea52640d6a615a6d6.result",
+      "evidence_quote": "Triton 的 TensorRT 平台标识为 **`\"tensorrt_plan\"`**。",
+      "verification": "source",
+      "reason": "原题三个子要求均有证据支撑：(1) 部署成推理服务并用 TensorRT——最终答案给出 trtexec 从 ONNX 构建 .plan 的完整命令（--onnx/--saveEngine/--min/--opt/--maxShapes），trtexec README 来源确认这些标志（'./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244'）及 INT8 随机权重警告（'in INT8 mode, random weights are used'）。(2) 配 model repository——目录结构（config.pbtxt + 数字版本子目录 + model.plan）与 Model Repository 来源一致（最小仓库 '<model-name>/config.pbtxt 1/ model.plan'；'非数字命名或以 0 开头会被忽略'）；config.pbtxt 最小配置、cc_model_filenames、dynamic_batching、instance_group、shape tensor 等均在 Model Configuration 来源中逐字出现。(3) 起服务——docker run 命令、8000/8001/8002 端口、READY 状态表、curl /v2/health/ready 验证、SDK 容器 image_client 示例均与 Quickstart 来源原文一致。版本配套表与 26.08 Release Notes 来源一致（TensorRT 11.2.1、CUDA 13.3、cc≥7.5）。未发现与来源矛盾的内容。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "最终答案将全部组件锁定到具体版本：Triton 26.08 容器、TensorRT 11.2.1、CUDA 13.3（基于 CUDA 13.4.1 驱动栈）、Ubuntu 24.04 / Python 3.12、compute capability ≥ 7.5，且明确 engine 必须用与容器一致的 TensorRT 版本构建。该配套关系与 26.08 Release Notes（来源核实）一致，无未解决冲突。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "以最新版（Triton 26.08 容器，含 TensorRT 11.2.1、CUDA 13.3，支持 compute capability ≥ 7.5，即 Turing/Ampere/Hopper/Ada/Blackwell）为例"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "engine 必须用与容器一致的 TensorRT 版本构建。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "操作指导完整：trtexec 构建命令含全部必要参数，config.pbtxt 给出完整可写示例，docker run 含端口映射、挂载与镜像 tag（已将官方 <xx.yy> 占位替换为 26.08-py3），验证命令 curl 与 SDK 容器示例齐全，前置条件（NVIDIA Container Toolkit、绝对路径）已说明。仅需替换明确标识的用户环境参数（模型路径 /full/path/to、输入 tensor 名与形状、GPU 数量），故评 4 分而非 5 分。答案自身声明 model-control-mode 等选项未经官方页核实，但不属于原题必需步骤。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v/full/path/to/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:26.08-py3 \\\n  tritonserver --model-repository=/models"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "curl -v localhost:8000/v2/health/ready     # 返回 200 即就绪"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "./trtexec --onnx=model.onnx --saveEngine=model.plan --fp16"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-14bba652f0fd",
+  "task_id": "S",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "a740002fce7d45acb20caac206864dc0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "d211b2d3d2fca213f4a729e8361a5220",
+        "conversationRequestId": "d211b2d3d2fca213f4a729e8361a5220",
+        "agent": "cli"
+      },
+      {
+        "messageId": "a740002fce7d45acb20caac206864dc0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "d211b2d3d2fca213f4a729e8361a5220",
+        "conversationRequestId": "d211b2d3d2fca213f4a729e8361a5220",
+        "rawUsage": {
+          "prompt_tokens": 26086,
+          "completion_tokens": 1810,
+          "total_tokens": 27896,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 783,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 23078,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 783,
+          "credit": 4.83,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 26086,
+          "outputTokens": 1810,
+          "totalTokens": 27896,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 783
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "ff4c7ab40b706c894d448af650eecebfea70da9c8c6f5e0bbe7c0e7b2d86641b",
+    "process_sha256": "6635b9469e1f2bc44509d526e39ff093621bf50017ed3823a957025b40eb9c19",
+    "elapsed_seconds": 30.01,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-b516b21ec2c845e59fe9ea629e462506",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-14bba652f0fd-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

@@ -13,7 +13,7 @@ for f in (R/'assessments/development').glob('*.json'):
  v,_,_=assess.extract(d['raw_stdout']);v=copy.deepcopy(v);repair=None
  if kind=='predictors':
   wanted=[f'M{i}' for i in range(1,9)];kept=[m for m in v.get('metrics',[]) if m.get('id') in wanted];extra=[m for m in v.get('metrics',[]) if m.get('id') not in wanted]
-  if [m['id'] for m in kept]==wanted and extra and all(str(m.get('id','')).endswith('-note') for m in extra):
+  if [m['id'] for m in kept]==wanted and extra and all(str(m.get('id','')).endswith(('-note', '_note')) and all(m.get(k) is None for k in ('score','lower','upper')) for m in extra):
    v['metrics']=kept;v['supplementary_notes']=extra;repair='Move non-metric note entries to supplementary_notes; keep all eight grades unchanged.'
  elif kind=='outcome' and 'm9_m10' not in v:
   req=v.get('requirements',[]);notes=[m for m in req if m.get('id') in ('M9','M10')];requirements=[m for m in req if isinstance(m.get('id'),int)]
