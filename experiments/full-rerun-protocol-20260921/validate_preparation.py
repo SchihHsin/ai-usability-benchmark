@@ -16,6 +16,6 @@ for i in items:
   assert i['question'] in json.loads(prompt.split('输入 JSON：\n',1)[1])['question']
   if kind=='predictors': assert 'final' not in json.loads(prompt.split('输入 JSON：\n',1)[1])
   # Verify original bytes, not just regenerated records.
-  assert hashlib.sha256((Path(i['run_dir'])/'process.jsonl').read_bytes()).hexdigest()==i['metadata']['process_sha256']
+  assert hashlib.sha256(((Path(i['run_dir']) if Path(i['run_dir']).is_absolute() else ROOT/Path(i['run_dir']))/'process.jsonl').read_bytes()).hexdigest()==i['metadata']['process_sha256']
 result={'jobs_preflight':len(jobs),'existing_logs_parsed':len(items),'logs_with_prior':sum(bool(i['prior']) for i in items),'recovered_priors':[i['case'] for i in items if any(x.get('recovery') for x in i['prior'])],'old_logs_modified':False,'live_model_runs':0,'limits':'Structural regression and real-log parsing, not live assessor accuracy or completed full rerun.'}
 (ROOT/'validation.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n');print(json.dumps(result,ensure_ascii=False))
