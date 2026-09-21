@@ -11,7 +11,10 @@ def errors(run):
  answer=run_log.unpack(end['answer']).decode('utf-8');out=[]
  if not any(e['type']=='tool_dispatch' for e in events):
   if re.search(r'<(?:WebSearch|WebFetch|invoke|tool_call)\b',answer,re.I):out.append('tool_call_serialized_as_text_without_dispatch')
-  if '<prior_answer>' in answer and not re.sub(r'<prior_answer>[\s\S]*?</prior_answer>','',answer).strip():out.append('prior_only_no_final_answer')
+  if '<prior_answer>' in answer:
+   tail=re.sub(r'<prior_answer>[\s\S]*?</prior_answer>','',answer).strip()
+   if not tail:out.append('prior_only_no_final_answer')
+   elif re.fullmatch(r'我(?:先|将|会)(?:去)?(?:检索|搜索)[^。！？\n]{0,80}[。！]?',tail):out.append('prior_followed_only_by_unexecuted_search_intent')
  return out
 
 def invalid_ids():
