@@ -24,6 +24,7 @@ def main():
             summary.append({'case':item['case'],'status':'assessment_missing'});continue
         dest=Path(item['run_dir']);events=run_log.events(dest);byid={x['id']:x for x in events};end=events[-1]
         hashes={str(x.relative_to(ROOT)):hashlib.sha256(x.read_bytes()).hexdigest() for x in (pp,op)}
+        hashes['consolidate_evaluations.py']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         channel_file=ROOT/'reviewed-channel-states.json'
         if channel_file.exists():hashes[str(channel_file.relative_to(ROOT))]=hashlib.sha256(channel_file.read_bytes()).hexdigest()
         saved=json.loads((dest/'evaluation.json').read_text())
