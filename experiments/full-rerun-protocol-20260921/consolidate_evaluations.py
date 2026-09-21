@@ -24,6 +24,8 @@ def main():
             summary.append({'case':item['case'],'status':'assessment_missing'});continue
         dest=Path(item['run_dir']);events=run_log.events(dest);byid={x['id']:x for x in events};end=events[-1]
         hashes={str(x.relative_to(ROOT)):hashlib.sha256(x.read_bytes()).hexdigest() for x in (pp,op)}
+        channel_file=ROOT/'reviewed-channel-states.json'
+        if channel_file.exists():hashes[str(channel_file.relative_to(ROOT))]=hashlib.sha256(channel_file.read_bytes()).hexdigest()
         saved=json.loads((dest/'evaluation.json').read_text())
         if any(x['evaluation'].get('assessment_files')==hashes for x in saved['revisions']):continue
         evidence=[]
@@ -75,6 +77,13 @@ def main():
         official=[d for d in documents if d.get('ownership')=='official']
         if official and all(d.get('representation') in ('none','frame') for d in official) and mm['M3'].get('status')=='blocked' and not any(x.startswith('M2:') for x in p.get('execution_gate',{}).get('errors',[])):
             channel_states['official']={'status':'confirmed_unavailable','reason':'完整获取清单中官方返回均无正文，M3已评为受阻；只限本轮取得支撑','evidence':[d['event_id'] for d in official]}
+        channel_file=ROOT/'reviewed-channel-states.json'
+        manual=json.loads(channel_file.read_text()).get(item['case']) if channel_file.exists() else None
+        if manual:
+            if manual['process_sha256']!=hashlib.sha256((dest/'process.jsonl').read_bytes()).hexdigest():raise ValueError('channel review process hash mismatch')
+            for name,state in manual['channels'].items():
+                if not state.get('reason') or not state.get('evidence') or any(e not in byid for e in state['evidence']):raise ValueError('channel review evidence mismatch')
+                channel_states[name]=state
         overall=overall_score.calculate({m['id']:m for m in metrics},channel_states)
         value={'rubric_version':events[0]['metadata']['rubric_version'],'assessor':{'id':'glm-5.3-with-deterministic-evidence-audit','method':'separate source/prior and outcome contexts; automatic assessment, not human gold'},'limitations':['No hardware execution. Literal evidence auditing cannot establish complete technical correctness.','M11 uses original baseline coefficients only; a fitted candidate is recorded at batch level, not silently adopted.'],'requirements':requirements,'metrics':metrics+[{'id':'M11',**overall}],'overall':overall,'channel_states':channel_states,'execution_gate':{'predictors':p.get('execution_gate'),'outcome':o.get('execution_gate')},'evidence':evidence,'issues':issues,'assessment_files':hashes,'m2_documents':p.get('m2_documents',[]),'quote_audit':p.get('quote_audit',[])+o.get('quote_audit',[])}
         run_log.save_evaluation(dest,value);check=run_log.check(dest)
