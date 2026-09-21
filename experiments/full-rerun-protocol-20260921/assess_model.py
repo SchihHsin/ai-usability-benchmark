@@ -4,6 +4,15 @@ from types import SimpleNamespace
 import json,sys
 import prepare_assessment,assess
 R=Path(__file__).resolve().parent
+original_prompt=assess.prompt
+def exact_prompt(item,kind):
+ text=original_prompt(item,kind)
+ if kind=='outcome':
+  schema=assess.output_schema(kind);fixed=json.loads(json.dumps(schema));n=len(item['criteria']);fixed['properties']['requirements']['minItems']=n;fixed['properties']['requirements']['maxItems']=n;fixed['properties']['requirements']['items']['properties']['id']['maximum']=n
+  text=text.replace(json.dumps(schema,ensure_ascii=False),json.dumps(fixed,ensure_ascii=False))
+  text+='\nrequirements必须严格对应输入criteria的'+str(n)+'项，ID='+str(list(range(1,n+1)))+'；原题内部子要求在该项reason内逐项解释，不另造顶层ID。'
+ return text
+assess.prompt=exact_prompt
 if __name__=='__main__':
  model=sys.argv[1];p=json.loads((R/'protocol.json').read_text());tasks=json.loads((R/'tasks.json').read_text())['tasks'];args=SimpleNamespace(timeout=900,overwrite=False)
  ledger=[json.loads(x) for x in (R/('ledger-'+model+'.jsonl')).read_text().splitlines()];runs={ (x['task'],x['ecosystem']):x for x in ledger if x.get('completed')}
