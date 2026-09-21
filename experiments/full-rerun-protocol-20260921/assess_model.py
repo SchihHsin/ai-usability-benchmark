@@ -1,7 +1,7 @@
 """Post-assess one model's completed runs; retain technical retries separately."""
 from pathlib import Path
 from types import SimpleNamespace
-import json,sys
+import json,sys,fcntl
 import prepare_assessment,assess
 from review_gate import check
 assess.check=check
@@ -23,10 +23,13 @@ if __name__=='__main__':
   for source in item['sources']:
    if source.get('status')=='not_dispatched':source['role']='blocked_request'
   for kind in ['predictors','outcome']:
-   existing=list((R/'assessments/development').glob(item['case']+'-'+kind+'*.json'))
-   good=[f for f in existing if not json.loads(f.read_text()).get('error')]
-   if good:continue
-   if len(existing)>=2:
-    print(json.dumps({'case':item['case'],'kind':kind,'status':'needs_review_after_two_technical_attempts'}),flush=True);continue
-   args.overwrite=bool(existing)
-   status=assess.run_one(item,kind,args);print(json.dumps(status),flush=True)
+   locks=R/'.assessment-locks';locks.mkdir(exist_ok=True)
+   with (locks/(item['case']+'-'+kind)).open('w') as lock:
+    fcntl.flock(lock,fcntl.LOCK_EX)
+    existing=list((R/'assessments/development').glob(item['case']+'-'+kind+'*.json'))
+    good=[f for f in existing if not json.loads(f.read_text()).get('error')]
+    if good:continue
+    if len(existing)>=2:
+     print(json.dumps({'case':item['case'],'kind':kind,'status':'needs_review_after_two_technical_attempts'}),flush=True);continue
+    args.overwrite=bool(existing)
+    status=assess.run_one(item,kind,args);print(json.dumps(status),flush=True)
