@@ -70,13 +70,20 @@ for run in (R/'runs').iterdir():
       for correction in (json.loads((R/'reviewed-quote-corrections.json').read_text()) if (R/'reviewed-quote-corrections.json').exists() else []):
        if correction['event_id']==x['event_id'] and correction['original']==q:variants.append(correction['replacement'])
       exact=next((v for v in variants if v.strip() and v in source),None)
+      if exact is None and ('……' in q or '...' in q):
+       pieces=re.split(r'……|\.\.\.',q)
+       if len(pieces)>1 and all(len(v.strip())>=8 and source.count(v)==1 for v in pieces):
+        positions=[source.index(v) for v in pieces]
+        if positions==sorted(positions):
+         expanded=source[positions[0]:positions[-1]+len(pieces[-1])]
+         if len(expanded)<3000:exact=expanded
       if exact is None and q.replace('\\n',' ').split():
        tokens=q.replace('\\n',' ').split();pattern=r'(?:\s|\\n)+'.join(re.escape(t) for t in tokens);match=re.search(pattern,source)
        if match:exact=match.group(0)
       if exact is None and x['event_id']=='call_868700ccdeee4388ab09e1df.result' and q=='**标题**: 昇腾社区官网-昇腾万里 让智能无所及':
        candidate='**标题**: 昇腾社区官网-昇腾万里 让智能无所不及'
        if candidate in source:exact=candidate
-      if exact is not None:x['quote']=exact;repairs.append({'event_id':x['event_id'],'original':q,'replacement':exact,'basis':'exact source substring; whitespace alignment or explicitly reviewed title transcription correction'})
+      if exact is not None:x['quote']=exact;repairs.append({'event_id':x['event_id'],'original':q,'replacement':exact,'basis':'exact source substring; verified escaping/whitespace alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction'})
     for v in x.values():walk(v)
    elif isinstance(x,list):
     for v in x:walk(v)
