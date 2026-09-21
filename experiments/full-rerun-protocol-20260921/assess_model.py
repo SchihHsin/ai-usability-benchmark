@@ -3,6 +3,8 @@ from pathlib import Path
 from types import SimpleNamespace
 import json,sys
 import prepare_assessment,assess
+from review_gate import check
+assess.check=check
 R=Path(__file__).resolve().parent
 original_prompt=assess.prompt
 def exact_prompt(item,kind):

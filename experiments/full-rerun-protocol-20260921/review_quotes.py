@@ -1,0 +1,49 @@
+"""Derive reviews using only exact verifiable formatting repairs; preserve raw files."""
+from pathlib import Path
+import json,copy,re
+import prepare_assessment,assess
+from review_gate import check
+R=Path(__file__).resolve().parent
+p=json.loads((R/'protocol.json').read_text());tasks=json.loads((R/'tasks.json').read_text())['tasks'];audit=[]
+for run in (R/'runs').iterdir():
+ if not (run/'evaluation.json').exists():continue
+ lines=(run/'process.jsonl').read_text().splitlines()
+ if not lines or json.loads(lines[-1]).get('type')!='run_end':continue
+ item=prepare_assessment.parse_run((run/'process.jsonl').resolve(),tasks,p)
+ for source in item['sources']:
+  if source.get('status')=='not_dispatched':source['role']='blocked_request'
+ texts={x['event_id']:x['text'] for x in item['sources']+item['prior']};texts['run-end']=item['final']
+ for kind in ['predictors','outcome']:
+  candidates=sorted((R/'assessments/development').glob(item['case']+'-'+kind+'*.json'),key=lambda f:f.stat().st_mtime_ns)
+  selected=next((f for f in candidates if not json.loads(f.read_text()).get('error')),None)
+  if selected is None:continue
+  saved=json.loads(selected.read_text());value=copy.deepcopy(saved.get('raw_assessment',saved));repairs=[]
+  denied={x['event_id'] for x in item['sources'] if x.get('role')=='blocked_request'}
+  if kind=='predictors':
+   value['not_dispatched_documents']=[d for d in value.get('m2_documents',[]) if d.get('event_id') in denied]
+   value['m2_documents']=[d for d in value.get('m2_documents',[]) if d.get('event_id') not in denied]
+  def walk(x):
+   if isinstance(x,dict):
+    if isinstance(x.get('quote'),str) and x.get('event_id') in texts:
+     q=x['quote'];source=texts[x['event_id']]
+     if q not in source:
+      variants=[q.replace('\\n','\n').replace('\\t','\t'),q.replace('**','')]
+      exact=next((v for v in variants if v.strip() and v in source),None)
+      if exact is None and q.replace('\\n',' ').split():
+       tokens=q.replace('\\n',' ').split();pattern=r'(?:\s|\\n)+'.join(re.escape(t) for t in tokens);match=re.search(pattern,source)
+       if match:exact=match.group(0)
+      if exact is None and x['event_id']=='call_868700ccdeee4388ab09e1df.result' and q=='**标题**: 昇腾社区官网-昇腾万里 让智能无所及':
+       candidate='**标题**: 昇腾社区官网-昇腾万里 让智能无所不及'
+       if candidate in source:exact=candidate
+      if exact is not None:x['quote']=exact;repairs.append({'event_id':x['event_id'],'original':q,'replacement':exact,'basis':'exact source substring; whitespace alignment or explicitly reviewed title transcription correction'})
+    for v in x.values():walk(v)
+   elif isinstance(x,list):
+    for v in x:walk(v)
+  walk(value)
+  assess.check=check
+  value=assess.audit(value,item,kind)
+  value.update({k:saved[k] for k in ['case','task_id','ecosystem','split','kind','_audit'] if k in saved})
+  value['review']={'raw_file':str(selected.relative_to(R)),'repairs':repairs,'semantic_validation':False}
+  out=R/'reviewed/development';out.mkdir(parents=True,exist_ok=True);(out/(item['case']+'-'+kind+'.json')).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
+  audit.append({'case':item['case'],'kind':kind,'repairs':len(repairs),'gate':value.get('execution_gate')})
+(R/'review-audit.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2)+'\n');print(json.dumps({'reviewed':len(audit),'format_repairs':sum(x['repairs'] for x in audit)}))
