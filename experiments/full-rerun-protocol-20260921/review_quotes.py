@@ -90,9 +90,16 @@ for run in (R/'runs').iterdir():
     for v in x.values():walk(v)
    elif isinstance(x,list):
     for v in x:walk(v)
+  for fix in (json.loads((R/'reviewed-field-corrections.json').read_text()) if (R/'reviewed-field-corrections.json').exists() else []):
+   if fix.get('phase')=='before_quote' and fix['case']==item['case'] and fix['kind']==kind:
+    parent=value
+    for key in fix['path'][:-1]:parent=parent[key]
+    key=fix['path'][-1]
+    if parent.get(key)!=fix['original']:raise ValueError('pre-quote field original mismatch')
+    parent[key]=copy.deepcopy(fix['replacement']);repairs.append(fix)
   walk(value)
   for fix in (json.loads((R/'reviewed-field-corrections.json').read_text()) if (R/'reviewed-field-corrections.json').exists() else []):
-   if fix['case']==item['case'] and fix['kind']==kind:
+   if fix.get('phase')!='before_quote' and fix['case']==item['case'] and fix['kind']==kind:
     parent=value
     for key in fix['path'][:-1]:parent=parent[key]
     key=fix['path'][-1]
