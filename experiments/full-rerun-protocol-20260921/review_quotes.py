@@ -4,6 +4,7 @@ import json,copy,re
 import prepare_assessment,assess
 from review_gate import check
 from review_normalization import completeness
+from quote_alignment import align as align_markdown
 R=Path(__file__).resolve().parent
 p=json.loads((R/'protocol.json').read_text());tasks=json.loads((R/'tasks.json').read_text())['tasks'];audit=[]
 for run in (R/'runs').iterdir():
@@ -71,6 +72,7 @@ for run in (R/'runs').iterdir():
       for correction in (json.loads((R/'reviewed-quote-corrections.json').read_text()) if (R/'reviewed-quote-corrections.json').exists() else []):
        if correction.get('case',item['case'])==item['case'] and correction['event_id']==x['event_id'] and correction['original']==q:variants.append(correction['replacement'])
       exact=next((v for v in variants if v.strip() and v in source),None)
+      if exact is None:exact=align_markdown(q,source)
       if exact is None and ('……' in q or '...' in q):
        pieces=re.split(r'……|\.\.\.',q)
        if len(pieces)>1 and all(len(v.strip())>=8 and source.count(v)==1 for v in pieces):
@@ -84,7 +86,7 @@ for run in (R/'runs').iterdir():
       if exact is None and x['event_id']=='call_868700ccdeee4388ab09e1df.result' and q=='**标题**: 昇腾社区官网-昇腾万里 让智能无所及':
        candidate='**标题**: 昇腾社区官网-昇腾万里 让智能无所不及'
        if candidate in source:exact=candidate
-      if exact is not None:x['quote']=exact;repairs.append({'event_id':x['event_id'],'original':q,'replacement':exact,'basis':'exact source substring; verified escaping/whitespace alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction'})
+      if exact is not None:x['quote']=exact;repairs.append({'event_id':x['event_id'],'original':q,'replacement':exact,'basis':'exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction'})
     for v in x.values():walk(v)
    elif isinstance(x,list):
     for v in x:walk(v)
