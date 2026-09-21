@@ -1,3 +1,4 @@
+from completion_guard import invalid_ids
 """Read-only live inventory; write a small derived progress report."""
 from pathlib import Path
 import json,html,datetime
@@ -7,7 +8,9 @@ for m in p['models']:
  ledger=R/('ledger-'+m+'.jsonl');latest={}
  if ledger.exists():
   for line in ledger.read_text().splitlines():
-   r=json.loads(line);latest[(r['task'],r['ecosystem'])]=r
+   r=json.loads(line)
+   if r['run_id'] in invalid_ids():r['completed']=False
+   latest[(r['task'],r['ecosystem'])]=r
  complete=sum(r.get('completed',False) for r in latest.values());fail=sum(not r.get('completed',False) for r in latest.values())
  rows.append({'model':m,'completed':complete,'expected':52,'technical_attention':fail})
 a=list((R/'assessments/development').glob('*.json'))

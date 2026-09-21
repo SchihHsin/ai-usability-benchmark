@@ -1,3 +1,4 @@
+from completion_guard import invalid_ids
 """Audit every selected logical unit against frozen resources and raw run log."""
 from pathlib import Path
 import hashlib,json,sys,datetime
@@ -11,7 +12,7 @@ for path,h in freeze.items():
 for model in p['models']:
  ledger=[json.loads(l) for l in (R/f'ledger-{model}.jsonl').read_text().splitlines()];selected={}
  for x in ledger:
-  if x.get('completed'):selected[(x['task'],x['ecosystem'])]=x
+  if x.get('completed') and x['run_id'] not in invalid_ids():selected[(x['task'],x['ecosystem'])]=x
  for task in p['development']:
   for eco in p['ecosystems']:
    if (task,eco) not in selected:missing.append([model,task,eco]);continue

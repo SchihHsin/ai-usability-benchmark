@@ -1,3 +1,4 @@
+from completion_guard import invalid_ids
 """Generate a provenance-linked report without inventing unassessed scores."""
 from pathlib import Path
 from collections import Counter
@@ -8,7 +9,7 @@ for model in p['models']:
  ledger=[json.loads(l) for l in (R/f'ledger-{model}.jsonl').read_text().splitlines()]
  selected={}
  for x in ledger:
-  if x.get('completed'):selected[(x['task'],x['ecosystem'])]=x
+  if x.get('completed') and x['run_id'] not in invalid_ids():selected[(x['task'],x['ecosystem'])]=x
  for task in p['development']:
   for eco in p['ecosystems']:
    x=selected.get((task,eco));row={'task':task,'ecosystem':eco,'model':model,'paired_analysis':task!='G','collected':bool(x)}
