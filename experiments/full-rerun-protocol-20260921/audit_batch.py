@@ -1,4 +1,4 @@
-from completion_guard import invalid_ids
+from completion_guard import invalid_ids,errors as completion_errors
 """Audit every selected logical unit against frozen resources and raw run log."""
 from pathlib import Path
 import hashlib,json,sys,datetime
@@ -21,7 +21,7 @@ for model in p['models']:
     if meta.get(field)!=sha(R/name):errors.append(field)
    for path,h in meta.get('skill_hashes',{}).items():
     if sha(R/'frozen-skill'/path)!=h:errors.append('skill:'+path)
-   check=run_log.check(r);errors.extend(check['issues'])
+   check=run_log.check(r);errors.extend(check['issues']);errors.extend(completion_errors(r))
    versions=json.loads((r/'evaluation.json').read_text())['revisions'];execution=next((v['evaluation']['execution'] for v in versions if 'execution' in v['evaluation']),{})
    if execution.get('exit_code')!=0 or execution.get('stop_reason')!='client_complete' or execution.get('adapter_errors'):errors.append('execution_not_complete')
    if execution.get('model_requested')!=model or model not in execution.get('models',[]):errors.append('model_identity')

@@ -24,6 +24,14 @@ for run in (R/'runs').iterdir():
    value['m2_documents']=[d for d in value.get('m2_documents',[]) if d.get('event_id') not in denied]
   def walk(x):
    if isinstance(x,dict):
+    if isinstance(x.get('answer_quote'),str):
+     quoted={'event_id':'run-end','quote':x['answer_quote']};walk(quoted)
+     if quoted['quote'] in item['final']:
+      if x.get('answer_event_id')!='run-end':repairs.append({'basis':'answer_quote verified against frozen final; normalize answer event alias'})
+      x['answer_event_id']='run-end';x['answer_quote']=quoted['quote']
+    if isinstance(x.get('evidence_quote'),str) and x.get('evidence_id'):
+     quoted={'event_id':x['evidence_id'],'quote':x['evidence_quote'],'_source_quote':True};walk(quoted)
+     x['evidence_id']=quoted['event_id'];x['evidence_quote']=quoted['quote']
     old_id=x.get('event_id')
     if old_id=='final':
      x['event_id']='run-end';old_id='run-end';repairs.append({'basis':'final alias maps to frozen final answer'})
@@ -41,7 +49,10 @@ for run in (R/'runs').iterdir():
        for ev in val:
         if isinstance(ev,dict) and 'event_id' not in ev and isinstance(ev.get('quote'),str) and ev['quote'] in texts[x['event_id']]:
          ev['event_id']=x['event_id'];repairs.append({'field':evidence_key,'basis':'verbatim quote matched to parent document event'})
-    if isinstance(x.get('quote'),str) and len(x['quote'])>=20 and x['quote'] not in texts.get(x.get('event_id'),''):
+    if kind=='outcome' and not x.get('_source_quote') and isinstance(x.get('quote'),str) and x['quote'].strip() and x['quote'] in item['final'] and x.get('event_id')!='run-end':
+     repairs.append({'original_event_id':x.get('event_id'),'replacement_event_id':'run-end','basis':'M9/M10 evidence is an exact frozen final-answer substring'})
+     x['event_id']='run-end'
+    if (kind=='predictors' or x.get('_source_quote')) and isinstance(x.get('quote'),str) and len(x['quote'])>=20 and x['quote'] not in texts.get(x.get('event_id'),''):
      matches=[eid for eid,txt in texts.items() if eid!='run-end' and x['quote'] in txt]
      if len(matches)==1:
       repairs.append({'original_event_id':x.get('event_id'),'replacement_event_id':matches[0],'quote':x['quote'],'basis':'unchanged exact quote occurs in one and only one captured evidence event'})
