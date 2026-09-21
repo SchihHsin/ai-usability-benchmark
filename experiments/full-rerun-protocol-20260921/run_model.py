@@ -21,7 +21,7 @@ def main():
   for e in ecos:
    if (t,e) in done:continue
    rid=runner.one_run(args,t,e,'standard',model)
-   ev=json.loads((R/'runs'/rid/'evaluation.json').read_text());ex=ev.get('execution',{})
+   ev=json.loads((R/'runs'/rid/'evaluation.json').read_text());ex=ev['revisions'][-1]['evaluation'].get('execution',{})
    check=json.loads((R/(rid+'-check.json')).read_text())
    completed=ex.get('exit_code')==0 and not ex.get('adapter_errors') and ex.get('stop_reason')=='client_complete' and not check.get('issues') and bool(ex.get('models'))
    record={'completed':completed,'stop_reason':ex.get('stop_reason'),'check_issues':check.get('issues'),'task':t,'ecosystem':e,'model':model,'run_id':rid,'exit_code':ex.get('exit_code'),'response_models':ex.get('models'),'adapter_errors':ex.get('adapter_errors')}
