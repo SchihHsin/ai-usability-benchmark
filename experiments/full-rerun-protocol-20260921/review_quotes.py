@@ -45,6 +45,14 @@ for run in (R/'runs').iterdir():
      q=x['quote'];source=texts[x['event_id']]
      if q not in source:
       variants=[q.replace('\\n','\n').replace('\\t','\t'),q.replace('**','')]
+      decoded=q
+      for _ in range(3):
+       try:decoded=json.loads('"'+decoded+'"')
+       except (ValueError,TypeError):break
+       if isinstance(decoded,str):variants.append(decoded)
+       else:break
+      for correction in (json.loads((R/'reviewed-quote-corrections.json').read_text()) if (R/'reviewed-quote-corrections.json').exists() else []):
+       if correction['event_id']==x['event_id'] and correction['original']==q:variants.append(correction['replacement'])
       exact=next((v for v in variants if v.strip() and v in source),None)
       if exact is None and q.replace('\\n',' ').split():
        tokens=q.replace('\\n',' ').split();pattern=r'(?:\s|\\n)+'.join(re.escape(t) for t in tokens);match=re.search(pattern,source)
@@ -57,6 +65,12 @@ for run in (R/'runs').iterdir():
    elif isinstance(x,list):
     for v in x:walk(v)
   walk(value)
+  for doc in value.get('m2_documents',[]):
+   if doc.get('representation')=='body' and doc.get('completeness')=='complete':
+    ref=doc.get('reference');ref=ref if isinstance(ref,dict) else {}
+    known=item.get('completeness_references',{}).get(ref.get('id'),{})
+    if not known.get('verified_complete'):
+     doc['completeness']='unknown';repairs.append({'event_id':doc.get('event_id'),'original_completeness':'complete','replacement_completeness':'unknown','basis':'no independent complete reference; retain observed body and existing 4–5 uncertainty rule'})
   assess.check=check
   value=assess.audit(value,item,kind)
   value.update({k:saved[k] for k in ['case','task_id','ecosystem','split','kind','_audit'] if k in saved})
