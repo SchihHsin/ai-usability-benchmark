@@ -1,0 +1,202 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。\n- 用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream（接口返回只代表任务下发成功，不代表复制完成）。\n- 跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_6bdbb8852f464ba499fc75c0.result",
+      "evidence_quote": "调用[aclrtRecordEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0083.html)接口将Event插入到stream1中（通常称为Record Event任务），调用[aclrtStreamWaitEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0091.html)接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+      "verification": "source",
+      "reason": "最终答案完整覆盖原题三个子要求：(1) 多 stream 并行——答案称“不同 Stream 之间并行执行”，与官方 Stream Management 原文一致（call_03a47fe7d805426fa26cc790.result: \"Different streams, on the other hand, execute their tasks concurrently.\"），并给出双 Stream 双缓冲 Event 代码；(2) aclrtMemcpyAsync 异步拷贝——签名、参数、64 字节对齐、锁页内存约束均与 call_609648bf6f78474a9aa9d344.result 的官方 API 参考逐条对应（“源地址和目的地址都必须64字节对齐”；“本接口不会报错，但是在实际执行到该任务时会发生不可预知的错误”）；(3) event 同步——aclrtRecordEvent/aclrtStreamWaitEvent/aclrtSynchronizeStream 语义与商用版 8.3.RC1 同步等待文档正文一致，含 Event 与 Notify 重置差异。锁页/非锁页内存对重叠效果的关键说明有 call_03a47fe7d805426fa26cc790.result 摘要支持（“Host线程无法与本次复制并行执行,数据传输也难以与计算充分重叠”）。答案已自行标注未能核实的边界（默认 stream 隐式同步、两个页面正文缺失），未虚构证据。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "最终答案对所用各 AscendCL 接口（aclrtCreateStream/aclrtMemcpyAsync/aclrtRecordEvent/aclrtStreamWaitEvent/aclrtSynchronizeStream/aclrtCreateEventExWithFlag）给出有依据的适用版本范围：8.0.0.alpha001、8.3.RC1、9.1.X/9.2.0.beta2、商用版 latest 均有官方文档记载，且指出版本差异（非锁页行为表述不同、9.x 新增 aclrtCreateEventExWithFlag/aclrtHostRegisterV2、旧版可改用 aclrtCreateEvent）。各组件均落到有依据的范围而非具体单一版本，故 4 分而非 5 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "上述接口（`aclrtCreateStream`/`aclrtMemcpyAsync`/`aclrtRecordEvent`/`aclrtStreamWaitEvent`/`aclrtSynchronizeStream` 等）在以下官方版本文档中均有记载，接口名与签名一致：\n- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待，`aclrtCreateEventExWithFlag`/`ACL_EVENT_SYNC` 用法）\n- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）\n- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）\n\n差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案提供了具体可操作方案：完整的双 Stream+Event 双缓冲代码、aclrtMemcpyAsync 完整签名与约束、锁页内存申请方式。但官方示例明确“不可以直接拷贝编译运行，仅供参考”，且代码缺 aclInit/aclrtSetDevice/Context 初始化与异常处理分支，事件数组声明（devIn[(i+1)%2]）依赖未定义的数组结构，首个迭代 Event 未记录即被等待的边界也需读者自行处理，需补充缺失内容才能执行，故 3 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "（代码综合自官方 Stream管理/数据复制示例；官方注明“不可以直接拷贝编译运行，仅供参考”，需自行补齐 aclInit/SetDevice/异常处理。）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "aclrtMemcpyAsync(devIn[(i+1)%2], size, hostIn[(i+1)%2], size,\n                     ACL_MEMCPY_HOST_TO_DEVICE, sCopy);"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-77df60c2fea8",
+  "task_id": "V",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "98e99678e743465096567b614ce75555",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "639bf7c3a9dfae38de3e9e2873564c09",
+        "conversationRequestId": "639bf7c3a9dfae38de3e9e2873564c09",
+        "agent": "cli"
+      },
+      {
+        "messageId": "98e99678e743465096567b614ce75555",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "639bf7c3a9dfae38de3e9e2873564c09",
+        "conversationRequestId": "639bf7c3a9dfae38de3e9e2873564c09",
+        "rawUsage": {
+          "prompt_tokens": 18797,
+          "completion_tokens": 1507,
+          "total_tokens": 20304,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 350,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 15789,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 350,
+          "credit": 3.49,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 18797,
+          "outputTokens": 1507,
+          "totalTokens": 20304,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 350
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "f80b107c5f2f1c6be72aad0e6f120f0422e159ec1c5976f8f423be855ae55501",
+    "process_sha256": "8655216e81ce47a7dfa0163fc933c238962c6c6eacbb281733a156900052495d",
+    "elapsed_seconds": 28.68,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-527344157e4643829ac4be1237aeb72d",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-77df60c2fea8-outcome-attempt-1.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。……用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream……跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+        "replacement": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。\n- 用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream（接口返回只代表任务下发成功，不代表复制完成）。\n- 跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+        "original": "调用aclrtRecordEvent接口将Event插入到stream1中（通常称为Record Event任务），调用aclrtStreamWaitEvent接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+        "replacement": "调用[aclrtRecordEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0083.html)接口将Event插入到stream1中（通常称为Record Event任务），调用[aclrtStreamWaitEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0091.html)接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "event_id": "run-end",
+        "original": "上述接口……在以下官方版本文档中均有记载，接口名与签名一致：- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待……）- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）",
+        "replacement": "上述接口（`aclrtCreateStream`/`aclrtMemcpyAsync`/`aclrtRecordEvent`/`aclrtStreamWaitEvent`/`aclrtSynchronizeStream` 等）在以下官方版本文档中均有记载，接口名与签名一致：\n- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待，`aclrtCreateEventExWithFlag`/`ACL_EVENT_SYNC` 用法）\n- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）\n- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）\n\n差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

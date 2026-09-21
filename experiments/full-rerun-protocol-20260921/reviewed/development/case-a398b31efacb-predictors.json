@@ -21,10 +21,10 @@
     {
       "id": "M2",
       "score": null,
-      "lower": null,
-      "upper": null,
-      "status": "insufficient_evidence",
-      "reason": "M2: incomplete/duplicate fetch inventory; M2: ownership unknown call_76494b85f0ce4a0cac57bd90.result",
+      "lower": 3.3333333333333335,
+      "upper": 4.0,
+      "status": "bounded",
+      "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
       "evidence": [
         {
           "event_id": "call_1a966cd00e5a4c3e950349a1.result",
@@ -42,11 +42,11 @@
     },
     {
       "id": "M3",
-      "score": null,
-      "lower": 1,
-      "upper": 5,
-      "status": "insufficient_evidence",
-      "reason": "自动引文审计未匹配，原判断保留在 raw_status；原题所需的ATC三条动态shape路线（dynamic_batch_size/dynamic_image_size/dynamic_dims）的功能说明、取值格式、约束、示例atc命令及推理侧ACL接口名均有直接正文；MindIE侧maxBatchSize等调度参数含计算公式与配置说明。但ACL接口的具体调用代码/头文件未取回，MindIE ScheduleConfig的config.json完整片段未展示，属于分支细节未完整，记4。",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "原题所需的ATC三条动态shape路线（dynamic_batch_size/dynamic_image_size/dynamic_dims）的功能说明、取值格式、约束、示例atc命令及推理侧ACL接口名均有直接正文；MindIE侧maxBatchSize等调度参数含计算公式与配置说明。但ACL接口的具体调用代码/头文件未取回，MindIE ScheduleConfig的config.json完整片段未展示，属于分支细节未完整，记4。",
       "evidence": [
         {
           "event_id": "call_1a966cd00e5a4c3e950349a1.result",
@@ -58,10 +58,9 @@
         },
         {
           "event_id": "call_e8bd37665ead496a8f307132.result",
-          "quote": "maxBatchSize = Floor[Total Block Num/Block Num]，需要先计算出“Total Block Num”和“Block Num”的值。"
+          "quote": "根据计算公式：maxBatchSize = Total Block Num/Block Num，需要先计算出“Total Block Num”和“Block Num”的值。\n   \n   1. 计算“Total Block Num”的值。\n      \n      - 方式一（实测获取）：\n        \n        - “Total Block Num”的值可以通过跑一次性能后在Python日志中的“npuBlockNum”获取，Python日志路径为：/usr/local/Ascend/mindie/latest/mindie-llm/logs/pythonlog.log。\n          \n          \n          \n          \n          \n          当使用多卡跑性能时，Python日志会根据使用的卡数打印多个“npuBlockNum”，此时获取最小值即可。\n        - “Total Block Num”的值也可以直接从info级打屏日志k_caches[0].shape=torch.Size([npuBlockNum, -, -, -])中torch.Size的第一个值获取。\n          \n          \n      - 方式二（公式计算）：\n        \n        Total Block Num = Floor[NPU显存/(模型网络层数*cacheBlockSize*模型注意力头数*注意力头大小*Cache类型字节数*Cache数)]，公式中各参数的取值信息如表3所示。\n        \n        \n        \n        **表3** Total Block Num公式中的参数值\n        \n        参数\n        \n        取值\n        \n        NPU显存\n        \n        2中“npuMemSize”的值：17。\n        \n        模型网络层数\n        \n        模型网络层数是模型权重文件config.json中num_hidden_layers参数的值，取值为：32。\n        \n        cacheBlockSize\n        \n        默认值：128。该参数的值与ScheduleConfig参数说明中cacheBlockSize参数的值保持一致。\n        \n        模型注意力头数\n        \n        模型注意力头数是模型权重文件config.json中num_attention_heads参数的值。\n        \n        注意力头大小\n        \n        “模型注意力头数*注意力头大小”的值为模型权重文件config.json中hidden_size参数的值（取值为：4096），即注意力头大小可以根据模型注意力头数计算获得。\n        \n        说明：\n        \n        对于GQA类模型（分组查询注意力类模型，例如LLaMA3-8B），“模型注意力头数”的值需使用模型权重文件config.json中num_key_value_heads参数的值（取值为：8），即对于LLaMA3-8B模型，其“注意力头大小”的值应该为4096/8=512。\n        \n        Cache类型字节数\n        \n        由模型config.json文件中的torch_dtype决定，一般为float16类型，取值为：2。\n        \n        Cache数\n        \n        Key+Value的值，各自代表1个Cache数。默认值：2。\n        \n        将以上参数值代入公式，得到Total Block Num = Floor[17*1024*1024*1024/(32 * 128 * 8*512/2*2*2)] = 544。\n        \n        注：以上算式中512/2是由于LLaMA3-8B双卡，所以注意头数需均分在2张卡上。\n   2. 计算每个请求所需“Block Num”的值，公式中各参数的取值信息如表4所示。\n      \n      根据计算公式：\n      \n      - 所需最小Block Num = Ceil(输入Token数/cacheBlockSize)\n      - 所需最大Block Num = Ceil(输入Token数/cacheBlockSize)+Ceil(最大输出Token数/cacheBlockSize)\n      - 所需平均Block Num = Ceil(输入Token数/cacheBlockSize)+Ceil(平均输出Token数/cacheBlockSize)\n      \n      \n      \n      **表4** Block Num公式中的参数值\n      \n      参数\n      \n      取值\n      \n      输入Token数\n      \n      从Benchmark输出的InputTokens参数的平均值获取，取值示例：186。\n      \n      最大输出Token数\n      \n      从config.json文件中的maxIterTimes参数获取，示例取值：512。\n      \n      平均输出Token数\n      \n      实际运行测试数据集后统计GeneratedTokens参数平均输出长度，示例取值：346。\n      \n      cacheBlockSize\n      \n      默认值：128。该参数的值与ScheduleConfig参数说明中cacheBlockSize的值保持一致。\n      \n      将以上参数值代入公式：\n      \n      - 所需最小Block Num = Ceil(186/128) = 2\n      - 所需最大Block Num = Ceil(186/128)+Ceil(512/128) = 6\n      - 所需平均Block Num = Ceil(186/128)+Ceil(346/128) = 5\n      \n      \n      \n      “Ceil”表示计算结果向上取整。\n   3. 计算“maxBatchSize”的取值范围。\n      \n      根据3.a和3.b计算出的“Total Block Num”和“Block Num”值，然后使用公式maxBatchSize=Floor[Total Block Num/Block Num]计算“maxBatchSize”的取值范围。"
         }
-      ],
-      "raw_status": "scored"
+      ]
     },
     {
       "id": "M4",
@@ -87,15 +86,15 @@
     },
     {
       "id": "M5",
-      "score": null,
-      "lower": 1,
-      "upper": 5,
-      "status": "insufficient_evidence",
-      "reason": "自动引文审计未匹配，原判断保留在 raw_status；统一预算内去重后的相关独立第三方来源5条：《ATC模型转换动态shape问题案例》同文多平台转载计1条（jishuzhan/知乎/pmdaddy/cnblogs/掘金/csdn），另有知乎mindie调优、博客园服务化参数调优实战、CSDN MindIE maxBatchSize时延文章、知乎MindIE服务化部署共4条，合计5条，记4。",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "scored",
+      "reason": "统一预算内去重后的相关独立第三方来源5条：《ATC模型转换动态shape问题案例》同文多平台转载计1条（jishuzhan/知乎/pmdaddy/cnblogs/掘金/csdn），另有知乎mindie调优、博客园服务化参数调优实战、CSDN MindIE maxBatchSize时延文章、知乎MindIE服务化部署共4条，合计5条，记4。",
       "evidence": [
         {
           "event_id": "call_efcd509dbf184de39f48bea5.result",
-          "quote": "本文分享自华为云社区《ATC模型转换动态shape问题案例》，作者为昇腾CANN。"
+          "quote": "本文分享自华为云社区《ATC模型转换动态shape问题案例》，作者：昇腾CANN。"
         },
         {
           "event_id": "call_3893db7899ac4fd9bf4bf9c1.result",
@@ -105,8 +104,7 @@
           "event_id": "call_3893db7899ac4fd9bf4bf9c1.result",
           "quote": "## 5. [MindIE服务化部署及性能调优介绍 - 知乎](https://zhuanlan.zhihu.com/p/1924488831194858710)"
         }
-      ],
-      "raw_status": "scored"
+      ]
     },
     {
       "id": "M6",
@@ -283,6 +281,26 @@
         }
       ],
       "reference": null
+    },
+    {
+      "event_id": "call_76494b85f0ce4a0cac57bd90.result",
+      "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0018.html",
+      "ownership": "official",
+      "representation": "frame",
+      "completeness": "incomplete",
+      "evidence": [
+        {
+          "event_id": "call_76494b85f0ce4a0cac57bd90.result",
+          "quote": "**标题**: --dynamic_batch_size-输入选项-基础功能参数-参数说明-ATC工具-训练&推理开发-CANN商用版8.0.RC3开发文档-昇腾社区\n\n文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+        }
+      ],
+      "boundary_evidence": [
+        {
+          "event_id": "call_76494b85f0ce4a0cac57bd90.result",
+          "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+        }
+      ],
+      "reference": "Actual dispatched official return; title and feedback widget only. Preserve attempt; same-URL aggregation applies."
     }
   ],
   "m4_check": {
@@ -308,32 +326,10 @@
     ]
   },
   "not_dispatched_documents": [],
-  "quote_audit": [
-    {
-      "metric": "M3",
-      "bad_refs": [
-        {
-          "event_id": "call_e8bd37665ead496a8f307132.result",
-          "quote": "maxBatchSize = Floor[Total Block Num/Block Num]，需要先计算出“Total Block Num”和“Block Num”的值。"
-        }
-      ]
-    },
-    {
-      "metric": "M5",
-      "bad_refs": [
-        {
-          "event_id": "call_efcd509dbf184de39f48bea5.result",
-          "quote": "本文分享自华为云社区《ATC模型转换动态shape问题案例》，作者为昇腾CANN。"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
-    "errors": [
-      "M2: incomplete/duplicate fetch inventory",
-      "M2: ownership unknown call_76494b85f0ce4a0cac57bd90.result"
-    ],
-    "passed": false,
+    "errors": [],
+    "passed": true,
     "scope": "structural evidence checks, not semantic validation"
   },
   "case": "case-a398b31efacb",
@@ -375,6 +371,293 @@
   "review": {
     "raw_file": "assessments/development/case-a398b31efacb-predictors-shape-recovered.json",
     "repairs": [
+      {
+        "case": "case-a398b31efacb",
+        "kind": "predictors",
+        "phase": "before_quote",
+        "path": [
+          "m2_documents"
+        ],
+        "original": [
+          {
+            "event_id": "call_3be41993f66e435a9c8a849d",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatcparam_16_0020.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_3be41993f66e435a9c8a849d",
+                "quote": "**标题**: --dynamic_dims-输入选项-基础功能参数-参数说明-ATC工具-训练&推理开发-CANN8.1.RC1.alpha001开发文档-昇腾社区\n\n文档评分"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_3be41993f66e435a9c8a849d",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_1a966cd00e5a4c3e950349a1",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0020.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_1a966cd00e5a4c3e950349a1",
+                "quote": "#### 功能说明\n\n设置ND格式下动态维度的档位。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_1a966cd00e5a4c3e950349a1",
+                "quote": "不使用[aclmdlSetInputDynamicDims](https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_0312.html)接口，则模型执行时，默认按照动态维度设置范围的最大值进行赋值。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_8cf1c7f53dee4db3b66d9cc6",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0018.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "retry_of": "call_76494b85f0ce4a0cac57bd90",
+            "evidence": [
+              {
+                "event_id": "call_8cf1c7f53dee4db3b66d9cc6",
+                "quote": "**标题**: --dynamic_batch_size-输入选项-基础功能参数-参数说明-ATC工具-训练&推理开发-CANN商用版8.0.RC3开发文档-昇腾社区\n\n文档评分"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76494b85f0ce4a0cac57bd90",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_0e8168bbe6f249fe93b865b4",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0019.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_0e8168bbe6f249fe93b865b4",
+                "quote": "#### 功能说明\n\n设置输入图片的动态分辨率参数。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_0e8168bbe6f249fe93b865b4",
+                "quote": "不使用[aclmdlSetDynamicHWSize](https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_0307.html)接口，则模型执行时，默认按照动态分辨率设置范围的最大档位宽、高进行赋值。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_e8bd37665ead496a8f307132",
+            "url": "https://www.hiascend.com/document/detail/zh/mindie/20RC2/mindieservice/servicedev/mindie_service0105.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_e8bd37665ead496a8f307132",
+                "quote": "# 性能调优流程\n\n通过参数调优，使吞吐率（TPS）达到时延约束条件下的最大值。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_e8bd37665ead496a8f307132",
+                "quote": "<!--THE END-->\n  \n  - 当npuMemSize的值过大时，则会报“Npu out of memory”错误，如图3所示。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_f8d89f7ba07e425ca1eccc51",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatcparam_16_0018.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_f8d89f7ba07e425ca1eccc51",
+                "quote": "# --dynamic_batch_size\n\n#### 功能说明\n\n设置动态BatchSize参数"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_f8d89f7ba07e425ca1eccc51",
+                "quote": "接口详细说明请参见《[AscendCL应用软件开发指南（C&C++）](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devguide/appdevg/aclcppdevg/aclcppdevg_000000.html) 》手册中的“AscendCL API参考 > 模型推理 > 模型执行 > aclmdlSetDynamicBatchSize”。"
+              }
+            ],
+            "reference": null
+          }
+        ],
+        "replacement": [
+          {
+            "event_id": "call_3be41993f66e435a9c8a849d",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatcparam_16_0020.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_3be41993f66e435a9c8a849d",
+                "quote": "**标题**: --dynamic_dims-输入选项-基础功能参数-参数说明-ATC工具-训练&推理开发-CANN8.1.RC1.alpha001开发文档-昇腾社区\n\n文档评分"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_3be41993f66e435a9c8a849d",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_1a966cd00e5a4c3e950349a1",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0020.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_1a966cd00e5a4c3e950349a1",
+                "quote": "#### 功能说明\n\n设置ND格式下动态维度的档位。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_1a966cd00e5a4c3e950349a1",
+                "quote": "不使用[aclmdlSetInputDynamicDims](https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_0312.html)接口，则模型执行时，默认按照动态维度设置范围的最大值进行赋值。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_8cf1c7f53dee4db3b66d9cc6",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0018.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "retry_of": "call_76494b85f0ce4a0cac57bd90",
+            "evidence": [
+              {
+                "event_id": "call_8cf1c7f53dee4db3b66d9cc6",
+                "quote": "**标题**: --dynamic_batch_size-输入选项-基础功能参数-参数说明-ATC工具-训练&推理开发-CANN商用版8.0.RC3开发文档-昇腾社区\n\n文档评分"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76494b85f0ce4a0cac57bd90",
+                "quote": "获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_0e8168bbe6f249fe93b865b4",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0019.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_0e8168bbe6f249fe93b865b4",
+                "quote": "#### 功能说明\n\n设置输入图片的动态分辨率参数。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_0e8168bbe6f249fe93b865b4",
+                "quote": "不使用[aclmdlSetDynamicHWSize](https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/appdevgapi/aclcppdevg_03_0307.html)接口，则模型执行时，默认按照动态分辨率设置范围的最大档位宽、高进行赋值。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_e8bd37665ead496a8f307132",
+            "url": "https://www.hiascend.com/document/detail/zh/mindie/20RC2/mindieservice/servicedev/mindie_service0105.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_e8bd37665ead496a8f307132",
+                "quote": "# 性能调优流程\n\n通过参数调优，使吞吐率（TPS）达到时延约束条件下的最大值。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_e8bd37665ead496a8f307132",
+                "quote": "<!--THE END-->\n  \n  - 当npuMemSize的值过大时，则会报“Npu out of memory”错误，如图3所示。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_f8d89f7ba07e425ca1eccc51",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatcparam_16_0018.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_f8d89f7ba07e425ca1eccc51",
+                "quote": "# --dynamic_batch_size\n\n#### 功能说明\n\n设置动态BatchSize参数"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_f8d89f7ba07e425ca1eccc51",
+                "quote": "接口详细说明请参见《[AscendCL应用软件开发指南（C&C++）](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devguide/appdevg/aclcppdevg/aclcppdevg_000000.html) 》手册中的“AscendCL API参考 > 模型推理 > 模型执行 > aclmdlSetDynamicBatchSize”。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_76494b85f0ce4a0cac57bd90.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/devaids/devtools/atc/atlasatcparam_16_0018.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_76494b85f0ce4a0cac57bd90.result",
+                "quote": "**标题**: --dynamic_batch_size-输入选项-基础功能参数-参数说明-ATC工具-训练&推理开发-CANN商用版8.0.RC3开发文档-昇腾社区\n\n文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_76494b85f0ce4a0cac57bd90.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": "Actual dispatched official return; title and feedback widget only. Preserve attempt; same-URL aggregation applies."
+          }
+        ],
+        "basis": "Root checked omitted dispatched fetch; exact official title/widget returned, no target body. Restore inventory without fabricating access."
+      },
+      {
+        "event_id": "call_e8bd37665ead496a8f307132.result",
+        "original": "maxBatchSize = Floor[Total Block Num/Block Num]，需要先计算出“Total Block Num”和“Block Num”的值。",
+        "replacement": "根据计算公式：maxBatchSize = Total Block Num/Block Num，需要先计算出“Total Block Num”和“Block Num”的值。\n   \n   1. 计算“Total Block Num”的值。\n      \n      - 方式一（实测获取）：\n        \n        - “Total Block Num”的值可以通过跑一次性能后在Python日志中的“npuBlockNum”获取，Python日志路径为：/usr/local/Ascend/mindie/latest/mindie-llm/logs/pythonlog.log。\n          \n          \n          \n          \n          \n          当使用多卡跑性能时，Python日志会根据使用的卡数打印多个“npuBlockNum”，此时获取最小值即可。\n        - “Total Block Num”的值也可以直接从info级打屏日志k_caches[0].shape=torch.Size([npuBlockNum, -, -, -])中torch.Size的第一个值获取。\n          \n          \n      - 方式二（公式计算）：\n        \n        Total Block Num = Floor[NPU显存/(模型网络层数*cacheBlockSize*模型注意力头数*注意力头大小*Cache类型字节数*Cache数)]，公式中各参数的取值信息如表3所示。\n        \n        \n        \n        **表3** Total Block Num公式中的参数值\n        \n        参数\n        \n        取值\n        \n        NPU显存\n        \n        2中“npuMemSize”的值：17。\n        \n        模型网络层数\n        \n        模型网络层数是模型权重文件config.json中num_hidden_layers参数的值，取值为：32。\n        \n        cacheBlockSize\n        \n        默认值：128。该参数的值与ScheduleConfig参数说明中cacheBlockSize参数的值保持一致。\n        \n        模型注意力头数\n        \n        模型注意力头数是模型权重文件config.json中num_attention_heads参数的值。\n        \n        注意力头大小\n        \n        “模型注意力头数*注意力头大小”的值为模型权重文件config.json中hidden_size参数的值（取值为：4096），即注意力头大小可以根据模型注意力头数计算获得。\n        \n        说明：\n        \n        对于GQA类模型（分组查询注意力类模型，例如LLaMA3-8B），“模型注意力头数”的值需使用模型权重文件config.json中num_key_value_heads参数的值（取值为：8），即对于LLaMA3-8B模型，其“注意力头大小”的值应该为4096/8=512。\n        \n        Cache类型字节数\n        \n        由模型config.json文件中的torch_dtype决定，一般为float16类型，取值为：2。\n        \n        Cache数\n        \n        Key+Value的值，各自代表1个Cache数。默认值：2。\n        \n        将以上参数值代入公式，得到Total Block Num = Floor[17*1024*1024*1024/(32 * 128 * 8*512/2*2*2)] = 544。\n        \n        注：以上算式中512/2是由于LLaMA3-8B双卡，所以注意头数需均分在2张卡上。\n   2. 计算每个请求所需“Block Num”的值，公式中各参数的取值信息如表4所示。\n      \n      根据计算公式：\n      \n      - 所需最小Block Num = Ceil(输入Token数/cacheBlockSize)\n      - 所需最大Block Num = Ceil(输入Token数/cacheBlockSize)+Ceil(最大输出Token数/cacheBlockSize)\n      - 所需平均Block Num = Ceil(输入Token数/cacheBlockSize)+Ceil(平均输出Token数/cacheBlockSize)\n      \n      \n      \n      **表4** Block Num公式中的参数值\n      \n      参数\n      \n      取值\n      \n      输入Token数\n      \n      从Benchmark输出的InputTokens参数的平均值获取，取值示例：186。\n      \n      最大输出Token数\n      \n      从config.json文件中的maxIterTimes参数获取，示例取值：512。\n      \n      平均输出Token数\n      \n      实际运行测试数据集后统计GeneratedTokens参数平均输出长度，示例取值：346。\n      \n      cacheBlockSize\n      \n      默认值：128。该参数的值与ScheduleConfig参数说明中cacheBlockSize的值保持一致。\n      \n      将以上参数值代入公式：\n      \n      - 所需最小Block Num = Ceil(186/128) = 2\n      - 所需最大Block Num = Ceil(186/128)+Ceil(512/128) = 6\n      - 所需平均Block Num = Ceil(186/128)+Ceil(346/128) = 5\n      \n      \n      \n      “Ceil”表示计算结果向上取整。\n   3. 计算“maxBatchSize”的取值范围。\n      \n      根据3.a和3.b计算出的“Total Block Num”和“Block Num”值，然后使用公式maxBatchSize=Floor[Total Block Num/Block Num]计算“maxBatchSize”的取值范围。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "call_efcd509dbf184de39f48bea5.result",
+        "original": "本文分享自华为云社区《ATC模型转换动态shape问题案例》，作者为昇腾CANN。",
+        "replacement": "本文分享自华为云社区《ATC模型转换动态shape问题案例》，作者：昇腾CANN。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
       {
         "event_id": "client-note-00005",
         "original": "atc --dynamic_batch_size=\"2,4,8\"，同时 --input_shape=\"input:-1;224;224;3\"",

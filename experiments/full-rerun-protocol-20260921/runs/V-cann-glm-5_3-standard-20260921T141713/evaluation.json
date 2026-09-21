@@ -147,6 +147,1628 @@
           "model_requested": "glm-5.3"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T06:42:24.069000+00:00",
+      "process_sha256": "8655216e81ce47a7dfa0163fc933c238962c6c6eacbb281733a156900052495d",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。\n- 用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream（接口返回只代表任务下发成功，不代表复制完成）。\n- 跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "evidence_quote": "调用[aclrtRecordEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0083.html)接口将Event插入到stream1中（通常称为Record Event任务），调用[aclrtStreamWaitEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0091.html)接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+            "verification": "source",
+            "reason": "最终答案完整覆盖原题三个子要求：(1) 多 stream 并行——答案称“不同 Stream 之间并行执行”，与官方 Stream Management 原文一致（call_03a47fe7d805426fa26cc790.result: \"Different streams, on the other hand, execute their tasks concurrently.\"），并给出双 Stream 双缓冲 Event 代码；(2) aclrtMemcpyAsync 异步拷贝——签名、参数、64 字节对齐、锁页内存约束均与 call_609648bf6f78474a9aa9d344.result 的官方 API 参考逐条对应（“源地址和目的地址都必须64字节对齐”；“本接口不会报错，但是在实际执行到该任务时会发生不可预知的错误”）；(3) event 同步——aclrtRecordEvent/aclrtStreamWaitEvent/aclrtSynchronizeStream 语义与商用版 8.3.RC1 同步等待文档正文一致，含 Event 与 Notify 重置差异。锁页/非锁页内存对重叠效果的关键说明有 call_03a47fe7d805426fa26cc790.result 摘要支持（“Host线程无法与本次复制并行执行,数据传输也难以与计算充分重叠”）。答案已自行标注未能核实的边界（默认 stream 隐式同步、两个页面正文缺失），未虚构证据。",
+            "evidence_refs": [
+              "ev-26",
+              "ev-27"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（昇腾社区官方文档“数据复制”），前5条全部为hiascend.com官方页面。",
+            "evidence": [
+              {
+                "event_id": "call_03a47fe7d805426fa26cc790.result",
+                "quote": "## 1. [数据复制](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/others/acldevg/runtime_doc_dev_0015.html)"
+              },
+              {
+                "event_id": "call_03a47fe7d805426fa26cc790.result",
+                "quote": "数据复制 昇腾社区｡异步接口aclrtMemcpyAsync将复制任务下发至指定的Stream"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.142857142857143,
+            "upper": 3.7142857142857144,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "多Stream之间任务的同步等待可以利用Event实现"
+              },
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "抓取正文已覆盖原题主流程与参数：stream创建与销毁、aclrtMemcpyAsync完整函数原型/参数/枚举/约束（含64字节对齐、Host内存须aclrtMallocHost申请）、Event跨stream同步完整代码（RecordEvent/StreamWaitEvent）。但“不同stream并行执行”这一重叠前提和锁页内存对重叠效果的影响未在抓取正文取得（相关页面仅返回标题），仅见于搜索摘要，属关键约束细节未在正文完整说明。",
+            "evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              },
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "若调用本接口传入的kind为ACL_MEMCPY_HOST_TO_DEVICE或ACL_MEMCPY_DEVICE_TO_HOST，并且Host内存不是通过aclrtMallocHost申请得到的"
+              },
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "aclrtStreamWaitEvent(s2, event);"
+              },
+              {
+                "event_id": "call_03a47fe7d805426fa26cc790.result",
+                "quote": "A stream is a sequence of tasks that execute in order. Different streams, on the other hand, execute their tasks concurrently."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "命中并抓取的官方文档横跨社区版9.1.X、9.2.0-beta.2、latest与商用版8.3.RC1、8.0.0.alpha001等多版本并存（alpha/RC/beta交错），各文档仅含自身版本标注，未取得任何官方版本选择规则或所用stream/event/异步拷贝接口的跨版本适用关系说明；无冲突亦无适用关系表。",
+            "evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "CANN8.0.0.alpha001开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "CANN商用版8.3.RC1开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "统一预算内（2次查询）相关独立第三方来源2条：aipaipai.wiki（Ascend310B开发文档站）与CSDN博客；gitcode.com/cann/runtime为官方仓库按渠道分类排除，hiascend.com为官方。首次发现于第2次查询第4—5位。1—2条对应2分。",
+            "evidence": [
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "[aclrtMemcpyAsync | 爱派派 aipaipai 嵌入式开发文档中心](https://www.aipaipai.wiki/ascend310b/application-development-guide/ascendcl-cpp/aclcppdevg_03_0107)"
+              },
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "[CANN Runtime 实战：基于 aclrtMemcpyAsync 实现 Host ...](https://blog.csdn.net/gitblog_00027/article/details/165852352)"
+              },
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "runtime/docs/api_docs/aclrtMemcpyAsync.md-代码预览"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方关键说法部分有可追溯依据：aipaipai给出的aclrtMemcpyAsync函数原型与抓取的官方API参考一致；但其为官方文档镜像，不构成独立互证；CSDN文章关键说法未抓取核验；未见已确证矛盾。",
+            "evidence": [
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "函数原型 aclError aclrtMemcpyAsync (void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind"
+              },
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              },
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "本篇文章以 CANN Runtime 开源仓库中的 Host 到 Device 异步内存复制样例 2_h2d_async_memory_copy 为主体"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前先验给出完整正确流程：初始化、多stream分工重叠、aclrtMemcpyAsync签名与kind枚举、Host内存有效期约束、event同步（RecordEvent/StreamWaitEvent）、双缓冲流水模式；签名事后与官方API参考逐字一致。但锁页内存要求的具体表述、默认stream同步语义、CANN版本锚点为先验自认不确定项，需外部补充，未达5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "把拷贝放到一个 stream、计算放到另一个 stream，即可重叠。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, aclrtStream stream)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "各接口的**确切函数签名**（参数顺序、destMax 语义）。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "默认 stream（nullptr）与其他 stream 的同步语义。"
+              },
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_03a47fe7d805426fa26cc790.dispatch",
+              "call_6bdbb8852f464ba499fc75c0.dispatch",
+              "call_eedb819c5b6e49139eb3b90e.dispatch",
+              "call_8d0db201d54a4adba22b4eb9.dispatch",
+              "call_02205c68c7ac4fe2bd2b3fde.dispatch",
+              "call_64673de939dc4b37874d5f13.dispatch",
+              "call_9008c734723b4c24a50f58f6.dispatch",
+              "call_609648bf6f78474a9aa9d344.dispatch",
+              "call_dd4b27b503a0421fb4e741cc.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "最终答案对所用各 AscendCL 接口（aclrtCreateStream/aclrtMemcpyAsync/aclrtRecordEvent/aclrtStreamWaitEvent/aclrtSynchronizeStream/aclrtCreateEventExWithFlag）给出有依据的适用版本范围：8.0.0.alpha001、8.3.RC1、9.1.X/9.2.0.beta2、商用版 latest 均有官方文档记载，且指出版本差异（非锁页行为表述不同、9.x 新增 aclrtCreateEventExWithFlag/aclrtHostRegisterV2、旧版可改用 aclrtCreateEvent）。各组件均落到有依据的范围而非具体单一版本，故 4 分而非 5 分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "上述接口……在以下官方版本文档中均有记载，接口名与签名一致：- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待……）- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。"
+              }
+            ],
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "答案提供了具体可操作方案：完整的双 Stream+Event 双缓冲代码、aclrtMemcpyAsync 完整签名与约束、锁页内存申请方式。但官方示例明确“不可以直接拷贝编译运行，仅供参考”，且代码缺 aclInit/aclrtSetDevice/Context 初始化与异常处理分支，事件数组声明（devIn[(i+1)%2]）依赖未定义的数组结构，首个迭代 Event 未记录即被等待的边界也需读者自行处理，需补充缺失内容才能执行，故 3 分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "（代码综合自官方 Stream管理/数据复制示例；官方注明“不可以直接拷贝编译运行，仅供参考”，需自行补齐 aclInit/SetDevice/异常处理。）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "aclrtMemcpyAsync(devIn[(i+1)%2], size, hostIn[(i+1)%2], size,\n                     ACL_MEMCPY_HOST_TO_DEVICE, sCopy);"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 69.73932251428572,
+            "upper": 70.78772297142856,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              69.7,
+              70.8
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 69.73932251428572,
+          "upper": 70.78772297142856,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            69.7,
+            70.8
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_03a47fe7d805426fa26cc790.result",
+            "field": "response",
+            "sha256": "2275f7ce4e09a74edf350724247c6453b04350f5b80493228d207e4fdbc2b744",
+            "start": 86,
+            "end": 209,
+            "quote": "## 1. [数据复制](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/others/acldevg/runtime_doc_dev_0015.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_03a47fe7d805426fa26cc790.result",
+            "field": "response",
+            "sha256": "2275f7ce4e09a74edf350724247c6453b04350f5b80493228d207e4fdbc2b744",
+            "start": 211,
+            "end": 258,
+            "quote": "数据复制 昇腾社区｡异步接口aclrtMemcpyAsync将复制任务下发至指定的Stream",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 4368,
+            "end": 4395,
+            "quote": "多Stream之间任务的同步等待可以利用Event实现",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "field": "response",
+            "sha256": "5d35bbbb1d31497a963ec28e37a415a1b4e03d150c883bb5e6804df1202f7cbf",
+            "start": 0,
+            "end": 68,
+            "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 1967,
+            "end": 2062,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 682,
+            "end": 780,
+            "quote": "若调用本接口传入的kind为ACL_MEMCPY_HOST_TO_DEVICE或ACL_MEMCPY_DEVICE_TO_HOST，并且Host内存不是通过aclrtMallocHost申请得到的",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 5706,
+            "end": 5738,
+            "quote": "aclrtStreamWaitEvent(s2, event);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_03a47fe7d805426fa26cc790.result",
+            "field": "response",
+            "sha256": "2275f7ce4e09a74edf350724247c6453b04350f5b80493228d207e4fdbc2b744",
+            "start": 1721,
+            "end": 1847,
+            "quote": "A stream is a sequence of tasks that execute in order. Different streams, on the other hand, execute their tasks concurrently.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 63,
+            "end": 90,
+            "quote": "CANN8.0.0.alpha001开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 42,
+            "end": 65,
+            "quote": "CANN商用版8.3.RC1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "field": "response",
+            "sha256": "5d35bbbb1d31497a963ec28e37a415a1b4e03d150c883bb5e6804df1202f7cbf",
+            "start": 43,
+            "end": 68,
+            "quote": "CANN9.2.0-beta.2开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1195,
+            "end": 1338,
+            "quote": "[aclrtMemcpyAsync | 爱派派 aipaipai 嵌入式开发文档中心](https://www.aipaipai.wiki/ascend310b/application-development-guide/ascendcl-cpp/aclcppdevg_03_0107)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1582,
+            "end": 1694,
+            "quote": "[CANN Runtime 实战：基于 aclrtMemcpyAsync 实现 Host ...](https://blog.csdn.net/gitblog_00027/article/details/165852352)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 868,
+            "end": 914,
+            "quote": "runtime/docs/api_docs/aclrtMemcpyAsync.md-代码预览",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1353,
+            "end": 1458,
+            "quote": "函数原型 aclError aclrtMemcpyAsync (void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 1967,
+            "end": 2062,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1704,
+            "end": 1780,
+            "quote": "本篇文章以 CANN Runtime 开源仓库中的 Host 到 Device 异步内存复制样例 2_h2d_async_memory_copy 为主体",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 607,
+            "end": 642,
+            "quote": "把拷贝放到一个 stream、计算放到另一个 stream，即可重叠。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 773,
+            "end": 889,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, aclrtStream stream)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 1755,
+            "end": 1787,
+            "quote": "各接口的**确切函数签名**（参数顺序、destMax 语义）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 1838,
+            "end": 1873,
+            "quote": "默认 stream（nullptr）与其他 stream 的同步语义。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 1967,
+            "end": 2062,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 4616,
+            "end": 4795,
+            "quote": "差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 1113,
+            "end": 1191,
+            "quote": "（代码综合自官方 Stream管理/数据复制示例；官方注明“不可以直接拷贝编译运行，仅供参考”，需自行补齐 aclInit/SetDevice/异常处理。）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 1759,
+            "end": 1876,
+            "quote": "aclrtMemcpyAsync(devIn[(i+1)%2], size, hostIn[(i+1)%2], size,\n                     ACL_MEMCPY_HOST_TO_DEVICE, sCopy);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 150,
+            "end": 352,
+            "quote": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。\n- 用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream（接口返回只代表任务下发成功，不代表复制完成）。\n- 跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 4454,
+            "end": 4794,
+            "quote": "调用[aclrtRecordEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0083.html)接口将Event插入到stream1中（通常称为Record Event任务），调用[aclrtStreamWaitEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0091.html)接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_eedb819c5b6e49139eb3b90e.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_eedb819c5b6e49139eb3b90e.result",
+            "alternative_body_event_ids": [
+              "call_02205c68c7ac4fe2bd2b3fde.result",
+              "call_64673de939dc4b37874d5f13.result",
+              "call_609648bf6f78474a9aa9d344.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_8d0db201d54a4adba22b4eb9.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "alternative_body_event_ids": [
+              "call_02205c68c7ac4fe2bd2b3fde.result",
+              "call_64673de939dc4b37874d5f13.result",
+              "call_609648bf6f78474a9aa9d344.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_dd4b27b503a0421fb4e741cc.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_dd4b27b503a0421fb4e741cc.result",
+            "alternative_body_event_ids": [],
+            "recovery_status": "no_later_body_observed",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-77df60c2fea8-predictors.json": "fb5de72a6bec0a77b90c20b03a878051d9686db2b967ca7efb77049f9bd04f73",
+          "reviewed/development/case-77df60c2fea8-outcome.json": "0dff5cc4174dbbc8227c00b5d79a97655f10acf647c02145a3215283165fd401",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/appdevg/acldevg/aclcppdevg_000013.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "多Stream之间任务的同步等待可以利用Event实现"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "本节介绍Device、Stream、Event、Notify在异步场景下的使用示例及关键接口。"
+              }
+            ],
+            "reference": "CANN商用版8.3.RC1同步等待页，含Event/Stream内/Stream间/Device各小节与代码，与页首目录一致，未见截断标记，但无独立完整性核对，记[4,5]"
+          },
+          {
+            "event_id": "call_eedb819c5b6e49139eb3b90e.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/others/acldevg/runtime_doc_dev_0015.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_eedb819c5b6e49139eb3b90e.result",
+                "quote": "**标题**: Host回调任务-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.1.X开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_eedb819c5b6e49139eb3b90e.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": "搜索结果中该URL为“数据复制”，抓取仅返回标题与评分控件，且标题显示为“Host回调任务”，目标正文未取得，记2"
+          },
+          {
+            "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/920beta2/others/acldevg/runtime_doc_dev_0014.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "reference": "搜索摘要显示该URL含非锁页Host内存异步复制说明，抓取仅返回标题，正文未取得，记2"
+          },
+          {
+            "event_id": "call_02205c68c7ac4fe2bd2b3fde.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/920beta2/others/acldevg/runtime_doc_dev_0012.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_02205c68c7ac4fe2bd2b3fde.result",
+                "quote": "调用aclrtCreateStream创建Stream，得到的aclrtStream对象作为后续的内存异步复制、Stream同步、Kernel执行等接口的Stream入参。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_02205c68c7ac4fe2bd2b3fde.result",
+                "quote": "aclrtDestroyStream(stream);"
+              }
+            ],
+            "reference": "Stream创建与销毁页，正文含说明与示例代码并链接完整样例，无截断标记，但无独立完整性核对，记[4,5]"
+          },
+          {
+            "event_id": "call_64673de939dc4b37874d5f13.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/latest/others/acldevg/runtime_doc_dev_0015.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_64673de939dc4b37874d5f13.result",
+                "quote": "用户可以使用aclrtLaunchHostFunc在Stream的任意位置插入一个Host回调任务。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_64673de939dc4b37874d5f13.result",
+                "quote": "aclrtDestroyStream(stream);"
+              }
+            ],
+            "reference": "目标为“数据复制”文档，latest路径下runtime_doc_dev_0015实际为“Host回调任务”，取得完整他页正文但内容与目标不符；就抓取性记body[4,5]，内容错位另行记录"
+          },
+          {
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/800alpha001/apiref/appdevgapi/aclcppdevg_03_0106.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "接口调用示例，参见数据传输。"
+              }
+            ],
+            "reference": "aclrtMemcpyAsync API参考（CANN8.0.0.alpha001），函数功能/约束/原型/参数/返回值/参考资源各节俱全，参数说明含“展开”折叠标记，无独立完整性核对，记[4,5]"
+          },
+          {
+            "event_id": "call_dd4b27b503a0421fb4e741cc.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/800alpha001/devguide/appdevg/aclcppdevg/aclcppdevg_000010.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_dd4b27b503a0421fb4e741cc.result",
+                "quote": "开发指南用于指导开发者如何基于昇腾平台进行模型开发、应用开发、算子开发"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_dd4b27b503a0421fb4e741cc.result",
+                "quote": "TensorFlow Scope融合规则开发与参考，图融合和UB融合规则参考。"
+              }
+            ],
+            "reference": "目标为“数据传输”章节，实际返回开发指南导读（结构性导航内容），无目标正文，记2"
+          }
+        ],
+        "quote_audit": [
+          {
+            "metric": "M9",
+            "bad_refs": [
+              {
+                "event_id": "run-end",
+                "quote": "上述接口……在以下官方版本文档中均有记载，接口名与签名一致：- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待……）- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
+    },
+    {
+      "revision": 3,
+      "recorded_at": "2026-09-21T06:45:11.877965+00:00",
+      "process_sha256": "8655216e81ce47a7dfa0163fc933c238962c6c6eacbb281733a156900052495d",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。\n- 用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream（接口返回只代表任务下发成功，不代表复制完成）。\n- 跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "evidence_quote": "调用[aclrtRecordEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0083.html)接口将Event插入到stream1中（通常称为Record Event任务），调用[aclrtStreamWaitEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0091.html)接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+            "verification": "source",
+            "reason": "最终答案完整覆盖原题三个子要求：(1) 多 stream 并行——答案称“不同 Stream 之间并行执行”，与官方 Stream Management 原文一致（call_03a47fe7d805426fa26cc790.result: \"Different streams, on the other hand, execute their tasks concurrently.\"），并给出双 Stream 双缓冲 Event 代码；(2) aclrtMemcpyAsync 异步拷贝——签名、参数、64 字节对齐、锁页内存约束均与 call_609648bf6f78474a9aa9d344.result 的官方 API 参考逐条对应（“源地址和目的地址都必须64字节对齐”；“本接口不会报错，但是在实际执行到该任务时会发生不可预知的错误”）；(3) event 同步——aclrtRecordEvent/aclrtStreamWaitEvent/aclrtSynchronizeStream 语义与商用版 8.3.RC1 同步等待文档正文一致，含 Event 与 Notify 重置差异。锁页/非锁页内存对重叠效果的关键说明有 call_03a47fe7d805426fa26cc790.result 摘要支持（“Host线程无法与本次复制并行执行,数据传输也难以与计算充分重叠”）。答案已自行标注未能核实的边界（默认 stream 隐式同步、两个页面正文缺失），未虚构证据。",
+            "evidence_refs": [
+              "ev-27",
+              "ev-28"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（昇腾社区官方文档“数据复制”），前5条全部为hiascend.com官方页面。",
+            "evidence": [
+              {
+                "event_id": "call_03a47fe7d805426fa26cc790.result",
+                "quote": "## 1. [数据复制](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/others/acldevg/runtime_doc_dev_0015.html)"
+              },
+              {
+                "event_id": "call_03a47fe7d805426fa26cc790.result",
+                "quote": "数据复制 昇腾社区｡异步接口aclrtMemcpyAsync将复制任务下发至指定的Stream"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.142857142857143,
+            "upper": 3.7142857142857144,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "多Stream之间任务的同步等待可以利用Event实现"
+              },
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "抓取正文已覆盖原题主流程与参数：stream创建与销毁、aclrtMemcpyAsync完整函数原型/参数/枚举/约束（含64字节对齐、Host内存须aclrtMallocHost申请）、Event跨stream同步完整代码（RecordEvent/StreamWaitEvent）。但“不同stream并行执行”这一重叠前提和锁页内存对重叠效果的影响未在抓取正文取得（相关页面仅返回标题），仅见于搜索摘要，属关键约束细节未在正文完整说明。",
+            "evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              },
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "若调用本接口传入的kind为ACL_MEMCPY_HOST_TO_DEVICE或ACL_MEMCPY_DEVICE_TO_HOST，并且Host内存不是通过aclrtMallocHost申请得到的"
+              },
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "aclrtStreamWaitEvent(s2, event);"
+              },
+              {
+                "event_id": "call_03a47fe7d805426fa26cc790.result",
+                "quote": "A stream is a sequence of tasks that execute in order. Different streams, on the other hand, execute their tasks concurrently."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "命中并抓取的官方文档横跨社区版9.1.X、9.2.0-beta.2、latest与商用版8.3.RC1、8.0.0.alpha001等多版本并存（alpha/RC/beta交错），各文档仅含自身版本标注，未取得任何官方版本选择规则或所用stream/event/异步拷贝接口的跨版本适用关系说明；无冲突亦无适用关系表。",
+            "evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "CANN8.0.0.alpha001开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "CANN商用版8.3.RC1开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "统一预算内（2次查询）相关独立第三方来源2条：aipaipai.wiki（Ascend310B开发文档站）与CSDN博客；gitcode.com/cann/runtime为官方仓库按渠道分类排除，hiascend.com为官方。首次发现于第2次查询第4—5位。1—2条对应2分。",
+            "evidence": [
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "[aclrtMemcpyAsync | 爱派派 aipaipai 嵌入式开发文档中心](https://www.aipaipai.wiki/ascend310b/application-development-guide/ascendcl-cpp/aclcppdevg_03_0107)"
+              },
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "[CANN Runtime 实战：基于 aclrtMemcpyAsync 实现 Host ...](https://blog.csdn.net/gitblog_00027/article/details/165852352)"
+              },
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "runtime/docs/api_docs/aclrtMemcpyAsync.md-代码预览"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方关键说法部分有可追溯依据：aipaipai给出的aclrtMemcpyAsync函数原型与抓取的官方API参考一致；但其为官方文档镜像，不构成独立互证；CSDN文章关键说法未抓取核验；未见已确证矛盾。",
+            "evidence": [
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "函数原型 aclError aclrtMemcpyAsync (void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind"
+              },
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              },
+              {
+                "event_id": "call_9008c734723b4c24a50f58f6.result",
+                "quote": "本篇文章以 CANN Runtime 开源仓库中的 Host 到 Device 异步内存复制样例 2_h2d_async_memory_copy 为主体"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前先验给出完整正确流程：初始化、多stream分工重叠、aclrtMemcpyAsync签名与kind枚举、Host内存有效期约束、event同步（RecordEvent/StreamWaitEvent）、双缓冲流水模式；签名事后与官方API参考逐字一致。但锁页内存要求的具体表述、默认stream同步语义、CANN版本锚点为先验自认不确定项，需外部补充，未达5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "把拷贝放到一个 stream、计算放到另一个 stream，即可重叠。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, aclrtStream stream)"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "各接口的**确切函数签名**（参数顺序、destMax 语义）。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "默认 stream（nullptr）与其他 stream 的同步语义。"
+              },
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20",
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=9",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_03a47fe7d805426fa26cc790.dispatch",
+              "call_6bdbb8852f464ba499fc75c0.dispatch",
+              "call_eedb819c5b6e49139eb3b90e.dispatch",
+              "call_8d0db201d54a4adba22b4eb9.dispatch",
+              "call_02205c68c7ac4fe2bd2b3fde.dispatch",
+              "call_64673de939dc4b37874d5f13.dispatch",
+              "call_9008c734723b4c24a50f58f6.dispatch",
+              "call_609648bf6f78474a9aa9d344.dispatch",
+              "call_dd4b27b503a0421fb4e741cc.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "最终答案对所用各 AscendCL 接口（aclrtCreateStream/aclrtMemcpyAsync/aclrtRecordEvent/aclrtStreamWaitEvent/aclrtSynchronizeStream/aclrtCreateEventExWithFlag）给出有依据的适用版本范围：8.0.0.alpha001、8.3.RC1、9.1.X/9.2.0.beta2、商用版 latest 均有官方文档记载，且指出版本差异（非锁页行为表述不同、9.x 新增 aclrtCreateEventExWithFlag/aclrtHostRegisterV2、旧版可改用 aclrtCreateEvent）。各组件均落到有依据的范围而非具体单一版本，故 4 分而非 5 分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "上述接口（`aclrtCreateStream`/`aclrtMemcpyAsync`/`aclrtRecordEvent`/`aclrtStreamWaitEvent`/`aclrtSynchronizeStream` 等）在以下官方版本文档中均有记载，接口名与签名一致：\n- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待，`aclrtCreateEventExWithFlag`/`ACL_EVENT_SYNC` 用法）\n- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）\n- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）\n\n差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "supported",
+            "reason": "答案提供了具体可操作方案：完整的双 Stream+Event 双缓冲代码、aclrtMemcpyAsync 完整签名与约束、锁页内存申请方式。但官方示例明确“不可以直接拷贝编译运行，仅供参考”，且代码缺 aclInit/aclrtSetDevice/Context 初始化与异常处理分支，事件数组声明（devIn[(i+1)%2]）依赖未定义的数组结构，首个迭代 Event 未记录即被等待的边界也需读者自行处理，需补充缺失内容才能执行，故 3 分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "（代码综合自官方 Stream管理/数据复制示例；官方注明“不可以直接拷贝编译运行，仅供参考”，需自行补齐 aclInit/SetDevice/异常处理。）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "aclrtMemcpyAsync(devIn[(i+1)%2], size, hostIn[(i+1)%2], size,\n                     ACL_MEMCPY_HOST_TO_DEVICE, sCopy);"
+              }
+            ],
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 69.73932251428572,
+            "upper": 70.78772297142856,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              69.7,
+              70.8
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 69.73932251428572,
+          "upper": 70.78772297142856,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            69.7,
+            70.8
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_03a47fe7d805426fa26cc790.result",
+            "field": "response",
+            "sha256": "2275f7ce4e09a74edf350724247c6453b04350f5b80493228d207e4fdbc2b744",
+            "start": 86,
+            "end": 209,
+            "quote": "## 1. [数据复制](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/others/acldevg/runtime_doc_dev_0015.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_03a47fe7d805426fa26cc790.result",
+            "field": "response",
+            "sha256": "2275f7ce4e09a74edf350724247c6453b04350f5b80493228d207e4fdbc2b744",
+            "start": 211,
+            "end": 258,
+            "quote": "数据复制 昇腾社区｡异步接口aclrtMemcpyAsync将复制任务下发至指定的Stream",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 4368,
+            "end": 4395,
+            "quote": "多Stream之间任务的同步等待可以利用Event实现",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "field": "response",
+            "sha256": "5d35bbbb1d31497a963ec28e37a415a1b4e03d150c883bb5e6804df1202f7cbf",
+            "start": 0,
+            "end": 68,
+            "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 1967,
+            "end": 2062,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 682,
+            "end": 780,
+            "quote": "若调用本接口传入的kind为ACL_MEMCPY_HOST_TO_DEVICE或ACL_MEMCPY_DEVICE_TO_HOST，并且Host内存不是通过aclrtMallocHost申请得到的",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 5706,
+            "end": 5738,
+            "quote": "aclrtStreamWaitEvent(s2, event);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_03a47fe7d805426fa26cc790.result",
+            "field": "response",
+            "sha256": "2275f7ce4e09a74edf350724247c6453b04350f5b80493228d207e4fdbc2b744",
+            "start": 1721,
+            "end": 1847,
+            "quote": "A stream is a sequence of tasks that execute in order. Different streams, on the other hand, execute their tasks concurrently.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 63,
+            "end": 90,
+            "quote": "CANN8.0.0.alpha001开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 42,
+            "end": 65,
+            "quote": "CANN商用版8.3.RC1开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "field": "response",
+            "sha256": "5d35bbbb1d31497a963ec28e37a415a1b4e03d150c883bb5e6804df1202f7cbf",
+            "start": 43,
+            "end": 68,
+            "quote": "CANN9.2.0-beta.2开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1195,
+            "end": 1338,
+            "quote": "[aclrtMemcpyAsync | 爱派派 aipaipai 嵌入式开发文档中心](https://www.aipaipai.wiki/ascend310b/application-development-guide/ascendcl-cpp/aclcppdevg_03_0107)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1582,
+            "end": 1694,
+            "quote": "[CANN Runtime 实战：基于 aclrtMemcpyAsync 实现 Host ...](https://blog.csdn.net/gitblog_00027/article/details/165852352)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 868,
+            "end": 914,
+            "quote": "runtime/docs/api_docs/aclrtMemcpyAsync.md-代码预览",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1353,
+            "end": 1458,
+            "quote": "函数原型 aclError aclrtMemcpyAsync (void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 1967,
+            "end": 2062,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_9008c734723b4c24a50f58f6.result",
+            "field": "response",
+            "sha256": "9973e9e1911336b1c9037f9a6a90e8a6ad817685796d9075bcfcd5c023fc8164",
+            "start": 1704,
+            "end": 1780,
+            "quote": "本篇文章以 CANN Runtime 开源仓库中的 Host 到 Device 异步内存复制样例 2_h2d_async_memory_copy 为主体",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 607,
+            "end": 642,
+            "quote": "把拷贝放到一个 stream、计算放到另一个 stream，即可重叠。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 773,
+            "end": 889,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind, aclrtStream stream)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 1755,
+            "end": 1787,
+            "quote": "各接口的**确切函数签名**（参数顺序、destMax 语义）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "cab78e828255857696b385d78efbbe796dd4c4e2b2b351059baecc017fd2d147",
+            "start": 1838,
+            "end": 1873,
+            "quote": "默认 stream（nullptr）与其他 stream 的同步语义。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "field": "response",
+            "sha256": "e492cade9b756b748fb2a2410cb91cef4bae15bfaf5b09173d560e7d627657a0",
+            "start": 1967,
+            "end": 2062,
+            "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 4271,
+            "end": 4795,
+            "quote": "上述接口（`aclrtCreateStream`/`aclrtMemcpyAsync`/`aclrtRecordEvent`/`aclrtStreamWaitEvent`/`aclrtSynchronizeStream` 等）在以下官方版本文档中均有记载，接口名与签名一致：\n- CANN 商用版 latest（Stream Management）与商用版 8.3.RC1（同步等待，`aclrtCreateEventExWithFlag`/`ACL_EVENT_SYNC` 用法）\n- CANN 社区版 8.0.0.alpha001（aclrtMemcpyAsync API 参考）\n- CANN 社区版 9.1.X / 9.2.0.beta2（Stream管理章节，含锁页内存说明）\n\n差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 4616,
+            "end": 4795,
+            "quote": "差异点：非锁页 Host 内存的行为表述不同（8.0.0.alpha001：“不可预知的错误”；9.x：“退化为同步完成、无法重叠”），且 CANN 9.x 新增 `aclrtCreateEventExWithFlag`（带 flag）、`aclrtHostRegisterV2` 等新接口；旧版可改用 `aclrtCreateEvent(&event)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 1113,
+            "end": 1191,
+            "quote": "（代码综合自官方 Stream管理/数据复制示例；官方注明“不可以直接拷贝编译运行，仅供参考”，需自行补齐 aclInit/SetDevice/异常处理。）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 1759,
+            "end": 1876,
+            "quote": "aclrtMemcpyAsync(devIn[(i+1)%2], size, hostIn[(i+1)%2], size,\n                     ACL_MEMCPY_HOST_TO_DEVICE, sCopy);",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-27",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "f2db4775fae8b3e0c96a986880de53c6419dc410d053c45e8ee6b802849f58a0",
+            "start": 150,
+            "end": 352,
+            "quote": "把“数据搬运”和“计算”下发到两个 Stream，即可让它们重叠。\n- 用 `aclrtMemcpyAsync` 把复制任务**异步下发**到指定 Stream（接口返回只代表任务下发成功，不代表复制完成）。\n- 跨 Stream 的数据依赖用 **Event** 建立：生产 Stream 里 `aclrtRecordEvent`，消费 Stream 里 `aclrtStreamWaitEvent`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-28",
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "field": "response",
+            "sha256": "2f2f7806ab943a7551ba0f6305396e5ad6961bc410aca9e646671470cbf90f59",
+            "start": 4454,
+            "end": 4794,
+            "quote": "调用[aclrtRecordEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0083.html)接口将Event插入到stream1中（通常称为Record Event任务），调用[aclrtStreamWaitEvent](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/API/appdevgapi/aclcppdevg_03_0091.html)接口在stream2中插入一个等待Event完成的任务（通常称为Wait Event任务）。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_eedb819c5b6e49139eb3b90e.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_eedb819c5b6e49139eb3b90e.result",
+            "alternative_body_event_ids": [
+              "call_02205c68c7ac4fe2bd2b3fde.result",
+              "call_64673de939dc4b37874d5f13.result",
+              "call_609648bf6f78474a9aa9d344.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_8d0db201d54a4adba22b4eb9.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "alternative_body_event_ids": [
+              "call_02205c68c7ac4fe2bd2b3fde.result",
+              "call_64673de939dc4b37874d5f13.result",
+              "call_609648bf6f78474a9aa9d344.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_dd4b27b503a0421fb4e741cc.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_dd4b27b503a0421fb4e741cc.result",
+            "alternative_body_event_ids": [],
+            "recovery_status": "no_later_body_observed",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-77df60c2fea8-predictors.json": "fb5de72a6bec0a77b90c20b03a878051d9686db2b967ca7efb77049f9bd04f73",
+          "reviewed/development/case-77df60c2fea8-outcome.json": "0272abc2ef8d5b7e9c2896a1dc95d0e48a6ca537c132ca93eb214e684225b1d3",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+            "url": "https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/appdevg/acldevg/aclcppdevg_000013.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "多Stream之间任务的同步等待可以利用Event实现"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_6bdbb8852f464ba499fc75c0.result",
+                "quote": "本节介绍Device、Stream、Event、Notify在异步场景下的使用示例及关键接口。"
+              }
+            ],
+            "reference": "CANN商用版8.3.RC1同步等待页，含Event/Stream内/Stream间/Device各小节与代码，与页首目录一致，未见截断标记，但无独立完整性核对，记[4,5]"
+          },
+          {
+            "event_id": "call_eedb819c5b6e49139eb3b90e.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/others/acldevg/runtime_doc_dev_0015.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_eedb819c5b6e49139eb3b90e.result",
+                "quote": "**标题**: Host回调任务-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.1.X开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_eedb819c5b6e49139eb3b90e.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": "搜索结果中该URL为“数据复制”，抓取仅返回标题与评分控件，且标题显示为“Host回调任务”，目标正文未取得，记2"
+          },
+          {
+            "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/920beta2/others/acldevg/runtime_doc_dev_0014.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_8d0db201d54a4adba22b4eb9.result",
+                "quote": "**标题**: 显式同步-Stream管理-应用开发 (C&C++)-应用开发-更多-CANN9.2.0-beta.2开发文档-昇腾社区"
+              }
+            ],
+            "reference": "搜索摘要显示该URL含非锁页Host内存异步复制说明，抓取仅返回标题，正文未取得，记2"
+          },
+          {
+            "event_id": "call_02205c68c7ac4fe2bd2b3fde.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/920beta2/others/acldevg/runtime_doc_dev_0012.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_02205c68c7ac4fe2bd2b3fde.result",
+                "quote": "调用aclrtCreateStream创建Stream，得到的aclrtStream对象作为后续的内存异步复制、Stream同步、Kernel执行等接口的Stream入参。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_02205c68c7ac4fe2bd2b3fde.result",
+                "quote": "aclrtDestroyStream(stream);"
+              }
+            ],
+            "reference": "Stream创建与销毁页，正文含说明与示例代码并链接完整样例，无截断标记，但无独立完整性核对，记[4,5]"
+          },
+          {
+            "event_id": "call_64673de939dc4b37874d5f13.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/latest/others/acldevg/runtime_doc_dev_0015.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_64673de939dc4b37874d5f13.result",
+                "quote": "用户可以使用aclrtLaunchHostFunc在Stream的任意位置插入一个Host回调任务。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_64673de939dc4b37874d5f13.result",
+                "quote": "aclrtDestroyStream(stream);"
+              }
+            ],
+            "reference": "目标为“数据复制”文档，latest路径下runtime_doc_dev_0015实际为“Host回调任务”，取得完整他页正文但内容与目标不符；就抓取性记body[4,5]，内容错位另行记录"
+          },
+          {
+            "event_id": "call_609648bf6f78474a9aa9d344.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/800alpha001/apiref/appdevgapi/aclcppdevg_03_0106.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "aclrtMemcpyAsync(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_609648bf6f78474a9aa9d344.result",
+                "quote": "接口调用示例，参见数据传输。"
+              }
+            ],
+            "reference": "aclrtMemcpyAsync API参考（CANN8.0.0.alpha001），函数功能/约束/原型/参数/返回值/参考资源各节俱全，参数说明含“展开”折叠标记，无独立完整性核对，记[4,5]"
+          },
+          {
+            "event_id": "call_dd4b27b503a0421fb4e741cc.result",
+            "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/800alpha001/devguide/appdevg/aclcppdevg/aclcppdevg_000010.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_dd4b27b503a0421fb4e741cc.result",
+                "quote": "开发指南用于指导开发者如何基于昇腾平台进行模型开发、应用开发、算子开发"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_dd4b27b503a0421fb4e741cc.result",
+                "quote": "TensorFlow Scope融合规则开发与参考，图融合和UB融合规则参考。"
+              }
+            ],
+            "reference": "目标为“数据传输”章节，实际返回开发指南导读（结构性导航内容），无目标正文，记2"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

@@ -113,3 +113,12 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - F-CANN Kimi requirement corrected to unverified with exact final gaps (global rank/multi-node launch), M10 stays3. Rejected reviewer-kimi-final-quote-proposals.json: final_exact claims did not match actual final; not authoritative.
 - A-CUDA DeepSeek M4=3 under existing anchor: complete version relation still missing; raw4 inconsistent with own checklist. Exact quotes/official snippet provenance repaired; unknown ownership remains unknown.
 - Paper/installed skill untouched. Continue all possible phases and evidence review before final report.
+
+
+## 2026-09-21 14:50 continuation
+
+- Collection150/156 (GLM46, DeepSeek52, Kimi52). W-CUDA unique retry143422 succeeded; X-CUDA144239 complete. U-CUDA exhausted only. GLM continuesX-CANN/Y/Z.
+- Root GLM snapshot77349 ended, restarting newest completed input. Kimi50539 ended and replaced28502 (PID27722); supplementary25551 still running. DeepSeek agent original process still active. No duplicate collectors.
+- Phase report276 completed,21 pending,1 exhausted (DeepSeekR-CUDA predictors both900s timeouts/no saved output). S-CANN GLM recovered schema: main requirement plus redundant version subrequirement sharing same id/status; second preserved as supplementary note, not double counted. All raw judgments retained.
+- S-CANN GLM M10 enforced4 (explicit user-environment substitutions) under frozen anchor. T-CANN GLM missing official dispatch inventory restored from exact title/widget return. T-CUDA DeepSeek target chapter absent/other Architecture Overview returned: preserve original assessor1 with received-body-of-different-page metadata, no fabricated target body.
+- Root exact-quote corrections continue; rejected Kimi proposal now explicitly tagged rejected_do_not_apply. No paper/installed-skill edits. Frozen29 hashes unchanged and31 focused tests pass. Latest pushc45f140 verified.

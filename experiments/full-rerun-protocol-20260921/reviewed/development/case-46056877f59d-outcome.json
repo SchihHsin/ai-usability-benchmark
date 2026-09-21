@@ -1,0 +1,167 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "把 H2D 拷贝、计算、D2H 拷贝绑到不同 Stream 上，并用 Event 做跨 Stream 依赖同步，即可实现流水线重叠",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_8_532dcbba.result",
+      "evidence_quote": "当Host内存是锁页内存时，本接口是异步接口，调用接口成功仅表示任务下发成功，不表示任务执行成功，调用本接口后，需调用同步等待接口（例如，[aclrtSynchronizeStream](https://gitcode.com/cann/runtime/blob/877fc541750a14472b7879dc3ec427b167e26ef1/docs/api_docs/aclrtSynchronizeStream.md)）确保内存复制的任务已执行完成",
+      "verification": "source",
+      "reason": "最终答案覆盖原题三个子方面：(1) 多 Stream：答案给出双 Stream/三段式流水骨架，官方文档 WebFetch_7 证实 aclrtStreamWaitEvent 用于多 Stream 同步（\"阻塞指定Stream的运行，直到指定的Event完成，支持多个Stream等待同一个Event的场景\"）；(2) 异步内存拷贝 aclrtMemcpyAsync：答案给出函数原型与锁页内存约束，WebFetch_8 官方原文逐字证实（含 64 字节对齐、非锁页内存时同步返回、Host-to-Host 不支持并返回 ACL_ERROR_RT_FEATURE_NOT_SUPPORT）；(3) Event 同步：答案给出 aclrtRecordEvent/aclrtStreamWaitEvent 原型与语义，WebFetch_9 官方原文证实（\"会捕获当前Stream上已下发的任务，并记录到Event事件中\"）。答案对未能核实处（枚举表、CANN 版本对应）如实标注，不构成错误。所有关键主张均有官方来源支撑。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 2,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案提到版本线索（hiascend 页面对应 CANN 8.0.RC2.2 / 8.2.RC1.alpha001/alpha002），但自述\"gitcode 仓库文档未标注 CANN 版本号，版本对应关系未能直接核实\"，关键定版依据未落实，也未给出所采用接口适用的具体 CANN 版本；仅产品代际（Atlas A2/A3）有官方支撑。属于第2档：提到版本但未给出有依据的适用版本或范围。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "gitcode 仓库文档未标注 CANN 版本号，版本对应关系未能直接核实"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "给出具体双缓冲流水代码骨架，接口签名、参数（kind、stream）、锁页内存与 64B 对齐前提、aclrtSetDevice 前置条件均明确，但有需修正/补全之处：锁页内存分配段 \"aclrtMallocHost(&hostBuf[i], chunkSize)\" 出现在循环外且引用未定义的 i（缺循环或批量分配）；devBuf、modelId、input/output 的创建与初始化未给出；无错误码检查；答案自述\"示例代码未在真实设备上运行验证\"且第三方骨架\"为教学骨架\"。属第3档：有具体方案但需补缺（缓冲区批量分配、Dataset 构建等）方可执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "aclrtMallocHost(&hostBuf[i], chunkSize);          // 关键：非锁页内存 memcpy 会同步返回"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-46056877f59d",
+  "task_id": "V",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "e1f8bc5ecc124ab89babb64d5982b2e0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "77a897ad26a8793634a722cb7c1cacdc",
+        "conversationRequestId": "77a897ad26a8793634a722cb7c1cacdc",
+        "agent": "cli"
+      },
+      {
+        "messageId": "e1f8bc5ecc124ab89babb64d5982b2e0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "77a897ad26a8793634a722cb7c1cacdc",
+        "conversationRequestId": "77a897ad26a8793634a722cb7c1cacdc",
+        "rawUsage": {
+          "prompt_tokens": 17094,
+          "completion_tokens": 1346,
+          "total_tokens": 18440,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 538,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 17094,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 538,
+          "credit": 3.49,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 17094,
+          "outputTokens": 1346,
+          "totalTokens": 18440,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 538
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "790a81bdb0ad21d6d845bf0b0e7fdc0f298816d3301b97b2eb497d77810575b3",
+    "process_sha256": "c7f6bb54b959899af2c571553974188b94ca9e8329da604b628aa6895efdb878",
+    "elapsed_seconds": 32.09,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-f5c9979eb92d4a1794ac62f998acf801",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-46056877f59d-outcome.json",
+    "repairs": [
+      {
+        "event_id": "WebFetch_8_532dcbba.result",
+        "original": "当Host内存是锁页内存时，本接口是异步接口，调用接口成功仅表示任务下发成功，不表示任务执行成功，调用本接口后，需调用同步等待接口（例如，aclrtSynchronizeStream）确保内存复制的任务已执行完成",
+        "replacement": "当Host内存是锁页内存时，本接口是异步接口，调用接口成功仅表示任务下发成功，不表示任务执行成功，调用本接口后，需调用同步等待接口（例如，[aclrtSynchronizeStream](https://gitcode.com/cann/runtime/blob/877fc541750a14472b7879dc3ec427b167e26ef1/docs/api_docs/aclrtSynchronizeStream.md)）确保内存复制的任务已执行完成",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

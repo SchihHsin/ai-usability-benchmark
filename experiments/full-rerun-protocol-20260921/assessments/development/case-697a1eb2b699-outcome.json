@@ -1,0 +1,214 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "`.om` 与 `--soc_version`（目标芯片）强绑定，换芯片必须**用目标 soc_version 重新跑 ATC**；同时需**重查算子支持差异**并**重测精度与性能**，且驱动/固件/CANN 版本要重新配套。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_THWIq7wXRr9qhmIk29vf0805.result",
+      "evidence_quote": "图编译完成之后生成适配昇腾AI处理器的离线模型文件（*.om）。",
+      "verification": "source",
+      "reason": "原题三个子要求均被覆盖：(1) soc_version 重新 ATC 转 .om——答案给出完整 atc 命令（--soc_version=Ascend910B3 等）与重转理由，官方 ATC 文档（call_00_THWIq7wXRr9qhmIk29vf0805）逐字支持 .om 适配昇腾AI处理器及图编译生成 .om，答案诚实标注“必须重转”属推理而非官方原句，该推理由 soc_version 机制与官方论坛文（call_00_3SaCC6M2UMBJIjdyptqy0768：“适配不同SoC版本（如Ascend310、Ascend910）的硬件特性”及 --soc_version=Ascend310 示例）合理支撑；(2) 算子支持差异——答案逐字引用官方 TBE 指南片段，与 sources 中搜索摘要（call_00_Fvqj0ydWvO0lnFQWsQm10859：“Ascend 310 AI Processor: supports float16, float32, and int32. Ascend 910 AI Processor: supports float16, float32, and int32.”及 vdiv 不含 int32）一致，并给出 --op_name_map/自定义算子处理；(3) 精度/性能重测——答案给出精度基线、cos_sim<0.999 逐层比对、msprof 重测方案，与 call_00_HT6a4x934l6MmLhH3vhy3296（msFmkTrans、精度基线 JSON、msprof/msvp）逐字对应。soc_version 完整取值表官方未取回，但原题问“要注意什么”而非要求完整取值表，答案已明确标注未核实项，不构成缺失。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "部分所需组件有明确版本依据，其余未确定。有依据部分：soc_version 示例值（Ascend310 出自官方论坛文、Ascend910B3 出自博客园正文示例）、确定目标芯片的方法（npu-smi info 查 Name 列）、ATC 命令中 --soc_version 用法。未确定部分：答案自认“各昇腾型号（尤其 910B1/B2/B3/B4、310P）与 soc_version 字符串的完整对应表，因官方 --soc_version 页正文未取回，本次无法给出官方逐字清单”，且芯片↔CANN 配套表“来自二手材料”“需以官方配套表核实”。关键定版组件（soc_version 完整对应表、官方配套表）未锁定到具体版本，符合第3档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "**未核实**：各昇腾型号（尤其 910B1/B2/B3/B4、310P）与 soc_version 字符串的完整对应表，因官方 `--soc_version` 页正文未取回，本次无法给出官方逐字清单。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "二手材料给出的芯片→CANN 版本参考（**非官方原文，需以官方配套表核实**）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "操作指导完整：给出可直接照抄的 atc 完整命令（含 --model/--framework/--soc_version/--input_shape/--input_format/--log 全参数）、msfmktrans 扫描命令、npu-smi info / cat /usr/local/Ascend/version.cfg 版本查看、keep_dtype.cfg 格式、7 步迁移检查清单。所需替换的仅为用户环境值（模型路径、目标芯片型号对应的 soc_version、输入 shape），且替换方法有明确说明（“用 npu-smi info 查看目标机芯片型号（Name列），据此选目标 soc_version”），无需修正内容错误即可执行，符合第4档。答案已声明“所有命令未实际运行（无昇腾环境），仅做内容核查”，按规则不作为4/5分界依据。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "atc \\\n  --model=resnet50.onnx \\\n  --framework=5 \\\n  --output=resnet50 \\\n  --soc_version=Ascend910B3 \\\n  --input_shape=\"input:1,3,224,224\" \\\n  --input_format=NCHW \\\n  --log=error"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "迁移做法：用 `npu-smi info` 查看目标机芯片型号（“Name”列），据此选目标 soc_version，再重转 .om。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-697a1eb2b699",
+  "task_id": "Y",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "`.om` 与 `--soc_version`（目标芯片）强绑定，换芯片必须**用目标 soc_version 重新跑 ATC**；同时需**重查算子支持差异**并**重测精度与性能**，且驱动/固件/CANN 版本要重新配套。",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_00_THWIq7wXRr9qhmIk29vf0805.result",
+        "evidence_quote": "图编译完成之后生成适配昇腾AI处理器的离线模型文件（*.om）。",
+        "verification": "source",
+        "reason": "原题三个子要求均被覆盖：(1) soc_version 重新 ATC 转 .om——答案给出完整 atc 命令（--soc_version=Ascend910B3 等）与重转理由，官方 ATC 文档（call_00_THWIq7wXRr9qhmIk29vf0805）逐字支持 .om 适配昇腾AI处理器及图编译生成 .om，答案诚实标注“必须重转”属推理而非官方原句，该推理由 soc_version 机制与官方论坛文（call_00_3SaCC6M2UMBJIjdyptqy0768：“适配不同SoC版本（如Ascend310、Ascend910）的硬件特性”及 --soc_version=Ascend310 示例）合理支撑；(2) 算子支持差异——答案逐字引用官方 TBE 指南片段，与 sources 中搜索摘要（call_00_Fvqj0ydWvO0lnFQWsQm10859：“Ascend 310 AI Processor: supports float16, float32, and int32. Ascend 910 AI Processor: supports float16, float32, and int32.”及 vdiv 不含 int32）一致，并给出 --op_name_map/自定义算子处理；(3) 精度/性能重测——答案给出精度基线、cos_sim<0.999 逐层比对、msprof 重测方案，与 call_00_HT6a4x934l6MmLhH3vhy3296（msFmkTrans、精度基线 JSON、msprof/msvp）逐字对应。soc_version 完整取值表官方未取回，但原题问“要注意什么”而非要求完整取值表，答案已明确标注未核实项，不构成缺失。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "部分所需组件有明确版本依据，其余未确定。有依据部分：soc_version 示例值（Ascend310 出自官方论坛文、Ascend910B3 出自博客园正文示例）、确定目标芯片的方法（npu-smi info 查 Name 列）、ATC 命令中 --soc_version 用法。未确定部分：答案自认“各昇腾型号（尤其 910B1/B2/B3/B4、310P）与 soc_version 字符串的完整对应表，因官方 --soc_version 页正文未取回，本次无法给出官方逐字清单”，且芯片↔CANN 配套表“来自二手材料”“需以官方配套表核实”。关键定版组件（soc_version 完整对应表、官方配套表）未锁定到具体版本，符合第3档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "**未核实**：各昇腾型号（尤其 910B1/B2/B3/B4、310P）与 soc_version 字符串的完整对应表，因官方 `--soc_version` 页正文未取回，本次无法给出官方逐字清单。"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "二手材料给出的芯片→CANN 版本参考（**非官方原文，需以官方配套表核实**）"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "scored",
+        "reason": "操作指导完整：给出可直接照抄的 atc 完整命令（含 --model/--framework/--soc_version/--input_shape/--input_format/--log 全参数）、msfmktrans 扫描命令、npu-smi info / cat /usr/local/Ascend/version.cfg 版本查看、keep_dtype.cfg 格式、7 步迁移检查清单。所需替换的仅为用户环境值（模型路径、目标芯片型号对应的 soc_version、输入 shape），且替换方法有明确说明（“用 npu-smi info 查看目标机芯片型号（Name列），据此选目标 soc_version”），无需修正内容错误即可执行，符合第4档。答案已声明“所有命令未实际运行（无昇腾环境），仅做内容核查”，按规则不作为4/5分界依据。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "atc \\\n  --model=resnet50.onnx \\\n  --framework=5 \\\n  --output=resnet50 \\\n  --soc_version=Ascend910B3 \\\n  --input_shape=\"input:1,3,224,224\" \\\n  --input_format=NCHW \\\n  --log=error"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "迁移做法：用 `npu-smi info` 查看目标机芯片型号（“Name”列），据此选目标 soc_version，再重转 .om。"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "bdb96f81a77a486fb3b25b18bb969241",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "df5435ca4ba7aff0619aedeaf6020db8",
+        "conversationRequestId": "df5435ca4ba7aff0619aedeaf6020db8",
+        "agent": "cli"
+      },
+      {
+        "messageId": "bdb96f81a77a486fb3b25b18bb969241",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "df5435ca4ba7aff0619aedeaf6020db8",
+        "conversationRequestId": "df5435ca4ba7aff0619aedeaf6020db8",
+        "rawUsage": {
+          "prompt_tokens": 31889,
+          "completion_tokens": 2039,
+          "total_tokens": 33928,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 832,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 31889,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 832,
+          "credit": 6.24,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 31889,
+          "outputTokens": 2039,
+          "totalTokens": 33928,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 832
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "4bf9b2e2e759f93bc9e1447590181820144267b242541f0c9b470ffeb6edb0ae",
+    "process_sha256": "e49fe401f266390f57a565ae4d59e415be4434e0b7773ea4d9ed44e7c9e10693",
+    "elapsed_seconds": 54.89,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-5ba6f5c27cf54a498eedeeb493f042d5",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

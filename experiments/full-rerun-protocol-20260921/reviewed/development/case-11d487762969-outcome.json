@@ -1,0 +1,190 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "排查按层进行：物理链路 → RoCE 网络 → HCCL 算法/参数 → 框架层（通信计算重叠）。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_6ceae4709f074906949c4e94.result",
+      "evidence_quote": "HCCL通信域Server内支持Mesh、Ring、Double-Ring和Star算法，具体使用的算法根据硬件拓扑自动选择，用户无须配置也不支持配置。",
+      "verification": "source",
+      "reason": "原题四个子方面均有覆盖且与来源吻合。(1) 拓扑：npu-smi info -t board/-t link 命令及'HCCL 通信域 Server 内...无须配置'引用与 gitcode 官方仓库正文（call_6ceae4709f074906949c4e94.result）逐字一致；两个 HCCS 域、56GB/s 带宽说法与第三方 CSDN 文（call_cfc1683cfe874e37a7af737b.result）'两个域内4卡全互联...同域内的卡间通信带宽（约56GB/s）'对应。(2) HCCL_ALGO：算法表（Ring/RHD/NHR/NB/Pipeline/Pairwise/AHC 特点与适用场景）与官方仓库正文逐条对应，'可通过环境变量HCCL_ALGO进行设置...自适应选择功能不再生效'有官方原文支撑；答案如实标注 HCCL_ALGO 完整语法未能抓回正文并给出官方文档入口。(3) RoCE 网络：每卡独立 IP、PFC 优先级 3/4、ECN 阈值 0.1%-1%、Spine-Leaf 1:1 收敛比均可由 CSDN 第三方文（call_cfc1683cfe874e37a7af737b.result）对应段落支撑（'每个RoCE网口独立IP/MAC...不要bond'、'qos wred ecn'、'千分之一到百分之一之间'、'收敛比做到1:1'）。(4) hccn_tool 诊断：hccn_tool -i 0 -ip -g、-link -g、-roce_reset 三条命令在 CSDN 文中有原文记载（'hccn_tool -i 0 -link -g 可以查询网卡端口速率'），官方接口参考正文未取得但答案明确标注未核实并给出 EDOC1100348871 等官方入口，属有证据的不适用/缺口披露而非编造。综合：各子要求均有来源支撑，技术正确的分层排查路线完整。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 2,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "原题需要定版的组件为所用 HCCL 调优参数、诊断工具和网络环境的版本适用关系。最终答案提到了 CANN 版本线索（hiascend 910beta3、HCCN Tool 23.0.x、24.1.RC3），但未给出用户环境应采用的 HCCL/CANN 具体版本或确切适用范围；HCCL_ALGO 取值与 hccn_tool 子命令清单的版本相关正文未取得，关键定版信息缺失。属'提到版本，但没有给出有依据的适用版本或范围'，且答案自身承认语法未核实。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "未核实处：`HCCL_ALGO` 的确切语法（全局 vs 按算子配置格式、各算法名完整拼写）在官方 hiascend 页面与 gitcode blob 页均未能抓回正文"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "未核实处：`net_health`、`statistics`、`tls`、`gateway` 等完整子命令语法——华为官方《HCCN Tool 接口参考》（support.huawei.com/enterprise/zh/doc/EDOC1100348871，Atlas A2 23.0.x 版；另见 EDOC1100318052、EDOC1100422625）两次抓取均只返回标题/框架，正文未取得（原因未确定）。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "答案给出了大量可直接执行的具体命令：npu-smi info -t board/-t link、hccn_tool -i 0 -ip -g/-link -g/-roce_reset、export HCCL_IF_NAME=eth0,...,eth7 等，命令行完整、参数齐全，排查流程有 A/B 测试步骤（固定 512MB 跑 all_reduce benchmark 对比 64MB/256MB/1GB）。但存在需修正/补充的缺口：HCCL_ALGO 示例为占位符 '<算法名，如 ring/nhr/nb/pipeline等，按官方HCCL_ALGO文档取值>'，且答案明确承认 HCCL_ALGO 确切语法（全局 vs 按算子格式）未核实、hccn_tool 完整子命令清单未取得——用户需查官方文档补充才能确定关键操作，非仅替换环境参数。属'有具体操作方案，但需修正错误或补充缺失内容才能执行'。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export HCCL_ALGO=<算法名，如 ring/nhr/nb/pipeline等，按官方HCCL_ALGO文档取值>"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "未核实处：`HCCL_ALGO` 的确切语法（全局 vs 按算子配置格式、各算法名完整拼写）在官方 hiascend 页面与 gitcode blob 页均未能抓回正文"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-11d487762969",
+  "task_id": "W",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "7517f182c0e343cba2f79df91fe1a50d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "0a3c72209fede2ddb9687e59eab12d98",
+        "conversationRequestId": "0a3c72209fede2ddb9687e59eab12d98",
+        "agent": "cli"
+      },
+      {
+        "messageId": "7517f182c0e343cba2f79df91fe1a50d",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "0a3c72209fede2ddb9687e59eab12d98",
+        "conversationRequestId": "0a3c72209fede2ddb9687e59eab12d98",
+        "rawUsage": {
+          "prompt_tokens": 22357,
+          "completion_tokens": 2899,
+          "total_tokens": 25256,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1636,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 22357,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1636,
+          "credit": 5.2,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 22357,
+          "outputTokens": 2899,
+          "totalTokens": 25256,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1636
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "52fedb6c8677a3f0cbb4763235e0394cd325536d406d73bcd3986663c615d84d",
+    "process_sha256": "3be119f978eaf0a7c7d0083c71915ef22c9373f434672f5e97cc98aee3b063c7",
+    "elapsed_seconds": 79.87,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-04fca8e00ad9424e8924c121602edcd2",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-11d487762969-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "event_id": "run-end",
+        "original": "未核实处：`net_health`、`statistics`、`tls`、`gateway` 等完整子命令语法……两次抓取均只返回标题/框架，正文未取得（原因未确定）。",
+        "replacement": "未核实处：`net_health`、`statistics`、`tls`、`gateway` 等完整子命令语法——华为官方《HCCN Tool 接口参考》（support.huawei.com/enterprise/zh/doc/EDOC1100348871，Atlas A2 23.0.x 版；另见 EDOC1100318052、EDOC1100422625）两次抓取均只返回标题/框架，正文未取得（原因未确定）。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

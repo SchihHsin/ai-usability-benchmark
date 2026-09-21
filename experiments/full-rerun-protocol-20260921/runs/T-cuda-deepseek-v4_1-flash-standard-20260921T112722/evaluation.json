@@ -2472,6 +2472,787 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 5,
+      "recorded_at": "2026-09-21T06:42:24.195226+00:00",
+      "process_sha256": "4de862df2b487cc9e919abe6603417166b3e7f42f25ba178f16b34ebce3e1250",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "- **TensorRT 层**：用 **optimization profile** 为每个动态输入张量定义 `min / opt / max` 三个 shape，本质是「可运行区间 + 选 kernel 的基准点」。\n- **Triton 层**：`max_batch_size` + `dynamic_batching {}` 负责**请求级动态 batching**（把多个请求合成一个大 batch）；`dims` 中的 `-1` 负责**张量空间维的动态 shape**，Triton 的 TensorRT backend 据此构造 TRT 的 optimization profile。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+            "evidence_quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor.\n\nThis function must be called for any network input tensor that has dynamic dimensions.",
+            "verification": "source",
+            "reason": "原题包含三个子要求：(1) TensorRT optimization profile/min-opt-max 配置——答案给出完整 Python 代码（create_optimization_profile、set_shape、add_optimization_profile、set_input_shape）及三条 set_shape 硬约束，逐字引用官方 IOptimizationProfile API 页（11.3.0），与 sources 中 call_00_xv5aQFu2brzuzFnrX04G5583.result 原文完全一致；(2) Triton dynamic batching——答案给出 dynamic_batching {} 语法、preferred_batch_size、max_queue_delay_microseconds，与 call_00_HRbVosVDH4k6vzj0KizI7920.result 官方教程逐字一致；(3) Triton 动态 shape（dims -1 与 max_batch_size 关系）——答案引用 Model Configuration 官方页（call_00_w6U3FYsNbwMotA7h5uI09143.result）中 'full shape is formed as [-1] + dims' 及 dims: [4, -1] 逐字原文。答案还提供完整 config.pbtxt 模板、Docker 启动命令、运行时绑定示例，并诚实标注 C++ API 及 TRT backend 显式 profile 参数为未核验。三个子要求均有官方来源支撑，判定 supported。",
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "首次查询前5条均为Torch-TensorRT文档(docs.pytorch.org)及第三方博客，无NVIDIA TensorRT/Triton官方页面；第二次查询第1条才首次出现docs.nvidia.com官方Triton教程，符合'第二次查询才首次发现相关官方来源'。",
+            "evidence": [
+              {
+                "event_id": "call_00_ihWp3ndpDCzD2Mx4sUGN4239.result",
+                "quote": "## 1. [Dynamic Shape Support — Torch-TensorRT](https://docs.pytorch.org/TensorRT/contributors/dynamic_shapes.html)"
+              },
+              {
+                "event_id": "call_00_mSH2bIiXYxAChE0BeC5z1644.result",
+                "quote": "## 1. [Dynamic Batching & Concurrent Model Execution — NVIDIA Triton Inference ...](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/tutorials/Conceptual_Guide/Part_2-improving_resource_utilization/README.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 2.875,
+            "upper": 3.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+                "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format."
+              },
+              {
+                "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+                "quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor."
+              },
+              {
+                "event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+                "quote": "# Architecture Overview — NVIDIA TensorRT"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文覆盖原题主流程：Triton max_batch_size语义与dims用-1表达可变维、TensorRT set_shape的min/opt/max完整约束(含0<=min<=opt<=max及-1维一致性)、dynamic_batching启用方式与max_queue_delay_microseconds。但原题涉及的分支仍缺失：TensorRT C++ setInputShape/多profile运行时选择正文未取得(developer guide两次取页失败)、scheduler.html的dynamic_batching完整字段表缺失、TRT backend从config.pbtxt推导profile的参数仅部分取得。",
+            "evidence": [
+              {
+                "event_id": "call_00_w6U3FYsNbwMotA7h5uI09143.result",
+                "quote": "For models that support input and output tensors with variable-size dimensions, those dimensions can be listed as -1 in the input and output configuration."
+              },
+              {
+                "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+                "quote": "0 <= `min[i]` <= `opt[i]` <= `max[i]` for all `i`"
+              },
+              {
+                "event_id": "call_00_HRbVosVDH4k6vzj0KizI7920.result",
+                "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n}"
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已取得部分适用关系：IOptimizationProfile set_shape在latest官方API文档中无版本限制说明，architecture页给出语义版本化与弃用政策(TRT 8.0起12个月迁移期)；但完成版本选择所需的Triton↔TensorRT版本对应关系、TRT backend动态shape参数的版本适用条件均未取得，故不能打4/5；无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+                "quote": "TensorRT version number (MAJOR.MINOR.PATCH) follows [Semantic Versioning 2.0.0"
+              },
+              {
+                "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+                "quote": "This function must be called for any network input tensor that has dynamic dimensions."
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "搜索预算内出现的相关独立第三方来源去重后≥6条：DeepWiki 3条(dynamic batching、tensorrt backend、model configuration)、掘金config.pbtxt解析1条、CSDN 2条(pbtxt性能文、IOptimizationProfile解析)、gitcode Polygraphy profile文1条、GitHub trtship 1条。pytorch.ac.cn/com.tw为pytorch.org镜像仅计一次且归属存疑未计入。",
+            "evidence": [
+              {
+                "event_id": "call_00_eD2irn8THrvkjOl6saZp1795.result",
+                "quote": "## 1. [TensorRT Backend | triton-inference-server/server | DeepWiki](https://deepwiki.com/triton-inference-server/server/6.3-tensorrt-backend)"
+              },
+              {
+                "event_id": "call_00_mSH2bIiXYxAChE0BeC5z1644.result",
+                "quote": "## 2. [Triton config.pbtxt配置解析关键要点 config.pbtxt 是 Triton ...](https://juejin.cn/post/7483764347041071158)"
+              },
+              {
+                "event_id": "call_00_S8rdeHBsSzuImFaqBq5Y0875.result",
+                "quote": "## 5. [【TensorRT】 IOptimizationProfile 类深度解析](https://blog.csdn.net/a8039974/article/details/146212489)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "存在第三方材料(DeepWiki/掘金/CSDN等搜索摘要)故非not_applicable，但全部fetch均指向NVIDIA官方文档或官方仓库，无任何第三方正文进入上下文，其关键说法的可靠性、新旧与交叉一致性无法核验。",
+            "evidence": [
+              {
+                "event_id": "call_00_eD2irn8THrvkjOl6saZp1795.result",
+                "quote": "## 3. [Model Configuration | triton-inference-server/server | DeepWiki](https://deepwiki.com/triton-inference-server/server/4.2-model-configuration)"
+              },
+              {
+                "event_id": "call_00_eD2irn8THrvkjOl6saZp1795.result",
+                "quote": "## 4. [GitHub - namesarnav/trtship: A CLI and Python toolkit that takes …](https://github.com/namesarnav/trtship)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确的完整流程与解释：TensorRT IOptimizationProfile的min/opt/max语义、C++/Python API(setDimensions/kMIN/kOPT/kMAX、set_shape)、运行时setInputShape、explicit batch、多profile；Triton dynamic_batching的preferred_batch_size/max_queue_delay_microseconds、dims用-1、max_batch_size语义。经官方来源事后核对，set_shape约束与dynamic_batching字段均正确。但原题涉及的Triton TensorRT backend自定义profile参数键名与版本对应关系自称不确定需外部补充，属'具体参数仍需补充'，故4分。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "profile->setDimensions(\"input\", OptProfileSelector::kMIN, Dims4(1,3,224,224));"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "dynamic_batching {\n    preferred_batch_size: [ 4, 8 ]\n    max_queue_delay_microseconds: 100\n  }"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "Triton TensorRT backend 自定义 optimization profile 的确切参数键名和语法**（例如 `tensorrt` backend parameters 里如何显式给 min/opt/max，以及是否要配合 `dims` 的 `-1`）。这是我最不确定、最需要检索的点。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=12",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_ihWp3ndpDCzD2Mx4sUGN4239.dispatch",
+              "call_00_mSH2bIiXYxAChE0BeC5z1644.dispatch",
+              "call_00_S8rdeHBsSzuImFaqBq5Y0875.dispatch",
+              "call_00_eD2irn8THrvkjOl6saZp1795.dispatch",
+              "call_00_w6U3FYsNbwMotA7h5uI09143.dispatch",
+              "call_00_spXZ5eqUyQSatbNvkr8v3462.dispatch",
+              "call_00_HRbVosVDH4k6vzj0KizI7920.dispatch",
+              "call_00_blDCjbg8L9EOvEMTDTSP6073.dispatch",
+              "call_00_OEwdbGx1IyDWbPypuIrc5617.dispatch",
+              "call_00_xv5aQFu2brzuzFnrX04G5583.dispatch",
+              "call_00_4TTG3c7Z7adkqO0rkUWz7594.dispatch",
+              "call_00_WlLUntXxzIolHSDOHlyh5911.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 2,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_version_lock",
+            "reason": "答案引用了 TRT Python API 11.3.0 文档标题，并提及 'TRT 8+/10+/11+ explicit batch 为默认'，但：(a) 未给出任何具体适用的 TRT 版本或范围作为要求；(b) Triton 版本完全未确定（'Triton 文档页无明确版本号'）；(c) 答案明确承认 'TRT 版本 ↔ Triton 版本 ↔ CUDA 的配套对照表本轮未取得'。版本信息有提及但关键配套关系未确定，落在第2档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "TRT 版本 ↔ Triton 版本 ↔ CUDA 的配套对照表本轮未取得"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "TRT 8+/10+/11+ explicit batch 为默认"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "executable_with_environment_params",
+            "reason": "答案提供了完整的可执行方案：(1) TRT Python 代码包含完整导入、网络创建、parser、profile set_shape 三组具体数值、build_serialized_network 调用链；(2) Triton config.pbtxt 模板字段齐全（platform、max_batch_size、input/output dims、dynamic_batching 参数、instance_group）；(3) Docker 启动命令完整。仅需用户替换的环境参数已明确标识：model.onnx 路径、nvcr.io/nvidia/tritonserver:yy.mm-py3 中的版本标签、输入/输出名称及维度等。代码内部逻辑经与官方 API 文档比对无错误（set_shape 参数顺序、约束条件均正确）。未标伪代码或省略步骤。C++ 部分虽标注未核验但为附加内容，不影响主要 Python 路径的可执行性。扣1分因 yy.mm 版本标签及部分 Triton TRT backend 参数需用户自行确认版本后填入。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "profile.set_shape(\n    \"input\",\n    min=(1, 3, 224, 224),\n    opt=(8, 3, 224, 224),\n    max=(32, 3, 224, 224),\n)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "docker run --gpus=all -it --shm-size=256m --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v ${PWD}:/workspace/ -v ${PWD}/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:yy.mm-py3 bash\n\ntritonserver --model-repository=/models"
+              }
+            ],
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "insufficient_evidence",
+                "reason": "存在第三方材料(DeepWiki/掘金/CSDN等搜索摘要)故非not_applicable，但全部fetch均指向NVIDIA官方文档或官方仓库，无任何第三方正文进入上下文，其关键说法的可靠性、新旧与交叉一致性无法核验。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "存在第三方材料(DeepWiki/掘金/CSDN等搜索摘要)故非not_applicable，但全部fetch均指向NVIDIA官方文档或官方仓库，无任何第三方正文进入上下文，其关键说法的可靠性、新旧与交叉一致性无法核验。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_ihWp3ndpDCzD2Mx4sUGN4239.result",
+            "field": "response",
+            "sha256": "ea98f5655b1fb0bcd8bcb1fbb0bec5210275763de70285f50140d7f99a1c23c9",
+            "start": 96,
+            "end": 210,
+            "quote": "## 1. [Dynamic Shape Support — Torch-TensorRT](https://docs.pytorch.org/TensorRT/contributors/dynamic_shapes.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_mSH2bIiXYxAChE0BeC5z1644.result",
+            "field": "response",
+            "sha256": "ed4d02be242effdb70f62934fb47481f1069d1b4da6b1a684678f9a93b943726",
+            "start": 122,
+            "end": 360,
+            "quote": "## 1. [Dynamic Batching & Concurrent Model Execution — NVIDIA Triton Inference ...](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/tutorials/Conceptual_Guide/Part_2-improving_resource_utilization/README.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 24,
+            "end": 97,
+            "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+            "field": "response",
+            "sha256": "fb05b1b2b6751de7be3857b7d9b40830097dc883a5dd8b47731cee35e292e93d",
+            "start": 6954,
+            "end": 7024,
+            "quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_w6U3FYsNbwMotA7h5uI09143.result",
+            "field": "response",
+            "sha256": "d30e47e9adc04cc00e7984f540702fb40ddc9bee1e64da20581eabc5f54f6678",
+            "start": 4932,
+            "end": 5087,
+            "quote": "For models that support input and output tensors with variable-size dimensions, those dimensions can be listed as -1 in the input and output configuration.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+            "field": "response",
+            "sha256": "fb05b1b2b6751de7be3857b7d9b40830097dc883a5dd8b47731cee35e292e93d",
+            "start": 7546,
+            "end": 7595,
+            "quote": "0 <= `min[i]` <= `opt[i]` <= `max[i]` for all `i`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_HRbVosVDH4k6vzj0KizI7920.result",
+            "field": "response",
+            "sha256": "56d84f396fd90a2f5f61f60d5f150836d284befc41ed34a42195610a2d7ec08c",
+            "start": 1331,
+            "end": 1389,
+            "quote": "dynamic_batching {\n    max_queue_delay_microseconds: 100\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+            "field": "response",
+            "sha256": "b6f1bde5cd8d4fc1565564f11da9a55616b1f21137ab67ea5afa262098db48ce",
+            "start": 8652,
+            "end": 8730,
+            "quote": "TensorRT version number (MAJOR.MINOR.PATCH) follows [Semantic Versioning 2.0.0",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+            "field": "response",
+            "sha256": "fb05b1b2b6751de7be3857b7d9b40830097dc883a5dd8b47731cee35e292e93d",
+            "start": 7026,
+            "end": 7112,
+            "quote": "This function must be called for any network input tensor that has dynamic dimensions.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_eD2irn8THrvkjOl6saZp1795.result",
+            "field": "response",
+            "sha256": "46bf953655639b9dbd3b814456c8dd362826209cd052555d0c1b97f3853c2f8f",
+            "start": 119,
+            "end": 261,
+            "quote": "## 1. [TensorRT Backend | triton-inference-server/server | DeepWiki](https://deepwiki.com/triton-inference-server/server/6.3-tensorrt-backend)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_mSH2bIiXYxAChE0BeC5z1644.result",
+            "field": "response",
+            "sha256": "ed4d02be242effdb70f62934fb47481f1069d1b4da6b1a684678f9a93b943726",
+            "start": 660,
+            "end": 765,
+            "quote": "## 2. [Triton config.pbtxt配置解析关键要点 config.pbtxt 是 Triton ...](https://juejin.cn/post/7483764347041071158)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_S8rdeHBsSzuImFaqBq5Y0875.result",
+            "field": "response",
+            "sha256": "96876a7cf54bf30b96fe2fcc8870a97523d41a355d6e0a92bcf3f1f314884914",
+            "start": 1981,
+            "end": 2084,
+            "quote": "## 5. [【TensorRT】 IOptimizationProfile 类深度解析](https://blog.csdn.net/a8039974/article/details/146212489)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_eD2irn8THrvkjOl6saZp1795.result",
+            "field": "response",
+            "sha256": "46bf953655639b9dbd3b814456c8dd362826209cd052555d0c1b97f3853c2f8f",
+            "start": 730,
+            "end": 878,
+            "quote": "## 3. [Model Configuration | triton-inference-server/server | DeepWiki](https://deepwiki.com/triton-inference-server/server/4.2-model-configuration)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_eD2irn8THrvkjOl6saZp1795.result",
+            "field": "response",
+            "sha256": "46bf953655639b9dbd3b814456c8dd362826209cd052555d0c1b97f3853c2f8f",
+            "start": 1100,
+            "end": 1213,
+            "quote": "## 4. [GitHub - namesarnav/trtship: A CLI and Python toolkit that takes …](https://github.com/namesarnav/trtship)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "aea35de3dba7cea1cf57d9f7d101a15852e779658f3195640620784fde0d89b1",
+            "start": 586,
+            "end": 666,
+            "quote": "profile->setDimensions(\\\"input\\\", OptProfileSelector::kMIN, Dims4(1,3,224,224));",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "aea35de3dba7cea1cf57d9f7d101a15852e779658f3195640620784fde0d89b1",
+            "start": 1859,
+            "end": 1957,
+            "quote": "dynamic_batching {\\n    preferred_batch_size: [ 4, 8 ]\\n    max_queue_delay_microseconds: 100\\n  }",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "aea35de3dba7cea1cf57d9f7d101a15852e779658f3195640620784fde0d89b1",
+            "start": 3328,
+            "end": 3481,
+            "quote": "Triton TensorRT backend 自定义 optimization profile 的确切参数键名和语法**（例如 `tensorrt` backend parameters 里如何显式给 min/opt/max，以及是否要配合 `dims` 的 `-1`）。这是我最不确定、最需要检索的点。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "bb188d259f6b72e67d24e5e563910fd9ef7cd2e10a10999c0775c7d6b2450097",
+            "start": 8493,
+            "end": 8530,
+            "quote": "TRT 版本 ↔ Triton 版本 ↔ CUDA 的配套对照表本轮未取得",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "bb188d259f6b72e67d24e5e563910fd9ef7cd2e10a10999c0775c7d6b2450097",
+            "start": 2160,
+            "end": 2193,
+            "quote": "TRT 8+/10+/11+ explicit batch 为默认",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "bb188d259f6b72e67d24e5e563910fd9ef7cd2e10a10999c0775c7d6b2450097",
+            "start": 2712,
+            "end": 2824,
+            "quote": "profile.set_shape(\n    \"input\",\n    min=(1, 3, 224, 224),\n    opt=(8, 3, 224, 224),\n    max=(32, 3, 224, 224),\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "bb188d259f6b72e67d24e5e563910fd9ef7cd2e10a10999c0775c7d6b2450097",
+            "start": 6960,
+            "end": 7195,
+            "quote": "docker run --gpus=all -it --shm-size=256m --rm \\\n  -p8000:8000 -p8001:8001 -p8002:8002 \\\n  -v ${PWD}:/workspace/ -v ${PWD}/model_repository:/models \\\n  nvcr.io/nvidia/tritonserver:yy.mm-py3 bash\n\ntritonserver --model-repository=/models",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "bb188d259f6b72e67d24e5e563910fd9ef7cd2e10a10999c0775c7d6b2450097",
+            "start": 85,
+            "end": 385,
+            "quote": "- **TensorRT 层**：用 **optimization profile** 为每个动态输入张量定义 `min / opt / max` 三个 shape，本质是「可运行区间 + 选 kernel 的基准点」。\n- **Triton 层**：`max_batch_size` + `dynamic_batching {}` 负责**请求级动态 batching**（把多个请求合成一个大 batch）；`dims` 中的 `-1` 负责**张量空间维的动态 shape**，Triton 的 TensorRT backend 据此构造 TRT 的 optimization profile。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+            "field": "response",
+            "sha256": "fb05b1b2b6751de7be3857b7d9b40830097dc883a5dd8b47731cee35e292e93d",
+            "start": 6954,
+            "end": 7112,
+            "quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor.\n\nThis function must be called for any network input tensor that has dynamic dimensions.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+            "alternative_body_event_ids": [
+              "call_00_HRbVosVDH4k6vzj0KizI7920.result",
+              "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+              "call_00_4TTG3c7Z7adkqO0rkUWz7594.result",
+              "call_00_WlLUntXxzIolHSDOHlyh5911.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_blDCjbg8L9EOvEMTDTSP6073.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_blDCjbg8L9EOvEMTDTSP6073.result",
+            "alternative_body_event_ids": [
+              "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+              "call_00_4TTG3c7Z7adkqO0rkUWz7594.result",
+              "call_00_WlLUntXxzIolHSDOHlyh5911.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+            "alternative_body_event_ids": [
+              "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+              "call_00_4TTG3c7Z7adkqO0rkUWz7594.result",
+              "call_00_WlLUntXxzIolHSDOHlyh5911.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-527df86dc554-predictors.json": "cbc80e9f5a20a0dd0568100d5fa84f95e33a5b08351d1d1951483eae7f8461ba",
+          "reviewed/development/case-527df86dc554-outcome.json": "0b5d9ebb0aca2f5ce8921533be35524e7a206cc9d8c6817190d3fbb638cdb7ec",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_w6U3FYsNbwMotA7h5uI09143.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/model_configuration.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_w6U3FYsNbwMotA7h5uI09143.result",
+                "quote": "Typically, this configuration is provided in a config.pbtxt file specified as ModelConfig protobuf."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_w6U3FYsNbwMotA7h5uI09143.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "多处[...]标记表明章节间内容缺失，正文非完整"
+          },
+          {
+            "event_id": "call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/backend/tensorrt.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "not_applicable",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+                "quote": "Page Not Found\n\nThis page no longer exists. It is a non-supported format."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_spXZ5eqUyQSatbNvkr8v3462.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "reference": "目标页(Triton TensorRT backend文档)不存在，无任何正文"
+          },
+          {
+            "event_id": "call_00_HRbVosVDH4k6vzj0KizI7920.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/tutorials/Conceptual_Guide/Part_2-improving_resource_utilization/README.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_HRbVosVDH4k6vzj0KizI7920.result",
+                "quote": "Dynamic batching can be enabled and configured on per model basis by specifying selections in the model’s `config.pbtxt`."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_HRbVosVDH4k6vzj0KizI7920.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "含一处[...]截断标记，正文不完整"
+          },
+          {
+            "event_id": "call_00_blDCjbg8L9EOvEMTDTSP6073.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/developer-guide/index.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "not_applicable",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_blDCjbg8L9EOvEMTDTSP6073.result",
+                "quote": "Page Not Found\n\nThis page no longer exists."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_blDCjbg8L9EOvEMTDTSP6073.result",
+                "quote": "Page Not Found"
+              }
+            ],
+            "reference": "developer guide最新路径404，optimization profile章节未取得"
+          },
+          {
+            "event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+                "quote": "**标题**: Architecture Overview — NVIDIA TensorRT"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_OEwdbGx1IyDWbPypuIrc5617.result",
+                "quote": "Back to top\n\n# Architecture Overview"
+              }
+            ],
+            "reference": "未知重定向至Architecture Overview页，返回的是正文但非目标developer guide/optimization profiles内容，按获取目标判定无目标正文=1；不与latest 404合并(不同URL且重定向未知)",
+            "received_representation": "body_of_different_page",
+            "note": "预先请求Optimization Profiles/dynamic shapes章节，返回Architecture Overview而非目标章节；保留实际返回的其他页面正文，按既有第1档无目标内容处理。不是网络错误或SPA归因。"
+          },
+          {
+            "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/_static/python-api/infer/Core/OptimizationProfile.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+                "quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+                "quote": "Raises:\n\n`ValueError` if an inconsistency was detected."
+              }
+            ],
+            "reference": "取得直接正文且无截断标记，但完整性无独立核对依据，保留[4,5]"
+          },
+          {
+            "event_id": "call_00_4TTG3c7Z7adkqO0rkUWz7594.result",
+            "url": "https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/scheduler.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_4TTG3c7Z7adkqO0rkUWz7594.result",
+                "quote": "The default scheduler is used for a model if none of the *scheduling_choice* properties are specified in the model configuration."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_4TTG3c7Z7adkqO0rkUWz7594.result",
+                "quote": "See [Ensemble Models](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/architecture.html#ensemble-models) for more information and examples."
+              }
+            ],
+            "reference": "返回正文在Ensemble Scheduler节后即止，fetch目标dynamic_batching字段节整体缺失，属可核对正文边界缺失"
+          },
+          {
+            "event_id": "call_00_WlLUntXxzIolHSDOHlyh5911.result",
+            "url": "https://github.com/triton-inference-server/tensorrt_backend",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_00_WlLUntXxzIolHSDOHlyh5911.result",
+                "quote": "Triton exposes some flags to control the execution mode of the TensorRT models through the Parameters section of the model's `config.pbtxt` file."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_WlLUntXxzIolHSDOHlyh5911.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "官方仓库README正文含[...]截断，Parameters节在execution_context_allocation_strategy后被截断，min/opt/max shape推导说明未取得"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

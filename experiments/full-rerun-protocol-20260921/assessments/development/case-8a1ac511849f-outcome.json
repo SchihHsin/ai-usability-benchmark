@@ -1,0 +1,230 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "export HCCL_ALGO=\"allreduce=level0:NA;level1:ring/allgather=level0:NA;level1:H-D_R\"",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_2_8676257a.result",
+      "evidence_quote": "export HCCL_ALGO=\"allreduce=level0:NA;level1:ring/allgather=level0:NA;level1:H-D_R\"",
+      "verification": "source",
+      "reason": "原题四子方面逐项核对：①HCCL_ALGO——配置语法（level0仅NA；level1/level2取值ring、H-D_R、NHR/NHR_V1、NB、AHC、pipeline、pairwise）、不设level1/level2时的默认算法规则、AHC与level2仅A3、pipeline仅A2且不支持确定性计算、Atlas A2保序场景不建议配置等，均与官方CANN 8.3.RC1环境变量参考（WebFetch_2_8676257a.result）逐字吻合，按算子配置示例与来源一致（见引文）。②RoCE网络——HCCL_RDMA_TC取值[0,255]、须为4整数倍、默认132、DSCP=TC/4、示例100对应DSCP25、通信域配置优先、RDMA变量族（SL/TIMEOUT/RETRY_CNT/QPS等）与WebFetch_11_71e641ae.result一致；HCCL_SOCKET_IFNAME未见于取回正文，PFC/ECN交换机细节仅目录（答案已如实注明）。③拓扑/瓶颈定位——npu-smi、msprof/HCCL日志、hccl_test基线、perftest及'link→IP→ping→netstat→perftest→hccl_test'诊断顺序为合理可执行建议。④hccn_tool诊断——'-i对应NPU设备ID（物理Die ID）'有官方导读佐证（WebSearch_3_14c091ab.result：'参数i取值均对应实际的NPU设备ID'），'分布式训练需用HCCN Tool配置device网卡IP'由WebFetch_6_1a601904.result佐证；但各子命令具体参数正文未取回（WebFetch_4_be3bfaf0/WebFetch_7_169be560仅标题目录，WebFetch_9_ba1a1515在代码块处截断），答案在'无法核实处'明确标注并指引以官方接口参考为准。核心调优内容（HCCL_ALGO+RoCE）有来源支撑、缺口透明披露，整体判supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "status": "supported",
+      "reason": "HCCL_ALGO部分定版到CANN Community Edition 8.3.RC1（alpha）文档，属有明确版本依据；但hccn_tool仅给出按硬件区分的文档版本范围（23.0.x/24.1.0/25.5.x）未定到具体版本，RDMA环境变量来自开源仓库未绑定CANN版本，且答案明确承认本机CANN版本与硬件型号未核实、需以npu-smi与安装路径文档为准。部分所需组件有明确版本依据、其余仍未确定，评3分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "HCCL_ALGO 文档取自 CANN Community Edition 8.3.RC1（alpha）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "hccn_tool 接口参考按硬件文档版本发布（23.0.x / 24.1.0 / 25.5.x），随驱动安装，需匹配本机硬件"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "未核实的本机 CANN 版本与硬件型号；请以 `npu-smi` 与安装路径下文档版本为准。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "status": "supported",
+      "reason": "HCCL_ALGO（含按算子配置示例）与export HCCL_RDMA_TC=100等命令完整、取值说明齐全，可直接执行；诊断顺序link→IP→ping→netstat→perftest→hccl_test明确。但hccn_tool子命令参数格式答案自认未验证：'-ip -s 具体参数格式建议以《HCCN Tool 接口参考》为准'、'各子命令的完整参数列表（官方正文未成功取回，仅目录）'，执行前需按官方文档核实补充。存在具体缺口（命令格式待确认，非仅替换环境参数），评3分而非4分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "hccn_tool -i <device_id> -link -g"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "export HCCL_RDMA_TC=100"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "故 `-ip -s` 具体参数格式建议以《HCCN Tool 接口参考》\"配置功能\"章节为准"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "hccn_tool 各子命令的完整参数列表（官方正文未成功取回，仅目录）。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-8a1ac511849f",
+  "task_id": "W",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "export HCCL_ALGO=\"allreduce=level0:NA;level1:ring/allgather=level0:NA;level1:H-D_R\"",
+        "answer_event_id": "run-end",
+        "evidence_id": "WebFetch_2_8676257a.result",
+        "evidence_quote": "export HCCL_ALGO=\"allreduce=level0:NA;level1:ring/allgather=level0:NA;level1:H-D_R\"",
+        "verification": "source",
+        "reason": "原题四子方面逐项核对：①HCCL_ALGO——配置语法（level0仅NA；level1/level2取值ring、H-D_R、NHR/NHR_V1、NB、AHC、pipeline、pairwise）、不设level1/level2时的默认算法规则、AHC与level2仅A3、pipeline仅A2且不支持确定性计算、Atlas A2保序场景不建议配置等，均与官方CANN 8.3.RC1环境变量参考（WebFetch_2_8676257a.result）逐字吻合，按算子配置示例与来源一致（见引文）。②RoCE网络——HCCL_RDMA_TC取值[0,255]、须为4整数倍、默认132、DSCP=TC/4、示例100对应DSCP25、通信域配置优先、RDMA变量族（SL/TIMEOUT/RETRY_CNT/QPS等）与WebFetch_11_71e641ae.result一致；HCCL_SOCKET_IFNAME未见于取回正文，PFC/ECN交换机细节仅目录（答案已如实注明）。③拓扑/瓶颈定位——npu-smi、msprof/HCCL日志、hccl_test基线、perftest及'link→IP→ping→netstat→perftest→hccl_test'诊断顺序为合理可执行建议。④hccn_tool诊断——'-i对应NPU设备ID（物理Die ID）'有官方导读佐证（WebSearch_3_14c091ab.result：'参数i取值均对应实际的NPU设备ID'），'分布式训练需用HCCN Tool配置device网卡IP'由WebFetch_6_1a601904.result佐证；但各子命令具体参数正文未取回（WebFetch_4_be3bfaf0/WebFetch_7_169be560仅标题目录，WebFetch_9_ba1a1515在代码块处截断），答案在'无法核实处'明确标注并指引以官方接口参考为准。核心调优内容（HCCL_ALGO+RoCE）有来源支撑、缺口透明披露，整体判supported。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "status": "supported",
+        "reason": "HCCL_ALGO部分定版到CANN Community Edition 8.3.RC1（alpha）文档，属有明确版本依据；但hccn_tool仅给出按硬件区分的文档版本范围（23.0.x/24.1.0/25.5.x）未定到具体版本，RDMA环境变量来自开源仓库未绑定CANN版本，且答案明确承认本机CANN版本与硬件型号未核实、需以npu-smi与安装路径文档为准。部分所需组件有明确版本依据、其余仍未确定，评3分。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "HCCL_ALGO 文档取自 CANN Community Edition 8.3.RC1（alpha）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "hccn_tool 接口参考按硬件文档版本发布（23.0.x / 24.1.0 / 25.5.x），随驱动安装，需匹配本机硬件"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "未核实的本机 CANN 版本与硬件型号；请以 `npu-smi` 与安装路径下文档版本为准。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 3,
+        "status": "supported",
+        "reason": "HCCL_ALGO（含按算子配置示例）与export HCCL_RDMA_TC=100等命令完整、取值说明齐全，可直接执行；诊断顺序link→IP→ping→netstat→perftest→hccl_test明确。但hccn_tool子命令参数格式答案自认未验证：'-ip -s 具体参数格式建议以《HCCN Tool 接口参考》为准'、'各子命令的完整参数列表（官方正文未成功取回，仅目录）'，执行前需按官方文档核实补充。存在具体缺口（命令格式待确认，非仅替换环境参数），评3分而非4分。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "hccn_tool -i <device_id> -link -g"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "export HCCL_RDMA_TC=100"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "故 `-ip -s` 具体参数格式建议以《HCCN Tool 接口参考》\"配置功能\"章节为准"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "hccn_tool 各子命令的完整参数列表（官方正文未成功取回，仅目录）。"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "9e492e7037a947ccbc50632197eca44e",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "3f8fa3c91d3b15eaa048290548f005eb",
+        "conversationRequestId": "3f8fa3c91d3b15eaa048290548f005eb",
+        "agent": "cli"
+      },
+      {
+        "messageId": "9e492e7037a947ccbc50632197eca44e",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "3f8fa3c91d3b15eaa048290548f005eb",
+        "conversationRequestId": "3f8fa3c91d3b15eaa048290548f005eb",
+        "rawUsage": {
+          "prompt_tokens": 21555,
+          "completion_tokens": 13852,
+          "total_tokens": 35407,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 12660,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 20261
+          },
+          "prompt_cache_hit_tokens": 20261,
+          "prompt_cache_miss_tokens": 1294,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 12660,
+          "credit": 8.77,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21555,
+          "outputTokens": 13852,
+          "totalTokens": 35407,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 20261
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 12660
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "ff7b41c5668ee89e064cf7d5973288b997880740c64675441eb2e8c74de64b1a",
+    "process_sha256": "e7c63a78fdc7bf580a7783434658eb5a5f8b8970b4ed7299bc7f9a3db9b9a2ce",
+    "elapsed_seconds": 198.26,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-aa4dbed2b3664cbc8fc8685b3494bf24",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

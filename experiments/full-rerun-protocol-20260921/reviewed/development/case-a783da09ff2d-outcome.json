@@ -1,0 +1,173 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,TUNING,ENV ./my_nccl_app 2>&1 | tee nccl.log\n```\n（官方在 affinity 章节明确给出 `NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,ENV ./my_nccl_app`，并提示在日志中找 `ncclTopoGetCpuAffinity: Affinity for GPU ...`。）\n\n> 未核实：INFO 日志中算法/协议选择行的**精确文本格式**我未取到官方样例，无法逐字给出；请在 `TUNING` 子系统输出中人工确认。\n\n---\n\n## 2. 基线带宽测量（官方 performance_and_tuning 页）\n来源：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting/performance_and_tuning.html\n\n- 机内：`nvbandwidth`（https://github.com/NVIDIA/nvbandwidth ），或 `nvloom`（https://github.com/NVIDIA/nvloom ，含 NVLink SHARP 基准）。\n  ```bash\n  srun/mpirun -n <nproc> ./nvloom -s pairwise --sizeMin 1M --sizeMax 4G\n  srun/mpirun -n <nproc> ./nvloom -s multicast --sizeMin 1M --sizeMax 4G\n  ```\n- 机间（`nvbandwidth` 需编译多机支持）：\n  ```bash\n  cmake -DMULTINODE=1 .\n  make\n  srun/mpirun -n <nproc> ./nvbandwidth -p multinode\n  srun/mpirun -n <nproc> ./nvloom -p gpu-to-rack rack-to-rack fabric-stress --sizeMin 1M --sizeMax 4G\n  ```\n- 网络层：`ib_write_bw` / `ib_write_lat`。\n- 判据（官方原文）：若 `nvbandwidth`/`nvloom` 与 `ib_write_bw` 结果符合硬件预期，**但 NCCL 仍低于预期，才是 NCCL 配置可调的信号**。\n\n---\n\n## 3. 拓扑 / NVLink / P2P 校验（官方 gpu_troubleshooting 页）\n来源：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting/gpu_troubleshooting.html\n\n- 机内拓扑与带宽预期：`nvidia-smi topo -m`\n- P2P 直连矩阵：`nvidia-smi topo -p2p n`（NVLink）/ `nvidia-smi topo -p2p p`（PCIe），输出 `OK` 表示可直连。\n- 验证 P2P 通路：CUDA sample `Samples/0_Introduction/simpleP2P`（末行应为 `Test passed`）。\n- **IOMMU/VT-d（裸金属 PCIe P2P 常见瓶颈）**：\n  ```bash\n  cat /proc/cmdline\n  dmesg | grep -i -E \"iommu|dmar|default domain\"\n  ```\n  出现 `iommu: Default domain type: Translated` / `DMAR: IOMMU enabled` 对裸金属 PCIe P2P 是隐患；官方指出裸金属 Linux 上 CUDA/驱动不支持 IOMMU-enabled PCIe P2P，要求关闭 IOMMU（虚拟化场景另论）。\n- **ACS（Access Control Services）**：会把 PCIe point-to-point 流量重定向到 CPU root complex，导致大幅降速甚至 hang。\n  ```bash\n  sudo lspci -vvv | grep ACSCtl        # 出现 SrcValid+ 可能启用了 ACS\n  sudo lspci | grep PLX\n  sudo setpci -s 03:00.0 ECAP_ACS+0x6.w=0000   # 03:00.0 换成各桥 BDF\n  ```\n  （PLX 设备需每次重启后重设；VM 内 ACS 不可关，需在网卡启用 ATS。）\n- **GPU-NIC（GDRDMA）**：`sudo modprobe nvidia-peermem`，或 `lsmod | grep nvidia-peermem` 验证；新内核 + 开源 GPU 驱动可走 DMA-BUF 自动启用。\n- 拓扑发现依赖 `/sys`：容器/VM 中须正确挂载 `/sys`，虚拟 PCI 拓扑会导致次优性能。\n- MNNVL（多机 NVLink）：`nvidia-imex-ctl -H -N`（看 `Domain State`，健康为 `READY` + 连接矩阵 `C`）；无 IMEX 权限时 `nvidia-smi -q | grep -v GUID | grep -A4 Fabric` 核对 cliqueId。\n\n---\n\n## 4. 主动诊断（NCCL ≥2.31 官方新特性）\n来源：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting/diagnostics.html\n\n- RAS diagnostics（被动收集配置/驱动状态）与 Active diagnostics（主动跑 P2P 路径验证）。\n- 启用：\n  ```bash\n  NCCL_RUN_DIAGNOSTICS=1 <application> [arguments]\n  ```\n  报告在 rank 0 的 stdout，前缀 `NCCL DIAG`，例如 `NCCL DIAG [OK] p2p: all 56 directed GPU P2P edges verified`；标签 `[OK]`/`[INFO]`。诊断仅信息性，不会中断初始化。\n- 若 P2P check 全过，官方建议把排查方向转向**机间网络或应用本身**。\n\n---\n\n## 5. NCCL_ALGO / NCCL_PROTO（核心调优项）\n**官方现状（重要且需注意）**：我在本轮取得的两份官方 2.31.2 `env.html` 抓取中**均未包含 `NCCL_ALGO`、`NCCL_PROTO`、`NCCL_MIN_NCHANNELS` 词条**，官方现行 `Performance and tuning` 页列出的调优旋钮是 `NCCL_MIN_CTAS/NCCL_MAX_CTAS`、`NCCL_CHUNK_SIZE`、`NCCL_IB_QPS_PER_CONNECTION`、`NCCL_CROSS_NIC`，并**明确不鼓励在生产中手工设置调优变量**。这暗示现代 NCCL 倾向自动 tuning 而非手工指定 algo/proto。**但 env 页被工具截断，不能据此断定官网完全没有该词条（未核实）**。\n\n**取值（来自第三方技术文，其线索为 NVIDIA 论文《Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols and Algorithms》）**：\n来源：https://zhuanlan.zhihu.com/p/1947979580301346603\n- `NCCL_ALGO`：`Ring` / `Tree` / `NVLS` / `PAT` 等（另有 `CollnetDirect`/`CollnetChain` 之类 CollNet 形态）。ALGO 描述的是“数据流动方式”，与拓扑强绑定；NCCL 在 `init.cc` 的 `initTransportRank` 按拓扑/XML 为各 algo 建 graph，再在 `tuning.cc` 对多组 algo/proto 统一 tuning 选优。\n- `NCCL_PROTO`：`LL` / `LL128` / `Simple`。\n  - `Simple`：大 chunk，需要额外 memory fence 维持顺序，但全部带宽用于传数据，**适合大数据量打满带宽**。\n  - `LL`：**每次 8B，其中 4B data + 4B 同步 flag**，无需额外 fence，需 atomic；低延迟、小消息，带宽效率约 50%。\n  - `LL128`：**每次 128B，其中 120B data + 8B flag**，介于两者之间，低延迟小消息。\n  - 经验区间（**未在官方取得，属未核实**）：极小消息偏 `LL`，小/中消息偏 `LL128`，大消息偏 `Simple`；NVLink 域内若硬件支持可考虑 `NVLS`。\n\n**建议调法（谨慎、A/B 验证）**：\n```bash\n# 仅在自动 tuning 明显异常时手工覆盖，并逐项 A/B\nNCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=TUNING NCCL_ALGO=Ring  NCCL_PROTO=Simple ./app\nNCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=TUNING NCCL_ALGO=Tree  NCCL_PROTO=LL128  ./app\nNCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=TUNING NCCL_ALGO=NVLS  ./app   # 需 NVSwitch/NVLS 硬件\nNCCL_ALGO=Ring,Tree ./app        # 逗号列表=允许集合，让 NCCL 在集合内 tuning\nNCCL_PROTO=LL,LL128,Simple ./app\n```\n> 说明：`NCCL_ALGO`/`NCCL_PROTO` 支持逗号分隔的“候选集合”，最终由 tuning 决定；具体可用枚举字符串我**未从官方页面逐字取得**，`NVLS/NVLSTree/PAT/Collnet*` 的存在与拼写**未核实**，请以你所用 NCCL 版本 `env.html` 与 `NCCL_DEBUG=INFO` 的 tuning 输出为准。\n\n---",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_qeiM3JBuy3xsMJYfmx4v8738.result",
+      "evidence_quote": "The most common tuning parameters are listed below.\n\nNOTE: In general we discourage the use of these variables in production since a tuning gain in one benchmark situation can lead to suboptimal settings elsewhere.",
+      "verification": "source",
+      "reason": "原题五个子方面均被覆盖：(1) NCCL_ALGO/NCCL_PROTO——答案第5节给出取值（Ring/Tree/NVLS；LL/LL128/Simple）、字节结构与A/B调法，取值依据第三方知乎文（call_00_ldDTo8wTRx4BynX9zJMf2080.result: 'NCCL_ALGO: Ring/Tree/NVLS/PAT等'、'NCCL_PROTO: LL/LL128/Simple'），并如实标注官方页截断、枚举未核实；(2) 拓扑感知/NVLink——第3节 nvidia-smi topo -m/-p2p n、IOMMU/ACS 检查，与官方 gpu_troubleshooting 页一致（'You can use nvidia-smi topo -p2p <capability>'）；(3) NCCL_DEBUG 诊断——第1节取值/子系统/默认值与官方 env 抓取一致（'Default: INIT,BOOTSTRAP,ENV'）；(4) 调优主线（先基线再调参、官方旋钮 MIN/MAX_CTAS、CHUNK_SIZE、IB_QPS_PER_CONNECTION、CROSS_NIC）与官方 performance_and_tuning 页逐字对应；(5) 附完整可照抄排查流程（第9节）。答案明确区分官方依据与未核实项，无证据矛盾。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "答案给出文档基线版本 NCCL 2.31.2、诊断特性需 ≥2.31，并为多数变量标注 since 版本（如 NCCL_DEBUG_SUBSYS since 2.3.4、NCCL_IB_HCA 上限32等），有依据；但用户实际环境的 NCCL/CUDA/驱动版本未确定，答案自己承认'未核实：你实际环境应锁定的确切 NCCL/CUDA/驱动版本'，仅给出自查命令而非定版结论，属'部分组件有明确版本依据，其余未定'，评3分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "**未核实**：你实际环境应锁定的确切 NCCL/CUDA/驱动版本，需用下方的 `NCCL_DEBUG=VERSION` 与环境自查确定。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "第9节给出完整可照抄的排查流程：版本与诊断、基线带宽（nvbandwidth/nvloom 编译参数 -DMULTINODE=1、srun 示例）、系统级隐患（/proc/cmdline、lspci ACSCtl、setpci）、NCCL 日志、逐项 A/B 调参命令，命令行完整、前置条件（NCCL>=2.31、需编译、BDF 替换）均注明；仅需替换 <nproc>、BDF 等明确标识的用户环境参数即可执行，评4分而非5（部分前置如工具构建/硬件存在性依赖用户环境，且 ALGO/PROTO 枚举未核实需以 tuning 输出确认）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "sudo setpci -s 03:00.0 ECAP_ACS+0x6.w=0000   # 03:00.0 换成各桥 BDF"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a783da09ff2d",
+  "task_id": "W",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "caf949a54e634b4ea61537a507ef24d1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "6ed5f25539a0ca9c66c7fe63cdbe0d25",
+        "conversationRequestId": "6ed5f25539a0ca9c66c7fe63cdbe0d25",
+        "agent": "cli"
+      },
+      {
+        "messageId": "caf949a54e634b4ea61537a507ef24d1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "6ed5f25539a0ca9c66c7fe63cdbe0d25",
+        "conversationRequestId": "6ed5f25539a0ca9c66c7fe63cdbe0d25",
+        "rawUsage": {
+          "prompt_tokens": 28096,
+          "completion_tokens": 1624,
+          "total_tokens": 29720,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 690,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 576
+          },
+          "prompt_cache_hit_tokens": 576,
+          "prompt_cache_miss_tokens": 27520,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 690,
+          "credit": 5.34,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 28096,
+          "outputTokens": 1624,
+          "totalTokens": 29720,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 576
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 690
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "8c44ee8870b0a5a5a9463825a780cdadb5731c539c2267109edb05581a64a823",
+    "process_sha256": "6447f5e9826d897302df98c443109606ac34d0e3aef25383ef18eda7e6e4058a",
+    "elapsed_seconds": 37.7,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-a9ee2d240e5741dfabe2c59d35bc46a4",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a783da09ff2d-outcome.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "NCCL_ALGO=Ring  NCCL_PROTO=Simple ./app ... NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,TUNING,ENV ./my_nccl_app 2>&1 | tee nccl.log",
+        "replacement": "NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,TUNING,ENV ./my_nccl_app 2>&1 | tee nccl.log\n```\n（官方在 affinity 章节明确给出 `NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,GRAPH,ENV ./my_nccl_app`，并提示在日志中找 `ncclTopoGetCpuAffinity: Affinity for GPU ...`。）\n\n> 未核实：INFO 日志中算法/协议选择行的**精确文本格式**我未取到官方样例，无法逐字给出；请在 `TUNING` 子系统输出中人工确认。\n\n---\n\n## 2. 基线带宽测量（官方 performance_and_tuning 页）\n来源：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting/performance_and_tuning.html\n\n- 机内：`nvbandwidth`（https://github.com/NVIDIA/nvbandwidth ），或 `nvloom`（https://github.com/NVIDIA/nvloom ，含 NVLink SHARP 基准）。\n  ```bash\n  srun/mpirun -n <nproc> ./nvloom -s pairwise --sizeMin 1M --sizeMax 4G\n  srun/mpirun -n <nproc> ./nvloom -s multicast --sizeMin 1M --sizeMax 4G\n  ```\n- 机间（`nvbandwidth` 需编译多机支持）：\n  ```bash\n  cmake -DMULTINODE=1 .\n  make\n  srun/mpirun -n <nproc> ./nvbandwidth -p multinode\n  srun/mpirun -n <nproc> ./nvloom -p gpu-to-rack rack-to-rack fabric-stress --sizeMin 1M --sizeMax 4G\n  ```\n- 网络层：`ib_write_bw` / `ib_write_lat`。\n- 判据（官方原文）：若 `nvbandwidth`/`nvloom` 与 `ib_write_bw` 结果符合硬件预期，**但 NCCL 仍低于预期，才是 NCCL 配置可调的信号**。\n\n---\n\n## 3. 拓扑 / NVLink / P2P 校验（官方 gpu_troubleshooting 页）\n来源：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting/gpu_troubleshooting.html\n\n- 机内拓扑与带宽预期：`nvidia-smi topo -m`\n- P2P 直连矩阵：`nvidia-smi topo -p2p n`（NVLink）/ `nvidia-smi topo -p2p p`（PCIe），输出 `OK` 表示可直连。\n- 验证 P2P 通路：CUDA sample `Samples/0_Introduction/simpleP2P`（末行应为 `Test passed`）。\n- **IOMMU/VT-d（裸金属 PCIe P2P 常见瓶颈）**：\n  ```bash\n  cat /proc/cmdline\n  dmesg | grep -i -E \"iommu|dmar|default domain\"\n  ```\n  出现 `iommu: Default domain type: Translated` / `DMAR: IOMMU enabled` 对裸金属 PCIe P2P 是隐患；官方指出裸金属 Linux 上 CUDA/驱动不支持 IOMMU-enabled PCIe P2P，要求关闭 IOMMU（虚拟化场景另论）。\n- **ACS（Access Control Services）**：会把 PCIe point-to-point 流量重定向到 CPU root complex，导致大幅降速甚至 hang。\n  ```bash\n  sudo lspci -vvv | grep ACSCtl        # 出现 SrcValid+ 可能启用了 ACS\n  sudo lspci | grep PLX\n  sudo setpci -s 03:00.0 ECAP_ACS+0x6.w=0000   # 03:00.0 换成各桥 BDF\n  ```\n  （PLX 设备需每次重启后重设；VM 内 ACS 不可关，需在网卡启用 ATS。）\n- **GPU-NIC（GDRDMA）**：`sudo modprobe nvidia-peermem`，或 `lsmod | grep nvidia-peermem` 验证；新内核 + 开源 GPU 驱动可走 DMA-BUF 自动启用。\n- 拓扑发现依赖 `/sys`：容器/VM 中须正确挂载 `/sys`，虚拟 PCI 拓扑会导致次优性能。\n- MNNVL（多机 NVLink）：`nvidia-imex-ctl -H -N`（看 `Domain State`，健康为 `READY` + 连接矩阵 `C`）；无 IMEX 权限时 `nvidia-smi -q | grep -v GUID | grep -A4 Fabric` 核对 cliqueId。\n\n---\n\n## 4. 主动诊断（NCCL ≥2.31 官方新特性）\n来源：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting/diagnostics.html\n\n- RAS diagnostics（被动收集配置/驱动状态）与 Active diagnostics（主动跑 P2P 路径验证）。\n- 启用：\n  ```bash\n  NCCL_RUN_DIAGNOSTICS=1 <application> [arguments]\n  ```\n  报告在 rank 0 的 stdout，前缀 `NCCL DIAG`，例如 `NCCL DIAG [OK] p2p: all 56 directed GPU P2P edges verified`；标签 `[OK]`/`[INFO]`。诊断仅信息性，不会中断初始化。\n- 若 P2P check 全过，官方建议把排查方向转向**机间网络或应用本身**。\n\n---\n\n## 5. NCCL_ALGO / NCCL_PROTO（核心调优项）\n**官方现状（重要且需注意）**：我在本轮取得的两份官方 2.31.2 `env.html` 抓取中**均未包含 `NCCL_ALGO`、`NCCL_PROTO`、`NCCL_MIN_NCHANNELS` 词条**，官方现行 `Performance and tuning` 页列出的调优旋钮是 `NCCL_MIN_CTAS/NCCL_MAX_CTAS`、`NCCL_CHUNK_SIZE`、`NCCL_IB_QPS_PER_CONNECTION`、`NCCL_CROSS_NIC`，并**明确不鼓励在生产中手工设置调优变量**。这暗示现代 NCCL 倾向自动 tuning 而非手工指定 algo/proto。**但 env 页被工具截断，不能据此断定官网完全没有该词条（未核实）**。\n\n**取值（来自第三方技术文，其线索为 NVIDIA 论文《Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols and Algorithms》）**：\n来源：https://zhuanlan.zhihu.com/p/1947979580301346603\n- `NCCL_ALGO`：`Ring` / `Tree` / `NVLS` / `PAT` 等（另有 `CollnetDirect`/`CollnetChain` 之类 CollNet 形态）。ALGO 描述的是“数据流动方式”，与拓扑强绑定；NCCL 在 `init.cc` 的 `initTransportRank` 按拓扑/XML 为各 algo 建 graph，再在 `tuning.cc` 对多组 algo/proto 统一 tuning 选优。\n- `NCCL_PROTO`：`LL` / `LL128` / `Simple`。\n  - `Simple`：大 chunk，需要额外 memory fence 维持顺序，但全部带宽用于传数据，**适合大数据量打满带宽**。\n  - `LL`：**每次 8B，其中 4B data + 4B 同步 flag**，无需额外 fence，需 atomic；低延迟、小消息，带宽效率约 50%。\n  - `LL128`：**每次 128B，其中 120B data + 8B flag**，介于两者之间，低延迟小消息。\n  - 经验区间（**未在官方取得，属未核实**）：极小消息偏 `LL`，小/中消息偏 `LL128`，大消息偏 `Simple`；NVLink 域内若硬件支持可考虑 `NVLS`。\n\n**建议调法（谨慎、A/B 验证）**：\n```bash\n# 仅在自动 tuning 明显异常时手工覆盖，并逐项 A/B\nNCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=TUNING NCCL_ALGO=Ring  NCCL_PROTO=Simple ./app\nNCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=TUNING NCCL_ALGO=Tree  NCCL_PROTO=LL128  ./app\nNCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=TUNING NCCL_ALGO=NVLS  ./app   # 需 NVSwitch/NVLS 硬件\nNCCL_ALGO=Ring,Tree ./app        # 逗号列表=允许集合，让 NCCL 在集合内 tuning\nNCCL_PROTO=LL,LL128,Simple ./app\n```\n> 说明：`NCCL_ALGO`/`NCCL_PROTO` 支持逗号分隔的“候选集合”，最终由 tuning 决定；具体可用枚举字符串我**未从官方页面逐字取得**，`NVLS/NVLSTree/PAT/Collnet*` 的存在与拼写**未核实**，请以你所用 NCCL 版本 `env.html` 与 `NCCL_DEBUG=INFO` 的 tuning 输出为准。\n\n---",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "call_00_qeiM3JBuy3xsMJYfmx4v8738.result",
+        "original": "The most common tuning parameters are listed below. NOTE: In general we discourage the use of these variables in production since a tuning gain in one benchmark situation can lead to suboptimal settings elsewhere.",
+        "replacement": "The most common tuning parameters are listed below.\n\nNOTE: In general we discourage the use of these variables in production since a tuning gain in one benchmark situation can lead to suboptimal settings elsewhere.",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

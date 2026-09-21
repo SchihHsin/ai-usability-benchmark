@@ -2,14 +2,13 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "必须用 pinned（page-locked）host memory 才能真异步...用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
+      "status": "supported",
+      "answer_quote": "1. **必须用 pinned（page-locked）host memory** 才能真异步：\n   > \"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work... It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"\n\n   即：用 pageable `malloc` 时 `cudaMemcpyAsync` **退化为同步**，不会重叠。\n\n2. **不同 stream 才可能重叠**；默认流（NULL/stream 0）是 blocking stream，会与其他 blocking stream 互相串行化：\n   > \"kernel2 will wait for kernel1 to complete, and kernel3 will wait for kernel2 to complete, even if in principle all three kernels could execute concurrently.\"\n\n   用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
       "answer_event_id": "run-end",
       "evidence_id": "call_00_CQC4sQ5gtBFc13ecrHl70139.result",
       "evidence_quote": "In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked.",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；最终答案完整覆盖了原题的三个子要求：(1) stream：给出完整多流代码，用 cudaStreamCreateWithFlags(stream, cudaStreamNonBlocking) 创建非默认流，官方指南2.5.6明确non-blocking flag；(2) event：用 cudaEventRecord/cudaStreamSynchronize/cudaEventElapsedTime 进行同步和计时，代码中 per-stream events + timing events 完整，官方指南2.5.3提供API签名；(3) pinned memory：明确 cudaMallocHost 为硬前提，官方指南2.5.2.3原文支持'host buffers must be pinned and page-locked'。此外还给出编译命令、硬件前提（compute capability ≥1.1 concurrent copy+execute、≥2.0 overlap、≥3.5 Hyper-Q）、double buffering 提示（cudaStreamWaitEvent），并附完整可编译代码。所有关键点均有官方来源逐字引文支撑。",
-      "raw_status": "supported"
+      "reason": "最终答案完整覆盖了原题的三个子要求：(1) stream：给出完整多流代码，用 cudaStreamCreateWithFlags(stream, cudaStreamNonBlocking) 创建非默认流，官方指南2.5.6明确non-blocking flag；(2) event：用 cudaEventRecord/cudaStreamSynchronize/cudaEventElapsedTime 进行同步和计时，代码中 per-stream events + timing events 完整，官方指南2.5.3提供API签名；(3) pinned memory：明确 cudaMallocHost 为硬前提，官方指南2.5.2.3原文支持'host buffers must be pinned and page-locked'。此外还给出编译命令、硬件前提（compute capability ≥1.1 concurrent copy+execute、≥2.0 overlap、≥3.5 Hyper-Q）、double buffering 提示（cudaStreamWaitEvent），并附完整可编译代码。所有关键点均有官方来源逐字引文支撑。"
     }
   ],
   "m9_m10": [
@@ -50,18 +49,7 @@
       ]
     }
   ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "run-end",
-          "quote": "必须用 pinned（page-locked）host memory 才能真异步...用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -172,7 +160,14 @@
   },
   "review": {
     "raw_file": "assessments/development/case-4474d14d9e5a-outcome.json",
-    "repairs": [],
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "必须用 pinned（page-locked）host memory 才能真异步...用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
+        "replacement": "1. **必须用 pinned（page-locked）host memory** 才能真异步：\n   > \"In order for memory copies involving CPU memory to be carried out asynchronously, the host buffers must be pinned and page-locked. `cudaMemcpyAsync()` will function correctly if host memory which is not pinned and page-locked is used, but it will revert to a synchronous behavior which will not overlap with other work... It is recommended programs use `cudaMallocHost()` to allocate buffers which will be used to send or receive data from GPUs.\"\n\n   即：用 pageable `malloc` 时 `cudaMemcpyAsync` **退化为同步**，不会重叠。\n\n2. **不同 stream 才可能重叠**；默认流（NULL/stream 0）是 blocking stream，会与其他 blocking stream 互相串行化：\n   > \"kernel2 will wait for kernel1 to complete, and kernel3 will wait for kernel2 to complete, even if in principle all three kernels could execute concurrently.\"\n\n   用 `cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)` 消除这种同步。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
     "semantic_validation": false,
     "document_identity_review": null,
     "official_search_evidence_review": null

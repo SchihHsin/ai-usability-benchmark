@@ -147,6 +147,722 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T06:48:56.184921+00:00",
+      "process_sha256": "5701a6ff209dfde6d2e0f1ef9254be9b50db97a3cc752e570e97d89f78a8f672",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "工具不强制重编译，但要输出 `文件:行号`，必须用 `-lineinfo`（推荐，不破坏优化）或 `-G`（完整设备调试信息，较慢）。不加则只有 `kernel()+偏移`，看不到源码行。",
+            "answer_event_id": "final",
+            "evidence_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "evidence_quote": "To generate line number information for applications without affecting the optimization level of the output, the `-lineinfo` nvcc option can be used. The Compute Sanitizer tools fully support both of these options and can display source attribution of errors for applications compiled with line information.",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题各子要求逐项核对：(1) 工具选择——CUDA ≥ 12.0 用 compute-sanitizer、≤ 11.x 用 cuda-memcheck，由 CUDA 12.0 Release Notes 直接支持（\"CUDA-MEMCHECK is removed from CUDA 12.0, and has been replaced with Compute Sanitizer.\"，call_00_NVv8H8IylJR7MHcymOl40180.result）；(2) 定位越界行的关键前提——用 -lineinfo/-G 编译以输出 file:line，由用户指南直接支持（见 evidence_quote，call_00_GK0qOVPmyh3ZqBbz5q005302.result）；(3) 运行方式——\"compute-sanitizer --tool memcheck ./app\"，与来源 \"The memcheck tool is enabled by default... It can also be explicitly enabled by using the `--tool memcheck` option.\" 一致；(4) 输出解读——来源示例 \"at unaligned_kernel():0x160 in memcheck_demo.cu:6\" 证明第2行含源文件:行号，答案据此正确解释；(5) 参数表默认值（print-limit=100、launch-timeout=10/60、demangle=full、destroy-on-device-error=context、error-exitcode=0、target-processes=all 等）与官方参数表逐项一致。cuda-memcheck 选项沿用说法为第三方（知乎/掘金）交叉印证，属次要方面且与官方移除声明不矛盾。未发现与官方来源相悖的内容。",
+            "raw_status": "supported",
+            "evidence_refs": [
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即出现相关官方来源（developer.nvidia.com），另第5条为docs.nvidia.com官方API指南。",
+            "evidence": [
+              {
+                "event_id": "call_00_hmBXsC2jrhAmNMptyn4Y0086.result",
+                "quote": "## 2. [NVIDIA Compute Sanitizer - NVIDIA Developer](https://developer.nvidia.com/compute-sanitizer)"
+              },
+              {
+                "event_id": "call_00_hmBXsC2jrhAmNMptyn4Y0086.result",
+                "quote": "## 5. [Compute Sanitizer API Reference Manual — Compute Sanitizer](https://docs.nvidia.com/compute-sanitizer/SanitizerApiGuide/index.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.75,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "**The provided content is explicitly truncated.** A `[content truncated]` marker appears at the very end"
+              },
+              {
+                "event_id": "call_00_WS8F4AscGgZ73awjUJpd6084.result",
+                "quote": "The content does not appear obviously truncated"
+              },
+              {
+                "event_id": "call_00_9PXQc8mLPADRq6xPO9Jf7240.result",
+                "quote": "[...]\n\n### Updates in 2025.4#"
+              },
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "[...]\n\n## 2. CUDA Libraries"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题所需内容：运行memcheck命令、获取源码行号的编译选项、输出格式、新旧工具关系。运行方式、-lineinfo/-G说明、完整参数表、含file:line的示例输出均已取得；但完整out-of-bounds示例输出因截断缺失（属原题明确涉及分支），故4分。",
+            "evidence": [
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "To generate line number information for applications without affecting the optimization level of the output, the `-lineinfo` nvcc option can be used."
+              },
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "=========     at unaligned_kernel():0x160 in memcheck_demo.cu:6"
+              },
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "The full memcheck_demo output showing the out-of-bounds report line is **not present** due to truncation."
+              },
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "CUDA-MEMCHECK is removed from CUDA 12.0, and has been replaced with Compute Sanitizer."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "原题所需版本关系（cuda-memcheck何时被何工具替代）由官方直接陈述，无需自行合并约束。工具与Toolkit绑定关系另有明确说明。",
+            "evidence": [
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "CUDA-MEMCHECK is removed from CUDA 12.0, and has been replaced with Compute Sanitizer."
+              },
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "The PTX compiler and compute-sanitizer must be from the same CUDA toolkit version for compile-time patching with memcheck."
+              },
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "Starting with CUDA 11, the various components in the toolkit are versioned independently."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "两次搜索结果中去重后的相关独立第三方来源≥6条：百度文库、腾讯云、CSDN、火山引擎、知乎、GitHub issue、掘金，共7条，均涉及本主题。",
+            "evidence": [
+              {
+                "event_id": "call_00_hmBXsC2jrhAmNMptyn4Y0086.result",
+                "quote": "## 3. [讲解CUDA error: an illegal memory access was encountered](https://cloud.tencent.com/developer/article/2373916)"
+              },
+              {
+                "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+                "quote": "## 3. [调试cuda程序 - 知乎](https://zhuanlan.zhihu.com/p/660480914)"
+              },
+              {
+                "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+                "quote": "## 4. [cuda-memcheck已经被废弃 · Issue #31 · brucefan1983/CUDA …](https://github.com/brucefan1983/CUDA-Programming/issues/31)"
+              },
+              {
+                "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+                "quote": "## 5. [使用 NVIDIA Compute Sanitizer 更有效地调试 CUDA](https://juejin.cn/post/7257029942856187963)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "存在多条第三方来源，且关于'cuda-memcheck被compute-sanitizer替代'这一关键说法有可追溯依据且与官方一致；但其余关键说法（如具体版本、操作细节）仅有搜索摘要，作者身份与日期未核验，无独立交叉印证，故3分。",
+            "evidence": [
+              {
+                "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+                "quote": "代替以前的 cuda-memcheck （自12.0开始，已经从CUDA Toolkit中移除）"
+              },
+              {
+                "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+                "quote": "Compute Sanitizer 已取代它的位置，提供了额外的功能，如改进的性能和对 Microsoft hardware-accelerated GPU …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确的完整流程：compute-sanitizer --tool memcheck、-lineinfo编译保留行号、输出形态与旧cuda-memcheck用法，多数参数与官方文档核对一致（--tool memcheck、--show-backtrace、--print-limit、--launch-timeout、--demangle、--log-file、--target-processes、--kernel-name均存在）。具体参数与约束仍有需补充处：cuda-memcheck确切移除版本自认不确定，--gen-source-info存疑（官方文档无此选项），故4分。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "nvcc -lineinfo -g -G -o app app.cu"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "cuda-memcheck 具体在哪个 CUDA 版本被移除/弃用（我印象是 11.0 弃用、后续移除，但确切版本不确定）。"
+              },
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "The memcheck tool is enabled by default when running the Compute Sanitizer application. It can also be explicitly enabled by using the `--tool memcheck` option."
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_hmBXsC2jrhAmNMptyn4Y0086.dispatch",
+              "call_00_GK0qOVPmyh3ZqBbz5q005302.dispatch",
+              "call_00_f1tRj1da9FLYTi4I54xE9752.dispatch",
+              "call_00_WS8F4AscGgZ73awjUJpd6084.dispatch",
+              "call_00_9PXQc8mLPADRq6xPO9Jf7240.dispatch",
+              "call_00_NVv8H8IylJR7MHcymOl40180.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "最终答案给出有据的工具-版本映射：CUDA ≥ 12.0 用 compute-sanitizer、≤ 11.x 用 cuda-memcheck，分界 12.0 有官方移除声明直接支持（call_00_NVv8H8IylJR7MHcymOl40180.result）；-fdevice-sanitize=memcheck 首现于 2025.4 亦有 Release Notes 支持（call_00_9PXQc8mLPADRq6xPO9Jf7240.result）。但答案自认\"CUDA 11.x 亦已有 compute-sanitizer，但未取得该版本的直接声明\"（推断），且用户环境 CUDA 版本未知，各组件停留在有据适用范围层面、未锁定到单一具体版本，对应第4档。第三方 GitHub issue 的 12.5 废弃说法与官方 12.0 移除声明的冲突已由答案明确\"以官方 Release Notes 为准\"消解。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "- **CUDA ≥ 12.0**：用 `compute-sanitizer`（`cuda-memcheck` 已从 Toolkit 移除）。\n- **CUDA ≤ 11.x**：用 `cuda-memcheck`。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "CUDA 11.x 亦已有 compute-sanitizer，但未取得该版本的直接声明"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "操作方案完整可照抄：编译命令（nvcc -lineinfo -o app app.cu；-G/-rdynamic 变体）、运行命令（compute-sanitizer --tool memcheck ./app）、cuda-memcheck 等价写法及参数组合示例均给出；参数名、取值与默认值逐项符合官方参数表（print-limit=100、launch-timeout=10/60、demangle=full、destroy-on-device-error=context、error-exitcode=0、target-processes=all 等，call_00_GK0qOVPmyh3ZqBbz5q005302.result）；前置条件明确（CUDA 版本决定工具选择、输出行号需 -lineinfo/-G、编译期插桩要求 PTX 编译器与 compute-sanitizer 同一 Toolkit 版本）。仅需替换 app/二进制名、日志文件名等明确标识的用户环境值，未发现需修正的内容错误，对应第4档（仅替换用户环境参数，无可执行性缺口）。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "nvcc -lineinfo -o app app.cu"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "compute-sanitizer --tool memcheck ./app arg1 arg2"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 92.25216,
+            "upper": 92.98944,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              92.2,
+              93.0
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 92.25216,
+          "upper": 92.98944,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            92.2,
+            93.0
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_hmBXsC2jrhAmNMptyn4Y0086.result",
+            "field": "response",
+            "sha256": "0836c8f92e25b1ec047ebbbb390c653658f025006705bd570a8eec80dd65b7d4",
+            "start": 468,
+            "end": 567,
+            "quote": "## 2. [NVIDIA Compute Sanitizer - NVIDIA Developer](https://developer.nvidia.com/compute-sanitizer)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_hmBXsC2jrhAmNMptyn4Y0086.result",
+            "field": "response",
+            "sha256": "0836c8f92e25b1ec047ebbbb390c653658f025006705bd570a8eec80dd65b7d4",
+            "start": 1437,
+            "end": 1575,
+            "quote": "## 5. [Compute Sanitizer API Reference Manual — Compute Sanitizer](https://docs.nvidia.com/compute-sanitizer/SanitizerApiGuide/index.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 68,
+            "end": 172,
+            "quote": "**The provided content is explicitly truncated.** A `[content truncated]` marker appears at the very end",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_WS8F4AscGgZ73awjUJpd6084.result",
+            "field": "response",
+            "sha256": "9d6e13871850ced873f0884e7888ca466cdbcc4eaa5d7561d556e1fd74c0ec7b",
+            "start": 3889,
+            "end": 3936,
+            "quote": "The content does not appear obviously truncated",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_9PXQc8mLPADRq6xPO9Jf7240.result",
+            "field": "response",
+            "sha256": "9e5aae261976624186a389d5efd9892357886ecb8cf076d86b77718b24487a2d",
+            "start": 962,
+            "end": 991,
+            "quote": "[...]\n\n### Updates in 2025.4#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 2283,
+            "end": 2432,
+            "quote": "To generate line number information for applications without affecting the optimization level of the output, the `-lineinfo` nvcc option can be used.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 11545,
+            "end": 11608,
+            "quote": "=========     at unaligned_kernel():0x160 in memcheck_demo.cu:6",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 13280,
+            "end": 13385,
+            "quote": "The full memcheck_demo output showing the out-of-bounds report line is **not present** due to truncation.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+            "field": "response",
+            "sha256": "0c8df29b6bd1b97faea9d19ba576df79ed152db986e83eadd2ac6602829187d2",
+            "start": 13508,
+            "end": 13594,
+            "quote": "CUDA-MEMCHECK is removed from CUDA 12.0, and has been replaced with Compute Sanitizer.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+            "field": "response",
+            "sha256": "0c8df29b6bd1b97faea9d19ba576df79ed152db986e83eadd2ac6602829187d2",
+            "start": 13508,
+            "end": 13594,
+            "quote": "CUDA-MEMCHECK is removed from CUDA 12.0, and has been replaced with Compute Sanitizer.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 16463,
+            "end": 16585,
+            "quote": "The PTX compiler and compute-sanitizer must be from the same CUDA toolkit version for compile-time patching with memcheck.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+            "field": "response",
+            "sha256": "0c8df29b6bd1b97faea9d19ba576df79ed152db986e83eadd2ac6602829187d2",
+            "start": 539,
+            "end": 628,
+            "quote": "Starting with CUDA 11, the various components in the toolkit are versioned independently.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_hmBXsC2jrhAmNMptyn4Y0086.result",
+            "field": "response",
+            "sha256": "0836c8f92e25b1ec047ebbbb390c653658f025006705bd570a8eec80dd65b7d4",
+            "start": 737,
+            "end": 852,
+            "quote": "## 3. [讲解CUDA error: an illegal memory access was encountered](https://cloud.tencent.com/developer/article/2373916)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+            "field": "response",
+            "sha256": "71da990065886cf6f789c2e581cb35f94f01b56092e8f8f453012b5b935ba15d",
+            "start": 677,
+            "end": 738,
+            "quote": "## 3. [调试cuda程序 - 知乎](https://zhuanlan.zhihu.com/p/660480914)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+            "field": "response",
+            "sha256": "71da990065886cf6f789c2e581cb35f94f01b56092e8f8f453012b5b935ba15d",
+            "start": 998,
+            "end": 1118,
+            "quote": "## 4. [cuda-memcheck已经被废弃 · Issue #31 · brucefan1983/CUDA …](https://github.com/brucefan1983/CUDA-Programming/issues/31)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+            "field": "response",
+            "sha256": "71da990065886cf6f789c2e581cb35f94f01b56092e8f8f453012b5b935ba15d",
+            "start": 1275,
+            "end": 1366,
+            "quote": "## 5. [使用 NVIDIA Compute Sanitizer 更有效地调试 CUDA](https://juejin.cn/post/7257029942856187963)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+            "field": "response",
+            "sha256": "71da990065886cf6f789c2e581cb35f94f01b56092e8f8f453012b5b935ba15d",
+            "start": 844,
+            "end": 892,
+            "quote": "代替以前的 cuda-memcheck （自12.0开始，已经从CUDA Toolkit中移除）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_00_f1tRj1da9FLYTi4I54xE9752.result",
+            "field": "response",
+            "sha256": "71da990065886cf6f789c2e581cb35f94f01b56092e8f8f453012b5b935ba15d",
+            "start": 1381,
+            "end": 1461,
+            "quote": "Compute Sanitizer 已取代它的位置，提供了额外的功能，如改进的性能和对 Microsoft hardware-accelerated GPU …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d39e30305dd0275a39291ed7900c59f781c379b4bac34b80f9381ef5dfdb10be",
+            "start": 461,
+            "end": 495,
+            "quote": "nvcc -lineinfo -g -G -o app app.cu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d39e30305dd0275a39291ed7900c59f781c379b4bac34b80f9381ef5dfdb10be",
+            "start": 1426,
+            "end": 1488,
+            "quote": "cuda-memcheck 具体在哪个 CUDA 版本被移除/弃用（我印象是 11.0 弃用、后续移除，但确切版本不确定）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 1285,
+            "end": 1445,
+            "quote": "The memcheck tool is enabled by default when running the Compute Sanitizer application. It can also be explicitly enabled by using the `--tool memcheck` option.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ff3a00e6a50fb027ee7aead37dfc5d2e14112bd3b165d2125c844f4cebbfab85",
+            "start": 334,
+            "end": 442,
+            "quote": "- **CUDA ≥ 12.0**：用 `compute-sanitizer`（`cuda-memcheck` 已从 Toolkit 移除）。\n- **CUDA ≤ 11.x**：用 `cuda-memcheck`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ff3a00e6a50fb027ee7aead37dfc5d2e14112bd3b165d2125c844f4cebbfab85",
+            "start": 5742,
+            "end": 5786,
+            "quote": "CUDA 11.x 亦已有 compute-sanitizer，但未取得该版本的直接声明",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ff3a00e6a50fb027ee7aead37dfc5d2e14112bd3b165d2125c844f4cebbfab85",
+            "start": 1254,
+            "end": 1282,
+            "quote": "nvcc -lineinfo -o app app.cu",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "ff3a00e6a50fb027ee7aead37dfc5d2e14112bd3b165d2125c844f4cebbfab85",
+            "start": 1562,
+            "end": 1611,
+            "quote": "compute-sanitizer --tool memcheck ./app arg1 arg2",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "field": "response",
+            "sha256": "1118b8409613bf0e1c1a8a24054bb0a2706bf045e5d7431413794a8e374dd401",
+            "start": 2283,
+            "end": 2590,
+            "quote": "To generate line number information for applications without affecting the optimization level of the output, the `-lineinfo` nvcc option can be used. The Compute Sanitizer tools fully support both of these options and can display source attribution of errors for applications compiled with line information.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-5de39317179d-predictors.json": "5e2f8a69ae605c6bbdec40a24a9693316a68ac218025029c56b2b30a34436068",
+          "reviewed/development/case-5de39317179d-outcome.json": "468c1493b1a45d9e8cc82b7806127882fe6d2e4bc9e3934475e7479085d6086b",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+            "url": "https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "A `[content truncated]` marker appears at the very end, during the `memcheck_demo` walk-through"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_GK0qOVPmyh3ZqBbz5q005302.result",
+                "quote": "The full memcheck_demo output showing the out-of-bounds report line is **not present** due to truncation."
+              }
+            ],
+            "reference": "截断处之后的内容（完整OOB示例、cuda-memcheck替代说明）未取得"
+          },
+          {
+            "event_id": "call_00_WS8F4AscGgZ73awjUJpd6084.result",
+            "url": "https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_WS8F4AscGgZ73awjUJpd6084.result",
+                "quote": "The content does not appear obviously truncated"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_WS8F4AscGgZ73awjUJpd6084.result",
+                "quote": "Section 3 (CUDA Libraries) appears to cover only a subset of libraries."
+              }
+            ],
+            "reference": "无独立完整性核对依据，保留unknown"
+          },
+          {
+            "event_id": "call_00_9PXQc8mLPADRq6xPO9Jf7240.result",
+            "url": "https://docs.nvidia.com/compute-sanitizer/ReleaseNotes/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_9PXQc8mLPADRq6xPO9Jf7240.result",
+                "quote": "### Updates in 2019.1#\n\n- Initial release of the Compute Sanitizer API (with CUDA 10.1)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_9PXQc8mLPADRq6xPO9Jf7240.result",
+                "quote": "[...]\n\n### Updates in 2025.4#"
+              }
+            ],
+            "reference": "各版本段落间存在[...]省略标记，完整性未知"
+          },
+          {
+            "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+            "url": "https://docs.nvidia.com/cuda/archive/12.0.0/cuda-toolkit-release-notes/index.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "CUDA-MEMCHECK is removed from CUDA 12.0, and has been replaced with Compute Sanitizer."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "[...]\n\n# 2. CUDA Libraries"
+              }
+            ],
+            "reference": "正文间存在[...]省略标记，完整性未知"
+          }
+        ],
+        "quote_audit": [
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "工具不强制重编译，但要输出 `文件:行号`，必须用 `-lineinfo`（推荐，不破坏优化）或 `-G`（完整设备调试信息，较慢）。不加则只有 `kernel()+偏移`，看不到源码行。"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "call_00_NVv8H8IylJR7MHcymOl40180.result",
+                "quote": "https://docs.nvidia.com/cuda/archive/12.0.0/cuda-toolkit-release-notes/index.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }
