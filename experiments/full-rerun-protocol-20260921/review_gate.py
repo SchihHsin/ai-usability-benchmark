@@ -8,6 +8,9 @@ def check(value,item,kind):
         return bool(evidence) and all(isinstance(e.get('quote'),str) and e['quote'].strip() and ((e.get('event_id')=='run-end' and e['quote'] in item['final']) if final else (e.get('event_id') in sources and e['quote'] in sources[e['event_id']]['text'])) for e in evidence)
     metrics=value.get('metrics',[]) if kind=='predictors' else value.get('m9_m10',[])
     byid={m['id']:m for m in metrics}
+    for m in metrics:
+        score=m.get('score')
+        if score is not None and m.get('id')!='M2' and (isinstance(score,bool) or not isinstance(score,(int,float)) or score not in (1,2,3,4,5)):errors.append(m['id']+': invalid ordinal grade')
     for key in ('M4','M9','M10'):
         if key not in byid:continue
         scope=item['applicability'][key];m=byid[key]
