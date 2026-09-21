@@ -25,7 +25,7 @@ def check(value,item,kind):
         ids=[x.get('event_id') for x in entries]
         if len(ids)!=len(set(ids)) or set(ids)!={s['event_id'] for s in fetch}:errors.append('M2: incomplete/duplicate fetch inventory')
         latest={}
-        for s in fetch:latest[urldefrag(s.get('url') or s['event_id'])[0]]=s['event_id']
+        for s in fetch:latest[item.get('reviewed_document_groups',{}).get(s['event_id'],urldefrag(s.get('url') or s['event_id'])[0])]=s['event_id']
         bounds=[]; byevent={x.get('event_id'):x for x in entries}
         for eid in latest.values():
             d=byevent.get(eid,{})

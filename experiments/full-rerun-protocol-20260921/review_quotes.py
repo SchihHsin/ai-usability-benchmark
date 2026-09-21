@@ -15,6 +15,11 @@ for run in (R/'runs').iterdir():
  for source in item['sources']:
   if source.get('status')=='not_dispatched':source['role']='blocked_request'
  texts={x['event_id']:x['text'] for x in item['sources']+item['prior']};texts['run-end']=item['final']
+ identity_file=R/'reviewed-document-identities.json'
+ identity=json.loads(identity_file.read_text()).get(item['case']) if identity_file.exists() else None
+ if identity:
+  if identity['process_sha256']!=hashlib.sha256((run/'process.jsonl').read_bytes()).hexdigest():raise ValueError('document identity review hash mismatch')
+  item['reviewed_document_groups']=identity['groups']
  ownership_file=R/'reviewed-official-search-evidence.json'
  ownership=json.loads(ownership_file.read_text()).get(item['case']) if ownership_file.exists() else None
  if ownership:
@@ -118,7 +123,7 @@ for run in (R/'runs').iterdir():
   assess.check=check
   value=assess.audit(value,item,kind)
   value.update({k:saved[k] for k in ['case','task_id','ecosystem','split','kind','_audit'] if k in saved})
-  value['review']={'raw_file':str(selected.relative_to(R)),'repairs':repairs,'semantic_validation':False}
+  value['review']={'raw_file':str(selected.relative_to(R)),'repairs':repairs,'semantic_validation':False,'document_identity_review':identity,'official_search_evidence_review':ownership}
   out=R/'reviewed/development';out.mkdir(parents=True,exist_ok=True);(out/(item['case']+'-'+kind+'.json')).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
   audit.append({'case':item['case'],'kind':kind,'repairs':len(repairs),'gate':value.get('execution_gate')})
 (R/'review-audit.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2)+'\n');print(json.dumps({'reviewed':len(audit),'review_adjustments':sum(x['repairs'] for x in audit)}))
