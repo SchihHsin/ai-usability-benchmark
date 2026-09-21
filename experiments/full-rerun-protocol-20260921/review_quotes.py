@@ -3,6 +3,7 @@ from pathlib import Path
 import json,copy,re
 import prepare_assessment,assess
 from review_gate import check
+from review_normalization import completeness
 R=Path(__file__).resolve().parent
 p=json.loads((R/'protocol.json').read_text());tasks=json.loads((R/'tasks.json').read_text())['tasks'];audit=[]
 for run in (R/'runs').iterdir():
@@ -96,15 +97,12 @@ for run in (R/'runs').iterdir():
     if parent.get(key)!=fix['original']:raise ValueError('review field original mismatch')
     parent[key]=copy.deepcopy(fix['replacement']);repairs.append(fix)
   for doc in value.get('m2_documents',[]):
-   if doc.get('representation')=='body' and doc.get('completeness')=='complete':
-    ref=doc.get('reference');ref=ref if isinstance(ref,dict) else {}
-    known=item.get('completeness_references',{}).get(ref.get('id'),{})
-    if not known.get('verified_complete'):
-     doc['completeness']='unknown';repairs.append({'event_id':doc.get('event_id'),'original_completeness':'complete','replacement_completeness':'unknown','basis':'no independent complete reference; retain observed body and existing 4–5 uncertainty rule'})
+   change=completeness(doc,item)
+   if change:repairs.append(change)
   assess.check=check
   value=assess.audit(value,item,kind)
   value.update({k:saved[k] for k in ['case','task_id','ecosystem','split','kind','_audit'] if k in saved})
   value['review']={'raw_file':str(selected.relative_to(R)),'repairs':repairs,'semantic_validation':False}
   out=R/'reviewed/development';out.mkdir(parents=True,exist_ok=True);(out/(item['case']+'-'+kind+'.json')).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
   audit.append({'case':item['case'],'kind':kind,'repairs':len(repairs),'gate':value.get('execution_gate')})
-(R/'review-audit.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2)+'\n');print(json.dumps({'reviewed':len(audit),'format_repairs':sum(x['repairs'] for x in audit)}))
+(R/'review-audit.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2)+'\n');print(json.dumps({'reviewed':len(audit),'review_adjustments':sum(x['repairs'] for x in audit)}))
