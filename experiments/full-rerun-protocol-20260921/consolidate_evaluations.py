@@ -4,6 +4,7 @@ import argparse,copy,hashlib,json,sys
 ROOT=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/'frozen-skill'))
 from scripts import run_log,overall_score
+from score_review import preserve_bounds
 
 def choose(case,kind,split,nreq):
     reviewed=ROOT/'reviewed'/split/f'{case}-{kind}.json'
@@ -50,8 +51,7 @@ def main():
                 r=add_ref(ev.get('event_id'),ev.get('quote'))
                 if r:refs.append(r)
             m['evidence_refs']=refs;m['event_refs']=[]
-            if m.get('status')=='bounded' and m.get('lower') is not None and m.get('upper') is not None and m['lower']<m['upper']:
-                m['score']=None;m['status']='bounded'
+            preserve_bounds(m)
             if m['id']=='M7' and not item['prior'] and not (ROOT/'prior-recovery'/(item['case']+'-input.json')).exists():m.update(score=None,lower=1,upper=5,status='insufficient_evidence')
             if m['id']=='M8':
                 c=sum(item['counts'].values());sc=1 if c>=9 else 2 if c>=7 else 3 if c>=5 else 4 if c>=3 else 5 if c>=1 else None
