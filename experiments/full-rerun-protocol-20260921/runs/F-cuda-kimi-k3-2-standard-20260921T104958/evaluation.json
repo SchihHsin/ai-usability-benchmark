@@ -3137,6 +3137,591 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 7,
+      "recorded_at": "2026-09-21T04:47:58.146200+00:00",
+      "process_sha256": "2df8b78b1262b0506772835e5fc6d3d89f414ab4dfacfaaaadeaef99b6fff374",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_fe613e7b.result",
+            "evidence_quote": "To initialize a process group in your training script, simply run:\n\n```\n>>> importtorch.distributedasdist\n>>> dist.init_process_group(backend=\"gloo|nccl\")\n```",
+            "verification": "source",
+            "reason": "原题包含三个子要求，均有官方来源支撑。(1) 初始化：答案给出 torch.cuda.set_device(LOCAL_RANK)、dist.init_process_group(backend=\"nccl\")、DDP(model, device_ids=[local_rank])、DistributedSampler 及 set_epoch，与 WebFetch_2（torchrun 文档 Important Notices：init_process_group 与 DDP device_ids=[local_rank] 写法）和 WebFetch_3（官方 multinode.py 示例的 ddp_setup 与 DDP 用法）一致。(2) 启动命令：方式 A 的 --nnodes/--nproc_per_node/--node_rank/--master_addr/--master_port 与方式 B 的 rendezvous 参数（--rdzv-backend=c10d、--rdzv-endpoint、--max-restarts、弹性 --nnodes=1:4）均可在 WebFetch_2 的 Usage 与 Note on rendezvous backend 章节逐项对应。(3) 环境变量：答案表格中的 RANK、LOCAL_RANK、WORLD_SIZE、LOCAL_WORLD_SIZE、MASTER_ADDR/MASTER_PORT、GROUP_RANK、ROLE_RANK、TORCHELASTIC_RUN_ID 与 WebFetch_2 的 Environment Variables 列表一致；NCCL_DEBUG=INFO 与 NCCL_SOCKET_IFNAME=eth0 在 WebFetch_1 Troubleshooting 中有官方原文（\"Set env variable `NCCL_DEBUG` to `INFO`\"、\"export NCCL_SOCKET_IFNAME=eth0\"）。答案还如实声明 NCCL 完整变量清单未取得，不构成错误。--local-rank 连字符注意事项亦与 WebFetch_2 的 version 2.0.0 变更说明一致。所有子要求均满足。",
+            "evidence_refs": [
+              "ev-20",
+              "ev-21"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.pytorch.ac.cn PyTorch 官方教程镜像），第2、3、5条亦为 docs.pytorch.org 官方页面。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_ddaafac3.result",
+                "quote": "## 1. [多节点训练 — PyTorch 教程 2.14.0+cu130 文档 - PyTorch 文档]"
+              },
+              {
+                "event_id": "WebSearch_0_ddaafac3.result",
+                "quote": "## 2. [Multinode Training — PyTorch Tutorials 2.14.0+cu130 documentation]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 4.666666666666667,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_391a42d4.result",
+                "quote": "### Further Reading[#]"
+              },
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "[...]"
+              },
+              {
+                "event_id": "WebFetch_3_fdf27395.result",
+                "quote": "main(args.save_every, args.total_epochs, args.batch_size)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "原题所需主流程已覆盖：初始化（init_process_group backend=nccl）、启动命令（torchrun 多节点模板含 nnodes/nproc-per-node/rdzv 参数）、环境变量（13项含 MASTER_ADDR/MASTER_PORT/RANK/WORLD_SIZE/LOCAL_RANK）、NCCL 注意事项（NCCL_DEBUG、NCCL_SOCKET_IFNAME、NCCL 推荐后端）。但多节点教程页将实际启动命令放在视频中未在正文给出，SLURM 集群方式仅提及未展开，elastic 页有截断。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "dist.init_process_group(backend=\"gloo|nccl\")"
+              },
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "08. `MASTER_ADDR` - The FQDN of the host that is running worker with rank 0"
+              },
+              {
+                "event_id": "WebFetch_1_391a42d4.result",
+                "quote": "Set env variable `NCCL_DEBUG` to `INFO`"
+              },
+              {
+                "event_id": "WebFetch_3_fdf27395.result",
+                "quote": "init_process_group(backend=\"nccl\")"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "适用关系需合并教程页与 elastic/run.html 官方约束确定：NCCL 为 GPU 训练推荐后端、torchrun 多节点需相同 rdzv 参数、env:// 初始化由模块自动提供环境变量。静态 --master-addr/--master-port 与 rdzv 两种启动路线并存但官方有各自说明，无未消解冲突；非直接查表即得，故4分。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "This utility and multi-process distributed (single-node or multi-node) GPU training currently only achieves the best performance using the NCCL distributed backend."
+              },
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "The environment variables necessary to initialize a Torch process group are provided to you by this module, no need for you to pass `RANK` manually."
+              },
+              {
+                "event_id": "WebFetch_1_391a42d4.result",
+                "quote": "running a `torchrun` command on each machine with identical rendezvous arguments"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "统一搜索预算（1次查询）内仅发现1条相关独立第三方来源（GitHub 个人仓库），其余结果均为官方文档；官方仓库 pytorch/examples 在 fetch 中不计入第三方。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_ddaafac3.result",
+                "quote": "## 4. [PyTorch DDP Multi-Node Training Pipeline - GitHub](https://github.com/vk032503/pytorch-ddp-multi-node-training)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "唯一第三方来源仅有搜索摘要，未被抓取，无实质改变操作或结论的陈述可供核验；不能仅凭摘要评价可信度与一致性。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_ddaafac3.result",
+                "quote": "This repository provides a complete, production-grade …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前回答已覆盖原题所需流程、解释、参数与约束，且经 sources 事后核对正确：init_process_group(backend=nccl)、LOCAL_RANK/RANK/WORLD_SIZE/MASTER_ADDR/MASTER_PORT 环境变量、torchrun 启动命令、NCCL_DEBUG/NCCL_SOCKET_IFNAME 均获官方文档印证，DDP(device_ids=[local_rank]) 写法一致。先验中自标不确定的 rdzv 细节属可选弹性路线，不影响原题主流程正确性。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "dist.init_process_group(backend=\"nccl\", init_method=\"env://\")"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "关键环境变量：`MASTER_ADDR`、`MASTER_PORT`、`RANK`（全局进程号）、`WORLD_SIZE`（总进程数）、`LOCAL_RANK`（本机内 GPU 序号）"
+              },
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "model = torch.nn.parallel.DistributedDataParallel(\n    model, device_ids=[local_rank], output_device=local_rank\n)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=4",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_ddaafac3.dispatch",
+              "WebFetch_1_391a42d4.dispatch",
+              "WebFetch_2_fe613e7b.dispatch",
+              "WebFetch_3_fdf27395.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "N/A",
+            "reason": "原题询问的是方法（初始化、启动命令、环境变量），未要求锁定具体 PyTorch/NCCL/CUDA 版本。答案虽注明文档对应 PyTorch 2.14（2.14.0+cu130），但按规则无版本定版需求记 N/A，不给分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "supported",
+            "reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "<answer>\n\n## PyTorch 多机多卡分布式训练（DDP + NCCL）\n\n来源（官方）：\n- https://docs.pytorch.org/tutorials/intermediate/ddp_series_multinode.html（Multinode Training 教程）\n- https://docs.pytorch.org/docs/stable/elastic/run.html（torchrun 官方文档，PyTorch 2.14）\n- https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multinode.py（官方示例代码）\n\n### 1. 代码初始化（每个进程）\n\n官方推荐用 torchrun 启动，进程组初始化只需读环境变量，无需手动传 RANK：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\ndef ddp_setup():\n    torch.cuda.set_device(int(os.environ[\"LOCAL_RANK\"]))\n    dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://\n\nddp_setup()\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = MyModel().to(local_rank)\nmodel = DDP(model, device_ids=[local_rank])\n\nloader = DataLoader(dataset, batch_size=bs, shuffle=False,\n                    sampler=DistributedSampler(dataset))  # 每个 epoch 调 sampler.set_epoch(epoch)\n# 训练结束后 dist.destroy_process_group()\n```\n\n注意：PyTorch 2.0.0 起 torchrun 向脚本传 `--local-rank=<rank>`（连字符形式），若脚本用 argparse 解析，建议同时兼容 `--local-rank` 和 `--local_rank`。\n\n### 2. 启动命令\n\n**方式 A：经典 master_addr 写法（两节点，每节点 8 卡）**\n\n```bash\n# 节点 0（主节点）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n\n# 节点 1（相同参数，仅 node_rank 不同）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=1 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n```\n\n**方式 B：官方文档推荐的 rendezvous 写法（多节点，含容错）**\n\n```bash\n# 所有节点运行完全相同的命令\ntorchrun \\\n    --nnodes=$NUM_NODES \\\n    --nproc-per-node=$NUM_TRAINERS \\\n    --max-restarts=3 \\\n    --rdzv-id=$JOB_ID \\\n    --rdzv-backend=c10d \\\n    --rdzv-endpoint=$HOST_NODE_ADDR \\\n    train.py\n```\n- `--rdzv-endpoint` 形如 `<host>[:<port>]`，缺省端口 29400；c10d 为官方推荐 backend（etcd/etcd-v2 为可选，etcd 已进入维护模式）。\n- 弹性训练：`--nnodes=1:4`（min:max）。\n- `--nproc-per-node` 可填 `gpu`/`cpu`/`auto` 或整数，GPU 训练时每进程占一张卡（GPU 0 到 nproc-1）。\n- 也可通过 SLURM 等集群管理器调度，入口命令仍为 torchrun。\n\n### 3. 环境变量\n\n**torchrun 自动注入（脚本内直接读取）：**\n| 变量 | 含义 |\n|---|---|\n| `RANK` | 全局进程 rank |\n| `LOCAL_RANK` | 节点内 GPU rank |\n| `WORLD_SIZE` | 总进程数 |\n| `LOCAL_WORLD_SIZE` | 每节点进程数 |\n| `MASTER_ADDR` / `MASTER_PORT` | rank 0 主机地址与 C10d TCP store 端口 |\n| `GROUP_RANK`、`ROLE_RANK`、`TORCHELASTIC_RUN_ID` 等 | 弹性/角色相关 |\n\n**NCCL 调优/排错（需自行 export）：**\n```bash\nexport NCCL_DEBUG=INFO              # 打印详细日志，排查通信问题\nexport NCCL_SOCKET_IFNAME=eth0      # 显式指定网卡（多网卡机器常需要）\n```\n\n### 4. 版本与前提\n\n- 文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。\n- 前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。\n- 警告：RANK 在故障重启后不保证稳定，不要在训练逻辑中硬编码 rank 假设。\n\n**未核实处**：NCCL 完整环境变量清单（如 NCCL_IB_*、NCCL_NET_GDR_LEVEL 等）未在本次抓取中取得，仅确认了 NCCL_DEBUG 与 NCCL_SOCKET_IFNAME 两项官方提及的变量。\n\n</answer>\n\n<stop_reason>\n信息充分后主动停止：原题要求的初始化方式、启动命令、环境变量均已从官方文档（多节点教程 + torchrun 文档 + 官方示例代码）取得，共使用 1 次 WebSearch（首次查询第 1/2 条即命中官方源）和 3 次 WebFetch，远未达预算上限；继续检索（如 NCCL 环境变量完整清单）对回答原题非必需，故停止。\n</stop_reason>"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "insufficient_evidence",
+                "reason": "唯一第三方来源仅有搜索摘要，未被抓取，无实质改变操作或结论的陈述可供核验；不能仅凭摘要评价可信度与一致性。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "唯一第三方来源仅有搜索摘要，未被抓取，无实质改变操作或结论的陈述可供核验；不能仅凭摘要评价可信度与一致性。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_ddaafac3.result",
+            "field": "response",
+            "sha256": "642d34c2363b624af87eba29f84d41a73c75576ce34d4394282459934a536a28",
+            "start": 103,
+            "end": 158,
+            "quote": "## 1. [多节点训练 — PyTorch 教程 2.14.0+cu130 文档 - PyTorch 文档]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_0_ddaafac3.result",
+            "field": "response",
+            "sha256": "642d34c2363b624af87eba29f84d41a73c75576ce34d4394282459934a536a28",
+            "start": 431,
+            "end": 504,
+            "quote": "## 2. [Multinode Training — PyTorch Tutorials 2.14.0+cu130 documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_1_391a42d4.result",
+            "field": "response",
+            "sha256": "5db21c20724deb07aa316754c60cc3993b02b65acc24418af430ac8633070c85",
+            "start": 4057,
+            "end": 4079,
+            "quote": "### Further Reading[#]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 5185,
+            "end": 5190,
+            "quote": "[...]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_3_fdf27395.result",
+            "field": "response",
+            "sha256": "05cfc40c85d6ed0a0cf8ea54bae7907923f0d655fb7e566997ef6eaf35565768",
+            "start": 4052,
+            "end": 4109,
+            "quote": "main(args.save_every, args.total_epochs, args.batch_size)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 9829,
+            "end": 9873,
+            "quote": "dist.init_process_group(backend=\"gloo|nccl\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 8094,
+            "end": 8169,
+            "quote": "08. `MASTER_ADDR` - The FQDN of the host that is running worker with rank 0",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_1_391a42d4.result",
+            "field": "response",
+            "sha256": "5db21c20724deb07aa316754c60cc3993b02b65acc24418af430ac8633070c85",
+            "start": 3679,
+            "end": 3718,
+            "quote": "Set env variable `NCCL_DEBUG` to `INFO`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_3_fdf27395.result",
+            "field": "response",
+            "sha256": "05cfc40c85d6ed0a0cf8ea54bae7907923f0d655fb7e566997ef6eaf35565768",
+            "start": 454,
+            "end": 488,
+            "quote": "init_process_group(backend=\"nccl\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 9332,
+            "end": 9496,
+            "quote": "This utility and multi-process distributed (single-node or multi-node) GPU training currently only achieves the best performance using the NCCL distributed backend.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 9570,
+            "end": 9718,
+            "quote": "The environment variables necessary to initialize a Torch process group are provided to you by this module, no need for you to pass `RANK` manually.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_1_391a42d4.result",
+            "field": "response",
+            "sha256": "5db21c20724deb07aa316754c60cc3993b02b65acc24418af430ac8633070c85",
+            "start": 1786,
+            "end": 1866,
+            "quote": "running a `torchrun` command on each machine with identical rendezvous arguments",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_ddaafac3.result",
+            "field": "response",
+            "sha256": "642d34c2363b624af87eba29f84d41a73c75576ce34d4394282459934a536a28",
+            "start": 1090,
+            "end": 1208,
+            "quote": "## 4. [PyTorch DDP Multi-Node Training Pipeline - GitHub](https://github.com/vk032503/pytorch-ddp-multi-node-training)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_ddaafac3.result",
+            "field": "response",
+            "sha256": "642d34c2363b624af87eba29f84d41a73c75576ce34d4394282459934a536a28",
+            "start": 1290,
+            "end": 1345,
+            "quote": "This repository provides a complete, production-grade …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d2726cd2325d4595cbb34ced63c95ea9d0dfa1d3d145a2b993f88a3af3cdd82c",
+            "start": 741,
+            "end": 806,
+            "quote": "dist.init_process_group(backend=\\\"nccl\\\", init_method=\\\"env://\\\")",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d2726cd2325d4595cbb34ced63c95ea9d0dfa1d3d145a2b993f88a3af3cdd82c",
+            "start": 508,
+            "end": 600,
+            "quote": "关键环境变量：`MASTER_ADDR`、`MASTER_PORT`、`RANK`（全局进程号）、`WORLD_SIZE`（总进程数）、`LOCAL_RANK`（本机内 GPU 序号）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 10223,
+            "end": 10336,
+            "quote": "model = torch.nn.parallel.DistributedDataParallel(\n    model, device_ids=[local_rank], output_device=local_rank\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4e9fa0f44bc418cb8aaefa7710787c4da8c318a33cc33707e82cfc7200ecf629",
+            "start": 2512,
+            "end": 2576,
+            "quote": "文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4e9fa0f44bc418cb8aaefa7710787c4da8c318a33cc33707e82cfc7200ecf629",
+            "start": 0,
+            "end": 3003,
+            "quote": "<answer>\n\n## PyTorch 多机多卡分布式训练（DDP + NCCL）\n\n来源（官方）：\n- https://docs.pytorch.org/tutorials/intermediate/ddp_series_multinode.html（Multinode Training 教程）\n- https://docs.pytorch.org/docs/stable/elastic/run.html（torchrun 官方文档，PyTorch 2.14）\n- https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multinode.py（官方示例代码）\n\n### 1. 代码初始化（每个进程）\n\n官方推荐用 torchrun 启动，进程组初始化只需读环境变量，无需手动传 RANK：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\ndef ddp_setup():\n    torch.cuda.set_device(int(os.environ[\"LOCAL_RANK\"]))\n    dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://\n\nddp_setup()\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = MyModel().to(local_rank)\nmodel = DDP(model, device_ids=[local_rank])\n\nloader = DataLoader(dataset, batch_size=bs, shuffle=False,\n                    sampler=DistributedSampler(dataset))  # 每个 epoch 调 sampler.set_epoch(epoch)\n# 训练结束后 dist.destroy_process_group()\n```\n\n注意：PyTorch 2.0.0 起 torchrun 向脚本传 `--local-rank=<rank>`（连字符形式），若脚本用 argparse 解析，建议同时兼容 `--local-rank` 和 `--local_rank`。\n\n### 2. 启动命令\n\n**方式 A：经典 master_addr 写法（两节点，每节点 8 卡）**\n\n```bash\n# 节点 0（主节点）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n\n# 节点 1（相同参数，仅 node_rank 不同）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=1 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n```\n\n**方式 B：官方文档推荐的 rendezvous 写法（多节点，含容错）**\n\n```bash\n# 所有节点运行完全相同的命令\ntorchrun \\\n    --nnodes=$NUM_NODES \\\n    --nproc-per-node=$NUM_TRAINERS \\\n    --max-restarts=3 \\\n    --rdzv-id=$JOB_ID \\\n    --rdzv-backend=c10d \\\n    --rdzv-endpoint=$HOST_NODE_ADDR \\\n    train.py\n```\n- `--rdzv-endpoint` 形如 `<host>[:<port>]`，缺省端口 29400；c10d 为官方推荐 backend（etcd/etcd-v2 为可选，etcd 已进入维护模式）。\n- 弹性训练：`--nnodes=1:4`（min:max）。\n- `--nproc-per-node` 可填 `gpu`/`cpu`/`auto` 或整数，GPU 训练时每进程占一张卡（GPU 0 到 nproc-1）。\n- 也可通过 SLURM 等集群管理器调度，入口命令仍为 torchrun。\n\n### 3. 环境变量\n\n**torchrun 自动注入（脚本内直接读取）：**\n| 变量 | 含义 |\n|---|---|\n| `RANK` | 全局进程 rank |\n| `LOCAL_RANK` | 节点内 GPU rank |\n| `WORLD_SIZE` | 总进程数 |\n| `LOCAL_WORLD_SIZE` | 每节点进程数 |\n| `MASTER_ADDR` / `MASTER_PORT` | rank 0 主机地址与 C10d TCP store 端口 |\n| `GROUP_RANK`、`ROLE_RANK`、`TORCHELASTIC_RUN_ID` 等 | 弹性/角色相关 |\n\n**NCCL 调优/排错（需自行 export）：**\n```bash\nexport NCCL_DEBUG=INFO              # 打印详细日志，排查通信问题\nexport NCCL_SOCKET_IFNAME=eth0      # 显式指定网卡（多网卡机器常需要）\n```\n\n### 4. 版本与前提\n\n- 文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。\n- 前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。\n- 警告：RANK 在故障重启后不保证稳定，不要在训练逻辑中硬编码 rank 假设。\n\n**未核实处**：NCCL 完整环境变量清单（如 NCCL_IB_*、NCCL_NET_GDR_LEVEL 等）未在本次抓取中取得，仅确认了 NCCL_DEBUG 与 NCCL_SOCKET_IFNAME 两项官方提及的变量。\n\n</answer>\n\n<stop_reason>\n信息充分后主动停止：原题要求的初始化方式、启动命令、环境变量均已从官方文档（多节点教程 + torchrun 文档 + 官方示例代码）取得，共使用 1 次 WebSearch（首次查询第 1/2 条即命中官方源）和 3 次 WebFetch，远未达预算上限；继续检索（如 NCCL 环境变量完整清单）对回答原题非必需，故停止。\n</stop_reason>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "4e9fa0f44bc418cb8aaefa7710787c4da8c318a33cc33707e82cfc7200ecf629",
+            "start": 668,
+            "end": 733,
+            "quote": "dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "field": "response",
+            "sha256": "08cf2a3c9850dbd9a302b8aba483a66c69707487dac6f7c410c2759b3671b1cf",
+            "start": 9719,
+            "end": 9877,
+            "quote": "To initialize a process group in your training script, simply run:\n\n```\n>>> importtorch.distributedasdist\n>>> dist.init_process_group(backend=\"gloo|nccl\")\n```",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-879b5d267b8e-predictors.json": "4958fe71eb0adf4f17ba29e91ccd6ce2d8cec81807d9252b944e8597eeacfc66",
+          "reviewed/development/case-879b5d267b8e-outcome.json": "dd32fbdd64ca9212b190cd863a4f5071c1dee8541aab729152a836eb1212e179",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_391a42d4.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_391a42d4.result",
+                "quote": "## Troubleshooting[#]"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_391a42d4.result",
+                "quote": "### Further Reading[#]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/tutorials/intermediate/ddp_series_multinode.html"
+          },
+          {
+            "event_id": "WebFetch_2_fe613e7b.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "## Environment Variables#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_fe613e7b.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/elastic/run.html"
+          },
+          {
+            "event_id": "WebFetch_3_fdf27395.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_fdf27395.result",
+                "quote": "def ddp_setup():"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_fdf27395.result",
+                "quote": "main(args.save_every, args.total_epochs, args.batch_size)"
+              }
+            ],
+            "reference": "https://raw.githubusercontent.com/pytorch/examples/main/distributed/ddp-tutorial-series/multinode.py"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

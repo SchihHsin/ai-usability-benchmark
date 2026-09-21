@@ -5120,6 +5120,704 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 9,
+      "recorded_at": "2026-09-21T04:47:58.112566+00:00",
+      "process_sha256": "aff538465ad70841cd51e5a635793666400fced043b531ba1f532928166cfbd5",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "msprof --output=/home/projects/output --task-time=on --ai-core=on \\\n       --runtime-api=on --ascendcl=on python3 train.py --epochs 1",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_2_b63cef96.result",
+            "evidence_quote": "with torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU\n        ],\n    schedule=torch_npu.profiler.schedule(wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),",
+            "verification": "source",
+            "reason": "原题子要求逐项核对：(1) 工具选择与分工——答案说明 Ascend PyTorch Profiler 采框架层、msprof 采 CANN/硬件层并引用官方'不支持采集Python调用栈'的说明，与 WebFetch_4/WebFetch_6 原文一致；(2) 采集代码——torch_npu.profiler.profile 完整示例（_ExperimentalConfig、schedule、tensorboard_trace_handler）与 WebFetch_2（Ascend/pytorch 官方指南）逐字对应，另含动态采集与离线 analyse 代码；(3) msprof 命令与步骤——两种传入方式、参数表、使用前准备（source set_env.sh）与 WebFetch_4（CANN8.5 通用命令）和 WebFetch_6（CANN8.3 AI任务参数）正文一致；(4) 分析步骤——step_trace_time/trace_view/op_statistic/kernel_details 的定位流程与 WebFetch_2 第8/9节输出文件说明对应。版本前提给出官方依据，CANN↔torch_npu↔PyTorch 配套表缺失已被答案明确标注为未核实而非掩盖，不影响采集与分析主流程的完整性。",
+            "evidence_refs": [
+              "ev-25",
+              "ev-26"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为昇腾官方(hiascend.com)的Ascend PyTorch Profiler文档，后续查询也命中官方msprof文档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_bcc02af5.result",
+                "quote": "## 1. [Ascend PyTorch Profiler-MindStudio26.0.0-昇腾社区](https://www.hiascend.com/document/detail/zh/mindstudio/2600/"
+              },
+              {
+                "event_id": "WebSearch_3_9d2d82f8.result",
+                "quote": "## 1. [msprof采集通用命令-性能数据采集（msprof命令行方式 ...](https://www.hiascend.com/document/detail/zh/canncommercial/601/devtools/auxiliarydevtool/atlasprofiling_16_0041.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.5,
+            "upper": 4.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_ee0ee095.result",
+                "quote": "**标题**: Ascend PyTorch Profiler-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分"
+              },
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "所提供的网页内容在「analysis.db数据」标题处被截断（原文标注 `[content truncated]`）"
+              },
+              {
+                "event_id": "WebFetch_4_9a3f124b.result",
+                "quote": "msprof命令执行完成后，会自动解析并导出性能数据结果文件，详细内容请参见[性能数据文件参考]"
+              },
+              {
+                "event_id": "WebFetch_6_d90b42b6.result",
+                "quote": "您需要将PROF*_*XXX目录上传到安装toolkit包的开发环境进行数据解析，具体操作方法请参见使用msprof命令解析与导出性能数据"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5",
+              "ev-6"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文中，Ascend PyTorch Profiler主流程代码、schedule/tensorboard_trace_handler、experimental_config参数、环境变量、输出目录与分析步骤，以及msprof两页完整参数表与示例均已说明，原题主流程及参数、前提齐备；但接口完整参数表章节缺失、该文档无msprof正文(需另查)，analysis.db表结构、profiler_config.json说明缺失，分支细节未完整。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "with torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU\n        ],\n    schedule=torch_npu.profiler.schedule(wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),    # 与prof.step()配套使用"
+              },
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "> ⚠️ 原文中「Ascend PyTorch Profiler接口说明」「experimental_config参数说明」等完整参数表章节**未包含在所给内容中**（链接锚点存在但正文缺失/被截断）。"
+              },
+              {
+                "event_id": "WebFetch_6_d90b42b6.result",
+                "quote": "msprof --output=/home/projects/output --ascendcl=on --runtime-api=on --task-time=on --aicpu=on --ai-core=on /home/projects/MyApp/out/main"
+              }
+            ],
+            "evidence_refs": [
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "已明确部分适用关系（PyTorch 2.1.0+、单进程多Device须2.1.0post14/2.5.1post2/2.6.0+、msprof不支持PyTorch框架层数据须用框架接口），但CANN与torch_npu/PyTorch的具体配套版本对应表未取得，多版本文档(6.0.1商用/8.3.RC1/8.5.alpha/MindStudio26.0)并存无选择规则，仍缺完成版本选择所需对应关系。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "单进程多 Device 场景 | 须配套 **PyTorch 2.1.0post14、2.5.1post2、2.6.0 及之后的版本**"
+              },
+              {
+                "event_id": "WebFetch_6_d90b42b6.result",
+                "quote": "不支持采集Python调用栈、PyTorch或MindSpore框架层数据，可使用对应框架接口方式采集。"
+              },
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "CANN | 安装配套版本的 CANN Toolkit 开发套件包或算子包并配置环境变量"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "搜索预算内出现4条相关独立第三方来源：kali20gakki/msprof仓库及3篇CSDN博客；gitcode/GitHub上的Ascend/pytorch、cann/oam-tools为官方仓库不计。3-4条对应3档。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_3_9d2d82f8.result",
+                "quote": "## 3. [GitHub - kali20gakki/msprof](https://github.com/kali20gakki/msprof)"
+              },
+              {
+                "event_id": "WebSearch_5_6827eed3.result",
+                "quote": "## 5. [Pytorch框架Profiling调优命令行实战 (训练) - CSDN博客](https://blog.csdn.net/Mr_Wuyan/article/details/126922512)"
+              },
+              {
+                "event_id": "WebSearch_3_9d2d82f8.result",
+                "quote": "## 4. [【昇腾CANN训练营·第十五期】数据驱动优化：使用MSProf ...](https://blog.csdn.net/2401_82857325/article/details/155358698)"
+              },
+              {
+                "event_id": "WebSearch_3_9d2d82f8.result",
+                "quote": "## 5. [CANN msprof 完整介绍（昇腾性能剖析工具） MindStudio ...](https://blog.csdn.net/zhangfeng1133/article/details/162138481)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方来源仅以搜索摘要形式出现，未被fetch；摘要陈述(msprof是CANN性能采集工具、命令行实战)与已取官方正文一致，有可追溯URL与日期支持部分关键说法，但其余关键说法(具体参数、操作结论)未经正文核验，亦无独立来源交叉印证正文内容。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_3_9d2d82f8.result",
+                "quote": "msprof是昇腾NPU全链路性能剖析工具，集成于CANN Toolkit，支持算子开发与模型训练/推理调优"
+              },
+              {
+                "event_id": "WebSearch_5_6827eed3.result",
+                "quote": "五、msprof 命令行工具说明及操作流程 基本介绍：msprof命令行工具提供了采集通用命令以及AI任务运行性能数据、"
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出msprof --application/--output用法与torch_npu.profiler profile/schedule/tensorboard_trace_handler完整代码，事后核对与官方正文一致(应用参数、导出方式、分析要点均正确)；但具体参数名(实际为--ai-core与--aic-metrics)、枚举值、CANN与torch_npu版本配套等约束自认不确定且确需外部补充，故不达5。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "text": "msprof --application=\"python3 train.py\" --output=./msprof_output",
+                "quote": "msprof --application=\"python3 train.py\" --output=./msprof_output"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(\"./prof_result\"),",
+                "quote": "on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(\"./prof_result\"),"
+              },
+              {
+                "event_id": "client-note-00005",
+                "text": "**不确定处**：当前 CANN 版本下 msprof 的准确参数名与默认值",
+                "quote": "**不确定处**：当前 CANN 版本下 msprof 的准确参数名与默认值"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=7",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_bcc02af5.dispatch",
+              "WebFetch_1_ee0ee095.dispatch",
+              "WebFetch_2_b63cef96.dispatch",
+              "WebSearch_3_9d2d82f8.dispatch",
+              "WebFetch_4_9a3f124b.dispatch",
+              "WebSearch_5_6827eed3.dispatch",
+              "WebFetch_6_d90b42b6.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial",
+            "reason": "部分所需组件有明确版本依据：PyTorch 2.1.0 或更高、单进程多 Device 须 2.1.0post14/2.5.1post2/2.6.0+（官方指南依据，见 WebFetch_2 软件版本表）；msprof 侧文档基于 CANN 8.3.RC1.alpha002 / 8.5.0.alpha001。但答案自述 CANN↔torch_npu↔PyTorch 精确配套表本次未获取、标为未核实，采集环境的组合定版关系未锁定到具体版本，属第3档：部分组件有依据、其余未确定。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "单进程多 Device 场景须 PyTorch **2.1.0post14 / 2.5.1post2 / 2.6.0 及之后版本**"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "CANN↔torch_npu↔PyTorch 的**精确对应表本次未获取**（在 torch_npu 安装文档中，此处标为未核实，安装时需另查配套表）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "complete",
+            "reason": "操作指导完整且可直接执行：torch_npu.profiler 采集代码为官方原文完整示例（含 experimental_config、schedule、prof.step 配套说明）；msprof 给出两种完整命令形式及逐项参数表（--output/--task-time/--ai-core/--aic-metrics 等）；前置条件明确（配套 CANN 并 source set_env.sh、umask≥0027、不用 root、采集时长与磁盘预留建议）；输出文件与四步分析流程具体。仅需代入用户自身训练脚本与路径，属任务固有内容且已明确标识（'命令末尾直接跟用户程序'），无需修正任何内容错误。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "<answer>\n\n# 昇腾上跑 PyTorch 定位瓶颈：msprof / Ascend PyTorch Profiler 采集与分析\n\n## 一、工具选择\n\n- **Ascend PyTorch Profiler（`torch_npu.profiler`，推荐）**：在脚本内采集，能拿到 PyTorch 框架层算子、调用栈、显存、NPU kernel 等全链路数据。\n- **msprof 命令行**：CANN Toolkit 自带，不改代码包裹整个任务，采集 CANN 层与硬件层数据；**官方明确说明其不支持采集 Python 调用栈、PyTorch 框架层数据，框架层需用 torch_npu 接口方式采集**。\n\n## 二、前提条件（版本，官方依据）\n\n来源：Ascend/pytorch 官方仓库 `ascend_pytorch_profiler_user_guide.md`（master）：\n\n- 安装**配套版本的 CANN Toolkit**并 `source set_env.sh` 配置环境变量；\n- 基于 **PyTorch 2.1.0 或更高版本**；\n- 单进程多 Device 场景须 PyTorch **2.1.0post14 / 2.5.1post2 / 2.6.0 及之后版本**；\n- 官方快速入门示例环境：PyTorch 2.9.0、Python 3.12、AArch64；\n- CANN↔torch_npu↔PyTorch 的**精确对应表本次未获取**（在 torch_npu 安装文档中，此处标为未核实，安装时需另查配套表）。\n\nmsprof 侧：文档基于 **CANN 8.3.RC1.alpha002 / 8.5.0.alpha001 社区版**，支持 Atlas 训练/推理系列、Atlas A2/A3 系列、Atlas 200I/500 A2。\n\n## 三、Ascend PyTorch Profiler（脚本内采集）\n\n```python\nimport torch\nimport torch_npu\n\nexperimental_config = torch_npu.profiler._ExperimentalConfig(\n    export_type=torch_npu.profiler.ExportType.Text,\n    profiler_level=torch_npu.profiler.ProfilerLevel.Level0,\n    aic_metrics=torch_npu.profiler.AiCMetrics.AiCoreNone)\n\nwith torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU],\n    schedule=torch_npu.profiler.schedule(\n        wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),\n    on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(\"./result\"),\n    profile_memory=False,\n    with_modules=False,\n    experimental_config=experimental_config) as prof:\n    for step in range(steps):\n        train_one_step()\n        prof.step()          # 与 schedule 配套\n```\n\n关键参数：\n- `activities`：CPU / NPU；\n- `schedule(wait, warmup, active, repeat, skip_first)`：只采指定迭代，避免数据过大；\n- `record_shapes=True`（trace 中显示 Input Dims/type）、`with_stack=True`（显示调用栈）、`profile_memory=True`（生成 memory_record.csv / operator_memory.csv 等）；\n- `_ExperimentalConfig`：`profiler_level`（Level0/1/2，Level1 起生成 api_statistic.csv、communication.json，Level2 生成 data_preprocess.csv）、`aic_metrics`（如 `PipeUtilization`）、`export_type`（Text / Db）、`mstx=True` 自定义打点。\n\n也可 `prof.start() / prof.stop()`，或 `prof.export_chrome_trace('./chrome_trace_14.json')`。\n\n**动态采集（不改代码）**：`export PROF_CONFIG_PATH=\"/path/to/profiler_config_path\"`，启动训练后修改自动生成的 `profiler_config.json` 使能采集；或脚本中 `from torch_npu.profiler import dynamic_profile as dp`，`dp.init(...)` / `dp.step()` / `dp.start(...)`。\n\n**大数据离线解析**（取消 on_trace_ready 后）：\n```python\nfrom torch_npu.profiler.profiler import analyse\nanalyse(profiler_path=\"./result_data\", max_process_number=1, export_type=['text'])\n```\n\n## 四、msprof 命令行采集\n\n环境准备后（`source .../set_env.sh`，完成\"使用前准备\"），两种方式：\n\n```bash\n# 方式一（推荐）：命令末尾直接跟用户程序\nmsprof --output=/home/projects/output --task-time=on --ai-core=on \\\n       --runtime-api=on --ascendcl=on python3 train.py --epochs 1\n\n# 方式二：--application\nmsprof --application=\"python3 train.py\" --output=/home/projects/output\n```\n\n常用参数（官方参数表，CANN 8.3/8.5 文档）：\n\n| 参数 | 说明 |\n|---|---|\n| `--output` | 结果存放路径 |\n| `--type` | 解析格式 text（json/csv+db，默认）或 db |\n| `--task-time` | l0/l1/on/off，算子下发+执行耗时（默认 on=l1） |\n| `--ai-core` | AI Core 数据开关；`--aic-mode` task-based（默认）/sample-based |\n| `--aic-metrics` | ArithmeticUtilization、PipeUtilization（多数产品默认）、Memory、MemoryL0、MemoryUB、ResourceConflictRatio、L2Cache、MemoryAccess 等，按产品不同；支持 `Custom:0x49,...` 自定义寄存器 |\n| `--runtime-api` / `--ascendcl` | runtime / acl 接口耗时（默认 off / on） |\n| `--hccl` | 通信数据（多卡场景；官方注明后续版本废弃，建议用 `--task-time` 控制） |\n| `--aicpu` | AICPU 算子详细信息 |\n| `--l2` | L2 Cache 命中率 |\n| `--sys-hardware-mem[=freq]` | 片上内存采集（注意 glibc<2.34 有已知 Bug 19329） |\n| `--ge-api` | 动态 Shape 算子 Host 调度耗时（off/l0/l1） |\n| `--task-memory` | 算子级内存占用 |\n| `--environment` | 自定义环境变量 |\n| `--storage-limit` | 落盘容量上限（默认磁盘可用空间 90%） |\n\n完成后自动解析，输出 `PROF_XXX` 目录（RC 场景需拷回 Toolkit 环境解析）。\n\n## 五、输出结果与分析步骤\n\n输出目录 `{worker_name}_{timestamp}_ascend_pt` 下：\n- `ASCEND_PROFILER_OUTPUT/trace_view.json`：时间线（应用层→CANN层→NPU底层），用 MindStudio Insight、`chrome://tracing/` 或 ui.perfetto.dev 打开；\n- `op_statistic.csv`：算子调用次数与耗时汇总 → 找 Top 耗时算子；\n- `kernel_details.csv`：NPU 上每个算子的 Duration/Wait Time、Shapes、Formats → 看 wait 长（下发瓶颈）还是 duration 长（算子本身瓶颈）；\n- `step_trace_time.csv`：每迭代的 Computing / Communication(Not Overlapped) / Free / Bubble → 判断通信未掩盖或 host 空泡；\n- `memory_record.csv`、`operator_memory.csv`（profile_memory=True）；\n- `communication.json`（Level1+，多卡通信）；\n- `ascend_pytorch_profiler_{Rank_ID}.db` / `analysis.db`：用 MindStudio Insight 查看。\n\n定位流程：\n1. `step_trace_time.csv` 看迭代时间构成：Free/Bubble 大 → host 侧（数据加载）瓶颈；Communication(Not Overlapped) 大 → 通信瓶颈；\n2. `trace_view.json` 看 host/device 时间线是否有 gap（常见于 dataloader，可开 Level2 看 data_preprocess.csv，或用 mstx 打点 `torch_npu.npu.mstx.range_push(\"dataloader\")`）；\n3. `op_statistic.csv` + `kernel_details.csv` 找热点算子，结合 `--aic-metrics=PipeUtilization` / `AiCMetrics.PipeUtilization` 判断 MemoryBound 还是计算瓶颈；\n4. 大集群用 mstx 打点定界关键函数/迭代。\n\n## 六、注意事项（官方原文要点）\n\n- umask ≥ 0027，不用 root，不建议生产环境使用；\n- 数据目录不能含软链接；\n- 各采集方式不可同时开启；不建议与 Dump 同时开启；\n- 建议采集 5min 以内，预留 ≥20 倍原始数据大小的内存/磁盘；\n- `tensorboard_trace_handler` 与 `export_chrome_trace` 二选一（前者已含后者数据）。\n\n## 来源\n\n- https://github.com/Ascend/pytorch/blob/master/docs/zh/developer_notes/ascend_pytorch_profiler_user_guide.md （官方仓库，正文取得但在 analysis.db 章节后截断；接口完整参数表、profiler_config.json 说明、原生 torch.profiler 章节未包含）\n- https://www.hiascend.com/document/detail/zh/mindstudio/2600/msTT_msIT/ascend_pytorch_profiler/docs/zh/ascend_pytorch_profiler/ascend_pytorch_profiler_user_guide.md （仅取得标题/导航，正文未取回）\n- https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha001/devaids/Profiling/atlasprofiling_16_0010.html （msprof 通用命令，正文取得）\n- https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/83RC1alpha002/devaids/Profiling/atlasprofiling_16_0011.html （AI 任务运行性能数据参数，正文取得）\n\n**未核实处**：CANN↔torch_npu↔PyTorch 精确版本配套表（未获取）；msprof 工具在 EP 环境的确切安装路径（prior 中的路径未验证，文档仅说 RC 场景在 `/var`）；analysis.db 表结构与接口完整参数表（来源截断）。\n\n</answer>\n\n<stop_reason>\n信息充分停止：Ascend PyTorch Profiler 与 msprof 两种路线的采集命令、代码、参数、输出与分析步骤均已从官方来源取得直接正文，足以完整回答原题。剩余预算未用完；未继续获取的是版本配套表与被截断章节，已标注为未核实，不影响主流程回答。\n</stop_reason>"
+              }
+            ],
+            "evidence_refs": [
+              "ev-24"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "bounded",
+            "score": null,
+            "lower": 78.0612096,
+            "upper": 78.90826239999998,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_interval": [
+              78.0,
+              79.0
+            ]
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "bounded",
+          "score": null,
+          "lower": 78.0612096,
+          "upper": 78.90826239999998,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_interval": [
+            78.0,
+            79.0
+          ]
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_bcc02af5.result",
+            "field": "response",
+            "sha256": "925ea564346fbf29dd9c75abfb6c992171d113a21f91479325f3de0d9be3df75",
+            "start": 75,
+            "end": 189,
+            "quote": "## 1. [Ascend PyTorch Profiler-MindStudio26.0.0-昇腾社区](https://www.hiascend.com/document/detail/zh/mindstudio/2600/",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebSearch_3_9d2d82f8.result",
+            "field": "response",
+            "sha256": "01f806d5b46af5572d9276053e58c505b1da9120b87d1c1748c6b1b48c8bc192",
+            "start": 77,
+            "end": 238,
+            "quote": "## 1. [msprof采集通用命令-性能数据采集（msprof命令行方式 ...](https://www.hiascend.com/document/detail/zh/canncommercial/601/devtools/auxiliarydevtool/atlasprofiling_16_0041.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_1_ee0ee095.result",
+            "field": "response",
+            "sha256": "1d51f2c9bfe2607b3e516eb3520f2120ce2ee72555dfaae3e9537b74f3fbc2f1",
+            "start": 0,
+            "end": 72,
+            "quote": "**标题**: Ascend PyTorch Profiler-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_2_b63cef96.result",
+            "field": "response",
+            "sha256": "3503630234bd83536a5a0e777444edbc82fd7c9a76feb6b5a58aa64af83da033",
+            "start": 52,
+            "end": 110,
+            "quote": "所提供的网页内容在「analysis.db数据」标题处被截断（原文标注 `[content truncated]`）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_4_9a3f124b.result",
+            "field": "response",
+            "sha256": "12fab7041e784846a690c9bfba84e0d2cdfa8447bd5f663fa9d931badf7f3439",
+            "start": 5567,
+            "end": 5615,
+            "quote": "msprof命令执行完成后，会自动解析并导出性能数据结果文件，详细内容请参见[性能数据文件参考]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_6_d90b42b6.result",
+            "field": "response",
+            "sha256": "5f60e2f86407958927cd3a69af867e0db9b3111358a66597e61846f4834b082b",
+            "start": 9482,
+            "end": 9551,
+            "quote": "您需要将PROF*_*XXX目录上传到安装toolkit包的开发环境进行数据解析，具体操作方法请参见使用msprof命令解析与导出性能数据",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_2_b63cef96.result",
+            "field": "response",
+            "sha256": "3503630234bd83536a5a0e777444edbc82fd7c9a76feb6b5a58aa64af83da033",
+            "start": 1759,
+            "end": 2051,
+            "quote": "with torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU\n        ],\n    schedule=torch_npu.profiler.schedule(wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),    # 与prof.step()配套使用",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_2_b63cef96.result",
+            "field": "response",
+            "sha256": "3503630234bd83536a5a0e777444edbc82fd7c9a76feb6b5a58aa64af83da033",
+            "start": 5694,
+            "end": 5795,
+            "quote": "> ⚠️ 原文中「Ascend PyTorch Profiler接口说明」「experimental_config参数说明」等完整参数表章节**未包含在所给内容中**（链接锚点存在但正文缺失/被截断）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_6_d90b42b6.result",
+            "field": "response",
+            "sha256": "5f60e2f86407958927cd3a69af867e0db9b3111358a66597e61846f4834b082b",
+            "start": 8995,
+            "end": 9132,
+            "quote": "msprof --output=/home/projects/output --ascendcl=on --runtime-api=on --task-time=on --aicpu=on --ai-core=on /home/projects/MyApp/out/main",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_2_b63cef96.result",
+            "field": "response",
+            "sha256": "3503630234bd83536a5a0e777444edbc82fd7c9a76feb6b5a58aa64af83da033",
+            "start": 677,
+            "end": 745,
+            "quote": "单进程多 Device 场景 | 须配套 **PyTorch 2.1.0post14、2.5.1post2、2.6.0 及之后的版本**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_6_d90b42b6.result",
+            "field": "response",
+            "sha256": "5f60e2f86407958927cd3a69af867e0db9b3111358a66597e61846f4834b082b",
+            "start": 386,
+            "end": 438,
+            "quote": "不支持采集Python调用栈、PyTorch或MindSpore框架层数据，可使用对应框架接口方式采集。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_2_b63cef96.result",
+            "field": "response",
+            "sha256": "3503630234bd83536a5a0e777444edbc82fd7c9a76feb6b5a58aa64af83da033",
+            "start": 423,
+            "end": 467,
+            "quote": "CANN | 安装配套版本的 CANN Toolkit 开发套件包或算子包并配置环境变量",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_3_9d2d82f8.result",
+            "field": "response",
+            "sha256": "01f806d5b46af5572d9276053e58c505b1da9120b87d1c1748c6b1b48c8bc192",
+            "start": 805,
+            "end": 879,
+            "quote": "## 3. [GitHub - kali20gakki/msprof](https://github.com/kali20gakki/msprof)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_5_6827eed3.result",
+            "field": "response",
+            "sha256": "597696e59c8a0d2e03193300c14affe537f116890030c00ac20dff5b5f6aa58a",
+            "start": 1498,
+            "end": 1603,
+            "quote": "## 5. [Pytorch框架Profiling调优命令行实战 (训练) - CSDN博客](https://blog.csdn.net/Mr_Wuyan/article/details/126922512)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "WebSearch_3_9d2d82f8.result",
+            "field": "response",
+            "sha256": "01f806d5b46af5572d9276053e58c505b1da9120b87d1c1748c6b1b48c8bc192",
+            "start": 1023,
+            "end": 1129,
+            "quote": "## 4. [【昇腾CANN训练营·第十五期】数据驱动优化：使用MSProf ...](https://blog.csdn.net/2401_82857325/article/details/155358698)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "WebSearch_3_9d2d82f8.result",
+            "field": "response",
+            "sha256": "01f806d5b46af5572d9276053e58c505b1da9120b87d1c1748c6b1b48c8bc192",
+            "start": 1280,
+            "end": 1392,
+            "quote": "## 5. [CANN msprof 完整介绍（昇腾性能剖析工具） MindStudio ...](https://blog.csdn.net/zhangfeng1133/article/details/162138481)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "WebSearch_3_9d2d82f8.result",
+            "field": "response",
+            "sha256": "01f806d5b46af5572d9276053e58c505b1da9120b87d1c1748c6b1b48c8bc192",
+            "start": 1416,
+            "end": 1470,
+            "quote": "msprof是昇腾NPU全链路性能剖析工具，集成于CANN Toolkit，支持算子开发与模型训练/推理调优",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebSearch_5_6827eed3.result",
+            "field": "response",
+            "sha256": "597696e59c8a0d2e03193300c14affe537f116890030c00ac20dff5b5f6aa58a",
+            "start": 1620,
+            "end": 1680,
+            "quote": "五、msprof 命令行工具说明及操作流程 基本介绍：msprof命令行工具提供了采集通用命令以及AI任务运行性能数据、",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d97d01e7f51882d36d5b344dd90370cc718f6f5cd5db806916d08d8f8f32693f",
+            "start": 446,
+            "end": 512,
+            "quote": "msprof --application=\\\"python3 train.py\\\" --output=./msprof_output",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d97d01e7f51882d36d5b344dd90370cc718f6f5cd5db806916d08d8f8f32693f",
+            "start": 1254,
+            "end": 1333,
+            "quote": "on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(\\\"./prof_result\\\"),",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "d97d01e7f51882d36d5b344dd90370cc718f6f5cd5db806916d08d8f8f32693f",
+            "start": 1735,
+            "end": 1773,
+            "quote": "**不确定处**：当前 CANN 版本下 msprof 的准确参数名与默认值",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5d49d998ab00693214303fe4ece72e515d06a911c99b032b42eec99e5c9cf8a2",
+            "start": 495,
+            "end": 561,
+            "quote": "单进程多 Device 场景须 PyTorch **2.1.0post14 / 2.5.1post2 / 2.6.0 及之后版本**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5d49d998ab00693214303fe4ece72e515d06a911c99b032b42eec99e5c9cf8a2",
+            "start": 613,
+            "end": 688,
+            "quote": "CANN↔torch_npu↔PyTorch 的**精确对应表本次未获取**（在 torch_npu 安装文档中，此处标为未核实，安装时需另查配套表）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5d49d998ab00693214303fe4ece72e515d06a911c99b032b42eec99e5c9cf8a2",
+            "start": 0,
+            "end": 6081,
+            "quote": "<answer>\n\n# 昇腾上跑 PyTorch 定位瓶颈：msprof / Ascend PyTorch Profiler 采集与分析\n\n## 一、工具选择\n\n- **Ascend PyTorch Profiler（`torch_npu.profiler`，推荐）**：在脚本内采集，能拿到 PyTorch 框架层算子、调用栈、显存、NPU kernel 等全链路数据。\n- **msprof 命令行**：CANN Toolkit 自带，不改代码包裹整个任务，采集 CANN 层与硬件层数据；**官方明确说明其不支持采集 Python 调用栈、PyTorch 框架层数据，框架层需用 torch_npu 接口方式采集**。\n\n## 二、前提条件（版本，官方依据）\n\n来源：Ascend/pytorch 官方仓库 `ascend_pytorch_profiler_user_guide.md`（master）：\n\n- 安装**配套版本的 CANN Toolkit**并 `source set_env.sh` 配置环境变量；\n- 基于 **PyTorch 2.1.0 或更高版本**；\n- 单进程多 Device 场景须 PyTorch **2.1.0post14 / 2.5.1post2 / 2.6.0 及之后版本**；\n- 官方快速入门示例环境：PyTorch 2.9.0、Python 3.12、AArch64；\n- CANN↔torch_npu↔PyTorch 的**精确对应表本次未获取**（在 torch_npu 安装文档中，此处标为未核实，安装时需另查配套表）。\n\nmsprof 侧：文档基于 **CANN 8.3.RC1.alpha002 / 8.5.0.alpha001 社区版**，支持 Atlas 训练/推理系列、Atlas A2/A3 系列、Atlas 200I/500 A2。\n\n## 三、Ascend PyTorch Profiler（脚本内采集）\n\n```python\nimport torch\nimport torch_npu\n\nexperimental_config = torch_npu.profiler._ExperimentalConfig(\n    export_type=torch_npu.profiler.ExportType.Text,\n    profiler_level=torch_npu.profiler.ProfilerLevel.Level0,\n    aic_metrics=torch_npu.profiler.AiCMetrics.AiCoreNone)\n\nwith torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU],\n    schedule=torch_npu.profiler.schedule(\n        wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),\n    on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(\"./result\"),\n    profile_memory=False,\n    with_modules=False,\n    experimental_config=experimental_config) as prof:\n    for step in range(steps):\n        train_one_step()\n        prof.step()          # 与 schedule 配套\n```\n\n关键参数：\n- `activities`：CPU / NPU；\n- `schedule(wait, warmup, active, repeat, skip_first)`：只采指定迭代，避免数据过大；\n- `record_shapes=True`（trace 中显示 Input Dims/type）、`with_stack=True`（显示调用栈）、`profile_memory=True`（生成 memory_record.csv / operator_memory.csv 等）；\n- `_ExperimentalConfig`：`profiler_level`（Level0/1/2，Level1 起生成 api_statistic.csv、communication.json，Level2 生成 data_preprocess.csv）、`aic_metrics`（如 `PipeUtilization`）、`export_type`（Text / Db）、`mstx=True` 自定义打点。\n\n也可 `prof.start() / prof.stop()`，或 `prof.export_chrome_trace('./chrome_trace_14.json')`。\n\n**动态采集（不改代码）**：`export PROF_CONFIG_PATH=\"/path/to/profiler_config_path\"`，启动训练后修改自动生成的 `profiler_config.json` 使能采集；或脚本中 `from torch_npu.profiler import dynamic_profile as dp`，`dp.init(...)` / `dp.step()` / `dp.start(...)`。\n\n**大数据离线解析**（取消 on_trace_ready 后）：\n```python\nfrom torch_npu.profiler.profiler import analyse\nanalyse(profiler_path=\"./result_data\", max_process_number=1, export_type=['text'])\n```\n\n## 四、msprof 命令行采集\n\n环境准备后（`source .../set_env.sh`，完成\"使用前准备\"），两种方式：\n\n```bash\n# 方式一（推荐）：命令末尾直接跟用户程序\nmsprof --output=/home/projects/output --task-time=on --ai-core=on \\\n       --runtime-api=on --ascendcl=on python3 train.py --epochs 1\n\n# 方式二：--application\nmsprof --application=\"python3 train.py\" --output=/home/projects/output\n```\n\n常用参数（官方参数表，CANN 8.3/8.5 文档）：\n\n| 参数 | 说明 |\n|---|---|\n| `--output` | 结果存放路径 |\n| `--type` | 解析格式 text（json/csv+db，默认）或 db |\n| `--task-time` | l0/l1/on/off，算子下发+执行耗时（默认 on=l1） |\n| `--ai-core` | AI Core 数据开关；`--aic-mode` task-based（默认）/sample-based |\n| `--aic-metrics` | ArithmeticUtilization、PipeUtilization（多数产品默认）、Memory、MemoryL0、MemoryUB、ResourceConflictRatio、L2Cache、MemoryAccess 等，按产品不同；支持 `Custom:0x49,...` 自定义寄存器 |\n| `--runtime-api` / `--ascendcl` | runtime / acl 接口耗时（默认 off / on） |\n| `--hccl` | 通信数据（多卡场景；官方注明后续版本废弃，建议用 `--task-time` 控制） |\n| `--aicpu` | AICPU 算子详细信息 |\n| `--l2` | L2 Cache 命中率 |\n| `--sys-hardware-mem[=freq]` | 片上内存采集（注意 glibc<2.34 有已知 Bug 19329） |\n| `--ge-api` | 动态 Shape 算子 Host 调度耗时（off/l0/l1） |\n| `--task-memory` | 算子级内存占用 |\n| `--environment` | 自定义环境变量 |\n| `--storage-limit` | 落盘容量上限（默认磁盘可用空间 90%） |\n\n完成后自动解析，输出 `PROF_XXX` 目录（RC 场景需拷回 Toolkit 环境解析）。\n\n## 五、输出结果与分析步骤\n\n输出目录 `{worker_name}_{timestamp}_ascend_pt` 下：\n- `ASCEND_PROFILER_OUTPUT/trace_view.json`：时间线（应用层→CANN层→NPU底层），用 MindStudio Insight、`chrome://tracing/` 或 ui.perfetto.dev 打开；\n- `op_statistic.csv`：算子调用次数与耗时汇总 → 找 Top 耗时算子；\n- `kernel_details.csv`：NPU 上每个算子的 Duration/Wait Time、Shapes、Formats → 看 wait 长（下发瓶颈）还是 duration 长（算子本身瓶颈）；\n- `step_trace_time.csv`：每迭代的 Computing / Communication(Not Overlapped) / Free / Bubble → 判断通信未掩盖或 host 空泡；\n- `memory_record.csv`、`operator_memory.csv`（profile_memory=True）；\n- `communication.json`（Level1+，多卡通信）；\n- `ascend_pytorch_profiler_{Rank_ID}.db` / `analysis.db`：用 MindStudio Insight 查看。\n\n定位流程：\n1. `step_trace_time.csv` 看迭代时间构成：Free/Bubble 大 → host 侧（数据加载）瓶颈；Communication(Not Overlapped) 大 → 通信瓶颈；\n2. `trace_view.json` 看 host/device 时间线是否有 gap（常见于 dataloader，可开 Level2 看 data_preprocess.csv，或用 mstx 打点 `torch_npu.npu.mstx.range_push(\"dataloader\")`）；\n3. `op_statistic.csv` + `kernel_details.csv` 找热点算子，结合 `--aic-metrics=PipeUtilization` / `AiCMetrics.PipeUtilization` 判断 MemoryBound 还是计算瓶颈；\n4. 大集群用 mstx 打点定界关键函数/迭代。\n\n## 六、注意事项（官方原文要点）\n\n- umask ≥ 0027，不用 root，不建议生产环境使用；\n- 数据目录不能含软链接；\n- 各采集方式不可同时开启；不建议与 Dump 同时开启；\n- 建议采集 5min 以内，预留 ≥20 倍原始数据大小的内存/磁盘；\n- `tensorboard_trace_handler` 与 `export_chrome_trace` 二选一（前者已含后者数据）。\n\n## 来源\n\n- https://github.com/Ascend/pytorch/blob/master/docs/zh/developer_notes/ascend_pytorch_profiler_user_guide.md （官方仓库，正文取得但在 analysis.db 章节后截断；接口完整参数表、profiler_config.json 说明、原生 torch.profiler 章节未包含）\n- https://www.hiascend.com/document/detail/zh/mindstudio/2600/msTT_msIT/ascend_pytorch_profiler/docs/zh/ascend_pytorch_profiler/ascend_pytorch_profiler_user_guide.md （仅取得标题/导航，正文未取回）\n- https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha001/devaids/Profiling/atlasprofiling_16_0010.html （msprof 通用命令，正文取得）\n- https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/83RC1alpha002/devaids/Profiling/atlasprofiling_16_0011.html （AI 任务运行性能数据参数，正文取得）\n\n**未核实处**：CANN↔torch_npu↔PyTorch 精确版本配套表（未获取）；msprof 工具在 EP 环境的确切安装路径（prior 中的路径未验证，文档仅说 RC 场景在 `/var`）；analysis.db 表结构与接口完整参数表（来源截断）。\n\n</answer>\n\n<stop_reason>\n信息充分停止：Ascend PyTorch Profiler 与 msprof 两种路线的采集命令、代码、参数、输出与分析步骤均已从官方来源取得直接正文，足以完整回答原题。剩余预算未用完；未继续获取的是版本配套表与被截断章节，已标注为未核实，不影响主流程回答。\n</stop_reason>",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5d49d998ab00693214303fe4ece72e515d06a911c99b032b42eec99e5c9cf8a2",
+            "start": 2718,
+            "end": 2851,
+            "quote": "msprof --output=/home/projects/output --task-time=on --ai-core=on \\\n       --runtime-api=on --ascendcl=on python3 train.py --epochs 1",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-26",
+            "event_id": "WebFetch_2_b63cef96.result",
+            "field": "response",
+            "sha256": "3503630234bd83536a5a0e777444edbc82fd7c9a76feb6b5a58aa64af83da033",
+            "start": 1759,
+            "end": 2029,
+            "quote": "with torch_npu.profiler.profile(\n    activities=[\n        torch_npu.profiler.ProfilerActivity.CPU,\n        torch_npu.profiler.ProfilerActivity.NPU\n        ],\n    schedule=torch_npu.profiler.schedule(wait=0, warmup=0, active=1, repeat=1, skip_first=0, skip_first_wait=0),",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-WebFetch_1_ee0ee095.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "WebFetch_1_ee0ee095.result",
+            "alternative_body_event_ids": [
+              "WebFetch_2_b63cef96.result",
+              "WebFetch_4_9a3f124b.result",
+              "WebFetch_6_d90b42b6.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-2703f35d47a9-predictors.json": "fc2dabb849ece2812e968004556d27b80414e43bba463b0adf9e922133b9ac63",
+          "reviewed/development/case-2703f35d47a9-outcome.json": "fae223f56bfdf935dc02aa51639830f6b1bf45e0c56b2f19566959c9ce638660",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_ee0ee095.result",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_ee0ee095.result",
+                "quote": "**标题**: Ascend PyTorch Profiler-训练推理开发工具-MindStudio26.0.0开发文档-昇腾社区\n\n文档评分\n\n获取效率"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_ee0ee095.result",
+                "quote": "文档评分\n\n获取效率\n\n正确性\n\n完整性\n\n易理解"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/mindstudio/2600/msTT_msIT/ascend_pytorch_profiler/docs/zh/ascend_pytorch_profiler/ascend_pytorch_profiler_user_guide.md"
+          },
+          {
+            "event_id": "WebFetch_2_b63cef96.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "> **完整性说明**：所提供的网页内容在「analysis.db数据」标题处被截断（原文标注 `[content truncated]`）。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_b63cef96.result",
+                "quote": "**Ascend PyTorch Profiler 接口说明（完整参数表）** | ❌ 未包含（文中锚点引用，正文缺失）"
+              }
+            ],
+            "reference": "https://github.com/Ascend/pytorch/blob/master/docs/zh/developer_notes/ascend_pytorch_profiler_user_guide.md"
+          },
+          {
+            "event_id": "WebFetch_4_9a3f124b.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_9a3f124b.result",
+                "quote": "msprof --output=/home/projects/output /home/projects/MyApp/out/main"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_9a3f124b.result",
+                "quote": "msprof命令执行完成后，会自动解析并导出性能数据结果文件，详细内容请参见[性能数据文件参考]"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha001/devaids/Profiling/atlasprofiling_16_0010.html"
+          },
+          {
+            "event_id": "WebFetch_6_d90b42b6.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_d90b42b6.result",
+                "quote": "--ai-core=<aicore-value>\n\n可选\n\n控制AI Core数据采集的开关。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_d90b42b6.result",
+                "quote": "最终生成的结果文件请参见表1。"
+              }
+            ],
+            "reference": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/83RC1alpha002/devaids/Profiling/atlasprofiling_16_0011.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

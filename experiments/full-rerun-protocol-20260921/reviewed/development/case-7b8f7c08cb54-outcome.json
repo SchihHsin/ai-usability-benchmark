@@ -32,23 +32,15 @@
     },
     {
       "id": "M10",
-      "score": 5,
-      "lower": null,
-      "upper": null,
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
       "status": "supported",
-      "reason": "答案给出可直接执行的完整命令与代码：trtexec 构建命令、动态形状 --optShapes 示例、Python Runtime 完整脚本（含 cuda-python 元组返回的正确处理 err, d_in = cudart.cudaMalloc）、依赖安装 pip 命令、GPU/版本前提条件均明确；onnx_helper wrapper 路径的已知 patch 也已说明改法（err = 改 err, =）。仅需替换文件路径/形状等用户环境值，无需修正内容错误即可执行。答案自述未实际运行，按规则不影响 4/5 档判定。",
+      "reason": "具体操作方案已给出，但ONNX验证代码把zip产生的tuple当作有name属性的对象，执行必然报AttributeError；必须改为元组解包或直接遍历输入元数据，属于需修正内容才能执行的3分。仅验证这一Python语义错误，未进行GPU端到端运行。",
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "trtexec --onnx=model.onnx --saveEngine=model.engine --stronglyTyped"
-        },
-        {
-          "event_id": "run-end",
-          "quote": "err, d_in  = cudart.cudaMalloc(host_input.nbytes)"
-        },
-        {
-          "event_id": "run-end",
-          "quote": "需按官方给出的 patch 修改 helper 中的 `err =` 为 `err, =`"
+          "quote": "onnxruntime_input = {i.name: dummy_input.numpy() for i in zip(ort_session.get_inputs(), [dummy_input.numpy()])}"
         }
       ]
     }
@@ -164,7 +156,54 @@
   },
   "review": {
     "raw_file": "assessments/development/case-7b8f7c08cb54-outcome.json",
-    "repairs": [],
+    "repairs": [
+      {
+        "case": "case-7b8f7c08cb54",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          1
+        ],
+        "original": {
+          "id": "M10",
+          "score": 5,
+          "lower": null,
+          "upper": null,
+          "status": "supported",
+          "reason": "答案给出可直接执行的完整命令与代码：trtexec 构建命令、动态形状 --optShapes 示例、Python Runtime 完整脚本（含 cuda-python 元组返回的正确处理 err, d_in = cudart.cudaMalloc）、依赖安装 pip 命令、GPU/版本前提条件均明确；onnx_helper wrapper 路径的已知 patch 也已说明改法（err = 改 err, =）。仅需替换文件路径/形状等用户环境值，无需修正内容错误即可执行。答案自述未实际运行，按规则不影响 4/5 档判定。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "trtexec --onnx=model.onnx --saveEngine=model.engine --stronglyTyped"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "err, d_in  = cudart.cudaMalloc(host_input.nbytes)"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "需按官方给出的 patch 修改 helper 中的 `err =` 为 `err, =`"
+            }
+          ]
+        },
+        "replacement": {
+          "id": "M10",
+          "score": 3,
+          "lower": 3,
+          "upper": 3,
+          "status": "supported",
+          "reason": "具体操作方案已给出，但ONNX验证代码把zip产生的tuple当作有name属性的对象，执行必然报AttributeError；必须改为元组解包或直接遍历输入元数据，属于需修正内容才能执行的3分。仅验证这一Python语义错误，未进行GPU端到端运行。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "onnxruntime_input = {i.name: dummy_input.numpy() for i in zip(ort_session.get_inputs(), [dummy_input.numpy()])}"
+            }
+          ]
+        },
+        "basis": "Root deterministic minimal Python check, documented in review-notes-glm-a-executable.json. Unchanged M10 grade3 anchor."
+      }
+    ],
     "semantic_validation": false,
     "document_identity_review": null,
     "official_search_evidence_review": null

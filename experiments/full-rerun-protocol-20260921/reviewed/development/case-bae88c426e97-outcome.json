@@ -32,19 +32,15 @@
     },
     {
       "id": "M10",
-      "score": 5,
-      "lower": null,
-      "upper": null,
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
       "status": "supported",
-      "reason": "操作指导完整可直接执行：依赖安装（pip3 install pandas/libcst/prettytable/jedi）、进入工具目录、完整的pytorch_gpu2npu.sh命令行含必选/可选参数说明及示例、输出文件说明、torch_npu wheel安装与验证命令、自动迁移三行import插入位置、运行命令python main.py -a resnet50 -b 32 --gpu 1 --dummy、手工迁移的逐项接口替换前后对照、前置条件（Atlas服务器/驱动/CANN/set_env.sh）均齐全，仅需用户替换路径等环境值，无需修正内容错误。",
+      "reason": "操作指导完整可直接执行：依赖安装（pip3 install pandas/libcst/prettytable/jedi）、进入工具目录、完整的pytorch_gpu2npu.sh命令行含必选/可选参数说明及示例、输出文件说明、torch_npu wheel安装与验证命令、自动迁移三行import插入位置、运行命令python main.py -a resnet50 -b 32 --gpu 1 --dummy、手工迁移的逐项接口替换前后对照、前置条件（Atlas服务器/驱动/CANN/set_env.sh）均齐全，仅需用户替换路径等环境值，无需修正内容错误。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model"
-        },
-        {
-          "event_id": "run-end",
-          "quote": "source ${install_path}/set_env.sh` 设置环境变量（如 `/usr/local/Ascend/ascend-toolkit`）"
+          "quote": "<answer>\n\n## PyTorch GPU 训练脚本迁移到昇腾 NPU 的方式与工具（CANN 生态）\n\n官方提供**三种迁移方式**：自动迁移（推荐，改动最少）、PyTorch GPU2Ascend 工具迁移（离线脚本转换）、手工迁移。\n\n### 一、前置环境\n\n1. Atlas 训练服务器 + NPU 驱动固件\n2. 安装 CANN 开发套件包 Ascend-cann-toolkit，并 `source ${install_path}/set_env.sh` 设置环境变量（如 `/usr/local/Ascend/ascend-toolkit`）\n3. 安装对应版本的 PyTorch 与 **torch_npu 插件**（Ascend Extension for PyTorch）\n\ntorch_npu 安装（wheel 快速安装示例，CANN 7.0.0 文档）：\n\n```\nwget https://gitee.com/ascend/pytorch/releases/download/v5.0.0-pytorch1.11.0/torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl\npip3 install torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl\n# 验证：\npython3 -c \"import torch;import torch_npu;print(torch_npu.npu.is_available())\"\n```\n\nwhl 包需与 Python 版本（cp37/cp38/cp39/cp310）、架构（aarch64/x86_64）、PyTorch 版本（官方表覆盖 PyTorch 1.11.0 / 2.0.1 / 2.1.0）一一对应；更多版本见 https://gitee.com/ascend/pytorch/releases 。PyTorch 2.1.0 若报 protobuf 问题：`pip install protobuf==3.20`。\n\n### 二、方式 1：自动迁移（推荐）\n\n在训练入口 .py 首行插入：\n\n```python\nimport torch\nimport torch_npu\nfrom torch_npu.contrib import transfer_to_npu\n```\n\n之后可直接在 NPU 上按原流程运行（`python main.py -a resnet50 -b 32 --gpu 1 --dummy`），成功保存权重即迁移成功。\n\n**约束**（CANN 8.0.RC3.alpha003 文档）：\n- 支持 PyTorch 1.11.0、2.1.0、2.2.0（需 1.11.0 及以上）\n- 与 `torch.jit.script` 冲突（会屏蔽该功能，必须使用时改用 GPU2Ascend 工具迁移）\n- 暂不支持 `channel_last`，需用 `contiguous` 替换\n- 与昇腾已适配三方库可能冲突，冲突时改用工具迁移\n- `init_process_group` 后 backend 自动由 nccl 替换为 hccl；脚本中若有 `assert backend in ['gloo','nccl']`、`if backend == 'nccl'` 等判断需手动把 `nccl` 改写为 `hccl`\n\n### 三、方式 2：PyTorch GPU2Ascend 工具迁移（msFmkTransplt）\n\n先装依赖（非 root 加 `--user`）：\n\n```\npip3 install pandas      # >=1.2.4\npip3 install libcst      # 语法树解析\npip3 install prettytable\npip3 install jedi        # 可选，跨文件解析\n```\n\n执行迁移：\n\n```\ncd Ascend-cann-toolkit安装目录/ascend-toolkit/latest/tools/ms_fmk_transplt/\n./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -t 目标模型变量名 -m 训练脚本入口文件]\n```\n\n示例：\n\n```\n./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model\n```\n\n关键参数：`-i` 输入目录（必选）；`-o` 输出目录（必选，单卡输出 `xxx_msft`、多卡输出 `xxx_msft_multi`）；`-v` PyTorch 版本（该版本文档支持 1.11.0、2.1.0）；`distributed` 将 GPU 单卡脚本迁移为 NPU 多卡脚本（仅支持 DataLoader 加载数据场景），此时 `-m` 入口文件必选、`-t` 模型变量名默认 `model`；`-m`（modelarts）可选。输出目录含 `unknown_api.csv`（存疑 API）、`unsupported_api.csv`（不支持 API）、`change_list.csv`（修改记录）、`run_distributed_npu.sh`（多卡启动脚本）等，可据此定位需人工处理的 API。\n\n### 四、方式 3：手工迁移\n\n单卡核心修改：\n1. `import torch_npu`\n2. 指定设备：`torch.device('cuda:{}'.format(args.gpu))` → `torch.device('npu:{}'.format(args.gpu))`；或 `torch.cuda.set_device(...)` → `torch_npu.npu.set_device(...)`\n3. 接口替换：`torch.cuda.is_available()` → `torch_npu.npu.is_available()`；`model.cuda(...)` → `model.npu(...)`；`images.cuda(args.gpu, non_blocking=True)` → `images.npu(args.gpu, non_blocking=True)`\n4. 含不支持的 `torch.nn.parallel.DataParallel` 需手动修改\n\n多卡（分布式）：`dist.init_process_group(backend='nccl', ...)` → `backend='hccl'`\n\n### 五、迁移后异常处理\n\n- 部分 cuda 接口报错多为 API 不支持：用分析迁移工具获取存疑 API 列表，到昇腾开源社区 https://gitee.com/ascend/pytorch 提 ISSUE；或将不支持 API 移至 CPU 运行（改 `torch_npu/csrc/aten/npu_native_functions.yaml` 的 `tocpu` 配置后重新编译）；或参考 Ascend C / 适配插件开发做算子适配。\n- 提升速度可开二进制算子：`torch_npu.npu.set_compile_mode(jit_compile=False)`（需装二进制算子包）。\n\n### 来源（官方正文已获取）\n\n- 迁移操作（自动迁移，CANN 8.0.RC3.alpha003）：https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC3alpha003/devaids/auxiliarydevtool/atlasfmkt_16_0019.html\n- PyTorch GPU2Ascend 工具迁移（CANN 商用版 8.0.RC1）：https://www.hiascend.com/document/detail/zh/canncommercial/80RC1/devaids/auxiliarydevtool/atlasfmkt_16_0021.html\n- 安装 torch_npu 插件（CANN 商用版 7.0.0，含版本下载表）：https://www.hiascend.com/document/detail/zh/canncommercial/700/envdeployment/instg/instg_0048.html\n- 手工迁移（TorchNPU 6.0.RC1）：https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0018.html\n\n### 未核实处\n\n- 最新 CANN 8.x 与 torch_npu/PyTorch（如 PyTorch 2.2+/2.4+）的完整配套表未从官方页面取得正文（CANN 8.0.0 与 8.0.RC3 的\"环境准备\"及工具迁移页两次抓取均只返回标题/评分标签，无正文，原因未确定；仅二手来源提及\"torch_npu 2.4.0.x 配 CANN 8.0\"，未获官方正文印证）。wheel 安装示例取自 CANN 7.0.0 文档。\n- 二进制算子包安装步骤、ModelArts 适配细节仅见引用链接，未取正文。\n- 精度对拍/msprof 调优流程本轮未取得官方正文（原题未强制，未再消耗预算）。\n\n</answer>\n\n<stop_reason>工具预算已用尽：WebSearch 4/4、WebFetch 8/8（其中 3 次抓取仅返回导航/标签无正文，1 次返回站点首页）。三种迁移方式、命令、参数及 torch_npu 安装与版本对应的核心官方正文均已取得，足以回答原题；仅 CANN 8.x 最新完整配套表未能核实，已在答案中注明。</stop_reason>"
         }
       ]
     }
@@ -162,15 +158,51 @@
     "raw_file": "assessments/development/case-bae88c426e97-outcome.json",
     "repairs": [
       {
+        "case": "case-bae88c426e97",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          1
+        ],
+        "original": {
+          "id": "M10",
+          "score": 5,
+          "lower": null,
+          "upper": null,
+          "status": "supported",
+          "reason": "操作指导完整可直接执行：依赖安装（pip3 install pandas/libcst/prettytable/jedi）、进入工具目录、完整的pytorch_gpu2npu.sh命令行含必选/可选参数说明及示例、输出文件说明、torch_npu wheel安装与验证命令、自动迁移三行import插入位置、运行命令python main.py -a resnet50 -b 32 --gpu 1 --dummy、手工迁移的逐项接口替换前后对照、前置条件（Atlas服务器/驱动/CANN/set_env.sh）均齐全，仅需用户替换路径等环境值，无需修正内容错误。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "source ${install_path}/set_env.sh 设置环境变量（如 /usr/local/Ascend/ascend-toolkit）"
+            }
+          ]
+        },
+        "replacement": {
+          "id": "M10",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "supported",
+          "reason": "操作指导完整可直接执行：依赖安装（pip3 install pandas/libcst/prettytable/jedi）、进入工具目录、完整的pytorch_gpu2npu.sh命令行含必选/可选参数说明及示例、输出文件说明、torch_npu wheel安装与验证命令、自动迁移三行import插入位置、运行命令python main.py -a resnet50 -b 32 --gpu 1 --dummy、手工迁移的逐项接口替换前后对照、前置条件（Atlas服务器/驱动/CANN/set_env.sh）均齐全，仅需用户替换路径等环境值，无需修正内容错误。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "<answer>\n\n## PyTorch GPU 训练脚本迁移到昇腾 NPU 的方式与工具（CANN 生态）\n\n官方提供**三种迁移方式**：自动迁移（推荐，改动最少）、PyTorch GPU2Ascend 工具迁移（离线脚本转换）、手工迁移。\n\n### 一、前置环境\n\n1. Atlas 训练服务器 + NPU 驱动固件\n2. 安装 CANN 开发套件包 Ascend-cann-toolkit，并 `source ${install_path}/set_env.sh` 设置环境变量（如 `/usr/local/Ascend/ascend-toolkit`）\n3. 安装对应版本的 PyTorch 与 **torch_npu 插件**（Ascend Extension for PyTorch）\n\ntorch_npu 安装（wheel 快速安装示例，CANN 7.0.0 文档）：\n\n```\nwget https://gitee.com/ascend/pytorch/releases/download/v5.0.0-pytorch1.11.0/torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl\npip3 install torch_npu-1.11.0.post8-cp38-cp38-linux_aarch64.whl\n# 验证：\npython3 -c \"import torch;import torch_npu;print(torch_npu.npu.is_available())\"\n```\n\nwhl 包需与 Python 版本（cp37/cp38/cp39/cp310）、架构（aarch64/x86_64）、PyTorch 版本（官方表覆盖 PyTorch 1.11.0 / 2.0.1 / 2.1.0）一一对应；更多版本见 https://gitee.com/ascend/pytorch/releases 。PyTorch 2.1.0 若报 protobuf 问题：`pip install protobuf==3.20`。\n\n### 二、方式 1：自动迁移（推荐）\n\n在训练入口 .py 首行插入：\n\n```python\nimport torch\nimport torch_npu\nfrom torch_npu.contrib import transfer_to_npu\n```\n\n之后可直接在 NPU 上按原流程运行（`python main.py -a resnet50 -b 32 --gpu 1 --dummy`），成功保存权重即迁移成功。\n\n**约束**（CANN 8.0.RC3.alpha003 文档）：\n- 支持 PyTorch 1.11.0、2.1.0、2.2.0（需 1.11.0 及以上）\n- 与 `torch.jit.script` 冲突（会屏蔽该功能，必须使用时改用 GPU2Ascend 工具迁移）\n- 暂不支持 `channel_last`，需用 `contiguous` 替换\n- 与昇腾已适配三方库可能冲突，冲突时改用工具迁移\n- `init_process_group` 后 backend 自动由 nccl 替换为 hccl；脚本中若有 `assert backend in ['gloo','nccl']`、`if backend == 'nccl'` 等判断需手动把 `nccl` 改写为 `hccl`\n\n### 三、方式 2：PyTorch GPU2Ascend 工具迁移（msFmkTransplt）\n\n先装依赖（非 root 加 `--user`）：\n\n```\npip3 install pandas      # >=1.2.4\npip3 install libcst      # 语法树解析\npip3 install prettytable\npip3 install jedi        # 可选，跨文件解析\n```\n\n执行迁移：\n\n```\ncd Ascend-cann-toolkit安装目录/ascend-toolkit/latest/tools/ms_fmk_transplt/\n./pytorch_gpu2npu.sh -i 原始脚本路径 -o 输出路径 -v 原始脚本框架版本 [-s] [-m] [distributed -t 目标模型变量名 -m 训练脚本入口文件]\n```\n\n示例：\n\n```\n./pytorch_gpu2npu.sh -i /home/username/fmktransplt -o /home/username/fmktransplt_output -v 1.11.0 distributed -m /home/username/fmktransplt/main.py -t model\n```\n\n关键参数：`-i` 输入目录（必选）；`-o` 输出目录（必选，单卡输出 `xxx_msft`、多卡输出 `xxx_msft_multi`）；`-v` PyTorch 版本（该版本文档支持 1.11.0、2.1.0）；`distributed` 将 GPU 单卡脚本迁移为 NPU 多卡脚本（仅支持 DataLoader 加载数据场景），此时 `-m` 入口文件必选、`-t` 模型变量名默认 `model`；`-m`（modelarts）可选。输出目录含 `unknown_api.csv`（存疑 API）、`unsupported_api.csv`（不支持 API）、`change_list.csv`（修改记录）、`run_distributed_npu.sh`（多卡启动脚本）等，可据此定位需人工处理的 API。\n\n### 四、方式 3：手工迁移\n\n单卡核心修改：\n1. `import torch_npu`\n2. 指定设备：`torch.device('cuda:{}'.format(args.gpu))` → `torch.device('npu:{}'.format(args.gpu))`；或 `torch.cuda.set_device(...)` → `torch_npu.npu.set_device(...)`\n3. 接口替换：`torch.cuda.is_available()` → `torch_npu.npu.is_available()`；`model.cuda(...)` → `model.npu(...)`；`images.cuda(args.gpu, non_blocking=True)` → `images.npu(args.gpu, non_blocking=True)`\n4. 含不支持的 `torch.nn.parallel.DataParallel` 需手动修改\n\n多卡（分布式）：`dist.init_process_group(backend='nccl', ...)` → `backend='hccl'`\n\n### 五、迁移后异常处理\n\n- 部分 cuda 接口报错多为 API 不支持：用分析迁移工具获取存疑 API 列表，到昇腾开源社区 https://gitee.com/ascend/pytorch 提 ISSUE；或将不支持 API 移至 CPU 运行（改 `torch_npu/csrc/aten/npu_native_functions.yaml` 的 `tocpu` 配置后重新编译）；或参考 Ascend C / 适配插件开发做算子适配。\n- 提升速度可开二进制算子：`torch_npu.npu.set_compile_mode(jit_compile=False)`（需装二进制算子包）。\n\n### 来源（官方正文已获取）\n\n- 迁移操作（自动迁移，CANN 8.0.RC3.alpha003）：https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC3alpha003/devaids/auxiliarydevtool/atlasfmkt_16_0019.html\n- PyTorch GPU2Ascend 工具迁移（CANN 商用版 8.0.RC1）：https://www.hiascend.com/document/detail/zh/canncommercial/80RC1/devaids/auxiliarydevtool/atlasfmkt_16_0021.html\n- 安装 torch_npu 插件（CANN 商用版 7.0.0，含版本下载表）：https://www.hiascend.com/document/detail/zh/canncommercial/700/envdeployment/instg/instg_0048.html\n- 手工迁移（TorchNPU 6.0.RC1）：https://www.hiascend.com/document/detail/zh/Pytorch/60RC1/ptmoddevg/trainingmigrguide/PT_LMTMOG_0018.html\n\n### 未核实处\n\n- 最新 CANN 8.x 与 torch_npu/PyTorch（如 PyTorch 2.2+/2.4+）的完整配套表未从官方页面取得正文（CANN 8.0.0 与 8.0.RC3 的\"环境准备\"及工具迁移页两次抓取均只返回标题/评分标签，无正文，原因未确定；仅二手来源提及\"torch_npu 2.4.0.x 配 CANN 8.0\"，未获官方正文印证）。wheel 安装示例取自 CANN 7.0.0 文档。\n- 二进制算子包安装步骤、ModelArts 适配细节仅见引用链接，未取正文。\n- 精度对拍/msprof 调优流程本轮未取得官方正文（原题未强制，未再消耗预算）。\n\n</answer>\n\n<stop_reason>工具预算已用尽：WebSearch 4/4、WebFetch 8/8（其中 3 次抓取仅返回导航/标签无正文，1 次返回站点首页）。三种迁移方式、命令、参数及 torch_npu 安装与版本对应的核心官方正文均已取得，足以回答原题；仅 CANN 8.x 最新完整配套表未能核实，已在答案中注明。</stop_reason>"
+            }
+          ]
+        },
+        "basis": "Root checked actual final placeholder ./pytorch_gpu2npu.sh -i 原始脚本路径; original assessor judged remaining content complete. Correct 4/5 anchor application without changing rubric; full final retained for review."
+      },
+      {
         "event_id": "call_d282377d09fc44378147f573.result",
         "original": "本章节将指导用户将PyTorch训练脚本从GPU平台迁移至昇腾NPU平台。自动迁移方式较简单，且修改内容最少，只需在训练脚本中导入库代码。",
         "replacement": "本章节将指导用户将PyTorch训练脚本从GPU平台迁移至昇腾NPU平台。自动迁移方式支持PyTorch1.11.0、2.1.0、2.2.0版本的训练脚本的迁移，自动迁移方式较简单，且修改内容最少，只需在训练脚本中导入库代码。",
-        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
-      },
-      {
-        "event_id": "run-end",
-        "original": "source ${install_path}/set_env.sh 设置环境变量（如 /usr/local/Ascend/ascend-toolkit）",
-        "replacement": "source ${install_path}/set_env.sh` 设置环境变量（如 `/usr/local/Ascend/ascend-toolkit`）",
         "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
       }
     ],

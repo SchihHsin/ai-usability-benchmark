@@ -1,0 +1,172 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "构建期指定一个或多个 optimization profile，给出运行时维度输入的允许范围，以及 auto-tuner 用于优化的维度。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_gCmvW3aqyTkTz2j239FH9080.result",
+      "evidence_quote": "An *optimization profile* describes a range of dimensions for each network input and the dimensions the auto-tuner will use for optimization. You must create at least one optimization profile at build time when using runtime dimensions.",
+      "verification": "source",
+      "reason": "原题问动态 shape 的 optimization profile / 运行时 shape 做法，答案各子方面均有来源支撑：(a) 构建期以 -1 标记动态维度并创建 IOptimizationProfile（min/opt/max）——call_00_gCmvW3aqyTkTz2j239FH9080 含 addInput(\"foo\", DataType::kFLOAT, Dims3(3, -1, -1)) 与 setDimensions(kMIN/kOPT/kMAX) 官方原文；(b) 运行时 setOptimizationProfileAsync → setInputShape → 查询输出维度 → enqueueV3 及 stream 一致性约束——同源 'At runtime, you must set an optimization profile before setting input dimensions'；(c) trtexec --minShapes/--optShapes/--maxShapes/--shapes 完整命令——call_00_BXg6VWP1yDkEvqDlVyut5649 收录 benchmarking 页与 GitHub trtexec 示例原文；(d) 8.x 与 10.x/11.x 接口差异——call_00_UoWr6KmWZwYv0P4g92Pa5912（迁移指南主路径）、call_00_9O2MwlmEZJRLkcfURKVc5943（移除清单）、call_00_KCEUml04Rg3xGjvQ7WaG3806（enqueueV2→enqueueV3）、8.6.1 归档与 cnblogs 正文（call_00_1OonOaZxsf42msYftlgd7728）相互印证；(e) 动态输出 IOutputAllocator——call_00_gCmvW3aqyTkTz2j239FH9080 原文。纯 CUDA kernel 小节答案自标'仅概念层面，未获本轮官方正文支撑'，但原题括号焦点为 TensorRT 的 optimization profile / 运行时 shape 机制且已全部落地取证，故整体判定 supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "status": "supported",
+      "reason": "最终答案按接口族给出有依据的版本适用范围：TensorRT 10.x/11.x 对应 setInputShape/getTensorShape/setOptimizationProfileAsync/enqueueV3，TensorRT 8.x 对应 setBindingDimensions/getBindingDimensions/enqueueV2，并注明所抓文档为 11.x 主线（出现 11.3.0 等版本号）、社区例为 CUDA 12.4 + TensorRT 10.11。所选接口的适用范围均有依据且相互无矛盾，但均未定到单一具体版本，且 setInputShape/enqueueV3 的精确引入版本（是否 8.5）自标未核实——符合第 4 档：全部组件有依据的适用范围、至少一项未定到具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "**TensorRT 10.x / 11.x**：`setInputShape` + `getTensorShape` + `setOptimizationProfileAsync` + `enqueueV3`；execution context 用名称寻址。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "**TensorRT 8.x**：binding 式 —— `setBindingDimensions` + `getBindingDimensions` + `enqueueV2`"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "（8.5 起已引入 `setInputShape`/`enqueueV3`，但我本轮未取到官方对\"8.5 引入\"的明确版本声明）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "supported",
+      "reason": "答案给出可照抄的完整 trtexec 命令行（构建期 --minShapes/--optShapes/--maxShapes 加运行时 --shapes，并说明仅 ONNX 输入时必需），以及 C++/Python 双语完整 API 调用序列（createOptimizationProfile/setDimensions/addOptimizationProfile → setOptimizationProfileAsync(0, stream) → setInputShape → getTensorShape → enqueueV3(stream)），前置约束明确（profile 须先于输入维度设置、stream 须与后续 enqueueV3 同流、每 execution context 独立 profile）。用户仅需替换明确标识的环境值（张量名 foo/input、shape 数值、模型路径）。API 路径需将官方片段组装为完整程序、输入地址注册仅在第四节与社区引文中出现而非主流程逐步展示，未达第 5 档'无需补写'；答案自标全部代码未运行，按约定不影响档位。综合第 4 档：操作指导完整，仅需替换环境参数。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "./trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "profile.set_shape(\"foo\", (3, 100, 200), (3, 150, 250), (3, 200, 300))"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "context.setOptimizationProfileAsync(0, stream)"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-2d40017dd3c1",
+  "task_id": "M",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "ea50eed358a3414e9050c1b1f52238bc",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "2bc2cc24e0fe7694909c70b79e128ddc",
+        "conversationRequestId": "2bc2cc24e0fe7694909c70b79e128ddc",
+        "agent": "cli"
+      },
+      {
+        "messageId": "ea50eed358a3414e9050c1b1f52238bc",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "2bc2cc24e0fe7694909c70b79e128ddc",
+        "conversationRequestId": "2bc2cc24e0fe7694909c70b79e128ddc",
+        "rawUsage": {
+          "prompt_tokens": 26646,
+          "completion_tokens": 15255,
+          "total_tokens": 41901,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 13966,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 25313
+          },
+          "prompt_cache_hit_tokens": 25313,
+          "prompt_cache_miss_tokens": 1333,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 13966,
+          "credit": 9.77,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 26646,
+          "outputTokens": 15255,
+          "totalTokens": 41901,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 25313
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 13966
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "ccb085b0b32ddf6cc20e4c38fd3e0e0122283595a8655da02583cd2f64f31159",
+    "process_sha256": "c01d4dd57b7e00f2674e4435b7a499226695495151e408fd769034ca44f1a4a0",
+    "elapsed_seconds": 186.78,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-709b80213b684a20a31c88b4302a2d57",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-2d40017dd3c1-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

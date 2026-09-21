@@ -28,19 +28,15 @@
     },
     {
       "id": "M10",
-      "score": 5,
-      "lower": null,
-      "upper": null,
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
       "status": "supported",
-      "reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。",
+      "reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
       "evidence": [
         {
           "event_id": "run-end",
-          "quote": "torchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py"
-        },
-        {
-          "event_id": "run-end",
-          "quote": "前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。"
+          "quote": "<answer>\n\n## PyTorch 多机多卡分布式训练（DDP + NCCL）\n\n来源（官方）：\n- https://docs.pytorch.org/tutorials/intermediate/ddp_series_multinode.html（Multinode Training 教程）\n- https://docs.pytorch.org/docs/stable/elastic/run.html（torchrun 官方文档，PyTorch 2.14）\n- https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multinode.py（官方示例代码）\n\n### 1. 代码初始化（每个进程）\n\n官方推荐用 torchrun 启动，进程组初始化只需读环境变量，无需手动传 RANK：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\ndef ddp_setup():\n    torch.cuda.set_device(int(os.environ[\"LOCAL_RANK\"]))\n    dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://\n\nddp_setup()\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = MyModel().to(local_rank)\nmodel = DDP(model, device_ids=[local_rank])\n\nloader = DataLoader(dataset, batch_size=bs, shuffle=False,\n                    sampler=DistributedSampler(dataset))  # 每个 epoch 调 sampler.set_epoch(epoch)\n# 训练结束后 dist.destroy_process_group()\n```\n\n注意：PyTorch 2.0.0 起 torchrun 向脚本传 `--local-rank=<rank>`（连字符形式），若脚本用 argparse 解析，建议同时兼容 `--local-rank` 和 `--local_rank`。\n\n### 2. 启动命令\n\n**方式 A：经典 master_addr 写法（两节点，每节点 8 卡）**\n\n```bash\n# 节点 0（主节点）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n\n# 节点 1（相同参数，仅 node_rank 不同）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=1 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n```\n\n**方式 B：官方文档推荐的 rendezvous 写法（多节点，含容错）**\n\n```bash\n# 所有节点运行完全相同的命令\ntorchrun \\\n    --nnodes=$NUM_NODES \\\n    --nproc-per-node=$NUM_TRAINERS \\\n    --max-restarts=3 \\\n    --rdzv-id=$JOB_ID \\\n    --rdzv-backend=c10d \\\n    --rdzv-endpoint=$HOST_NODE_ADDR \\\n    train.py\n```\n- `--rdzv-endpoint` 形如 `<host>[:<port>]`，缺省端口 29400；c10d 为官方推荐 backend（etcd/etcd-v2 为可选，etcd 已进入维护模式）。\n- 弹性训练：`--nnodes=1:4`（min:max）。\n- `--nproc-per-node` 可填 `gpu`/`cpu`/`auto` 或整数，GPU 训练时每进程占一张卡（GPU 0 到 nproc-1）。\n- 也可通过 SLURM 等集群管理器调度，入口命令仍为 torchrun。\n\n### 3. 环境变量\n\n**torchrun 自动注入（脚本内直接读取）：**\n| 变量 | 含义 |\n|---|---|\n| `RANK` | 全局进程 rank |\n| `LOCAL_RANK` | 节点内 GPU rank |\n| `WORLD_SIZE` | 总进程数 |\n| `LOCAL_WORLD_SIZE` | 每节点进程数 |\n| `MASTER_ADDR` / `MASTER_PORT` | rank 0 主机地址与 C10d TCP store 端口 |\n| `GROUP_RANK`、`ROLE_RANK`、`TORCHELASTIC_RUN_ID` 等 | 弹性/角色相关 |\n\n**NCCL 调优/排错（需自行 export）：**\n```bash\nexport NCCL_DEBUG=INFO              # 打印详细日志，排查通信问题\nexport NCCL_SOCKET_IFNAME=eth0      # 显式指定网卡（多网卡机器常需要）\n```\n\n### 4. 版本与前提\n\n- 文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。\n- 前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。\n- 警告：RANK 在故障重启后不保证稳定，不要在训练逻辑中硬编码 rank 假设。\n\n**未核实处**：NCCL 完整环境变量清单（如 NCCL_IB_*、NCCL_NET_GDR_LEVEL 等）未在本次抓取中取得，仅确认了 NCCL_DEBUG 与 NCCL_SOCKET_IFNAME 两项官方提及的变量。\n\n</answer>\n\n<stop_reason>\n信息充分后主动停止：原题要求的初始化方式、启动命令、环境变量均已从官方文档（多节点教程 + torchrun 文档 + 官方示例代码）取得，共使用 1 次 WebSearch（首次查询第 1/2 条即命中官方源）和 3 次 WebFetch，远未达预算上限；继续检索（如 NCCL 环境变量完整清单）对回答原题非必需，故停止。\n</stop_reason>"
         }
       ]
     }
@@ -156,7 +152,50 @@
   },
   "review": {
     "raw_file": "assessments/development/case-879b5d267b8e-outcome.json",
-    "repairs": [],
+    "repairs": [
+      {
+        "case": "case-879b5d267b8e",
+        "kind": "outcome",
+        "phase": "before_quote",
+        "path": [
+          "m9_m10",
+          1
+        ],
+        "original": {
+          "id": "M10",
+          "score": 5,
+          "lower": null,
+          "upper": null,
+          "status": "supported",
+          "reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "torchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py"
+            },
+            {
+              "event_id": "run-end",
+              "quote": "前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。"
+            }
+          ]
+        },
+        "replacement": {
+          "id": "M10",
+          "score": 4,
+          "lower": 4,
+          "upper": 4,
+          "status": "supported",
+          "reason": "操作指导完整可直接执行：初始化代码完整（读 LOCAL_RANK、init_process_group(backend=\"nccl\")、DDP 包装、DistributedSampler），启动命令两种写法均给出完整参数（方式 A 含具体示例值，方式 B 的 $NUM_NODES 等为明确标识的环境参数且文档原样使用），环境变量表与 export 命令齐全，前提条件（CUDA 版 PyTorch、节点间 TCP 互通）已说明。代码中的 MyModel/dataset 为用户自有内容，属正常占位，无需修正错误即可照抄运行。 复核：最终答案含用户程序、路径或进程标识等待代入值；依原M10规则应为4分，不能把环境参数替换归5分。",
+          "evidence": [
+            {
+              "event_id": "run-end",
+              "quote": "<answer>\n\n## PyTorch 多机多卡分布式训练（DDP + NCCL）\n\n来源（官方）：\n- https://docs.pytorch.org/tutorials/intermediate/ddp_series_multinode.html（Multinode Training 教程）\n- https://docs.pytorch.org/docs/stable/elastic/run.html（torchrun 官方文档，PyTorch 2.14）\n- https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multinode.py（官方示例代码）\n\n### 1. 代码初始化（每个进程）\n\n官方推荐用 torchrun 启动，进程组初始化只需读环境变量，无需手动传 RANK：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\ndef ddp_setup():\n    torch.cuda.set_device(int(os.environ[\"LOCAL_RANK\"]))\n    dist.init_process_group(backend=\"nccl\")   # init_method 默认 env://\n\nddp_setup()\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = MyModel().to(local_rank)\nmodel = DDP(model, device_ids=[local_rank])\n\nloader = DataLoader(dataset, batch_size=bs, shuffle=False,\n                    sampler=DistributedSampler(dataset))  # 每个 epoch 调 sampler.set_epoch(epoch)\n# 训练结束后 dist.destroy_process_group()\n```\n\n注意：PyTorch 2.0.0 起 torchrun 向脚本传 `--local-rank=<rank>`（连字符形式），若脚本用 argparse 解析，建议同时兼容 `--local-rank` 和 `--local_rank`。\n\n### 2. 启动命令\n\n**方式 A：经典 master_addr 写法（两节点，每节点 8 卡）**\n\n```bash\n# 节点 0（主节点）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=0 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n\n# 节点 1（相同参数，仅 node_rank 不同）\ntorchrun --nnodes=2 --nproc_per_node=8 --node_rank=1 \\\n    --master_addr=192.168.1.1 --master_port=29500 train.py\n```\n\n**方式 B：官方文档推荐的 rendezvous 写法（多节点，含容错）**\n\n```bash\n# 所有节点运行完全相同的命令\ntorchrun \\\n    --nnodes=$NUM_NODES \\\n    --nproc-per-node=$NUM_TRAINERS \\\n    --max-restarts=3 \\\n    --rdzv-id=$JOB_ID \\\n    --rdzv-backend=c10d \\\n    --rdzv-endpoint=$HOST_NODE_ADDR \\\n    train.py\n```\n- `--rdzv-endpoint` 形如 `<host>[:<port>]`，缺省端口 29400；c10d 为官方推荐 backend（etcd/etcd-v2 为可选，etcd 已进入维护模式）。\n- 弹性训练：`--nnodes=1:4`（min:max）。\n- `--nproc-per-node` 可填 `gpu`/`cpu`/`auto` 或整数，GPU 训练时每进程占一张卡（GPU 0 到 nproc-1）。\n- 也可通过 SLURM 等集群管理器调度，入口命令仍为 torchrun。\n\n### 3. 环境变量\n\n**torchrun 自动注入（脚本内直接读取）：**\n| 变量 | 含义 |\n|---|---|\n| `RANK` | 全局进程 rank |\n| `LOCAL_RANK` | 节点内 GPU rank |\n| `WORLD_SIZE` | 总进程数 |\n| `LOCAL_WORLD_SIZE` | 每节点进程数 |\n| `MASTER_ADDR` / `MASTER_PORT` | rank 0 主机地址与 C10d TCP store 端口 |\n| `GROUP_RANK`、`ROLE_RANK`、`TORCHELASTIC_RUN_ID` 等 | 弹性/角色相关 |\n\n**NCCL 调优/排错（需自行 export）：**\n```bash\nexport NCCL_DEBUG=INFO              # 打印详细日志，排查通信问题\nexport NCCL_SOCKET_IFNAME=eth0      # 显式指定网卡（多网卡机器常需要）\n```\n\n### 4. 版本与前提\n\n- 文档对应 PyTorch 2.14（教程页标注 2.14.0+cu130）；GPU 训练官方明确推荐 NCCL backend。\n- 前提：所有节点安装带 CUDA 的 PyTorch、节点间 TCP 互通；多节点训练受节点间通信延迟限制，同卡数单机更快。\n- 警告：RANK 在故障重启后不保证稳定，不要在训练逻辑中硬编码 rank 假设。\n\n**未核实处**：NCCL 完整环境变量清单（如 NCCL_IB_*、NCCL_NET_GDR_LEVEL 等）未在本次抓取中取得，仅确认了 NCCL_DEBUG 与 NCCL_SOCKET_IFNAME 两项官方提及的变量。\n\n</answer>\n\n<stop_reason>\n信息充分后主动停止：原题要求的初始化方式、启动命令、环境变量均已从官方文档（多节点教程 + torchrun 文档 + 官方示例代码）取得，共使用 1 次 WebSearch（首次查询第 1/2 条即命中官方源）和 3 次 WebFetch，远未达预算上限；继续检索（如 NCCL 环境变量完整清单）对回答原题非必需，故停止。\n</stop_reason>"
+            }
+          ]
+        },
+        "basis": "Root checked actual final placeholder model = MyModel().to(local_rank); original assessor judged remaining content complete. Correct 4/5 anchor application without changing rubric; full final retained for review."
+      }
+    ],
     "semantic_validation": false,
     "document_identity_review": null,
     "official_search_evidence_review": null

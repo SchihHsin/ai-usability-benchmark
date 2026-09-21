@@ -3294,6 +3294,798 @@
         "superseded_m8_quote_audit": [],
         "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
       }
+    },
+    {
+      "revision": 6,
+      "recorded_at": "2026-09-21T04:45:49.907728+00:00",
+      "process_sha256": "0f42f0c9cc3749d132afb3385d306d077bc77fbfc35f58de973c6d4e82ebc98f",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "unverified",
+            "answer_quote": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。",
+            "answer_event_id": "final",
+            "evidence_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+            "evidence_quote": "构建 INT8 引擎时，构建器执行以下步骤：1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。2. 从直方图构建一个校准表，为每个张量提供一个比例值。3. 根据校准表和网络定义构建 INT8 引擎。",
+            "verification": "source",
+            "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求INT8量化部署+校准流程。答案覆盖各子方面：(1)量化路线选择（PTQ隐式 vs QAT/PTQ显式），与官方博客7.1.1/7.1.2一致；(2)校准流程——隐式路线给出构建器三步校准、校准器选择（EntropyCalibrator2/MinMax等）、Python校准器完整实现与C++接口，均由官方博客7.3及call_00_uXZzZWkNfxomyg7p4FoJ2219（显式量化页）、call_00_4nhBYhtvcxPjfYHseVjd9602（issue #4095的ModelOpt与trtexec命令）支撑；(3)部署（反序列化+推理）给出骨架并如实标注未逐字核实；(4)版本/弃用状态由10.3.0 Release Notes（call_01_aSAI4pScSHPWSB2hoxiH0186）支撑。未运行代码已在答案中声明，属内容核查，不构成否定。少量样板代码（pycuda部分）为通用写法且已标注，不影响核心校准流程有据可依。",
+            "raw_status": "supported",
+            "evidence_refs": []
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询第2条即为相关官方来源（developer.nvidia.com 的 IInt8EntropyCalibrator2 API 页），第4条为 NVIDIA 官方技术博客。",
+            "evidence": [
+              {
+                "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+                "quote": "## 2. [IInt8EntropyCalibrator2 — NVIDIA TensorRT Standard Python …](https://developer.nvidia.com/docs/drive/drive-os/6.0.9.2/public/drive-os-tensorrt/api-reference/docs/python/infer/Int8/EntropyCalibrator2.html)"
+              },
+              {
+                "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+                "quote": "## 4. [7. TensorRT 中的 INT8 - NVIDIA 技术博客](https://developer.nvidia.cn/blog/tensorrt-int8-cn/)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M2: missing return evidence call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+            "evidence": [
+              {
+                "event_id": "call_00_ypUnBMlXx03TRV4493Hy0633.result",
+                "quote": "**标题**: Architecture Overview — NVIDIA TensorRT"
+              },
+              {
+                "event_id": "call_00_tNYSV72m3WsPTZSG3sj11634.result",
+                "quote": "**标题**: 403 Forbidden"
+              },
+              {
+                "event_id": "call_02_y0ZCY9KeyP1Yts5TIJbl2807.result",
+                "quote": "**标题**: Page Not Found"
+              },
+              {
+                "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+                "quote": "# TensorRT 10.3.0 Release Notes#\n\n[...]"
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方博客（NVIDIA官方渠道，Ken He）完整覆盖主流程：PTQ校准原理、三种校准器选择、校准三步骤、约500张校准图像、C++/Python配置代码、校准缓存复用与可移植条件、set_dynamic_range；release notes 补充TRT10弃用关系。但Python校准器类完整实现缺失（步骤编号从3跳到6，无类实现代码），TRT10迁移具体代码示例未取得，属分支/参考细节不全。",
+            "evidence": [
+              {
+                "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+                "quote": "所需的输入数据量取决于应用程序，但实验表明大约 500 张图像足以校准 ImageNet 分类网络。"
+              },
+              {
+                "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+                "quote": "```\nconfig.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator\n```"
+              },
+              {
+                "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+                "quote": "They may not give the optimal performance and accuracy. As a workaround, use INT8 explicit quantization instead."
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": 2,
+            "upper": 3,
+            "status": "bounded",
+            "reason": "部分适用关系已明确（10.x弃用隐式量化校准API、建议改用显式量化、弃用API保留至8/2025），但存在未消解的官方冲突：2022官方博客称Q/DQ网络必须设置kINT8标志，最新官方文档称Precision-control build flags不需要且不应设置；且各校准API具体移除版本/时间线缺失。冲突未消解不能打3/4/5，缺失关系不能打4/5。",
+            "evidence": [
+              {
+                "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+                "quote": "Deprecated INT8 implicit quantization and calibrator APIs including `dynamicRangeIsSet`, `CalibrationAlgoType`, `IInt8Calibrator`, `IInt8EntropyCalibrator`, `IInt8EntropyCalibrator2`, `IInt8MinMaxCalibrator`"
+              },
+              {
+                "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+                "quote": "APIs deprecated in TensorRT 10.3 will be retained until 8/2025."
+              },
+              {
+                "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+                "quote": "AQ/DQ 网络必须在启用 INT8 精度构建器标志的情况下构建："
+              },
+              {
+                "event_id": "call_00_uXZzZWkNfxomyg7p4FoJ2219.result",
+                "quote": "Use explicit quantization with Strong Typing. Precision-control build flags are not required and should not be specified."
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": [],
+            "candidate_score": 2,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "统一搜索预算内可发现的相关独立第三方来源≥6条：CSDN博客3篇（oYeZhou、zsf10220208、qq_33287871）、百度开发者文章、知乎专栏、zmurder个人博客、Torch-TensorRT PyTorch文档、ask.csdn问答；官方博客/官方论坛/官方仓库（HeKun-NVIDIA翻译仓库属官方内容镜像）不计入。首次查询第1条即出现第三方来源。",
+            "evidence": [
+              {
+                "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+                "quote": "## 1. [TensorRT INT8量化原理以及如何编写校准器类进行校准 ...](https://blog.csdn.net/oYeZhou/article/details/106719154)"
+              },
+              {
+                "event_id": "call_00_82SvO1I8D2LcUlr3HtDG0380.result",
+                "quote": "## 5. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)"
+              },
+              {
+                "event_id": "call_00_TpoKcpQaybQQhCs7QzoF1941.result",
+                "quote": "## 5. [TensorRT INT8量化代码 | 奔跑的IC](https://zmurder.github.io/TensorRT/TensorRT%20INT8%E9%87%8F%E5%8C%96%E4%BB%A3%E7%A0%81/)"
+              },
+              {
+                "event_id": "call_00_je2WRg6CZQoM1kKrkImW2708.result",
+                "quote": "## 5. [TensorRT 10.1 中隐式量化 API 报错“已弃用”，如何迁移到显 ...](https://ask.csdn.net/questions/9418709/56396376)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15",
+              "ev-16"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "第三方材料仅有搜索摘要，未抓取正文。其中改变操作判断的关键说法（ask.csdn称TensorRT 10.1中setDynamicRange等隐式量化API被标记Deprecated）与官方release notes可追溯依据一致；其余第三方关键说法（各CSDN/知乎/博客的量化流程主张）未经核验，无独立交叉印证。",
+            "evidence": [
+              {
+                "event_id": "call_00_je2WRg6CZQoM1kKrkImW2708.result",
+                "quote": "在 TensorRT 10.1 中，`setDynamicRange ()`、`setQDQScale ()` 等隐式量化 API 被正式标记为 **Deprecated**"
+              },
+              {
+                "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+                "quote": "As a workaround, use INT8 explicit quantization instead."
+              }
+            ],
+            "evidence_refs": [
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答给出正确的完整流程：隐式/显式双路线、校准器种类与选择（IInt8EntropyCalibrator2推荐/KL、MinMax适合BERT类）、calibrator四接口方法名、config.set_flag(trt.BuilderFlag.INT8)与int8_calibrator配置、校准缓存复用——均被检索到的官方资料证实。但具体参数（官方为约500张，先验称500–1000且自认模糊）与版本适用关系（TRT10弃用）自认不确定，需外部补充。符合4档：完整正确流程，具体参数/约束需补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "实现 calibrator 接口：Python 中继承 `trt.IInt8EntropyCalibrator2`，实现 `get_batch_size()`、`get_batch()`、`read_calibration_cache()`、`write_calibration_cache()`"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "配置：`config.set_flag(trt.BuilderFlag.INT8)`，`config.int8_calibrator = calibrator`（Python）；C++ 用 `config->setInt8Calibrator(calibrator)`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "TensorRT 10.x 是否仍支持上述隐式量化 calibrator 接口，是否有弃用/移除（我怀疑 8.5+ 主推显式量化，10.0 有接口变动，但无法确认具体版本行为）。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20",
+              "ev-21"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 1,
+            "lower": 1,
+            "upper": 1,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=11",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_dMYs10kAqRJZ7Mzje0EE2027.dispatch",
+              "call_00_82SvO1I8D2LcUlr3HtDG0380.dispatch",
+              "call_00_ypUnBMlXx03TRV4493Hy0633.dispatch",
+              "call_00_TpoKcpQaybQQhCs7QzoF1941.dispatch",
+              "call_00_uXZzZWkNfxomyg7p4FoJ2219.dispatch",
+              "call_01_XcwNmTGam5bwX8aBdQM62451.dispatch",
+              "call_00_je2WRg6CZQoM1kKrkImW2708.dispatch",
+              "call_00_tNYSV72m3WsPTZSG3sj11634.dispatch",
+              "call_01_aSAI4pScSHPWSB2hoxiH0186.dispatch",
+              "call_02_y0ZCY9KeyP1Yts5TIJbl2807.dispatch",
+              "call_00_4nhBYhtvcxPjfYHseVjd9602.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "答案对所需组件给出有依据的适用范围：TensorRT目标10.x（10.3及以上，基于10.3.0 Release Notes弃用说明）、隐式校准器路线限定10.0.x（基于issue #4095的10.1起弃用警告）、ONNX opset 13（每通道量化必需）、PyTorch 1.8+（opset 13导出）。各范围均有官方来源支撑且无冲突。但最新具体版本号未取得（答案自述'本轮只取到10.3.0 Release Notes页，未抓取最新版'），故未能定到确切具体版本，且弃用API是否已实际移除属未知，锁定粒度为范围而非具体版本。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "结论：**新项目应直接走显式量化（Q/DQ + ModelOpt），目标 TensorRT 10.x（10.3 及以上）**；仅在必须复用旧校准器管线时才留在 10.0.x，并接受弃用状态。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。"
+              }
+            ],
+            "raw_status": "assessed",
+            "evidence_refs": [
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "assessed",
+            "reason": "校准路线给出可照抄的完整Python实现（EntropyCalibrator类、get_batch_size/get_batch/read/write_calibration_cache四接口、config.set_flag(trt.BuilderFlag.INT8)、int8_calibrator赋值、build_serialized_network），接口契约与官方资料一致；显式路线给出trtexec --onnx=model.quant.onnx --best（issue #4095原文）；C++给出setInt8Calibrator调用。需替换的仅为环境参数（模型路径、校准数据迭代器、输入shape、缓存文件名），均有明确标识。部署节为骨架（'绑定 I/O、分配 device 缓冲后'为注释占位），且答案自述pycuda样板与部署API未逐字核实，略低于5分；未实际运行已如实声明，不影响本项评分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "config = builder.create_builder_config()\nconfig.set_flag(trt.BuilderFlag.INT8)                 # 关键 flag\nconfig.int8_calibrator = EntropyCalibrator(iter_calib, \"calib.cache\", (3, 224, 224))"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "trtexec --onnx=model.quant.onnx --best"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-23",
+              "ev-24",
+              "ev-25"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M2",
+                "status": "insufficient_evidence",
+                "reason": "M2: missing return evidence call_01_aSAI4pScSHPWSB2hoxiH0186.result"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M2",
+              "status": "insufficient_evidence",
+              "reason": "M2: missing return evidence call_01_aSAI4pScSHPWSB2hoxiH0186.result"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M2: missing return evidence call_01_aSAI4pScSHPWSB2hoxiH0186.result"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+            "field": "response",
+            "sha256": "83ce9f0db12614594b5646cd9588415c611dde0bc605528b5669b4b52481a800",
+            "start": 343,
+            "end": 554,
+            "quote": "## 2. [IInt8EntropyCalibrator2 — NVIDIA TensorRT Standard Python …](https://developer.nvidia.com/docs/drive/drive-os/6.0.9.2/public/drive-os-tensorrt/api-reference/docs/python/infer/Int8/EntropyCalibrator2.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+            "field": "response",
+            "sha256": "83ce9f0db12614594b5646cd9588415c611dde0bc605528b5669b4b52481a800",
+            "start": 1105,
+            "end": 1198,
+            "quote": "## 4. [7. TensorRT 中的 INT8 - NVIDIA 技术博客](https://developer.nvidia.cn/blog/tensorrt-int8-cn/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_ypUnBMlXx03TRV4493Hy0633.result",
+            "field": "response",
+            "sha256": "b6f1bde5cd8d4fc1565564f11da9a55616b1f21137ab67ea5afa262098db48ce",
+            "start": 0,
+            "end": 47,
+            "quote": "**标题**: Architecture Overview — NVIDIA TensorRT",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_tNYSV72m3WsPTZSG3sj11634.result",
+            "field": "response",
+            "sha256": "9f5cb40b4a28d7f4c10bd6d61ec630ebcb9804a703790ee2f02dd680c37b5fb9",
+            "start": 0,
+            "end": 21,
+            "quote": "**标题**: 403 Forbidden",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_02_y0ZCY9KeyP1Yts5TIJbl2807.result",
+            "field": "response",
+            "sha256": "67106108ce6eb092e808e1b6303d2d30387a22a188960de2378d88541c11ec16",
+            "start": 0,
+            "end": 22,
+            "quote": "**标题**: Page Not Found",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+            "field": "response",
+            "sha256": "0972c0ff284f5b9d0559c624f0734586af12bbace9e73ecf263dd1e1b76854c0",
+            "start": 3606,
+            "end": 3656,
+            "quote": "所需的输入数据量取决于应用程序，但实验表明大约 500 张图像足以校准 ImageNet 分类网络。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+            "field": "response",
+            "sha256": "0972c0ff284f5b9d0559c624f0734586af12bbace9e73ecf263dd1e1b76854c0",
+            "start": 6329,
+            "end": 6415,
+            "quote": "```\nconfig.set_flag(trt.BuilderFlag.INT8)\nconfig.int8_calibrator = Int8_calibrator\n```",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+            "field": "response",
+            "sha256": "403e6295909ae8f920f0bf41d2ba5f4d526689af187d8305e7f8b1ce38eeb804",
+            "start": 3161,
+            "end": 3273,
+            "quote": "They may not give the optimal performance and accuracy. As a workaround, use INT8 explicit quantization instead.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+            "field": "response",
+            "sha256": "403e6295909ae8f920f0bf41d2ba5f4d526689af187d8305e7f8b1ce38eeb804",
+            "start": 2744,
+            "end": 2951,
+            "quote": "Deprecated INT8 implicit quantization and calibrator APIs including `dynamicRangeIsSet`, `CalibrationAlgoType`, `IInt8Calibrator`, `IInt8EntropyCalibrator`, `IInt8EntropyCalibrator2`, `IInt8MinMaxCalibrator`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+            "field": "response",
+            "sha256": "403e6295909ae8f920f0bf41d2ba5f4d526689af187d8305e7f8b1ce38eeb804",
+            "start": 3480,
+            "end": 3543,
+            "quote": "APIs deprecated in TensorRT 10.3 will be retained until 8/2025.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+            "field": "response",
+            "sha256": "0972c0ff284f5b9d0559c624f0734586af12bbace9e73ecf263dd1e1b76854c0",
+            "start": 6497,
+            "end": 6530,
+            "quote": "AQ/DQ 网络必须在启用 INT8 精度构建器标志的情况下构建：",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_uXZzZWkNfxomyg7p4FoJ2219.result",
+            "field": "response",
+            "sha256": "94e0e8a1229852fbaba40f21898db4e56b9b585699e173a1d32c20a3bfc13290",
+            "start": 276,
+            "end": 397,
+            "quote": "Use explicit quantization with Strong Typing. Precision-control build flags are not required and should not be specified.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+            "field": "response",
+            "sha256": "83ce9f0db12614594b5646cd9588415c611dde0bc605528b5669b4b52481a800",
+            "start": 90,
+            "end": 190,
+            "quote": "## 1. [TensorRT INT8量化原理以及如何编写校准器类进行校准 ...](https://blog.csdn.net/oYeZhou/article/details/106719154)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_82SvO1I8D2LcUlr3HtDG0380.result",
+            "field": "response",
+            "sha256": "fb0049d67b0f3ecc82eabd1aa8c218089b6c76271ed2ba70911fdc9092635ba4",
+            "start": 1215,
+            "end": 1288,
+            "quote": "## 5. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_TpoKcpQaybQQhCs7QzoF1941.result",
+            "field": "response",
+            "sha256": "63bdec79f3243a5846f0db6db5ccd16815f181f90370e3c31626d1c758bb6249",
+            "start": 1468,
+            "end": 1590,
+            "quote": "## 5. [TensorRT INT8量化代码 | 奔跑的IC](https://zmurder.github.io/TensorRT/TensorRT%20INT8%E9%87%8F%E5%8C%96%E4%BB%A3%E7%A0%81/)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "call_00_je2WRg6CZQoM1kKrkImW2708.result",
+            "field": "response",
+            "sha256": "1b3cf2265958f4b19e5db66d27f472ea9811453d6617cc67d0dd772242309474",
+            "start": 1555,
+            "end": 1654,
+            "quote": "## 5. [TensorRT 10.1 中隐式量化 API 报错“已弃用”，如何迁移到显 ...](https://ask.csdn.net/questions/9418709/56396376)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_00_je2WRg6CZQoM1kKrkImW2708.result",
+            "field": "response",
+            "sha256": "1b3cf2265958f4b19e5db66d27f472ea9811453d6617cc67d0dd772242309474",
+            "start": 1669,
+            "end": 1756,
+            "quote": "在 TensorRT 10.1 中，`setDynamicRange ()`、`setQDQScale ()` 等隐式量化 API 被正式标记为 **Deprecated**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+            "field": "response",
+            "sha256": "403e6295909ae8f920f0bf41d2ba5f4d526689af187d8305e7f8b1ce38eeb804",
+            "start": 3217,
+            "end": 3273,
+            "quote": "As a workaround, use INT8 explicit quantization instead.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "bcf84530d90711ff119b38bcdeaef97af8f859356a98642805cf98eb3c9462fd",
+            "start": 827,
+            "end": 975,
+            "quote": "实现 calibrator 接口：Python 中继承 `trt.IInt8EntropyCalibrator2`，实现 `get_batch_size()`、`get_batch()`、`read_calibration_cache()`、`write_calibration_cache()`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "bcf84530d90711ff119b38bcdeaef97af8f859356a98642805cf98eb3c9462fd",
+            "start": 992,
+            "end": 1127,
+            "quote": "配置：`config.set_flag(trt.BuilderFlag.INT8)`，`config.int8_calibrator = calibrator`（Python）；C++ 用 `config->setInt8Calibrator(calibrator)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "bcf84530d90711ff119b38bcdeaef97af8f859356a98642805cf98eb3c9462fd",
+            "start": 1319,
+            "end": 1408,
+            "quote": "TensorRT 10.x 是否仍支持上述隐式量化 calibrator 接口，是否有弃用/移除（我怀疑 8.5+ 主推显式量化，10.0 有接口变动，但无法确认具体版本行为）。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "7477af792408f90d65aee124d3ac97e0bb797c7610acfc0e858cc77e6fa05bda",
+            "start": 8577,
+            "end": 8672,
+            "quote": "结论：**新项目应直接走显式量化（Q/DQ + ModelOpt），目标 TensorRT 10.x（10.3 及以上）**；仅在必须复用旧校准器管线时才留在 10.0.x，并接受弃用状态。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "7477af792408f90d65aee124d3ac97e0bb797c7610acfc0e858cc77e6fa05bda",
+            "start": 6329,
+            "end": 6518,
+            "quote": "config = builder.create_builder_config()\nconfig.set_flag(trt.BuilderFlag.INT8)                 # 关键 flag\nconfig.int8_calibrator = EntropyCalibrator(iter_calib, \"calib.cache\", (3, 224, 224))",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "7477af792408f90d65aee124d3ac97e0bb797c7610acfc0e858cc77e6fa05bda",
+            "start": 1985,
+            "end": 2023,
+            "quote": "trtexec --onnx=model.quant.onnx --best",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "7477af792408f90d65aee124d3ac97e0bb797c7610acfc0e858cc77e6fa05bda",
+            "start": 7781,
+            "end": 7823,
+            "quote": "这是通用部署骨架；本轮官方抓取页未展开部署 API，属于常规用法，未在本轮逐字核实。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_00_ypUnBMlXx03TRV4493Hy0633.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_ypUnBMlXx03TRV4493Hy0633.result",
+            "alternative_body_event_ids": [
+              "call_00_uXZzZWkNfxomyg7p4FoJ2219.result",
+              "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+              "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+              "call_00_4nhBYhtvcxPjfYHseVjd9602.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_00_tNYSV72m3WsPTZSG3sj11634.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_00_tNYSV72m3WsPTZSG3sj11634.result",
+            "alternative_body_event_ids": [
+              "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+              "call_00_4nhBYhtvcxPjfYHseVjd9602.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          },
+          {
+            "id": "fetch-call_02_y0ZCY9KeyP1Yts5TIJbl2807.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_02_y0ZCY9KeyP1Yts5TIJbl2807.result",
+            "alternative_body_event_ids": [
+              "call_00_4nhBYhtvcxPjfYHseVjd9602.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-2acc20ed6eef-predictors.json": "d55fb4ba92f47e92423808fc929d69b0689c4edbca3bd60c28ff4a71583e9597",
+          "reviewed/development/case-2acc20ed6eef-outcome.json": "d049d2896b6a053915543e1fb3e19be10ace02299cfaacc7d6df5d7c7cf135a5",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_ypUnBMlXx03TRV4493Hy0633.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_ypUnBMlXx03TRV4493Hy0633.result",
+                "quote": "**标题**: Architecture Overview — NVIDIA TensorRT"
+              }
+            ],
+            "boundary_evidence": "返回内容为架构概览章节，无INT8校准相关正文，目标章节未取得",
+            "reference": "https://docs.nvidia.com/deeplearning/tensorrt/latest/architecture/architecture-overview.html"
+          },
+          {
+            "event_id": "call_00_uXZzZWkNfxomyg7p4FoJ2219.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/quantized-types-explicit-quantization.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_uXZzZWkNfxomyg7p4FoJ2219.result",
+                "quote": "# Explicit Quantization#\n\nWhen TensorRT detects Q/DQ layers in a network, it builds an engine using explicit quantization processing logic."
+              }
+            ],
+            "boundary_evidence": "取得直接正文但无独立全文起止核对依据，工具未标注截断",
+            "reference": null
+          },
+          {
+            "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+            "url": "https://developer.nvidia.cn/blog/tensorrt-int8-cn/",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+                "quote": "## 7.3. Post-Training Quantization using Calibration"
+              }
+            ],
+            "boundary_evidence": "章节编号7.1至7.5连贯，但无独立完整起止核对依据",
+            "reference": null
+          },
+          {
+            "event_id": "call_00_tNYSV72m3WsPTZSG3sj11634.result",
+            "url": "https://forums.developer.nvidia.com/t/superseded-by-explicit-quantization/304013",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_00_tNYSV72m3WsPTZSG3sj11634.result",
+                "quote": "**标题**: 403 Forbidden"
+              }
+            ],
+            "boundary_evidence": "请求被拒，无任何正文",
+            "reference": null
+          },
+          {
+            "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/getting-started/release-notes-10/10.3.0.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": 4,
+            "evidence": [
+              {
+                "event_id": "call_01_aSAI4pScSHPWSB2hoxiH0186.result",
+                "quote": "# TensorRT 10.3.0 Release Notes#\n\n[...]"
+              }
+            ],
+            "boundary_evidence": "正文含[...]截断标记，多处章节不完整",
+            "reference": null
+          },
+          {
+            "event_id": "call_02_y0ZCY9KeyP1Yts5TIJbl2807.result",
+            "url": "https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Int8/EntropyCalibrator2.html",
+            "ownership": "official",
+            "representation": "none",
+            "completeness": "unknown",
+            "score": 1,
+            "evidence": [
+              {
+                "event_id": "call_02_y0ZCY9KeyP1Yts5TIJbl2807.result",
+                "quote": "**标题**: Page Not Found"
+              }
+            ],
+            "boundary_evidence": "页面不存在，无正文",
+            "reference": null
+          },
+          {
+            "event_id": "call_00_4nhBYhtvcxPjfYHseVjd9602.result",
+            "url": "https://github.com/NVIDIA/TensorRT/issues/4095",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score": null,
+            "lower": 4,
+            "upper": 5,
+            "evidence": [
+              {
+                "event_id": "call_00_4nhBYhtvcxPjfYHseVjd9602.result",
+                "quote": "The warning I’ve been getting starting with TensorRT 10.1 is that the INT8 Entropy Calibrator 2 implicit quantization has been deprecated and superseded by explicit quantization."
+              }
+            ],
+            "boundary_evidence": "官方仓库issue正文完整可读，但无独立起止核对依据",
+            "reference": null
+          }
+        ],
+        "quote_audit": [
+          {
+            "requirement": 1,
+            "bad_refs": [
+              {
+                "field": "answer_quote",
+                "event_id": "final",
+                "quote": "用 TensorRT Model Optimizer（ModelOpt）做 INT8 PTQ（内部使用 ONNXRuntime 的 entropy 校准）/ QAT，导出带 QuantizeLinear/DequantizeLinear 的 ONNX。"
+              },
+              {
+                "field": "evidence_quote",
+                "event_id": "call_01_XcwNmTGam5bwX8aBdQM62451.result",
+                "quote": "构建 INT8 引擎时，构建器执行以下步骤：1. 构建一个 32 位引擎，在校准集上运行它，并为激活值分布的每个张量记录一个直方图。2. 从直方图构建一个校准表，为每个张量提供一个比例值。3. 根据校准表和网络定义构建 INT8 引擎。"
+              }
+            ]
+          },
+          {
+            "metric": "M9",
+            "bad_refs": [
+              {
+                "event_id": "run-end",
+                "quote": "TensorRT 当前最新具体版本号未取得：本轮只取到 10.3.0 Release Notes 页，未抓取最新版 Release Notes 页，故不指定\"最新版本\"。"
+              }
+            ]
+          }
+        ],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

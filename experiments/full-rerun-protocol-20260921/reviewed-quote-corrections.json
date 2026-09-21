@@ -442,5 +442,96 @@
     "original": "CANN 8.5.0 及以后（含 9.x，如 CANN 9.1.0）：source /usr/local/Ascend/cann/set_env.sh；CANN 8.5.0 之前：source /usr/local/Ascend/ascend-toolkit/set_env.sh",
     "replacement": "CANN 8.5.0 及以后（含 9.x，如 CANN 9.1.0）：\n\n```bash\n# root 用户安装（默认 /usr/local/Ascend）：\nsource /usr/local/Ascend/cann/set_env.sh\n\n# 非 root 用户安装（默认 $HOME/Ascend）：\nsource ${HOME}/Ascend/cann/set_env.sh\n```\n\nCANN 8.5.0 之前（如 8.2.RC1、7.x、6.x）：\n\n```bash\n# root 用户安装：\nsource /usr/local/Ascend/ascend-toolkit/set_env.sh\n\n# 非 root 用户安装：\nsource ${HOME}/Ascend/ascend-toolkit/set_env.sh\n# 官方 samples 文档中的等价写法：. $HOME/Ascend/ascend-toolkit/set_env.sh\n```\n\n",
     "basis": "Root exact-span verification; full original claims retained including code layout/intervening paragraphs."
+  },
+  {
+    "case": "case-75590c766a78",
+    "event_id": "run-end",
+    "original": "定位方法（按推荐顺序）：1. CUDA_LAUNCH_BLOCKING=1；2. PYTORCH_USE_CUDA_DSA=1 直接给出 kernel 名与两侧 file:line；3. compute-sanitizer 精确到 kernel/线程；4. cuda-gdb 现场调试；5. torch.cuda.synchronize() 二分等辅助手段",
+    "replacement": "<answer>\n\n## 错误本质与为什么栈指向的行不对\n\n`device-side assert triggered` 表示某个 CUDA kernel 内部的 `assert()` 失败（在 PyTorch 中绝大多数是索引越界：`cross_entropy` 的 target ≥ num_classes、`embedding`/`gather`/`scatter`/`index_select` 索引越界或为负）。由于 CUDA kernel 异步执行，错误在之后的某个同步点才被上报，所以 Python traceback 指向的往往不是真正出错的行。PyTorch 官方源码（`c10/cuda/CUDAException.cpp` 的 `c10_cuda_check_implementation`）就是在这个检查点拼接错误信息并检查 device 断言缓存的。\n\n## 定位方法（按推荐顺序）\n\n### 1. 先开同步执行，让栈指对行（NVIDIA 官方）\n\n```bash\nCUDA_LAUNCH_BLOCKING=1 python train.py\n```\n\nNVIDIA CUDA Programming Guide 附录 5.2.3.1 原文：该变量\"specifies whether to disable or enable asynchronous kernel launches… This allows CUDA API errors to be observed at the exact API call that triggered them, rather than later in the execution.\"（取值 `1` 禁用异步，默认 `0`；会变慢，仅用于调试）。\n来源：https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html\n\n### 2. 开 PyTorch 的 Device-Side Assertion（DSA）报告，直接给出 kernel 名与两侧 file:line（PyTorch 官方源码）\n\n```bash\nPYTORCH_USE_CUDA_DSA=1 python train.py\n# 需要同时打出 kernel 启动点的完整回溯时：\nPYTORCH_USE_CUDA_DSA=1 PYTORCH_CUDA_DSA_STACKTRACING=1 python train.py\n```\n\n依据 `c10/cuda/CUDADeviceAssertionHost.cpp`（逐字核实）：\n- `check_env_for_dsa_enabled()` 读取环境变量 **`PYTORCH_USE_CUDA_DSA`**（`env_flag_set(\"PYTORCH_USE_CUDA_DSA\")`）；\n- `check_env_for_enable_launch_stacktracing()` 读取 **`PYTORCH_CUDA_DSA_STACKTRACING`**；\n- 启用后报错会调用 `c10_retrieve_device_side_assertion_info()`，输出内容包括：GPU 断言消息、**断言所在的 CUDA 源文件：行号**、device 函数名、失败线程的 thread ID / block ID、**kernel 启动处的 Python/C++ 侧文件：行号、函数名、kernel 名、stream**，以及可选的启动点回溯；\n- 前提条件：所有 GPU compute capability ≥ 6（需要 managed memory，`dsa_check_if_all_devices_support_managed_memory`），否则提示 \"Device-side assertions disabled because not all devices support managed memory.\"；\n- 当前 main 分支中 `TORCH_USE_CUDA_DSA` 在 `USE_CUDA` 下自动定义（`CUDADeviceAssertionHost.h`），运行时仍需上述环境变量激活。\n- **未核实处**：`PYTORCH_USE_CUDA_DSA` 是从哪个 PyTorch 版本开始可用、旧版本会打印何种\"not compiled with TORCH_USE_CUDA_DSA\"提示，本轮未取得官方版本对照表；已知条件是\"较新的、带 DSA 编译的版本\"。\n\n来源（均为官方源码，逐字抓取，无截断）：\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.cpp\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.h\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.cpp\n- https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.h\n\n### 3. 用 Compute Sanitizer 精确到 kernel / 线程（NVIDIA 官方）\n\n```bash\n# PyTorch 程序直接套在 python 外层（memcheck 为默认工具）\ncompute-sanitizer python train.py\n\n# 只检查名字匹配的 kernel；或跳过前 N 次启动、只查 M 次\ncompute-sanitizer --kernel-name regex='embedding' python train.py\ncompute-sanitizer --launch-skip 1000 --launch-count 50 python train.py\n\n# 首个错误处生成 coredump，供 cuda-gdb 事后分析\ncompute-sanitizer --generate-coredump python train.py\n```\n\n官方文档要点（https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html ，该页有明确截断标记，截断于 Memcheck 示例中部）：\n- Compute Sanitizer 随 CUDA toolkit 安装，`--tool` 可选 `memcheck/racecheck/initcheck/synccheck`，默认 memcheck；\n- 对\"Precise\"错误（内存越界/未对齐），可报告 kernel 名、指令 PC、线程与块坐标、访问地址；自编 CUDA kernel 需用 `-lineinfo`（不影响优化）或 `-G` 编译才有 file:line，release 构建只有 kernel 名；\n- **注意**：device 侧 assert 属于硬件报告的 \"Hardware exception (Imprecise)\" 类，官方明言这类错误\"may not be able to attribute the cause of the error back to the source file and line\"——即 compute-sanitizer 能告诉你出错的 kernel，行号归因可能不精确；\n- 该文档未专门讨论 assert 场景，也未说明旧 `cuda-memcheck` 的弃用状态（此点未能核实，需查 CUDA Release Notes）。\n\n### 4. cuda-gdb 现场/事后调试（NVIDIA 官方）\n\n```bash\nCUDA_DEVICE_WAITS_ON_EXCEPTION=1 python train.py   # 进程在设备异常处暂停\ncuda-gdb -p <pid>                                  # 附着检查 live GPU 状态\n```\n\n`CUDA_DEVICE_WAITS_ON_EXCEPTION`（同一环境变量附录 5.2.3.6，取值 0/1，默认 0）：\"a CUDA application will halt and wait when a device-side exception occurs, allowing a debugger, such as cuda-gdb, to be attached to inspect the live GPU state\"。\n\n### 5. 辅助手段（社区通行做法，本轮未抓取正文核实）\n\n- 在可疑区间插 `torch.cuda.synchronize()` 二分定位（效果同 1 的手动版）；\n- 把数据/模型搬到 CPU 复跑，CPU 路径通常给出明确的 \"index out of bounds\" 报错；\n- 事后检查最常见根因：`(target >= num_classes).any()`、`(idx >= num_embeddings).any()`、负索引、混入 NaN。\n\n## 版本适用性（M9 范围）\n\n- `CUDA_LAUNCH_BLOCKING`、`CUDA_DEVICE_WAITS_ON_EXCEPTION`：当前 CUDA Programming Guide（页面更新于 2026-09）记载，适用于现行 CUDA 工具链；引入版本未在所取正文中给出（未核实）。\n- `compute-sanitizer`：随 CUDA toolkit 安装（文档正文未给最低版本号）；`--generate-coredump` 需 CUDA 11.6 起。\n- `PYTORCH_USE_CUDA_DSA` / `PYTORCH_CUDA_DSA_STACKTRACING`：以 PyTorch main 分支源码为准（2026-09 抓取）；确切引入版本未核实。\n- 上述均未能在本轮锁定到具体引入版本号，只能给出有依据的适用条件。\n\n## 来源清单\n\n官方（正文已取得）：\n1. https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html （有截断）\n2. https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html （`CUDA_LAUNCH_BLOCKING` 条目完整取得）\n3. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.cpp\n4. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDAException.h\n5. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.h\n6. https://raw.githubusercontent.com/pytorch/pytorch/main/c10/cuda/CUDADeviceAssertionHost.cpp\n\n第三方（仅见标题/摘要，未取正文）：CSDN（blog.csdn.net/weixin_42561040/article/details/160704542 等）、腾讯云开发者社区（cloud.tencent.com/developer/article/2363866 等）、知乎专栏（zhuanlan.zhihu.com/p/14373043490）。\n\n无法核实处汇总：PyTorch DSA 环境变量的确切引入版本；旧版 `cuda-memcheck` 弃用的官方声明；第三方文章正文中的具体主张。\n\n</answer>\n\n<stop_reason>\n达到并略超检索预算上限后停止：WebSearch 已用满 4 次（上限 4），WebFetch 已用 7 次（上限 8）。任务所需核心信息（官方定位手段、命令、参数、版本条件）已从 NVIDIA 官方文档与 PyTorch 官方源码取得，剩余未核实项（PyTorch DSA 引入版本、cuda-memcheck 弃用声明）在预算内无法通过进一步抓取解决，已在答案中标注。停止原因为：预算耗尽且核心问题已可回答，非因异常中断。\n</stop_reason>",
+    "basis": "Root preserves complete final answer because original compressed quotation spans multiple disjoint sections. No source text substituted; no claims dropped."
+  },
+  {
+    "case": "case-f2b192d8a946",
+    "event_id": "run-end",
+    "original": "dist.init_process_group(backend=\"nccl\") ... torchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py ... MASTER_ADDR | 必需（rank 0 除外）；rank 0 节点地址",
+    "replacement": "<answer>\n\n# PyTorch 多机多卡分布式训练（DDP + NCCL）完整方案\n\n以下内容依据 PyTorch 2.14 官方文档（tutorial 与 API 文档正文均已取得）。\n\n## 1. 初始化（代码）\n\n每个进程绑定一张 GPU，然后初始化进程组，后端选 `nccl`：\n\n```python\nimport os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\nfrom torch.utils.data.distributed import DistributedSampler\n\n# torchrun 会注入 LOCAL_RANK 等环境变量\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\ntorch.cuda.set_device(local_rank)   # 防止所有进程挤占 GPU:0 导致挂起/显存暴涨\n\n# torchrun 已注入 MASTER_ADDR/MASTER_PORT/RANK/WORLD_SIZE，init_method 默认 env://\ndist.init_process_group(backend=\"nccl\")\n\nmodel = model.to(local_rank)\nmodel = DDP(model, device_ids=[local_rank], output_device=local_rank)\n\ntrain_sampler = DistributedSampler(train_dataset)\ntrain_loader = torch.utils.data.DataLoader(\n    dataset=train_dataset, batch_size=32, shuffle=False,\n    sampler=train_sampler,   # 用 DistributedSampler 时 shuffle 必须为 False\n)\n\nfor epoch in range(epochs):\n    train_sampler.set_epoch(epoch)   # 每个 epoch 必须调用，否则 shuffle 顺序不变\n    ...\n\ndist.destroy_process_group()   # 结束时所有 rank 都要调用，否则可能挂起\n```\n\n`init_process_group` 当前完整签名（2.14 文档）：\n`init_process_group(backend=None, init_method=None, timeout=None, world_size=-1, rank=-1, store=None, group_name='', pg_options=None, device_id=None)`。不传 `init_method` 和 `store` 时默认 `env://`。\n\n官方教程也支持 `device_id` 传加速器对象的写法（如 `torch.accelerator.set_device_index(int(os.environ[\"LOCAL_RANK\"]))` 后 `dist.init_process_group(backend)`），NCCL 下会立即建立 communicator 并使用 `ncclCommSplit`。\n\n若含 BatchNorm，需转换：`torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)`。\n\n## 2. 启动命令（多机）\n\n官方推荐 `torchrun`（即 `torch.distributed.run`；`torch.distributed.launch` 已废弃）。\n\n**多机多卡（官方教程原文命令）**——两台机器、每台 8 卡，两台机器上执行相同命令：\n\n```bash\ntorchrun --nnodes=2 --nproc_per_node=8 --rdzv_id=100 \\\n  --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:29400 \\\n  elastic_ddp.py\n```\n\n要点：\n- `$MASTER_ADDR` 必须在所有节点上一致（通常是 rank 0 所在机器的地址）；`--rdzv-endpoint` 不写端口时默认 29400。\n- `--rdzv-backend` 官方推荐 `c10d`（也支持 `etcd-v2` 和 legacy `etcd`）。\n- `--nproc-per-node` 可为整数，或 `\"gpu\"`/`\"cpu\"`/`\"auto\"`。\n- 弹性模式：`--nnodes=1:4`（min:max）+ `--max-restarts=3`；固定规模容错：`--nnodes=$NUM_NODES --max-restarts=3`。\n- 单机多进程可用 `--standalone`。\n\nSLURM 集群示例（官方文档原文）：\n\n```bash\nexport MASTER_ADDR=$(scontrol show hostname ${SLURM_NODELIST} | head -n 1)\nsrun --nodes=2 ./torchrun_script.sh\n```\n\n注意：`torchrun` 只负责在**当前节点**起进程；要在多台机器上跑，需要集群管理工具（如 SLURM）在每台机器上执行同一条命令，或手动在每台机器分别运行（命令相同，无需手写 `--node_rank`，rank 由 rendezvous 自动分配）。\n\n旧式写法（不推荐，已废弃）：\n```bash\npython -m torch.distributed.launch --nnodes=2 --node_rank=$i --nproc_per_node=8 ...\n```\ntorchrun 从 2.0 起向脚本传 `--local-rank`（横线，取代旧的 `--local_rank`），脚本 argparse 建议两者都注册。\n\n## 3. 环境变量\n\n**`env://` 初始化必需的 4 个变量**（手动初始化时需自己 export；torchrun 会自动注入）：\n\n| 变量 | 说明 |\n|---|---|\n| `MASTER_ADDR` | 必需（rank 0 除外）；rank 0 节点地址 |\n| `MASTER_PORT` | 必需；rank 0 机器上的空闲端口 |\n| `WORLD_SIZE` | 必需；也可在 init 调用中传入 |\n| `RANK` | 必需；也可在 init 调用中传入 |\n\n**torchrun 注入脚本的完整环境变量列表**（官方 torchrun 文档）：\n`LOCAL_RANK`（节点内局部 rank）、`RANK`（全局 rank）、`GROUP_RANK`（节点 rank，0..max_nnodes）、`ROLE_RANK`、`LOCAL_WORLD_SIZE`（= `--nproc-per-node`）、`WORLD_SIZE`、`ROLE_WORLD_SIZE`、`MASTER_ADDR`（rank 0 所在主机 FQDN）、`MASTER_PORT`、`TORCHELASTIC_RESTART_COUNT`、`TORCHELASTIC_MAX_RESTARTS`、`TORCHELASTIC_RUN_ID`、`PYTHON_EXEC`。\n\n**NCCL 相关调优/排障变量**（torch.distributed 文档）：\n- `NCCL_DEBUG=INFO`（排障）、`NCCL_DEBUG_SUBSYS=COLL`/`GRAPH`\n- `NCCL_SOCKET_IFNAME=eth0`（多网卡机器指定通信网卡，多机训练常必需）\n- `NCCL_SOCKET_NTHREADS`、`NCCL_NSOCKS_PERTHREAD`（socket 带宽调优）\n- `TORCH_NCCL_BLOCKING_WAIT`（超时阻塞等待行为）\n\n## 4. 关键约束（官方）\n\n- **NCCL 是 CUDA GPU 分布式训练唯一推荐后端**；InfiniBand/GPUDirect 只有 NCCL 支持；出问题可回退 Gloo（较慢）。\n- 每个进程必须**独占**其使用的 GPU，多进程共享同一 GPU 会死锁或 NCCL invalid usage。\n- NCCL 默认 collective 超时 10 分钟。\n- 所有 rank 的 collective 调用顺序必须全局一致。\n- checkpoint 只在 `rank == 0` 保存，且保存分支内不能含 collective 调用；读取权重用 `model.module.state_dict()`。\n- 每卡 batch 32 × 4 卡 = 有效 batch 128（等效批量 = batch_size × 进程数）。\n\n## 来源\n\n- https://docs.pytorch.org/tutorials/intermediate/ddp_tutorial.html（DDP 教程，含多机 torchrun 命令与 SLURM 示例，直接正文）\n- https://docs.pytorch.org/tutorials/beginner/ddp_series_multigpu.html（DDP 实操教程，直接正文）\n- https://docs.pytorch.org/docs/stable/distributed.html（torch.distributed API，直接正文但有截断：file:// 初始化节缺失、P2P 节中断）\n- https://docs.pytorch.org/docs/stable/elastic/run.html（torchrun 文档，直接正文，含环境变量表与 Important Notices）\n\n## 无法核实处\n\n- 各命令未实际运行（无本机执行；仅文档内容核查）。\n- distributed.html 页面截断，`file://` 共享文件系统初始化细节未取得完整正文（多机也可用此法，但未在本次取得官方完整说明）。\n- 文档标注 \"2.14.0+cu130 / Last Updated: May-Sep 2026\"；NCCL 库自身版本要求（与 PyTorch 捆绑的 NCCL 具体版本号）未在所取正文中出现，无法核实。\n</answer>\n\n<stop_reason>\n任务所需内容已齐全：官方 DDP 教程、torch.distributed API、torchrun 文档四份直接正文全部取得，覆盖原题的初始化代码、多机启动命令、环境变量三部分；另完成一次二手材料可发现度检索。共用 WebSearch 2 次、WebFetch 4 次，未超预算，正常完成停止。\n</stop_reason>",
+    "basis": "Root preserves complete final answer because original compressed quotation spans multiple disjoint sections. No source text substituted; no claims dropped."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+    "original": "## 2. [IInt8EntropyCalibrator2 — NVIDIA TensorRT Standard Python …] (https://developer.nvidia.com/docs/drive/drive-os/6.0.9.2/public/drive-os-tensorrt/api-reference/docs/python/infer/Int8/EntropyCalibrator2.html)",
+    "replacement": "## 2. [IInt8EntropyCalibrator2 — NVIDIA TensorRT Standard Python …](https://developer.nvidia.com/docs/drive/drive-os/6.0.9.2/public/drive-os-tensorrt/api-reference/docs/python/infer/Int8/EntropyCalibrator2.html)",
+    "basis": "Exact Markdown link syntax transcription correction; title, result rank and URL unchanged."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+    "original": "## 4. [7. TensorRT 中的 INT8 - NVIDIA 技术博客] (https://developer.nvidia.cn/blog/tensorrt-int8-cn/)",
+    "replacement": "## 4. [7. TensorRT 中的 INT8 - NVIDIA 技术博客](https://developer.nvidia.cn/blog/tensorrt-int8-cn/)",
+    "basis": "Exact Markdown link syntax transcription correction; title, result rank and URL unchanged."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "event_id": "call_00_dMYs10kAqRJZ7Mzje0EE2027.result",
+    "original": "## 1. [TensorRT INT8量化原理以及如何编写校准器类进行校准 ...] (https://blog.csdn.net/oYeZhou/article/details/106719154)",
+    "replacement": "## 1. [TensorRT INT8量化原理以及如何编写校准器类进行校准 ...](https://blog.csdn.net/oYeZhou/article/details/106719154)",
+    "basis": "Exact Markdown link syntax transcription correction; title, result rank and URL unchanged."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "event_id": "call_00_82SvO1I8D2LcUlr3HtDG0380.result",
+    "original": "## 5. [tensorrt官方int8量化方法汇总 - 知乎] (https://zhuanlan.zhihu.com/p/648877516)",
+    "replacement": "## 5. [tensorrt官方int8量化方法汇总 - 知乎](https://zhuanlan.zhihu.com/p/648877516)",
+    "basis": "Exact Markdown link syntax transcription correction; title, result rank and URL unchanged."
+  },
+  {
+    "case": "case-2acc20ed6eef",
+    "event_id": "call_00_je2WRg6CZQoM1kKrkImW2708.result",
+    "original": "## 5. [TensorRT 10.1 中隐式量化 API 报错“已弃用”，如何迁移到显 ...] (https://ask.csdn.net/questions/9418709/56396376)",
+    "replacement": "## 5. [TensorRT 10.1 中隐式量化 API 报错“已弃用”，如何迁移到显 ...](https://ask.csdn.net/questions/9418709/56396376)",
+    "basis": "Exact Markdown link syntax transcription correction; title, result rank and URL unchanged."
+  },
+  {
+    "case": "case-d4702abc1bd7",
+    "event_id": "call_00_vbR7jCL3Q22aJuOEV3xa7288.result",
+    "original": "msaicerr 环境检查指南：使用内置算子样例验证 CANN 软软硬件环境",
+    "replacement": "msaicerr 环境检查指南：使用内置算子样例验证 CANN 软硬件环境",
+    "basis": "Root verified unchanged substantive wording with actual source punctuation, Markdown/code layout or transcription typo corrected."
+  },
+  {
+    "case": "case-07e24ec7c4c3",
+    "event_id": "call_00_MQpKc8tpYFi98slkmn6N5515.result",
+    "original": "vllm serve /home/models/Qwen2.5-7B-w8a8 --served-model-name \"Qwen2.5-7B-w8a8\" --max-model-len 4096 --quantization ascend",
+    "replacement": "vllm serve /home/models/Qwen2.5-7B-w8a8 \\\n  --served-model-name \"Qwen2.5-7B-w8a8\" \\\n  --max-model-len 4096 \\\n  --quantization ascend",
+    "basis": "Root verified unchanged substantive wording with actual source punctuation, Markdown/code layout or transcription typo corrected."
+  },
+  {
+    "case": "case-697173c28269",
+    "event_id": "call_00_zcx4KQmK52D9QwWeNdap8656.result",
+    "original": "PyTorch与CUDA版本对齐指南（2026最新） 本文详细讲解了 PyTorch …",
+    "replacement": "PyTorch与CUDA版本对齐指南（2026最新） 本文详细讲解了PyTorch …",
+    "basis": "Root verified unchanged substantive wording with actual source punctuation, Markdown/code layout or transcription typo corrected."
+  },
+  {
+    "case": "case-195e0f2168b0",
+    "event_id": "call_00_1dBLR7ddcMPjaY5nsx2Z6030.result",
+    "original": "**CUDA version**: **13.4** (also referred to as **CUDA 13.4 Update 1**, and download checksum page for **13.4.1**)",
+    "replacement": "**CUDA version** | **13.4** (also referred to as **CUDA 13.4 Update 1**, and download checksum page for **13.4.1**)",
+    "basis": "Root verified unchanged substantive wording with actual source punctuation, Markdown/code layout or transcription typo corrected."
+  },
+  {
+    "case": "case-a081938d85e5",
+    "event_id": "call_00_JSwqavxrlfQDDcb6sTvj9957.result",
+    "original": "it **contains no content on float64/double precision, tolerances (rtol/atol), or gradcheck usage examples**",
+    "replacement": "**contains no content on `float64`/double precision, tolerances (`rtol`/`atol`), or `gradcheck` usage examples**",
+    "basis": "Root verified unchanged substantive wording with actual source punctuation, Markdown/code layout or transcription typo corrected."
+  },
+  {
+    "case": "case-50ec2ffb0406",
+    "event_id": "call_00_tiNWmKnPwjpsbSCKYS5w7158.result",
+    "original": "动态shape场景下,输入的shape是未知的。",
+    "replacement": "动态shape场景下,输入的shape是未知的｡",
+    "basis": "Root verified unchanged substantive wording with actual source punctuation, Markdown/code layout or transcription typo corrected."
   }
 ]
