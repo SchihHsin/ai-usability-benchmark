@@ -68,7 +68,7 @@ for run in (R/'runs').iterdir():
        if isinstance(decoded,str):variants.append(decoded)
        else:break
       for correction in (json.loads((R/'reviewed-quote-corrections.json').read_text()) if (R/'reviewed-quote-corrections.json').exists() else []):
-       if correction['event_id']==x['event_id'] and correction['original']==q:variants.append(correction['replacement'])
+       if correction.get('case',item['case'])==item['case'] and correction['event_id']==x['event_id'] and correction['original']==q:variants.append(correction['replacement'])
       exact=next((v for v in variants if v.strip() and v in source),None)
       if exact is None and ('……' in q or '...' in q):
        pieces=re.split(r'……|\.\.\.',q)
