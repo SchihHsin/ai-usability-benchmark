@@ -13,6 +13,10 @@ def main():
  for name,digest in freeze.items():
   assert hashlib.sha256((R/name).read_bytes()).hexdigest()==digest, name+' changed after freeze'
  ledger=R/('ledger-'+MODEL+'.jsonl'); done={}
+ exfile=R/'collection-exhausted.json'
+ if exfile.exists():
+  for z in json.loads(exfile.read_text()).get('skipped',[]):
+   EXHAUSTED[(z['task'],z['ecosystem'])]={'reason':z.get('reason','two technical failures exhausted retry allowance'),'runs':z.get('runs',[])}
  if ledger.exists():
   for line in ledger.read_text().splitlines():
    x=json.loads(line)
@@ -43,7 +47,7 @@ def main():
      done[(t,e)]=rec; break
     fail_counts[(t,e)]=fail_counts.get((t,e),0)+1
     if fail_counts[(t,e)]>=2:
-     EXHAUSTED[(t,e)]={'reason':'two technical failures exhausted retry allowance','runs':[z['run_id'] for z in [rec] if z.get('run_id')]}
+     EXHAUSTED[(t,e)]={'reason':'two technical failures exhausted retry allowance','runs':[json.loads(line).get('run_id') for line in ledger.read_text().splitlines() if json.loads(line).get('task')==t and json.loads(line).get('ecosystem')==e and not json.loads(line).get('completed')]}
      skipped.append({'task':t,'ecosystem':e,**EXHAUSTED[(t,e)]})
      (R/'collection-exhausted.json').write_text(json.dumps({'model':MODEL,'skipped':skipped},ensure_ascii=False,indent=2)+'\n')
      break

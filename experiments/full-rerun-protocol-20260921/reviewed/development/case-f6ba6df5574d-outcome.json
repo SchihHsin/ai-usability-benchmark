@@ -1,0 +1,194 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_3_4b855af3.result",
+      "evidence_quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:<xx.yy>-py3 tritonserver --model-repository=/models",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；子要求逐项核对：(1) model repository 布局——数字版本子目录、'非数字名或 0 开头会被忽略'、各 backend 默认文件名 model.plan/model.onnx/model.pt 及 default_model_filename 覆盖，见 WebFetch_2_fd288185.result（'非数字命名的子目录、或以字符 0 开头的目录名将**被忽略**'；'以上所有默认文件名均可通过模型配置中的 default_model_filename 属性覆盖'）。(2) config.pbtxt——platform tensorrt_plan、max_batch_size、input/output 必填字段、[-1]+dims 规则、可变维度 -1、instance_group 默认每 GPU 1 实例、auto-complete 与 --disable-auto-complete-config、cc_model_filenames、version_policy，均见 WebFetch_1_2f6135f4.result（如 '系统中**每块 GPU 默认创建 1 个执行实例**'、'当 max_batch_size > 1 且未指定调度器时自动启用'）。(3) trtexec 生成 engine——--onnx/--saveEngine/--fp16/--skipInference/--minShapes 等旗标定义见 WebFetch_6_6731356a.result，动态 shape 语法 'trtexec --onnx=model.onnx --minShapes=input:1x3x244x244 --optShapes=input:16x3x244x244 --maxShapes=input:32x3x244x244 --shapes=input:5x3x244x244' 见 WebFetch_9_972c93b7.result，答案并如实标注组合命令非原文单条示例。(4) 起服务与验证——docker run 命令、端口 8000/8001/8002、curl -v localhost:8000/v2/health/ready、客户端 -py3-sdk 镜像均逐字对应 WebFetch_3_4b855af3.result。(5) 版本——'Release 2.72.0 corresponding to NGC container 26.08' 及 cu134/cp312 artifact 名见 WebFetch_10_0e2f802e.result；TensorFlow backend 25.02 后移除见 WebSearch_7_78378e11.result（'The last release of Triton Inference Server with the Tensorflow Backend is 25.02'）。远程仓库 s3/gs/as 见 WebFetch_2。答案明确列出无法核实项，未将未证内容冒充已证。主问题（部署流程、仓库配置、起服务）已全部覆盖并有来源支撑。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "服务栈组件已定到具体版本，容器内 TensorRT 精确版本未定",
+      "reason": "原题实际需要定版的组件为所选 Triton 服务栈。最终答案给出 Triton Server 2.72.0 ↔ NGC 容器 26.08、cu134（CUDA 13.4）、Python 3.12，与 WebFetch_10_0e2f802e.result 的 release 标题及 artifact 名（tritonserver-2.72.0+nv26.08-cu134-cp312）一致，有依据且无冲突；并给出容器 tag 规则。但部署栈中的 TensorRT 本身仅给出'随容器内置、查 Frameworks Support Matrix'的范围性说明，未取得 26.08 对应的具体 TensorRT 版本号，答案自己承认'本次未逐字取得'。属'所有所需组件均给出有依据的适用范围，但至少一项尚未定到具体版本'，记 4 分；.plan 与 TRT 版本绑定的风险已给出缓解建议（容器内运行 trtexec）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "最新 release（GitHub，2026-08-31）：**Triton Server 2.72.0 ↔ NGC 容器 26.08**，artifact 标注 `cu134`（CUDA 13.4）、Python 3.12"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "TensorRT 版本随容器内置，配套关系查 Frameworks Support Matrix（docs.nvidia.com/deeplearning/frameworks/support-matrix）；本次未逐字取得 26.08 对应的 TensorRT 具体小版本"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "最终答案给出可直接执行的完整命令：docker run 含具体镜像 tag 26.08-py3、端口映射、仓库挂载与服务参数；启动前提（NVIDIA 驱动 + Container Toolkit）已写明；验证命令 curl -v localhost:8000/v2/health/ready 及客户端 SDK 镜像命令完整；config.pbtxt 给出可照抄的最小配置；trtexec 静态与动态 shape 命令含全部必要参数，语法与官方 README 一致。需替换的仅为明确标识的环境值：仓库路径、模型名、输入名与维度。扣至 4 而非 5 的原因：四参数合一的 trtexec 命令为按官方语法拼接（答案自标'非原文单条示例'），且'TensorRT backend 直接加载 ONNX 自动转 TRT'的配置路径答案自认未取得官方逐字说明，属需补充/未证实内容，不满足 5 分'无需补写或修正'标准；但关键操作本身均可据答案确定，超过 3 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "curl -v localhost:8000/v2/health/ready   # 200 即就绪"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "四参数合一的 trtexec 完整命令为按官方语法拼接，非原文单条示例"
+        }
+      ],
+      "raw_status": "操作指导完整，仅需替换明确标识的用户环境参数"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "run-end",
+          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models"
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "docker run --gpus=1 --rm -p8000:8000 -p8001:8001 -p8002:8002 -v/full/path/to/model_repository:/models nvcr.io/nvidia/tritonserver:26.08-py3 tritonserver --model-repository=/models"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-f6ba6df5574d",
+  "task_id": "S",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "5d6e09bd7e31499092c691d9cea2cda6",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "dc47671d5f23b2a9413ad9846809f8ec",
+        "conversationRequestId": "dc47671d5f23b2a9413ad9846809f8ec",
+        "agent": "cli"
+      },
+      {
+        "messageId": "5d6e09bd7e31499092c691d9cea2cda6",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "dc47671d5f23b2a9413ad9846809f8ec",
+        "conversationRequestId": "dc47671d5f23b2a9413ad9846809f8ec",
+        "rawUsage": {
+          "prompt_tokens": 23734,
+          "completion_tokens": 5163,
+          "total_tokens": 28897,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 3555,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 22072
+          },
+          "prompt_cache_hit_tokens": 22072,
+          "prompt_cache_miss_tokens": 1662,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 3555,
+          "credit": 4.04,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 23734,
+          "outputTokens": 5163,
+          "totalTokens": 28897,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 22072
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 3555
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "756ea58c9555d0cd8664d38a339f02cb0408250f4427523e84fe3bf5610ed224",
+    "process_sha256": "f65f83f8653d5169c0a0873ade0eab978262bc98192f28df9156632172987789",
+    "elapsed_seconds": 86.35,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-830e9cf6964c4a80bc17090ff4c40f40",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-f6ba6df5574d-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

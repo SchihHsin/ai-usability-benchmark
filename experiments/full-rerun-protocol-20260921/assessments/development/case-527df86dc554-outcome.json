@@ -1,0 +1,243 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "TensorRT 层：用 optimization profile 为每个动态输入张量定义 min / opt / max 三个 shape；Triton 层：max_batch_size + dynamic_batching {} 负责请求级动态 batching；dims 中的 -1 负责张量空间维的动态 shape",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+      "evidence_quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor. This function must be called for any network input tensor that has dynamic dimensions.",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题包含三个子要求：(1) TensorRT optimization profile/min-opt-max 配置——答案给出完整 Python 代码（create_optimization_profile、set_shape、add_optimization_profile、set_input_shape）及三条 set_shape 硬约束，逐字引用官方 IOptimizationProfile API 页（11.3.0），与 sources 中 call_00_xv5aQFu2brzuzFnrX04G5583.result 原文完全一致；(2) Triton dynamic batching——答案给出 dynamic_batching {} 语法、preferred_batch_size、max_queue_delay_microseconds，与 call_00_HRbVosVDH4k6vzj0KizI7920.result 官方教程逐字一致；(3) Triton 动态 shape（dims -1 与 max_batch_size 关系）——答案引用 Model Configuration 官方页（call_00_w6U3FYsNbwMotA7h5uI09143.result）中 'full shape is formed as [-1] + dims' 及 dims: [4, -1] 逐字原文。答案还提供完整 config.pbtxt 模板、Docker 启动命令、运行时绑定示例，并诚实标注 C++ API 及 TRT backend 显式 profile 参数为未核验。三个子要求均有官方来源支撑，判定 supported。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "TRT 版本 ↔ Triton 版本 ↔ CUDA 的配套对照表本轮未取得"
+        },
+        {
+          "event_id": "final",
+          "quote": "TRT 8+/10+/11+ explicit batch 为默认"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "答案提供了完整的可执行方案：(1) TRT Python 代码包含完整导入、网络创建、parser、profile set_shape 三组具体数值、build_serialized_network 调用链；(2) Triton config.pbtxt 模板字段齐全（platform、max_batch_size、input/output dims、dynamic_batching 参数、instance_group）；(3) Docker 启动命令完整。仅需用户替换的环境参数已明确标识：model.onnx 路径、nvcr.io/nvidia/tritonserver:yy.mm-py3 中的版本标签、输入/输出名称及维度等。代码内部逻辑经与官方 API 文档比对无错误（set_shape 参数顺序、约束条件均正确）。未标伪代码或省略步骤。C++ 部分虽标注未核验但为附加内容，不影响主要 Python 路径的可执行性。扣1分因 yy.mm 版本标签及部分 Triton TRT backend 参数需用户自行确认版本后填入。",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "profile.set_shape(\"input\", min=(1, 3, 224, 224), opt=(8, 3, 224, 224), max=(32, 3, 224, 224),)"
+        },
+        {
+          "event_id": "final",
+          "quote": "docker run --gpus=all -it --shm-size=256m --rm -p8000:8000 -p8001:8001 -p8002:8002 -v ${PWD}:/workspace/ -v ${PWD}/model_repository:/models nvcr.io/nvidia/tritonserver:yy.mm-py3 bash"
+        }
+      ],
+      "raw_status": "executable_with_environment_params"
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "TensorRT 层：用 optimization profile 为每个动态输入张量定义 min / opt / max 三个 shape；Triton 层：max_batch_size + dynamic_batching {} 负责请求级动态 batching；dims 中的 -1 负责张量空间维的动态 shape"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+          "quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor. This function must be called for any network input tensor that has dynamic dimensions."
+        }
+      ]
+    },
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "final",
+          "quote": "profile.set_shape(\"input\", min=(1, 3, 224, 224), opt=(8, 3, 224, 224), max=(32, 3, 224, 224),)"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-527df86dc554",
+  "task_id": "T",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "TensorRT 层：用 optimization profile 为每个动态输入张量定义 min / opt / max 三个 shape；Triton 层：max_batch_size + dynamic_batching {} 负责请求级动态 batching；dims 中的 -1 负责张量空间维的动态 shape",
+        "answer_event_id": "final",
+        "evidence_id": "call_00_xv5aQFu2brzuzFnrX04G5583.result",
+        "evidence_quote": "Set the minimum/optimum/maximum dimensions for a dynamic input tensor. This function must be called for any network input tensor that has dynamic dimensions.",
+        "verification": "source",
+        "reason": "原题包含三个子要求：(1) TensorRT optimization profile/min-opt-max 配置——答案给出完整 Python 代码（create_optimization_profile、set_shape、add_optimization_profile、set_input_shape）及三条 set_shape 硬约束，逐字引用官方 IOptimizationProfile API 页（11.3.0），与 sources 中 call_00_xv5aQFu2brzuzFnrX04G5583.result 原文完全一致；(2) Triton dynamic batching——答案给出 dynamic_batching {} 语法、preferred_batch_size、max_queue_delay_microseconds，与 call_00_HRbVosVDH4k6vzj0KizI7920.result 官方教程逐字一致；(3) Triton 动态 shape（dims -1 与 max_batch_size 关系）——答案引用 Model Configuration 官方页（call_00_w6U3FYsNbwMotA7h5uI09143.result）中 'full shape is formed as [-1] + dims' 及 dims: [4, -1] 逐字原文。答案还提供完整 config.pbtxt 模板、Docker 启动命令、运行时绑定示例，并诚实标注 C++ API 及 TRT backend 显式 profile 参数为未核验。三个子要求均有官方来源支撑，判定 supported。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 2,
+        "lower": null,
+        "upper": null,
+        "status": "insufficient_version_lock",
+        "reason": "答案引用了 TRT Python API 11.3.0 文档标题，并提及 'TRT 8+/10+/11+ explicit batch 为默认'，但：(a) 未给出任何具体适用的 TRT 版本或范围作为要求；(b) Triton 版本完全未确定（'Triton 文档页无明确版本号'）；(c) 答案明确承认 'TRT 版本 ↔ Triton 版本 ↔ CUDA 的配套对照表本轮未取得'。版本信息有提及但关键配套关系未确定，落在第2档。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "TRT 版本 ↔ Triton 版本 ↔ CUDA 的配套对照表本轮未取得"
+          },
+          {
+            "event_id": "final",
+            "quote": "TRT 8+/10+/11+ explicit batch 为默认"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "executable_with_environment_params",
+        "reason": "答案提供了完整的可执行方案：(1) TRT Python 代码包含完整导入、网络创建、parser、profile set_shape 三组具体数值、build_serialized_network 调用链；(2) Triton config.pbtxt 模板字段齐全（platform、max_batch_size、input/output dims、dynamic_batching 参数、instance_group）；(3) Docker 启动命令完整。仅需用户替换的环境参数已明确标识：model.onnx 路径、nvcr.io/nvidia/tritonserver:yy.mm-py3 中的版本标签、输入/输出名称及维度等。代码内部逻辑经与官方 API 文档比对无错误（set_shape 参数顺序、约束条件均正确）。未标伪代码或省略步骤。C++ 部分虽标注未核验但为附加内容，不影响主要 Python 路径的可执行性。扣1分因 yy.mm 版本标签及部分 Triton TRT backend 参数需用户自行确认版本后填入。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "profile.set_shape(\"input\", min=(1, 3, 224, 224), opt=(8, 3, 224, 224), max=(32, 3, 224, 224),)"
+          },
+          {
+            "event_id": "final",
+            "quote": "docker run --gpus=all -it --shm-size=256m --rm -p8000:8000 -p8001:8001 -p8002:8002 -v ${PWD}:/workspace/ -v ${PWD}/model_repository:/models nvcr.io/nvidia/tritonserver:yy.mm-py3 bash"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "8e5f394ce9764d52a654d86edd3da5be",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "1912160ed853ef2e9caf66bb8c618b91",
+        "conversationRequestId": "1912160ed853ef2e9caf66bb8c618b91",
+        "agent": "cli"
+      },
+      {
+        "messageId": "8e5f394ce9764d52a654d86edd3da5be",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "1912160ed853ef2e9caf66bb8c618b91",
+        "conversationRequestId": "1912160ed853ef2e9caf66bb8c618b91",
+        "rawUsage": {
+          "prompt_tokens": 25192,
+          "completion_tokens": 4271,
+          "total_tokens": 29463,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 3182,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 23428
+          },
+          "prompt_cache_hit_tokens": 23428,
+          "prompt_cache_miss_tokens": 1764,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 3182,
+          "credit": 3.61,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 25192,
+          "outputTokens": 4271,
+          "totalTokens": 29463,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 23428
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 3182
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "a8bdaaea2e70ad55c2275b58553b5789b28a5332609e47e15ac1e444f8dbebae",
+    "process_sha256": "4de862df2b487cc9e919abe6603417166b3e7f42f25ba178f16b34ebce3e1250",
+    "elapsed_seconds": 72.87,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-2ccde1154a9a45c0bde406cae985c689",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

@@ -93,3 +93,12 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Root restored remaining exact source/final quotations; F-CANN Kimi answer_quote still not found as exact passage, don't fabricate.
 - audit_arithmetic.py independent polynomial check87 computable rows, issues=[]; repeat after final results. paired_summary.py excludes exhausted cell with explicit reason, reports only eligible pairs, no statistical inference. results.html now explicitly marks exhausted cell and links failure record.
 - Latest pushedc20db75 verified; later changes await next push. Frozen29 hashes verified unchanged. Paper/installedSkill unchanged. Continue all other collect/assess units; explicitly report genuine exhausted failures, never claim156 success.
+
+
+## 2026-09-21 14:22 continuation
+
+- Collection146/156; assessed114; gates102; quote-clean109. GLM wrapper continuing after successful V-CUDA retry; exhausted U-CUDA remains uncollected. Kimi last cell active.
+- Root assessment snapshots67275/50539 and supplementary25551 remain active; DeepSeek full pass under Luna. Same frozen protocol and bounded technical attempts.
+- Root restored9 exact same-event source/prior/final quotations in GLM U-CANN, DeepSeek M-CUDA/R-CANN/S-CANN; no scores/rules changed.
+- 31 focused tests pass; selected collection audit issues=[]; independent expanded-polynomial M11 check94 rows issues=[].
+- Continue remaining collection/assessment and evidence checks. Paper and installed skill untouched.

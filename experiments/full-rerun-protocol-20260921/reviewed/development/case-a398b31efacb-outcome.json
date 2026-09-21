@@ -1,0 +1,176 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "三种方式均为**分档（gear）机制**：转换时声明若干支持的档位，推理时选择档位。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_1a966cd00e5a4c3e950349a1.result",
+      "evidence_quote": "设置ND格式下动态维度的档位。适用于执行推理时，每次处理任意维度的场景。",
+      "verification": "source",
+      "reason": "原题各子要求均有官方来源支撑：(1) ATC动态batch：N须首位设-1、双引号内逗号分隔、(1,100]档数、每档建议[1~2048]、om模型新增输入、示例 --input_shape=\"data:-1,3,416,416;img_info:-1,4\" --dynamic_batch_size=\"1,2,4,8\"，与 call_f8d89f7ba07e425ca1eccc51（CANN 8.1.RC1.alpha001 官方完整正文）逐项一致；(2) 动态分辨率：--input_format 仅支持 NCHW/NHWC、分号分隔档位、静态 AIPP 不能开 Crop/Padding 且 src_image_size_w/h 置 0、动态 AIPP 宽高须与 aclmdlSetDynamicHWSize 相等且取最大档位、swapoff -a 建议，与 call_0e8168bbe6f249fe93b865b4（商用版 8.0.RC3 官方完整正文）一致（H/W 两维设-1 另有 call_efcd509dbf184de39f48bea5 第三方摘要佐证）；(3) dynamic_dims：配合 --input_format=ND、每档依次给出所有-1维取值、分号分隔、单输入与多输入示例及档位展开，与本证据 call_1a966cd00e5a4c3e950349a1（商用版 8.0.RC3 官方完整正文）一致；(4) 分档互斥约束（三者不可同用、不与 --input_shape_range 同用、不支持 --framework=1/*.air、不支持过程动态shape算子）在三个官方参数页均逐字出现；(5) ACL 推理侧 aclmdlSetDynamicBatchSize/aclmdlSetDynamicHWSize/aclmdlSetInputDynamicDims 接口名称、模型执行接口之前调用、不调用时按最大档位赋值的默认行为，均见于上述官方页“接口约束”节；(6) MindIE 动态batch：maxBatchSize=Floor[Total Block Num/Block Num]、maxPrefillBatchSize≤maxBatchSize 建议一半、maxPrefillTokens 一般不超 8192、maxQueueDelayMicroseconds 必填默认 5000、supportSelectBatch 吞吐/首token权衡、maxPreemptCount>0 需 cpuMemSize>0 与 MIES_USE_MB_SWAPPER=1、npuMemSize 0.8 系数及 LLaMA3-8B 双卡配置示例，与 call_e8bd37665ead496a8f307132（MindIE 2.0.RC2 官方完整正文）一致。答案诚实声明的延伸缺口（ACL 函数签名、--input_shape_range 详情、--dynamic_input_shape 存在性存疑、ScheduleConfig 层级、未实际运行）不否定原题主干配置方法的正确性与完整性。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 5,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "所需定版组件为所选 ATC/MindIE 动态 shape 参数。最终答案对每一组件均给出有依据的具体版本：--dynamic_batch_size→CANN 社区版 8.1.RC1.alpha001（来源3 完整正文）、--dynamic_dims 与 --dynamic_image_size→CANN 商用版 8.0.RC3（来源1/2 完整正文，抓取页面标题即含版本号）、MindIE 动态 batch→MindIE 2.0.RC2（来源4 完整正文），ACL 接口亦锚定在 8.0.RC3 官方文档链接上下文。三个 ATC 参数互斥使用，不存在需同版联用的配套冲突；dynamic_batch_size 跨版本取材（8.0.RC3 页面无正文、取自 8.1.RC1.alpha001）已在答案中显式声明，与 sources 一致，属已说明的取材边界而非未解决冲突。--dynamic_input_shape 存疑项非原题所需组件。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "（CANN 商用版 8.0.RC3 官方原文）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "（CANN 8.1.RC1.alpha001 官方原文）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "以下依据 MindIE 2.0.RC2 官方文档）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "ATC 侧操作指导完整：三条参数的完整示例（含档位语法、--input_format=ND、互斥与 AIPP 前提、swapoff -a 环境建议）可直接嵌入 atc 命令使用，型号覆盖与约束明确。但整体需补充缺失内容才能全程执行，具体缺口由答案自列：ACL 推理侧仅有接口名称与调用时机，无函数签名、参数表或调用代码；MindIE 侧 maxBatchSize 等调度参数所在 ScheduleConfig 的 JSON 层级未取得（官方示例仅展示 ModelDeployConfig 片段，完整结构需借第三方文章补足）。按档3：有具体操作方案但需补充缺失内容方可执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "--input_shape=\"data:1,-1\"  --dynamic_dims=\"4;8;16;64\" --input_format=ND"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "ACL 三个动态接口（`aclmdlSetDynamicBatchSize`/`aclmdlSetDynamicHWSize`/`aclmdlSetInputDynamicDims`）的函数签名、参数表未抓取，仅有官方参数页中的接口名称与调用时机说明。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "官方示例仅展示 ModelDeployConfig 片段，ScheduleConfig 完整结构未取得"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-a398b31efacb",
+  "task_id": "T",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "76d8d6ef8442476883dd30e927f25e1b",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "a453fe05a35e528f72af30ebad82f0f8",
+        "conversationRequestId": "a453fe05a35e528f72af30ebad82f0f8",
+        "agent": "cli"
+      },
+      {
+        "messageId": "76d8d6ef8442476883dd30e927f25e1b",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "a453fe05a35e528f72af30ebad82f0f8",
+        "conversationRequestId": "a453fe05a35e528f72af30ebad82f0f8",
+        "rawUsage": {
+          "prompt_tokens": 22101,
+          "completion_tokens": 10906,
+          "total_tokens": 33007,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 9465,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 20774
+          },
+          "prompt_cache_hit_tokens": 20774,
+          "prompt_cache_miss_tokens": 1327,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 9465,
+          "credit": 7.15,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 22101,
+          "outputTokens": 10906,
+          "totalTokens": 33007,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 20774
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 9465
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "1adc4c47df66e49356c03efb8b2a7399bf97834a623d3e755ea12f6472552c33",
+    "process_sha256": "4fdbe1f132a210cf01ee73589a09019a7762baaca877b8dbcb87a155e8da9a3c",
+    "elapsed_seconds": 184.81,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-8663695581074bdb8aabef8e4bafec75",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-a398b31efacb-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}
