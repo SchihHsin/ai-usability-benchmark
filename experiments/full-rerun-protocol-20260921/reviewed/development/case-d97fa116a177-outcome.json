@@ -1,0 +1,165 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "nsys profile \\\n  -t cuda,nvtx,osrt \\\n  -o report \\\n  --force-overwrite=true \\\n  python train.py",
+      "answer_event_id": "final",
+      "evidence_id": "call_94a1905ab4a04eda9b13a79d.result",
+      "evidence_quote": "**cuda**, **opengl**, **nvtx**, **osrt**",
+      "verification": "source",
+      "reason": "原题要求两方面：采集命令和分析步骤。采集命令方面，答案给出完整的 nsys profile 命令（含 -t cuda,nvtx,osrt、-o、--force-overwrite、-y/-d、-c cudaProfilerApi），所有核心参数均被 NVIDIA UserGuide 来源证实（--trace 默认值为 cuda,opengl,nvtx,osrt；--capture-range 取值含 cudaProfilerApi；--delay/--duration 存在；--force-overwrite 默认 false）。NVTX 标注部分（range_push/range_pop）被 PyTorch 2.14 官方文档（call_ca525419d36b483ab1438fe5）逐字证实。分析步骤方面，答案给出 5 步 timeline 分析流程（看 GPU 空隙→对齐 CPU 行→NVTX 拆分→统计核对→复测），NVTX Timeline View 行为被来源引用证实：'When you add NVTX markers and ranges to your application, the Timeline View shows when your CPU threads are executing within those regions.'；nsys stats 命令被来源证实。少量次要细节（--cpuctxsw 参数列表、stats -r 报告名集合、torch.cuda.cudart() Python API 形式）来源中未直接出现，但答案已明确标注为未核实处，不影响核心要求的满足。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "原题为操作指导类，不强制要求版本锁定，但答案中引用了 PyTorch 2.14 作为 NVTX API 文档版本依据，Nsight Systems 本身未锁定到具体版本号（仅引用 User Guide 通用页面）。部分组件有版本依据，其余未确定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "PyTorch 官方 API（https://docs.pytorch.org/docs/stable/generated/torch.cuda.nvtx.range_push.html，PyTorch 2.14）"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "operational_complete_with_env_params",
+      "reason": "核心采集命令完整可执行（nsys profile 各变体、nsys stats、Python 侧 NVTX 标注代码），参数含义与默认值均有官方依据；仅需用户替换 train.py、report 等环境参数即可运行。次要可选项（--cpuctxsw 取值、stats -r 报告名）答案已明确标注未核实，不阻塞主流程执行。分析步骤为 GUI 操作指导，无命令行依赖。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "nsys stats report.nsys-rep\n# 或指定报告，如：\nnsys stats -r cuda_gpu_kern_sum,cuda_api_sum report.nsys-rep"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-d97fa116a177",
+  "task_id": "B",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "fd4757c934754fee9b095ac77ad8737c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "f839d6d318d98e02fbfe1e36b64bccaa",
+        "conversationRequestId": "f839d6d318d98e02fbfe1e36b64bccaa",
+        "agent": "cli"
+      },
+      {
+        "messageId": "fd4757c934754fee9b095ac77ad8737c",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "f839d6d318d98e02fbfe1e36b64bccaa",
+        "conversationRequestId": "f839d6d318d98e02fbfe1e36b64bccaa",
+        "rawUsage": {
+          "prompt_tokens": 17402,
+          "completion_tokens": 4571,
+          "total_tokens": 21973,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 3791,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 17402,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 3791,
+          "credit": 5.34,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 17402,
+          "outputTokens": 4571,
+          "totalTokens": 21973,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 3791
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "5f1b7e4199ed8f7de43d67206708a7fe4771c10e223b2f0f6feceb240771e228",
+    "process_sha256": "4330875f7965f8145eedd27113b769e6185554c8c289ad6b02056ac11b4bbbb3",
+    "elapsed_seconds": 100.03,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-5342d0879a5d4e50ad30d7bb137914c2",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-d97fa116a177-outcome.json",
+    "repairs": [
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false
+  }
+}

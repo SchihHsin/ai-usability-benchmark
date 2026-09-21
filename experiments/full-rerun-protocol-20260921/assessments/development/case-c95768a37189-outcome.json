@@ -1,0 +1,230 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "**稠密 GEMM → cuBLAS**（官方原文：\"drop-in industry standard BLAS APIs and GEMM APIs\"，\"Complete support for all 152 standard BLAS routines\"，GEMM 针对深度学习尺寸调优，支持 Tensor Core 低精度/混合精度）",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_97c3f68682724d8c98d94b79.result",
+      "evidence_quote": "It includes several API extensions for providing drop-in industry standard BLAS APIs and GEMM APIs",
+      "verification": "source",
+      "reason": "原题三问逐项核验。(1)有哪些官方库：答案列出 cuBLAS/cuDNN/cuSPARSE（另补充 cuSPARSELt、cuBLASLt/Xt/Mp/Dx），三库均由官方产品页直接证实——call_97c3f68682724d8c98d94b79.result（\"drop-in industry standard BLAS APIs and GEMM APIs\"）、call_e57204bc3dff4aefa122b042.result（\"forward and backward convolution, attention, matmul, pooling, and normalization\"）、call_a8e04614c35e41bca78c5a0d.result（\"Generic high-performance APIs for sparse-dense vector multiplication (SpVV), sparse matrix-dense vector multiplication (SpMV), and sparse matrix-dense matrix multiplication (SpMM)\"）。(2)怎么选：稠密GEMM→cuBLAS、卷积→cuDNN、稀疏→cuSPARSE、2:4结构化稀疏→cuSPARSELt（Ampere及以后），分工与官方正文一致且有引文。(3)怎么调用：cuBLAS 头文件/链接/编译命令由官方文档证实（call_ac70e4eb81e64fb9867504c9.result：\"nvcc myCublasApp.c -lcublas -o myCublasApp\"、\"the cuBLAS library uses column-major storage, and 1-based indexing\"）；cublasSgemm 签名仅由二手 CSDN 源转录证实（call_01fb397c33ec404191450265.result；官方页面截断于 §2.4.13，call_9c1040c6a34941f0a14f56c5.result 证实 §2.7.1 未取得），答案已如实标注；cuDNN Graph API 路线与 Python 示例由官方产品页证实（call_e57204bc3dff4aefa122b042.result），C++ 样例构建命令由官方样例页证实（call_04efc5d636f6467daf13fe39.result：\"cmake -DCUDNN_PATH=/path/to/cudnn -DCUDAToolkit_ROOT=/path/to/cuda ../\"）；cuSPARSE 格式与核心 API 名由产品页证实（call_a8e04614c35e41bca78c5a0d.result），但头文件/链接参数为答案自标\"常识性写法，本轮官方正文未直接给出\"。核心问题（选库与调用方式）已获官方来源支撑；剩余缺口（GEMM 官方函数参考原文、cuDNN 版本/安装命令、cuSPARSE 完整调用代码）均已在答案\"无法核实处\"诚实披露，属边缘缺口，不构成对原题要求的否定。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "status": "scored",
+      "reason": "applicability 判定 M9 适用（范围：所选库与设备/接口的版本适用关系）。实际采用路线中：cuBLAS 引用 13.4 文档版本（有依据）；cuSPARSELt 给出 \"Ampere 及以后\" 的架构适用依据（官方正文证实）；但 cuDNN 版本未锁定——答案自认概览页与产品页均未给出具体版本号，仅能由 SDPA 博客佐证 9.x 主线，且与 CUDA Toolkit 的版本兼容矩阵未取得。属\"部分所需组件有明确版本依据，其余仍未确定\"（第3档）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "cuDNN 当前具体版本号及与 CUDA Toolkit 的版本兼容矩阵（概览页与产品页均未给出具体版本号；产品页提及 cuDNN 9 的 SDPA 博客可佐证主线为 9.x）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "若是 2:4 结构化稀疏（Ampere 及以后），官方另有 **cuSPARSELt**，利用 Sparse Tensor Core 做 GEMM"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cuBLAS 13.4 文档：https://docs.nvidia.com/cuda/cublas/index.html"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "status": "scored",
+      "reason": "有具体操作方案但需补充缺失内容才能完整执行。可执行部分：cuBLAS 三种编译命令（nvcc 动态/静态、g++ 静态）完整，头文件 cublas_v2.h 明确，cublasSgemm 完整签名与列主序/1基索引约定齐备，行主序技巧给出具体调用行，工作流（cublasCreate→cudaMalloc/cublasSetMatrix→计算→cublasGetMatrix→cublasDestroy）明确，环境参数 <cuda-toolkit-path> 有标识与说明；cuDNN 有官方 Python Graph API 代码与 C++ 样例 cmake 构建命令。具体缺口：(a) 原题明确包含卷积，答案仅给 matmul 示例，卷积调用只有\"卷积同理：在 graph 上建 convolution 节点\"的指向而无实际卷积代码；(b) cuDNN 安装命令未给出（自认\"未取得原文\"），Python 示例的 cudnn 包安装前提缺失；(c) cuSPARSE 完整调用代码缺失（自认 fetch 预算用尽），头文件/链接参数为未经官方确认的常识写法。综合记 3 分。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "nvcc myCublasApp.c -lcublas -o myCublasApp"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "卷积同理：在 graph 上建 `convolution` 节点（frontend 有专门卷积样例）。"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cuSPARSE SpMM 完整调用代码（仅取得产品页功能描述，文档正文未抓取——fetch 预算已用尽）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "cuDNN 具体安装命令（tarball/pip 各发行版细节）未取得原文"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-c95768a37189",
+  "task_id": "C",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "**稠密 GEMM → cuBLAS**（官方原文：\"drop-in industry standard BLAS APIs and GEMM APIs\"，\"Complete support for all 152 standard BLAS routines\"，GEMM 针对深度学习尺寸调优，支持 Tensor Core 低精度/混合精度）",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_97c3f68682724d8c98d94b79.result",
+        "evidence_quote": "It includes several API extensions for providing drop-in industry standard BLAS APIs and GEMM APIs",
+        "verification": "source",
+        "reason": "原题三问逐项核验。(1)有哪些官方库：答案列出 cuBLAS/cuDNN/cuSPARSE（另补充 cuSPARSELt、cuBLASLt/Xt/Mp/Dx），三库均由官方产品页直接证实——call_97c3f68682724d8c98d94b79.result（\"drop-in industry standard BLAS APIs and GEMM APIs\"）、call_e57204bc3dff4aefa122b042.result（\"forward and backward convolution, attention, matmul, pooling, and normalization\"）、call_a8e04614c35e41bca78c5a0d.result（\"Generic high-performance APIs for sparse-dense vector multiplication (SpVV), sparse matrix-dense vector multiplication (SpMV), and sparse matrix-dense matrix multiplication (SpMM)\"）。(2)怎么选：稠密GEMM→cuBLAS、卷积→cuDNN、稀疏→cuSPARSE、2:4结构化稀疏→cuSPARSELt（Ampere及以后），分工与官方正文一致且有引文。(3)怎么调用：cuBLAS 头文件/链接/编译命令由官方文档证实（call_ac70e4eb81e64fb9867504c9.result：\"nvcc myCublasApp.c -lcublas -o myCublasApp\"、\"the cuBLAS library uses column-major storage, and 1-based indexing\"）；cublasSgemm 签名仅由二手 CSDN 源转录证实（call_01fb397c33ec404191450265.result；官方页面截断于 §2.4.13，call_9c1040c6a34941f0a14f56c5.result 证实 §2.7.1 未取得），答案已如实标注；cuDNN Graph API 路线与 Python 示例由官方产品页证实（call_e57204bc3dff4aefa122b042.result），C++ 样例构建命令由官方样例页证实（call_04efc5d636f6467daf13fe39.result：\"cmake -DCUDNN_PATH=/path/to/cudnn -DCUDAToolkit_ROOT=/path/to/cuda ../\"）；cuSPARSE 格式与核心 API 名由产品页证实（call_a8e04614c35e41bca78c5a0d.result），但头文件/链接参数为答案自标\"常识性写法，本轮官方正文未直接给出\"。核心问题（选库与调用方式）已获官方来源支撑；剩余缺口（GEMM 官方函数参考原文、cuDNN 版本/安装命令、cuSPARSE 完整调用代码）均已在答案\"无法核实处\"诚实披露，属边缘缺口，不构成对原题要求的否定。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "status": "scored",
+        "reason": "applicability 判定 M9 适用（范围：所选库与设备/接口的版本适用关系）。实际采用路线中：cuBLAS 引用 13.4 文档版本（有依据）；cuSPARSELt 给出 \"Ampere 及以后\" 的架构适用依据（官方正文证实）；但 cuDNN 版本未锁定——答案自认概览页与产品页均未给出具体版本号，仅能由 SDPA 博客佐证 9.x 主线，且与 CUDA Toolkit 的版本兼容矩阵未取得。属\"部分所需组件有明确版本依据，其余仍未确定\"（第3档）。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "cuDNN 当前具体版本号及与 CUDA Toolkit 的版本兼容矩阵（概览页与产品页均未给出具体版本号；产品页提及 cuDNN 9 的 SDPA 博客可佐证主线为 9.x）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "若是 2:4 结构化稀疏（Ampere 及以后），官方另有 **cuSPARSELt**，利用 Sparse Tensor Core 做 GEMM"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "cuBLAS 13.4 文档：https://docs.nvidia.com/cuda/cublas/index.html"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 3,
+        "status": "scored",
+        "reason": "有具体操作方案但需补充缺失内容才能完整执行。可执行部分：cuBLAS 三种编译命令（nvcc 动态/静态、g++ 静态）完整，头文件 cublas_v2.h 明确，cublasSgemm 完整签名与列主序/1基索引约定齐备，行主序技巧给出具体调用行，工作流（cublasCreate→cudaMalloc/cublasSetMatrix→计算→cublasGetMatrix→cublasDestroy）明确，环境参数 <cuda-toolkit-path> 有标识与说明；cuDNN 有官方 Python Graph API 代码与 C++ 样例 cmake 构建命令。具体缺口：(a) 原题明确包含卷积，答案仅给 matmul 示例，卷积调用只有\"卷积同理：在 graph 上建 convolution 节点\"的指向而无实际卷积代码；(b) cuDNN 安装命令未给出（自认\"未取得原文\"），Python 示例的 cudnn 包安装前提缺失；(c) cuSPARSE 完整调用代码缺失（自认 fetch 预算用尽），头文件/链接参数为未经官方确认的常识写法。综合记 3 分。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "nvcc myCublasApp.c -lcublas -o myCublasApp"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "卷积同理：在 graph 上建 `convolution` 节点（frontend 有专门卷积样例）。"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "cuSPARSE SpMM 完整调用代码（仅取得产品页功能描述，文档正文未抓取——fetch 预算已用尽）"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "cuDNN 具体安装命令（tarball/pip 各发行版细节）未取得原文"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "93c9dc11595b419ea4851a9be907bedf",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "49d36e883023fffdf2a67b163a5e53f1",
+        "conversationRequestId": "49d36e883023fffdf2a67b163a5e53f1",
+        "agent": "cli"
+      },
+      {
+        "messageId": "93c9dc11595b419ea4851a9be907bedf",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "49d36e883023fffdf2a67b163a5e53f1",
+        "conversationRequestId": "49d36e883023fffdf2a67b163a5e53f1",
+        "rawUsage": {
+          "prompt_tokens": 21963,
+          "completion_tokens": 15127,
+          "total_tokens": 37090,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 13558,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 20425
+          },
+          "prompt_cache_hit_tokens": 20425,
+          "prompt_cache_miss_tokens": 1538,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 13558,
+          "credit": 9.53,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21963,
+          "outputTokens": 15127,
+          "totalTokens": 37090,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 20425
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 13558
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "dbe08f9173c9a71b4593cc8de5ff83e79a1759bf14f5ea388dbd43e8057302f8",
+    "process_sha256": "7a8877875c6075d146fb1badca8bbc87e82c738c62ec7aea219f4cd2daababf8",
+    "elapsed_seconds": 201.72,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-03a2cea883bf40259b9213e47c224184",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}
