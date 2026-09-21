@@ -65,6 +65,13 @@ for run in (R/'runs').iterdir():
    elif isinstance(x,list):
     for v in x:walk(v)
   walk(value)
+  for fix in (json.loads((R/'reviewed-field-corrections.json').read_text()) if (R/'reviewed-field-corrections.json').exists() else []):
+   if fix['case']==item['case'] and fix['kind']==kind:
+    parent=value
+    for key in fix['path'][:-1]:parent=parent[key]
+    key=fix['path'][-1]
+    if parent.get(key)!=fix['original']:raise ValueError('review field original mismatch')
+    parent[key]=copy.deepcopy(fix['replacement']);repairs.append(fix)
   for doc in value.get('m2_documents',[]):
    if doc.get('representation')=='body' and doc.get('completeness')=='complete':
     ref=doc.get('reference');ref=ref if isinstance(ref,dict) else {}
