@@ -30,7 +30,12 @@ if __name__=='__main__':
     existing=list((R/'assessments/development').glob(item['case']+'-'+kind+'*.json'))
     good=[f for f in existing if not json.loads(f.read_text()).get('error')]
     if good:continue
-    if len(existing)>=2:
+    nonquota=[]
+    for attempt in existing:
+     record=json.loads(attempt.read_text());raw=record.get('raw_stdout',[]);raw=raw if isinstance(raw,list) else [raw]
+     quota=any(isinstance(e,dict) and any(info.get('category')=='quota' or info.get('code')==14018 for info in e.get('errors_info',[]) if isinstance(info,dict)) for e in raw)
+     if not quota:nonquota.append(attempt)
+    if len(nonquota)>=2:
      print(json.dumps({'case':item['case'],'kind':kind,'status':'needs_review_after_two_technical_attempts'}),flush=True);continue
     args.overwrite=bool(existing)
     status=assess.run_one(item,kind,args);print(json.dumps(status),flush=True)
