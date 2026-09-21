@@ -1,0 +1,198 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "有两条官方路线，注册后都通过 `torch.ops.<namespace>.<op_name>(...)` 调用。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_PKaVthzywsZSW4lTeejL2666.result",
+      "evidence_quote": "This makes the operator available from Python via **`torch.ops.extension_cpp.mymuladd`**.",
+      "verification": "source",
+      "reason": "原题含三个子要求，final 均有官方来源支撑：(1) TORCH_LIBRARY schema 注册——final 给出 `TORCH_LIBRARY(extension_cpp, m){ m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\"); }`，与 call_00_PKaVthzywsZSW4lTeejL2666（cpp_custom_ops 教程）及 call_00_cXoybr5r44m3cDz8oTgj7104（registration.html，\"There may only be one `TORCH_LIBRARY()` for any given namespace.\"）一致；(2) dispatcher 后端注册——final 给出 CPU/CUDA 两个 `TORCH_LIBRARY_IMPL` 块，源文含相同代码（\"TORCH_LIBRARY_IMPL(extension_cpp, CUDA, m) { m.impl(\\\"mymuladd\\\", &mymuladd_cuda); }\"）；(3) autograd 注册——final 同时给出 C++ 路线（torch::autograd::Function + at::AutoNonVariableTypeMode、autogradNotImplementedFallback，与 call_01_AWjvAXHM3GbgHFhltcmA0918 dispatcher 教程一致）和 Python 路线（register_autograd + setup_context，与 call_01_bSrlLsKvMHGGNDFk3YUr1977 一致，且该源文建议优先 register_autograd 而非 autograd.Function）；(4) torch.ops 调用——final 明确 `torch.ops.extension_cpp.mymuladd(a, b, c)` 与 `.default` overload，evidence 引文直接证实注册后可经 torch.ops 调用。另附构建（CUDAExtension）、FakeTensor/torch.compile 支持、opcheck 自检，均可溯源官方页面。CUDAExtension setup.py 为答案自行改写并已自标非官方原文，属诚实披露，不影响子要求成立。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": 3,
+      "upper": 3,
+      "status": "supported",
+      "reason": "原题为 how-to 题，未要求定到单一版本；按 applicability 以注册接口为组件评估版本可锁定性。C++ 路线组件有明确版本依据的适用范围（教程 Prerequisites：PyTorch ≥2.4，stable ABI ≥2.10），并给出若干版本节点（register_fake 更名于 2.4、in-place/out= 始于 2.13、dispatcher 教程自 2.4 废弃）；但 Python 路线核心 API（custom_op、register_autograd）的引入版本被答案明确标注未核实。属部分组件有版本依据、其余未定，对应第3档；符合证据的范围不构成答案技术错误。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "PyTorch 2.4 or later (or PyTorch 2.10 or later if using the stable ABI)"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "**未核实**：`torch.library.custom_op` 与 `register_autograd` 的精确引入版本号——官方页面**没有** `versionadded` 标注"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "supported",
+      "reason": "两条路线均给出完整可照抄内容：C++ 端 schema、CPU/CUDA kernel（含 getCurrentCUDAStream）、TORCH_LIBRARY_IMPL、C++ autograd 注册代码齐全；构建端给出 setup.py（CUDAExtension）与 `pip install -e .` 命令；调用与自检（`torch.ops.extension_cpp.mymuladd(a, b, c)`、opcheck）明确；前置条件（PyTorch ≥2.4、.cu 需 nvcc、流一致）已说明。仅需替换命名空间、文件名等环境值即可执行，符合第4档。不给5分的原因：CUDAExtension 的 setup.py 为答案自行改写并自标'属常规约定，非教程原文'且记为未核实，`from . import _C` 的包结构与扁平 setup.py 需用户自行组装；答案声明未实际运行、仅内容核查（按约定不影响4/5分界，仅作记录）。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "ext_modules=[cpp_extension.CUDAExtension(\"extension_cpp\", [\"muladd.cpp\", \"muladd_cuda.cu\"])],"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "pip install -e .\n# 或：python setup.py develop"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "torch.ops.extension_cpp.mymuladd(a, b, c)\ntorch.ops.extension_cpp.mymuladd.default(a, b, c)   # 指定 default overload"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "（教程把 `CUDAExtension` 的 `setup.py` 示例指向 https://github.com/pytorch/extension-cpp，**未在本页给出完整示例**，此点记为未核实。）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-5910e572dd51",
+  "task_id": "O",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "e5128eff4bf94df698c9525c2bb512a7",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c15adaa9f27582119ae20d53a4d46198",
+        "conversationRequestId": "c15adaa9f27582119ae20d53a4d46198",
+        "agent": "cli"
+      },
+      {
+        "messageId": "e5128eff4bf94df698c9525c2bb512a7",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c15adaa9f27582119ae20d53a4d46198",
+        "conversationRequestId": "c15adaa9f27582119ae20d53a4d46198",
+        "rawUsage": {
+          "prompt_tokens": 39842,
+          "completion_tokens": 8869,
+          "total_tokens": 48711,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 7590,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 39842,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 7590,
+          "credit": 11.34,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 39842,
+          "outputTokens": 8869,
+          "totalTokens": 48711,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 7590
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "a5f2141c9ff657bf79f4f28eacf04b294d7a9a8831ebe72f2982232021201869",
+    "process_sha256": "a8f2513ebcf7f8ed908119306aa05d5504727bc65abc0420233bf8a9dcd02571",
+    "elapsed_seconds": 154.61,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-87d094fdfa4a4d60828832b6d940bbd6",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-5910e572dd51-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "混合精度适配支持两种方式：PyTorch 内置 AMP 与第三方 APEX；NPU 适配面主要是 `amp.autocast()` 与 `amp.GradScaler`，并且 NPU 版 `GradScaler` 增加了 `dynamic` 参数",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_f88fd992.result",
+      "evidence_quote": "混合精度适配支持两种方式：\n\n- PyTorch框架内置的AMP功能模块\n- 第三方APEX混合精度模块\n\n我们推荐用户使用PyTorch框架内置的AMP功能模块来进行混合精度训练",
+      "verification": "source",
+      "reason": "答案逐项覆盖原题三个子要求：1) 如何开混合精度——给出 autocast/GradScaler 训练骨架与官方使用约束（Atlas 训练系列需开启，A2/A3 可选），与 WebFetch_1 官方页『混合精度适配操作在脚本迁移完成后，训练开始之前』及约束条目一致；2) amp 与 apex 两条路线均给出——AMP 代码与 Apex for Ascend 安装/用法，Apex 安装命令、opt_level 语义（O0=FP32，O1/O2=混合精度）与 gitee 官方仓库正文（WebFetch_4）逐字对应；3) loss scale 配置——动态默认、静态 `amp.GradScaler(init_scale=2.**10, dynamic=False)`、dynamic/init_scale 参数语义均与 WebFetch_1 表1 一致，Apex 侧 dynamic_init_scale=2.**16 等新增参数与 WebFetch_4 签名一致。答案明确标注未核实项（import 路径、README 正文、loss_scale 枚举），未虚构证据。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "部分组件有明确版本依据：AMP 路线引用 TorchNPU 6.0.0 官方文档（dynamic/init_scale 语义），Apex 路线给出 CANN 8.0.RC3 配 PyTorch 2.1.0/2.3.1/2.4.0 及 torch_npu v2.x-6.0.rc3 等配套表（与 gitee 仓库正文一致），TorchNPU 26.1.1 配 CANN 9.1.X 亦有来源线索。但最终答案未把所选路线锁定到具体可执行的版本组合：`from torch_npu.npu import amp` 的 import 路径自认未核验，TorchNPU README 正文未捕获，答案自己声明『未在抓取正文中逐字核验』、『列为未核实』，属于部分所需组件有依据、其余未确定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "版本配套：Apex-patch README 给出的例子包括 CANN 8.0.RC3 配 PyTorch 2.1.0/2.3.1/2.4.0、Ascend Extension for PyTorch `v2.x-6.0.rc3`、Apex master"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "1) `from torch_npu.npu import amp` 的确切 import 路径未在抓取正文中出现；2) TorchNPU README 安装命令正文未成功捕获"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 3,
+      "lower": null,
+      "upper": null,
+      "status": "partial",
+      "reason": "有具体可操作方案：AMP 训练骨架、静态/动态 loss scale 写法、Apex git clone/build.sh/pip install 完整命令均给出，多数命令可照抄。但需修正/补充才能执行：核心 import 语句 `from torch_npu.npu import amp` 被答案自标『未逐字核验；部分版本可能暴露为 torch_npu.amp』，用户须按报错试错调整；Apex `loss_scale` 静态/动态取值语义亦未逐字确认，需以 inspect.signature 与报错为准；且答案自述未运行代码。属于有具体方案但需补充缺失内容才能执行，缺口已在答案中具体指出。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "from torch_npu.npu import amp  # 未逐字核验；部分版本可能暴露为 torch_npu.amp"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "静态/动态切换的精确 `loss_scale` 取值语义本次未在抓取正文中逐字核验，建议按 Apex 上游语义：固定数值为静态 scale，`\"dynamic\"` 为动态；最终以所用 wheel 的 `inspect.signature(apex.amp.initialize)` 与报错为准"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "bash scripts/build.sh --python=3.7\ncd apex/dist/\npip3 uninstall apex\npip3 install --upgrade apex-0.1+ascend-{version}.whl"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-ddd49fe7f8da",
+  "task_id": "P",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "28d181ef40084360a0b5e180c49ff4c1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c5b5f366a621b4a7ca89b55238c930a8",
+        "conversationRequestId": "c5b5f366a621b4a7ca89b55238c930a8",
+        "agent": "cli"
+      },
+      {
+        "messageId": "28d181ef40084360a0b5e180c49ff4c1",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "c5b5f366a621b4a7ca89b55238c930a8",
+        "conversationRequestId": "c5b5f366a621b4a7ca89b55238c930a8",
+        "rawUsage": {
+          "prompt_tokens": 19156,
+          "completion_tokens": 1617,
+          "total_tokens": 20773,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 469,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 16148,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 469,
+          "credit": 3.61,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 19156,
+          "outputTokens": 1617,
+          "totalTokens": 20773,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 469
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "00d080b5d915da2989259004631f7de3770167c6cfdb500870c56af93d614b8e",
+    "process_sha256": "dc26e51d2668b130cd1dcfc1eb3048aaa14a50736245853d8d025c9f47e817d8",
+    "elapsed_seconds": 24.19,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-d46f3347d4bb4ef59f69239f01db3f64",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-ddd49fe7f8da-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

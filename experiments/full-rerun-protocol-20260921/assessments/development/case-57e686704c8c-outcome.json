@@ -1,0 +1,225 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "控制缓存分配器行为。格式：`PYTORCH_NPU_ALLOC_CONF=<option1>:<value1>,<option2>:<value2>`（来源[1][2]）",
+      "answer_event_id": "run-end",
+      "evidence_id": "WebFetch_1_4df161ff.result",
+      "evidence_quote": "参数配置格式PYTORCH_NPU_ALLOC_CONF=<option1>:<value1>,<option2>:<value2>。",
+      "verification": "source",
+      "reason": "原题含三个子要求，逐项核对：(1) PYTORCH_NPU_ALLOC_CONF：答案给出完整参数表、默认值、互斥约束和典型配置，与官方文档 WebFetch_1（TorchNPU 7.2.0）及 WebFetch_6（GitHub master 版）逐项吻合，包括 max_split_size_mb/garbage_collection_threshold/expandable_segments 及互斥约束、page_size 版本要求；(2) 梯度检查点：答案给出 torch.utils.checkpoint 具体用法（use_reentrant=False、训练时启用），WebSearch_3 结果确认其为 PyTorch 1.0+ 标准 API，torch_npu 兼容原生 API 的说法与 WebFetch_6 官方文档中 PYTORCH_ALLOC_CONF 兼容性描述一致；(3) 显存碎片：答案的碎片判断（reserved vs allocated）与 WebFetch_1 中 max_split_size_mb 描述（大量非活动切分内存块场景）及 garbage_collection_threshold 机制对应。答案对未能核实的部分（内存管理 API 清单、MindSpeed 参数）已明确标注未核实，第三方来源[5]的矛盾说法也被识别并排除。整体有官方来源支撑。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "status": "insufficient_evidence",
+      "reason": "答案对 PYTORCH_NPU_ALLOC_CONF 各配置项给出了有依据的适用范围（expandable_segments 需 HDK 23.0.0+、page_size 需 HDK 25.0.RC1+/CANN 8.1.RC1+、per_process_memory_fraction 需 TorchNPU 26.1.0+/PyTorch 2.10.0+ 等，均有官方文档支撑），但用户实际环境的 TorchNPU/CANN/HDK 具体版本未确定，内存管理 API 接口清单也因官方页面抓取失败未核实，属于部分组件有版本依据、其余未确定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "expandable_segments ... 要求 Ascend HDK 23.0.0+"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "本轮抓取两次均返回了错误页面（标题为 hi_remap_lut），**具体接口清单未核实**"
+        }
+      ],
+      "raw_status": "部分组件有版本依据"
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "status": "操作指导基本可直接执行",
+      "reason": "答案给出完整可复制的环境变量配置命令（export PYTORCH_NPU_ALLOC_CONF=...，与官方配置示例逐字一致）、可直接使用的 torch.utils.checkpoint 代码片段、以及碎片排查步骤（npu-smi info、memory_summary 判断 reserved vs allocated）。适用前提（HDK 版本要求、参数互斥约束）已明确说明。仅 max_split_size_mb 推荐值需用户按环境网格试验（官方确未给固定推荐值），不构成内容错误；无需修正即可执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "output = checkpoint(self.block, x, use_reentrant=False)"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "设 `max_split_size_mb`（建议 32~256MB 网格试，官方未给固定推荐值"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "expandable_segments ... 要求 Ascend HDK 23.0.0+"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-57e686704c8c",
+  "task_id": "Q",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "控制缓存分配器行为。格式：`PYTORCH_NPU_ALLOC_CONF=<option1>:<value1>,<option2>:<value2>`（来源[1][2]）",
+        "answer_event_id": "run-end",
+        "evidence_id": "WebFetch_1_4df161ff.result",
+        "evidence_quote": "参数配置格式PYTORCH_NPU_ALLOC_CONF=<option1>:<value1>,<option2>:<value2>。",
+        "verification": "source",
+        "reason": "原题含三个子要求，逐项核对：(1) PYTORCH_NPU_ALLOC_CONF：答案给出完整参数表、默认值、互斥约束和典型配置，与官方文档 WebFetch_1（TorchNPU 7.2.0）及 WebFetch_6（GitHub master 版）逐项吻合，包括 max_split_size_mb/garbage_collection_threshold/expandable_segments 及互斥约束、page_size 版本要求；(2) 梯度检查点：答案给出 torch.utils.checkpoint 具体用法（use_reentrant=False、训练时启用），WebSearch_3 结果确认其为 PyTorch 1.0+ 标准 API，torch_npu 兼容原生 API 的说法与 WebFetch_6 官方文档中 PYTORCH_ALLOC_CONF 兼容性描述一致；(3) 显存碎片：答案的碎片判断（reserved vs allocated）与 WebFetch_1 中 max_split_size_mb 描述（大量非活动切分内存块场景）及 garbage_collection_threshold 机制对应。答案对未能核实的部分（内存管理 API 清单、MindSpeed 参数）已明确标注未核实，第三方来源[5]的矛盾说法也被识别并排除。整体有官方来源支撑。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 3,
+        "status": "部分组件有版本依据",
+        "reason": "答案对 PYTORCH_NPU_ALLOC_CONF 各配置项给出了有依据的适用范围（expandable_segments 需 HDK 23.0.0+、page_size 需 HDK 25.0.RC1+/CANN 8.1.RC1+、per_process_memory_fraction 需 TorchNPU 26.1.0+/PyTorch 2.10.0+ 等，均有官方文档支撑），但用户实际环境的 TorchNPU/CANN/HDK 具体版本未确定，内存管理 API 接口清单也因官方页面抓取失败未核实，属于部分组件有版本依据、其余未确定。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "expandable_segments ... 要求 Ascend HDK 23.0.0+"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "本轮抓取两次均返回了错误页面（标题为 hi_remap_lut），**具体接口清单未核实**"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 4,
+        "status": "操作指导基本可直接执行",
+        "reason": "答案给出完整可复制的环境变量配置命令（export PYTORCH_NPU_ALLOC_CONF=...，与官方配置示例逐字一致）、可直接使用的 torch.utils.checkpoint 代码片段、以及碎片排查步骤（npu-smi info、memory_summary 判断 reserved vs allocated）。适用前提（HDK 版本要求、参数互斥约束）已明确说明。仅 max_split_size_mb 推荐值需用户按环境网格试验（官方确未给固定推荐值），不构成内容错误；无需修正即可执行。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:32,garbage_collection_threshold:0.6"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "output = checkpoint(self.block, x, use_reentrant=False)"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "设 `max_split_size_mb`（建议 32~256MB 网格试，官方未给固定推荐值"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "196c3f58bd7a404c95a148f6010fc1d0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "411a1dae22bb5ccef00a1727eb995272",
+        "conversationRequestId": "411a1dae22bb5ccef00a1727eb995272",
+        "agent": "cli"
+      },
+      {
+        "messageId": "196c3f58bd7a404c95a148f6010fc1d0",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "411a1dae22bb5ccef00a1727eb995272",
+        "conversationRequestId": "411a1dae22bb5ccef00a1727eb995272",
+        "rawUsage": {
+          "prompt_tokens": 21082,
+          "completion_tokens": 1792,
+          "total_tokens": 22874,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 903,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 18074,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 903,
+          "credit": 4.02,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 21082,
+          "outputTokens": 1792,
+          "totalTokens": 22874,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 903
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "08fcbe327a31a5f538fd036853b07393df8b257113e5486674d40d9c4c22225d",
+    "process_sha256": "a9c4cee578482a9a8de8d610aea3c642bc04eb1a1ecfa1bf212a9b3a65b574bd",
+    "elapsed_seconds": 37.65,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-6eb56994c4cb40698e922821f531b8e3",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

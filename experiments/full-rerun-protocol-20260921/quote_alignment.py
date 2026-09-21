@@ -3,7 +3,7 @@ import re
 
 def projected(text):
     hidden=set()
-    for m in re.finditer(r'\[([^\]\n]+)\]\(([^\n]*?)\)',text):
+    for m in re.finditer(r'\[([^\]\n]*)\]\(([^\n]*?)\)',text):
         hidden.add(m.start());hidden.update(range(m.start(1)+len(m.group(1)),m.end()))
     for m in re.finditer(r'`+|\*\*|__',text):hidden.update(range(m.start(),m.end()))
     chars=[];positions=[]

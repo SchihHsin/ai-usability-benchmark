@@ -147,6 +147,756 @@
           "model_requested": "kimi-k3-2"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T05:13:28.851568+00:00",
+      "process_sha256": "df641162ef9e7a4f3ff3769c7be1d7970a5bdafc09e50982faa18aa19f3d8443",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "纯 Python 用 `torch.library`，C++/CUDA 扩展用 `TORCH_LIBRARY`/`TORCH_LIBRARY_IMPL`（或 Stable ABI 的 `STABLE_*`）",
+            "answer_event_id": "run-end",
+            "evidence_id": "WebFetch_4_cc7b12a4.result",
+            "evidence_quote": "注册是**两步过程**：① 定义算子（schema）→ ② 注册后端实现。",
+            "verification": "source",
+            "reason": "原题包含三条主线，最终答案均覆盖且与官方来源一致：(1) torch.ops 调用——答案给出 torch.ops.load_library 与 torch.ops.myops.add 调用，WebFetch_4 中『torch.ops.extension_cpp.mymuladd(a, b, c)』及 load_library 三种加载方式印证；(2) TORCH_LIBRARY/dispatcher 注册——答案给出 TORCH_LIBRARY 定义 schema、TORCH_LIBRARY_IMPL 按 CPU/CUDA/Autograd key 注册、同 namespace 只能一个 TORCH_LIBRARY、跨文件用 TORCH_LIBRARY_FRAGMENT、IMPL 内只能 impl 不能 def，均被 WebFetch_3（『同一命名空间中只能有一个 TORCH_LIBRARY()』『在此上下文中不允许调用 torch::Library::def()』）与 WebFetch_4（『TORCH_LIBRARY_IMPL(extension_cpp, CPU, m) { m.impl(\"mymuladd\", &mymuladd_cpu); }』）逐条印证；(3) autograd 注册——答案给出 torch.library.register_autograd 及 setup_context/backward 结构、优先 register_autograd 而非 torch.autograd.Function 的建议，WebFetch_5 原文『Prefer this over directly using `torch.autograd.Function`』及 WebFetch_4『✅ 优先使用此 API，而非直接使用 `torch.autograd.Function`』直接印证。fake/meta kernel 与 opcheck 建议亦与 WebFetch_2/4/5 一致。注：输入未提供 run-end 事件，answer_event_id 以 final 标注。",
+            "evidence_refs": [
+              "ev-24",
+              "ev-25"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "唯一一次查询的第1条结果即为高度相关的官方来源（PyTorch 官方 Custom Operators 教程页），第2、5条亦为官方文档/官方中文镜像。属首次查询第1条命中。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_70ecefe8.result",
+                "quote": "## 1. [PyTorch Custom Operators — PyTorch Tutorials 2.14.0+cu130 …](https://docs.pytorch.org/tutorials/advanced/custom_ops_landing_page.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.6666666666666665,
+            "upper": 4.333333333333333,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_be3a02e3.result",
+                "quote": "PyTorch uses the schema and registrations to reason about mutation/aliasing; it does not infer the contract from the Python function body."
+              },
+              {
+                "event_id": "WebFetch_3_1bfa6dd1.result",
+                "quote": "# PyTorch C++ Operator Registration 文档提取报告"
+              },
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "# PyTorch 官方 C++/CUDA Custom Ops 教程分析"
+              },
+              {
+                "event_id": "WebFetch_6_6a1214c8.result",
+                "quote": "**Total running time of the script:** (0 minutes 3.044 seconds)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "取回内容覆盖原题全部所需：TORCH_LIBRARY 定义 schema 的宏参数与约束、TORCH_LIBRARY_IMPL 按 dispatch key（CPU/CUDA/Autograd）注册、CUDA kernel 接入与 stream 获取、构建与三种 .so 加载方式及顺序约束、torch.ops 命名空间调用、autograd 注册（register_autograd + setup_context/backward 及'backward 须为可追踪算子组合'约束）、fake kernel、mutates_args/Tensor(a!) 变更约束、opcheck 验证，均含完整代码与参数，无需另查即可补齐。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_1bfa6dd1.result",
+                "quote": "用 `TORCH_LIBRARY()` 定义所有新算子的 schema，然后用**多个** `TORCH_LIBRARY_IMPL()` 块分别提供 **CPU、CUDA 和 Autograd** 的实现。"
+              },
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "注册是**两步过程**：① 定义算子（schema）→ ② 注册后端实现。"
+              },
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "torch.ops.extension_cpp.mymuladd(a, b, c)"
+              },
+              {
+                "event_id": "WebFetch_5_db4607d5.result",
+                "quote": "Use `torch.library.register_autograd` to add training support for an operator. Prefer this over directly using `torch.autograd.Function`"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "官方取得内容含明确且相互一致的版本约束：教程注册路线要求 PyTorch 2.4+，Stable ABI 变体宏（STABLE_TORCH_LIBRARY/TORCH_BOX）需 2.10+，in-place/out= custom op 自 2.13 起。范围内（dispatcher/autograd 注册接口）无缺失关系、无未消解冲突；但适用关系分散于摘要式重组提取中，需自行合并上述约束才能对给定 PyTorch 版本确定适用 API 变体，未取得可直接套用的官方版本适用表原文，记4分。",
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "要求 PyTorch 2.4+（stable ABI 需 2.10+）"
+              },
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "| 用途 | 非 Stable ABI | Stable ABI（2.10+） |"
+              },
+              {
+                "event_id": "WebFetch_2_be3a02e3.result",
+                "quote": "Starting in PyTorch 2.13, this includes PyTorch-style in-place and `out=` custom operators."
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "统一预算内仅发现1条相关独立第三方来源（deepwiki 的 pytorch/pytorch 自定义算子页，第1次查询第3条；未抓取正文，计数不以正文取得为前提）。其余结果为官方 docs.pytorch.org 及官方中文镜像 docs.pytorch.ac.cn，按渠道分类不计入第三方。1—2条对应2分。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_70ecefe8.result",
+                "quote": "## 3. [Custom Operators and Library Extension | pytorch/pytorch](https://deepwiki.com/pytorch/pytorch/6.2-custom-operators-and-library-extension)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": 1,
+            "upper": 4,
+            "status": "insufficient_evidence",
+            "reason": "存在第三方材料（deepwiki）故不记 N/A，但该来源仅有搜索摘要、从未被抓取：摘要主张与官方文档一致，未发现矛盾，但其权威性、新鲜度与内容一致性无法从摘要核验，也无任何独立来源交叉印证。证据不足以定分，保留区间[1,4]（单源无交叉印证上限4，未知内容下限1）。",
+            "evidence": [
+              {
+                "event_id": "WebSearch_0_70ecefe8.result",
+                "quote": "The torch.library API provides a structured way to define new operators that integrate with PyTorch's dispatcher, …"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出正确完整流程并被官方文档逐项核对为正确：TORCH_LIBRARY 定义 schema、按 dispatch key 注册 CPU/CUDA 内核、Python 侧 custom_op/register_fake/register_autograd、load_inline/CUDAExtension 构建、torch.ops 调用（WebFetch_3/4/5 均印证）。但先验自认原题涉及的具体参数与约束仍需查证——autograd 注册键名跨版本差异、TORCH_LIBRARY_IMPL 宏参数细节、PYBIND11/加载时机，符合4分（完整流程正确，具体参数、约束仍需补充）。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "TORCH_LIBRARY(myops, m) { m.def(\"add(Tensor a, Tensor b) -> Tensor\"); }"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "`@torch.library.custom_op(\"mylib::add\", mutates_args=())` 定义，`@custom_op.register_fake` 给 meta/fake，用 `torch.library.register_autograd` 或 setup_context 指定 backward。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "autograd 注册键名（`AutogradCUDA` vs `ADInplaceOrView`/`CompositeExplicitAutograd`）在不同版本差异"
+              },
+              {
+                "event_id": "WebFetch_5_db4607d5.result",
+                "quote": "Use `torch.library.register_autograd` to add training support for an operator."
+              }
+            ],
+            "evidence_refs": [
+              "ev-15",
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=7",
+            "evidence": [],
+            "raw_status": "scored",
+            "evidence_refs": [],
+            "event_refs": [
+              "WebSearch_0_70ecefe8.dispatch",
+              "WebFetch_1_640fa240.dispatch",
+              "WebFetch_2_be3a02e3.dispatch",
+              "WebFetch_3_1bfa6dd1.dispatch",
+              "WebFetch_4_cc7b12a4.dispatch",
+              "WebFetch_5_db4607d5.dispatch",
+              "WebFetch_6_6a1214c8.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 3,
+            "lower": null,
+            "upper": null,
+            "status": "partial_version_lock",
+            "reason": "答案对关键接口给出有依据的版本范围（C++/CUDA 教程要求 PyTorch 2.4+，Stable ABI 2.10+，tagged in-place/out= 2.13 起），但最终未定到用户环境的具体版本，且自认『未核实处：你本地 PyTorch/CUDA 具体小版本』，属部分组件有明确范围、未锁定具体版本，对应第3档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "版本锁定建议：普通 CUDA C++ 扩展按 PyTorch 2.4+ 教程；需要稳定 wheel/跨 LibTorch 版本用 Stable ABI，PyTorch ≥2.10；要用 tagged in-place/`out=` Python custom ops 则需 ≥2.13"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "未核实处：你本地 PyTorch/CUDA 具体小版本、是否启用 Stable ABI、算子是否 in-place/`out=`/需要 `torch.compile`，会影响宏选择、schema `Tensor(a!)` 标注和 fake kernel 严格度。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "executable_with_env_params",
+            "reason": "答案给出完整的 TORCH_LIBRARY/TORCH_LIBRARY_IMPL C++ 骨架、Python 加载调用、JIT load 命令、register_autograd/register_fake 代码及 opcheck/gradcheck 验证命令，前置条件（先加载库再调 torch.library、版本要求）说明明确；需用户替换的仅为路径、算子名等环境值，且 CUDA kernel 启动处留为示意注释（『// launch kernel on at::cuda::getCurrentCUDAStream()』），属骨架内核需用户填入自身 kernel，未达5分但无需修正错误，对应第4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "torch.ops.load_library(\"/path/to/libmyops.so\")  # 或先 import 扩展模块触发静态注册"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "mod = load(name=\"myops\", sources=[\"myops.cpp\", \"myops_cuda.cu\"], extra_cuda_cflags=[\"-O3\"])"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "  // launch kernel on at::cuda::getCurrentCUDAStream()"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22",
+              "ev-23"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "insufficient_evidence",
+                "reason": "存在第三方材料（deepwiki）故不记 N/A，但该来源仅有搜索摘要、从未被抓取：摘要主张与官方文档一致，未发现矛盾，但其权威性、新鲜度与内容一致性无法从摘要核验，也无任何独立来源交叉印证。证据不足以定分，保留区间[1,4]（单源无交叉印证上限4，未知内容下限1）。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "存在第三方材料（deepwiki）故不记 N/A，但该来源仅有搜索摘要、从未被抓取：摘要主张与官方文档一致，未发现矛盾，但其权威性、新鲜度与内容一致性无法从摘要核验，也无任何独立来源交叉印证。证据不足以定分，保留区间[1,4]（单源无交叉印证上限4，未知内容下限1）。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "WebSearch_0_70ecefe8.result",
+            "field": "response",
+            "sha256": "9bd8f79946d7659a7a0fef3e1c0d6467a2d23b2df22a13b9e006412fa74fc057",
+            "start": 126,
+            "end": 267,
+            "quote": "## 1. [PyTorch Custom Operators — PyTorch Tutorials 2.14.0+cu130 …](https://docs.pytorch.org/tutorials/advanced/custom_ops_landing_page.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "WebFetch_2_be3a02e3.result",
+            "field": "response",
+            "sha256": "357da98c235d0212225eb0cbf9fd99a86a7154987bba022fe29e6217f3cf7372",
+            "start": 5032,
+            "end": 5170,
+            "quote": "PyTorch uses the schema and registrations to reason about mutation/aliasing; it does not infer the contract from the Python function body.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "WebFetch_3_1bfa6dd1.result",
+            "field": "response",
+            "sha256": "0307cf3642ca0ffd16270021ee7855de5b556817276c182096e5c50476a2ceaa",
+            "start": 0,
+            "end": 42,
+            "quote": "# PyTorch C++ Operator Registration 文档提取报告",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "field": "response",
+            "sha256": "5feff7cc0229f6ee9aa5b4204f6d47535778c3a1e89d44efe6c1fd439f804f8a",
+            "start": 0,
+            "end": 37,
+            "quote": "# PyTorch 官方 C++/CUDA Custom Ops 教程分析",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "WebFetch_6_6a1214c8.result",
+            "field": "response",
+            "sha256": "9dea3680d67d7f1af34d40b68fe74f3108863f49ce4e9f92487a6721ed6c835f",
+            "start": 7223,
+            "end": 7286,
+            "quote": "**Total running time of the script:** (0 minutes 3.044 seconds)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "WebFetch_3_1bfa6dd1.result",
+            "field": "response",
+            "sha256": "0307cf3642ca0ffd16270021ee7855de5b556817276c182096e5c50476a2ceaa",
+            "start": 1769,
+            "end": 1872,
+            "quote": "用 `TORCH_LIBRARY()` 定义所有新算子的 schema，然后用**多个** `TORCH_LIBRARY_IMPL()` 块分别提供 **CPU、CUDA 和 Autograd** 的实现。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "field": "response",
+            "sha256": "5feff7cc0229f6ee9aa5b4204f6d47535778c3a1e89d44efe6c1fd439f804f8a",
+            "start": 2996,
+            "end": 3033,
+            "quote": "注册是**两步过程**：① 定义算子（schema）→ ② 注册后端实现。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "field": "response",
+            "sha256": "5feff7cc0229f6ee9aa5b4204f6d47535778c3a1e89d44efe6c1fd439f804f8a",
+            "start": 6743,
+            "end": 6784,
+            "quote": "torch.ops.extension_cpp.mymuladd(a, b, c)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "WebFetch_5_db4607d5.result",
+            "field": "response",
+            "sha256": "c599c5770f6b0800d1314f07b57ce3f6f74635536e4efff25d5e19bc816ea136",
+            "start": 1258,
+            "end": 1394,
+            "quote": "Use `torch.library.register_autograd` to add training support for an operator. Prefer this over directly using `torch.autograd.Function`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "field": "response",
+            "sha256": "5feff7cc0229f6ee9aa5b4204f6d47535778c3a1e89d44efe6c1fd439f804f8a",
+            "start": 366,
+            "end": 401,
+            "quote": "要求 PyTorch 2.4+（stable ABI 需 2.10+）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "field": "response",
+            "sha256": "5feff7cc0229f6ee9aa5b4204f6d47535778c3a1e89d44efe6c1fd439f804f8a",
+            "start": 3045,
+            "end": 3086,
+            "quote": "| 用途 | 非 Stable ABI | Stable ABI（2.10+） |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "WebFetch_2_be3a02e3.result",
+            "field": "response",
+            "sha256": "357da98c235d0212225eb0cbf9fd99a86a7154987bba022fe29e6217f3cf7372",
+            "start": 2104,
+            "end": 2195,
+            "quote": "Starting in PyTorch 2.13, this includes PyTorch-style in-place and `out=` custom operators.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "WebSearch_0_70ecefe8.result",
+            "field": "response",
+            "sha256": "9bd8f79946d7659a7a0fef3e1c0d6467a2d23b2df22a13b9e006412fa74fc057",
+            "start": 796,
+            "end": 941,
+            "quote": "## 3. [Custom Operators and Library Extension | pytorch/pytorch](https://deepwiki.com/pytorch/pytorch/6.2-custom-operators-and-library-extension)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "WebSearch_0_70ecefe8.result",
+            "field": "response",
+            "sha256": "9bd8f79946d7659a7a0fef3e1c0d6467a2d23b2df22a13b9e006412fa74fc057",
+            "start": 956,
+            "end": 1071,
+            "quote": "The torch.library API provides a structured way to define new operators that integrate with PyTorch's dispatcher, …",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c11f8a633af5de4cc549fdcd8886bbc83b22260f9a6b893f990bd03ec0defe74",
+            "start": 553,
+            "end": 626,
+            "quote": "TORCH_LIBRARY(myops, m) { m.def(\\\"add(Tensor a, Tensor b) -> Tensor\\\"); }",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c11f8a633af5de4cc549fdcd8886bbc83b22260f9a6b893f990bd03ec0defe74",
+            "start": 1102,
+            "end": 1268,
+            "quote": "`@torch.library.custom_op(\\\"mylib::add\\\", mutates_args=())` 定义，`@custom_op.register_fake` 给 meta/fake，用 `torch.library.register_autograd` 或 setup_context 指定 backward。",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "c11f8a633af5de4cc549fdcd8886bbc83b22260f9a6b893f990bd03ec0defe74",
+            "start": 1485,
+            "end": 1570,
+            "quote": "autograd 注册键名（`AutogradCUDA` vs `ADInplaceOrView`/`CompositeExplicitAutograd`）在不同版本差异",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "WebFetch_5_db4607d5.result",
+            "field": "response",
+            "sha256": "c599c5770f6b0800d1314f07b57ce3f6f74635536e4efff25d5e19bc816ea136",
+            "start": 1258,
+            "end": 1336,
+            "quote": "Use `torch.library.register_autograd` to add training support for an operator.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "edb6e668d2684df2aed71f8a147f4f66d194d4e51a16aca9ee89216160a3ea6c",
+            "start": 3445,
+            "end": 3587,
+            "quote": "版本锁定建议：普通 CUDA C++ 扩展按 PyTorch 2.4+ 教程；需要稳定 wheel/跨 LibTorch 版本用 Stable ABI，PyTorch ≥2.10；要用 tagged in-place/`out=` Python custom ops 则需 ≥2.13",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "edb6e668d2684df2aed71f8a147f4f66d194d4e51a16aca9ee89216160a3ea6c",
+            "start": 3654,
+            "end": 3785,
+            "quote": "未核实处：你本地 PyTorch/CUDA 具体小版本、是否启用 Stable ABI、算子是否 in-place/`out=`/需要 `torch.compile`，会影响宏选择、schema `Tensor(a!)` 标注和 fake kernel 严格度。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "edb6e668d2684df2aed71f8a147f4f66d194d4e51a16aca9ee89216160a3ea6c",
+            "start": 1541,
+            "end": 1611,
+            "quote": "torch.ops.load_library(\"/path/to/libmyops.so\")  # 或先 import 扩展模块触发静态注册",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "edb6e668d2684df2aed71f8a147f4f66d194d4e51a16aca9ee89216160a3ea6c",
+            "start": 1771,
+            "end": 1862,
+            "quote": "mod = load(name=\"myops\", sources=[\"myops.cpp\", \"myops_cuda.cu\"], extra_cuda_cflags=[\"-O3\"])",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "edb6e668d2684df2aed71f8a147f4f66d194d4e51a16aca9ee89216160a3ea6c",
+            "start": 1259,
+            "end": 1313,
+            "quote": "  // launch kernel on at::cuda::getCurrentCUDAStream()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "edb6e668d2684df2aed71f8a147f4f66d194d4e51a16aca9ee89216160a3ea6c",
+            "start": 52,
+            "end": 155,
+            "quote": "纯 Python 用 `torch.library`，C++/CUDA 扩展用 `TORCH_LIBRARY`/`TORCH_LIBRARY_IMPL`（或 Stable ABI 的 `STABLE_*`）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-25",
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "field": "response",
+            "sha256": "5feff7cc0229f6ee9aa5b4204f6d47535778c3a1e89d44efe6c1fd439f804f8a",
+            "start": 2996,
+            "end": 3033,
+            "quote": "注册是**两步过程**：① 定义算子（schema）→ ② 注册后端实现。",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-61bfabb6e440-predictors.json": "91822c1b4efdedd3e9e399557350f9ff2915bdbd981d9eb4af67d5680d9aa4b3",
+          "reviewed/development/case-61bfabb6e440-outcome.json": "352520a2eb4fa36a5417887e31470bab258c886a3d0498474c5c10e3d0691458",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "WebFetch_1_640fa240.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/custom_ops_landing_page.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_1_640fa240.result",
+                "quote": "In order to do so, you must register the custom operation with PyTorch via the Python [torch.library docs](https://pytorch.org/docs/stable/library.html) or C++ `TORCH_LIBRARY` APIs."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_1_640fa240.result",
+                "quote": "In order for an operation to compose with PyTorch subsystems, it must be registered via the operator registration APIs."
+              }
+            ],
+            "reference": "PyTorch 官方教程 Custom Operators landing page（docs.pytorch.org，2.14.0+cu130）"
+          },
+          {
+            "event_id": "WebFetch_2_be3a02e3.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_2_be3a02e3.result",
+                "quote": "Every custom operator needs:"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_2_be3a02e3.result",
+                "quote": "[Adding registrations](https://docs.pytorch.org/tutorials/advanced/python_custom_ops_registrations.html#python-custom-ops-registrations)"
+              }
+            ],
+            "reference": "PyTorch 官方教程 Custom Python Operators（docs.pytorch.org）"
+          },
+          {
+            "event_id": "WebFetch_3_1bfa6dd1.result",
+            "url": "https://docs.pytorch.org/cppdocs/api/library/registration.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "unknown",
+            "score_range": [
+              3,
+              3
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_3_1bfa6dd1.result",
+                "quote": "# PyTorch C++ Operator Registration 文档提取报告"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_3_1bfa6dd1.result",
+                "quote": "Lambda 构造函数示例被截断（最明显的截断点）"
+              }
+            ],
+            "reference": "PyTorch C++ API operator registration 文档（cppdocs；返回为提取报告，自报个别示例截断）"
+          },
+          {
+            "event_id": "WebFetch_4_cc7b12a4.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "unknown",
+            "score_range": [
+              3,
+              3
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "# PyTorch 官方 C++/CUDA Custom Ops 教程分析"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "**截断情况**：教程正文完整收录至 Conclusion，无内容截断"
+              }
+            ],
+            "reference": "PyTorch 官方 C++/CUDA Custom Ops 教程（返回为分析式重组，自报完整不作为独立完整性依据）"
+          },
+          {
+            "event_id": "WebFetch_5_db4607d5.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/python_custom_ops_registrations.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_5_db4607d5.result",
+                "quote": "Use `torch.library.register_autograd` to add training support for an operator."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_5_db4607d5.result",
+                "quote": "**Total running time of the script:** (0 minutes 1.268 seconds)"
+              }
+            ],
+            "reference": "PyTorch 官方教程 Adding Training and Other Registrations to Python Custom Operators（docs.pytorch.org）"
+          },
+          {
+            "event_id": "WebFetch_6_6a1214c8.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/python_custom_ops_functional.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "score_range": [
+              4,
+              5
+            ],
+            "evidence": [
+              {
+                "event_id": "WebFetch_6_6a1214c8.result",
+                "quote": "Use this path when the operator mutates no Tensor inputs and returns fresh Tensor outputs."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "WebFetch_6_6a1214c8.result",
+                "quote": "**Total running time of the script:** (0 minutes 3.044 seconds)"
+              }
+            ],
+            "reference": "PyTorch 官方教程 Functional Python Custom Operators（docs.pytorch.org）"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [
+          {
+            "metric": "M8",
+            "bad_refs": [
+              {
+                "event_id": "WebFetch_3_1bfa6dd1.result",
+                "quote": "https://docs.pytorch.org/cppdocs/api/library/registration.html"
+              },
+              {
+                "event_id": "WebFetch_4_cc7b12a4.result",
+                "quote": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html"
+              }
+            ]
+          }
+        ],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

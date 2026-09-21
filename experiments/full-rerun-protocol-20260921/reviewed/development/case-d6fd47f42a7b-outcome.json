@@ -1,0 +1,203 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "整体分两大步：**(一) CANN 侧**把 Ascend C 算子做成带 aclnn 接口的自定义算子包并部署；**(二) torch_npu 侧**写 C++ extension 适配层，把 aclnn 接口注册进 PyTorch dispatcher。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_1112407b2a5b443fb4b6cf95.result",
+      "evidence_quote": "EXEC_NPU_CMD(aclnnAddCustom, self, other, result);",
+      "verification": "source",
+      "reason": "原题含三方面：(a) Ascend C 算子注册为 aclnn 接口——答案给出 msopgen 工程流程、REG_OP 原型、编译部署后 aclnn 接口注册进运行时，其中 msopgen 细节来自二手 CSDN（call_cbadd251109ef4d84b0560565 含 'msopgen -i ./op.json -c AiCore -out'）且答案明确标注未官方核验；aclnn 两段式接口的存在由官方搜索摘要佐证（call_969ba659acad4e43b8d77e3d：'无论是基于Ascend C自定义的算子还是CANN内置算子，通常会以aclnn前缀API（简称aclnn接口）实现算子调用'）。(b) torch_npu/PyTorch 集成——答案给出 TORCH_LIBRARY 注册 schema、TORCH_LIBRARY_IMPL(PrivateUse1) 绑定、autograd Function、pybind、setup.py 编译全流程，逐字对应官方 TorchNPU 7.1.0 文档正文（call_1112407b2a5b443fb4b6cf95，含 EXEC_NPU_CMD(aclnnAddCustom...) 完整代码）。(c) 更新版本替代路径由官方 TorchNPU 26.0.0 文档正文佐证（call_c6a72ac3ef7e4c16a742204c，.asc 文件 + <<<>>> 直接 launch）。未核实处（CANN 侧 aclnn 适配层正文、OpPlugin 文档）答案已诚实标注，属有证据的'部分不适用/未取得'说明，核心问题（如何注册并集成使框架可调）已有可执行的官方证据支撑，故整体 supported。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "status": "supported",
+      "reason": "答案给出 TorchNPU 7.1.0 配套 CANN 8.2.RC1、TorchNPU 26.0.0 配套 CANN 9.0.0 的明确配套关系（官方文档前提条件），并给出 PyTorch ≥2.1 用 PrivateUse1 / <2.1 用 XLA 的条件规则；但 PyTorch 本身未定到具体版本（仅条件分支），且呈现两条版本轨道而非锁定唯一组合，属于有依据的适用范围而非全部定到具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "| TorchNPU 7.1.0 文档（aclnn 调用适配） | 配套 CANN 8.2.RC1；PyTorch ≥2.1 用 PrivateUse1，<2.1 用 XLA | 官方文档原文 |"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "| TorchNPU 26.0.0 文档（.asc 直接 launch） | 配套 CANN 9.0.0（商用/社区） | 官方文档前提条件章节 |"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "status": "insufficient_evidence",
+      "reason": "torch_npu 侧操作指导完整：完整 C++/Python 代码、文件结构、编译命令（python3 setup.py build bdist_wheel、bash build_and_run.sh、git clone 示例仓库）及版本前提条件，仅需替换用户环境参数即可执行；CANN 侧 msopgen 命令参数需按答案提示在本地 --help 核对（有明确说明的核对指引，非内容错误），aclnn 适配层细节指向官方文档链接。未实际运行验证，答案自身已声明'仅为文档内容核查'。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "python3 setup.py build bdist_wheel\n（样例工程可用 `bash build_and_run.sh` 一键编译安装运行测试）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "（命令与参数来自 CSDN 文章 ... 参数拼写请在本地 `msopgen --help` 核对）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "4. 所有代码均未实际运行验证，仅为文档内容核查。"
+        }
+      ],
+      "raw_status": "supported"
+    }
+  ],
+  "quote_audit": [
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "python3 setup.py build bdist_wheel\n（样例工程可用 `bash build_and_run.sh` 一键编译安装运行测试）"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-d6fd47f42a7b",
+  "task_id": "O",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "c6fa1d85f1584b29857be66073caa030",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "cfd7356f13ce8b5c81e7dabb708d81c5",
+        "conversationRequestId": "cfd7356f13ce8b5c81e7dabb708d81c5",
+        "agent": "cli"
+      },
+      {
+        "messageId": "c6fa1d85f1584b29857be66073caa030",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "cfd7356f13ce8b5c81e7dabb708d81c5",
+        "conversationRequestId": "cfd7356f13ce8b5c81e7dabb708d81c5",
+        "rawUsage": {
+          "prompt_tokens": 26179,
+          "completion_tokens": 1895,
+          "total_tokens": 28074,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 810,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 26179,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 810,
+          "credit": 5.25,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 26179,
+          "outputTokens": 1895,
+          "totalTokens": 28074,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 810
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "2546a633c30384b1374899ef762d5f87f2293c321c072bf6e615a6bef98b1214",
+    "process_sha256": "cff163c17120cbbbf5794c739c5af09d3e77b86da4891bfc700e2398d94f1f09",
+    "elapsed_seconds": 39.97,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-3df6fda1c5ed4659b3db01ec5f810510",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-d6fd47f42a7b-outcome.json",
+    "repairs": [
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "original_event_id": "call_1112407b2a5b443fb4b6cf95",
+        "replacement_event_id": "call_1112407b2a5b443fb4b6cf95.result",
+        "basis": "unique exact tool-result ID suffix; quote still separately checked"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

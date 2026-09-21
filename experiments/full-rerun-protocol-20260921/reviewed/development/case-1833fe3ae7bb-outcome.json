@@ -1,0 +1,215 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "unverified",
+      "answer_quote": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数 → `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用",
+      "answer_event_id": "final",
+      "evidence_id": "call_00_pn1iyxNqVYBbzLtYNGGs4156.result",
+      "evidence_quote": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下 - func: npu_add_custom(Tensor x, Tensor y) -> Tensor impl_ns: op_api",
+      "verification": "source",
+      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求覆盖两个子方面，均有证据：(1) 注册成 aclnn 接口——来源7（GitCode asc-tools 03_msopgen 解析）给出 msopgen gen 命令、安装 custom_opp .run 后『产出 aclnn_add_custom.h 等头文件与 cust_opapi 库』、aclnn 两段式调用 aclnnAddCustomGetWorkspaceSize/aclnnAddCustom；(2) 集成进 torch_npu/PyTorch——来源5（hiascend CANN 7.0.0 官方）给出 op-plugin_functions.yaml custom 节点注册、AddCustomKernelNpu.cpp 用 EXEC_NPU_CMD(aclnnAddCustom,...)、bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0、pip install torch_npu wheel、torch_npu.npu_add_custom(x.npu(), y.npu()) 调用及测试 OK 输出。来源1（TorchNPU 26.0.0 官方）另给 TORCH_LIBRARY/PrivateUse1 替代路线，答案如实标注其不经 aclnn 并以 A 为主线，符合原题。答案的未核实清单（msopgen -f 取值、REG_OP vs OP_ADD）不构成对已答内容的否定。",
+      "raw_status": "supported"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "主线 A 所需组件均给出有依据的具体版本：CANN 7.0.0、PyTorch 2.1.0、op-plugin 分支 5.0.0、torch_npu 2.1.0（来源5 官方原文含 --pytorch=v2.1.0-5.0.0 与 wheel 名）；路线 B 给出 TorchNPU 26.0.0 / CANN 9.0（来源1 安装链接 canncommercial/900）。未到 5 的原因：soc_version 仅给查询方法未定具体型号，且 msopgen -f 的 PyTorch 取值与 op-plugin 其他版本目录名自认未核实，属部分组件未定到具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "主线 A 的具体配套（来源 5，官方 CANN 7.0.0 商用版文档）：CANN **7.0.0**；PyTorch **2.1.0**；op-plugin 分支 **5.0.0**；torch_npu **2.1.0**"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值：取回材料只确证 `-f` 默认 `tf`/`tensorflow`……**未取到**官方参数表中 PyTorch 对应取值"
+        }
+      ],
+      "raw_status": "supported"
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "supported",
+      "reason": "路线 A 给出完整可执行链：msopgen gen 完整命令、cp 回填、bash build.sh、./custom_opp_<os>_<arch>.run、CMakePresets.json ENABLE_BINARY_PACKAGE=True、export LD_LIBRARY_PATH、op-plugin yaml 与 C++ 完整文件、bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0、pip3 install wheel、python3 test_ops_custom.py 测试脚本，均来自官方正文。仅 <soc_version>/<framework>/路径等环境参数需按用户环境替换且有说明（npu-smi info 查询规则）。未到 5：答案自认 msopgen -f 精确取值未确证（留默认未由官方确认）、host 侧注册宏归属未核实，存在需用户按所用 CANN 版本核对的点。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "msopgen gen -i ./op_dev/add_custom.json -f <framework> -c ai_core-<soc_version> -lan cpp -out ./custom_op"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0\npip3 install --upgrade dist/torch_npu-2.1.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "确认 soc_version：`npu-smi info`，取查询到的 \"Name\" 前面加 `Ascend` 前缀"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [
+    {
+      "requirement": 1,
+      "bad_refs": [
+        {
+          "field": "answer_quote",
+          "event_id": "final",
+          "quote": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数 → `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用"
+        },
+        {
+          "field": "evidence_quote",
+          "event_id": "call_00_pn1iyxNqVYBbzLtYNGGs4156.result",
+          "quote": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下 - func: npu_add_custom(Tensor x, Tensor y) -> Tensor impl_ns: op_api"
+        }
+      ]
+    },
+    {
+      "metric": "M9",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值：取回材料只确证 `-f` 默认 `tf`/`tensorflow`……**未取到**官方参数表中 PyTorch 对应取值"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-1833fe3ae7bb",
+  "task_id": "O",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "6db8ea0adb374ce9b888764a44e718ba",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "34b9e30ca2a1ddba3d01a9567c5545c7",
+        "conversationRequestId": "34b9e30ca2a1ddba3d01a9567c5545c7",
+        "agent": "cli"
+      },
+      {
+        "messageId": "6db8ea0adb374ce9b888764a44e718ba",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "34b9e30ca2a1ddba3d01a9567c5545c7",
+        "conversationRequestId": "34b9e30ca2a1ddba3d01a9567c5545c7",
+        "rawUsage": {
+          "prompt_tokens": 29732,
+          "completion_tokens": 1908,
+          "total_tokens": 31640,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 592,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 26724,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 592,
+          "credit": 5.46,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 29732,
+          "outputTokens": 1908,
+          "totalTokens": 31640,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 592
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "a27fe1be4ebb7e04d7777090d763e5d42d980fdaa85c67ea5dfa4707c7732ffd",
+    "process_sha256": "4b719db23e57c587e8ee8b27a3b20d80d88c54de39dc18931c0f12af1c559b8c",
+    "elapsed_seconds": 35.5,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-b606176bc4ea49d9937e42223d20cca0",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-1833fe3ae7bb-outcome.json",
+    "repairs": [
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "basis": "final alias maps to frozen final answer"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}
