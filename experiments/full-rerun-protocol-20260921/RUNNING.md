@@ -61,3 +61,13 @@ status.py生成status.json/progress.html。采集和评分完成数分别报告�
 - Actual M10 content reviews: GLM A-CUDA tuple.name error reproducible with minimal Python; grade3. DeepSeek H-CUDA deployment lacks buffer/runtime setup; grade3. Several original grade5 judgments requiring environment substitution corrected to original grade4. GLM J-CANN M9 conditional bands→grade4. No rubric/formula changes.
 - Independent M11 expanded-polynomial arithmetic check passed all53 then-computable rows; arithmetic-audit.json. Missing source evidence remains missing rather than fabricated.
 - Recent pushed commits f83bd9f,fc9af6b,5eecbd3; pending next review checkpoint. Paper untouched.
+
+
+## 2026-09-21 13:26 continuation
+
+- Collection128/156: GLM38, DeepSeek52, Kimi38, no current technical_attention. GLM/Kimi continue remaining tasks under existing Luna controllers. Kimi I-CANN replacement125026 valid; do not repeat it.
+- Root assessor snapshots19523(GLM) and60105(Kimi) active; DeepSeek full snapshot under Luna, with bounded technical retries after first pass.
+- Latest report90 assessed,78 structural gates passed,66 quote-clean; pipeline must refresh as assessments finish.
+- Root restored exact DeepSeek N-CUDA/O-CANN source and final spans; no rule/score change. 28 focused tests pass.
+- paired_summary.py now uses exactly25 tasks excludingG, per-model both-side gate+quote checks, explicit exclusion reasons and source run IDs, cross-endpoint difference bounds. Synthetic denominator/difference/exclusion checks passed. No fitting or inferential claims.
+- Latest preceding push e0b861e verified. Paper and installed skill untouched. Continue through156 and postassessment.

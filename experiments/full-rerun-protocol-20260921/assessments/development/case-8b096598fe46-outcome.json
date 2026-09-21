@@ -1,0 +1,225 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "scaler = torch.amp.GradScaler(\"cuda\")",
+      "answer_event_id": "final",
+      "evidence_id": "call_c2e095c98eb64821a7f1ac7b.result",
+      "evidence_quote": "scaler = torch.amp.GradScaler(\"cuda\")",
+      "verification": "source",
+      "reason": "原题三个子要求均满足且有官方来源支撑。(1) 如何开AMP：答案给出完整可复制的训练循环（autocast 包 forward+loss、scaler.scale/step/update），与官方 amp_recipe 教程中 \"with torch.autocast(device_type=device, dtype=torch.float16):\" 和 \"scaler = torch.amp.GradScaler(\\\"cuda\\\")\" 完全一致；并说明不需要手动 .half()，对应官方 \"You should not call half() or bfloat16() on your model(s) or inputs when using autocasting.\"（call_d036901e203946d999c3ec3b.result）。(2) torch.cuda.amp.autocast/GradScaler 用法：答案给出旧路径写法并引用官方 Warning 原文（call_d036901e \"torch.cuda.amp.autocast(args...) and torch.cpu.amp.autocast(args...) is deprecated. Please use torch.amp.autocast(\\\"cuda\\\", args...)\"），新旧对应关系正确。(3) GradScaler 关键用法（unscale_ 后裁剪、多优化器、梯度累积、state_dict、bf16 不需 scaler、默认参数 65536/2.0/0.5/2000）：逐项与 call_c94972b86a1e4fb2b03e0957.result（amp_examples，如 \"unscale_ should only be called once per optimizer per step call\"、多优化器示例）和 call_d036901e（GradScaler 弃用桩签名 \"init_scale=65536.0, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000, enabled=True\"）一致。答案明确标注无法核实项（弃用引入版本、移除版本），未编造，不构成错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M9: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "AMP 自 PyTorch 1.6 起提供（`torch.cuda.amp` 路径）；`torch.autocast` 为 1.10 新增。"
+        },
+        {
+          "event_id": "final",
+          "quote": "PyTorch 2.x 当前版本（文档为 2.14）推荐并演示 `torch.amp.autocast(device_type=...)` + `torch.amp.GradScaler(\"cuda\")`；旧路径官方已标注 deprecated 但文档未给出移除版本。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "M10: missing/invalid final answer citation",
+      "evidence": [
+        {
+          "event_id": "final",
+          "quote": "with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n            output = model(input)              # forward + loss 都在 autocast 内\n            loss = loss_fn(output, target)"
+        },
+        {
+          "event_id": "final",
+          "quote": "scaler.scale(loss).backward()          # 缩放 loss 并反传，得缩放梯度"
+        },
+        {
+          "event_id": "final",
+          "quote": "需要 CUDA GPU；速度提升主要来自 Tensor Core 架构（Volta 及以后，2-3x）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [
+      "M9: missing/invalid final answer citation",
+      "M10: missing/invalid final answer citation"
+    ],
+    "passed": false,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-8b096598fe46",
+  "task_id": "P",
+  "ecosystem": "cuda",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "scaler = torch.amp.GradScaler(\"cuda\")",
+        "answer_event_id": "final",
+        "evidence_id": "call_c2e095c98eb64821a7f1ac7b.result",
+        "evidence_quote": "scaler = torch.amp.GradScaler(\"cuda\")",
+        "verification": "source",
+        "reason": "原题三个子要求均满足且有官方来源支撑。(1) 如何开AMP：答案给出完整可复制的训练循环（autocast 包 forward+loss、scaler.scale/step/update），与官方 amp_recipe 教程中 \"with torch.autocast(device_type=device, dtype=torch.float16):\" 和 \"scaler = torch.amp.GradScaler(\\\"cuda\\\")\" 完全一致；并说明不需要手动 .half()，对应官方 \"You should not call half() or bfloat16() on your model(s) or inputs when using autocasting.\"（call_d036901e203946d999c3ec3b.result）。(2) torch.cuda.amp.autocast/GradScaler 用法：答案给出旧路径写法并引用官方 Warning 原文（call_d036901e \"torch.cuda.amp.autocast(args...) and torch.cpu.amp.autocast(args...) is deprecated. Please use torch.amp.autocast(\\\"cuda\\\", args...)\"），新旧对应关系正确。(3) GradScaler 关键用法（unscale_ 后裁剪、多优化器、梯度累积、state_dict、bf16 不需 scaler、默认参数 65536/2.0/0.5/2000）：逐项与 call_c94972b86a1e4fb2b03e0957.result（amp_examples，如 \"unscale_ should only be called once per optimizer per step call\"、多优化器示例）和 call_d036901e（GradScaler 弃用桩签名 \"init_scale=65536.0, growth_factor=2.0, backoff_factor=0.5, growth_interval=2000, enabled=True\"）一致。答案明确标注无法核实项（弃用引入版本、移除版本），未编造，不构成错误。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "部分组件定版，粒度未到具体版本",
+        "reason": "答案对所需组件（autocast、GradScaler 新旧两条路径）均给出有依据的适用版本范围：AMP 自 1.6 起提供、torch.autocast 1.10 新增、2.x 推荐 torch.amp 命名空间（文档为 2.14），且诚实说明弃用警告引入版本与移除版本无法核实。但最终推荐方案未锁定到用户环境的某个具体 PyTorch 版本，仍停留在范围层面，属第4档。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "AMP 自 PyTorch 1.6 起提供（`torch.cuda.amp` 路径）；`torch.autocast` 为 1.10 新增。"
+          },
+          {
+            "event_id": "final",
+            "quote": "PyTorch 2.x 当前版本（文档为 2.14）推荐并演示 `torch.amp.autocast(device_type=...)` + `torch.amp.GradScaler(\"cuda\")`；旧路径官方已标注 deprecated 但文档未给出移除版本。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "lower": null,
+        "upper": null,
+        "status": "操作指导完整，前提明确，可直接执行",
+        "reason": "答案提供完整训练循环代码：构造 GradScaler、autocast 包 forward+loss、退出后 backward、scale/step/update 顺序齐全，含梯度裁剪、多优化器、累积、bf16 等场景的完整可照抄片段；前置条件明确（需要 CUDA GPU、Tensor Core 架构 Volta 及以后、维度取 8 的倍数）。仅需用户替换自己的模型/数据/损失函数（题面固有内容，非答案缺项），无需修正任何内容错误。",
+        "evidence": [
+          {
+            "event_id": "final",
+            "quote": "with torch.autocast(device_type=\"cuda\", dtype=torch.float16):\n            output = model(input)              # forward + loss 都在 autocast 内\n            loss = loss_fn(output, target)"
+          },
+          {
+            "event_id": "final",
+            "quote": "scaler.scale(loss).backward()          # 缩放 loss 并反传，得缩放梯度"
+          },
+          {
+            "event_id": "final",
+            "quote": "需要 CUDA GPU；速度提升主要来自 Tensor Core 架构（Volta 及以后，2-3x）"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "a82ed04107be425c97436cf94f823c30",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "884c6e1ac8b3c042fcd729783b87481f",
+        "conversationRequestId": "884c6e1ac8b3c042fcd729783b87481f",
+        "agent": "cli"
+      },
+      {
+        "messageId": "a82ed04107be425c97436cf94f823c30",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "884c6e1ac8b3c042fcd729783b87481f",
+        "conversationRequestId": "884c6e1ac8b3c042fcd729783b87481f",
+        "rawUsage": {
+          "prompt_tokens": 24629,
+          "completion_tokens": 2196,
+          "total_tokens": 26825,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1130,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 24629,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1130,
+          "credit": 5.17,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 24629,
+          "outputTokens": 2196,
+          "totalTokens": 26825,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1130
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "5941b865b064462a812832f798143798c7f7de8f206751216e88aa6f762740dc",
+    "process_sha256": "ea8ca7ae97747b58a11be1c5b74960d1873f253d48be07a64e32b2595a388ac3",
+    "elapsed_seconds": 35.61,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-d9d31cb96d28485ea078e79ec2f45a4e",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

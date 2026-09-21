@@ -1,0 +1,120 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "官方明确：`torch.cuda.amp.autocast(args...)` 与 `torch.cuda.amp.GradScaler(args...)` **已废弃（deprecated）**，应改用统一接口 `torch.amp.autocast(\"cuda\", args...)` 和 `torch.amp.GradScaler(\"cuda\", args...)`。",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+      "evidence_quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)` or `torch.amp.autocast(\"cpu\", args...)` instead.",
+      "verification": "source",
+      "reason": "原题三个子要求均满足：(1) 如何开AMP——答案给出标准训练循环（autocast 包前向 + scaler.scale(loss).backward() + scaler.step + scaler.update），与官方 recipe 的 'All together' 示例一致；(2) autocast 用法——给出签名 device_type/dtype/enabled/cache_enabled、thread-local 约束、不要手动 .half()，均与官方 amp.html 原文一致；(3) GradScaler 用法——给出参数默认值（init_scale=65536.0 等）、unscale_ 与梯度裁剪、多 optimizer 只调一次 update、保存恢复 state_dict，均与 amp_examples 与 recipe 原文一致。答案额外给出废弃迁移说明（torch.cuda.amp→torch.amp），有官方 Warning 逐字支持。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "答案对所用接口给出有依据的版本范围：文档基于 PyTorch 2.14（官方页标注）、torch.amp.autocast 'new in version 1.10'（官方原文）、代码兼容 1.6+、2.4 起废弃 torch.cuda.amp（第三方 runoob），且自述未能确认 torch.amp.GradScaler device_type 参数等精确引入版本——属于有依据的适用范围但至少一项未定到具体版本，符合第4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "官方文档版本：抓取到的为 **PyTorch 2.14**（tutorials 页标注 “2.14.0+cu130 documentation”；amp API 页 “PyTorch 2.14 documentation”）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "我没能逐一确认每个小版本（如 `torch.amp.GradScaler` 的 `device_type` 参数、`torch.autocast(device_type=...)` 形式）精确引入的版本号"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "scored",
+      "reason": "给出完整可运行训练循环（含 import、optimizer、scaler 构造、autocast 上下文、scale/step/update 顺序），前置条件明确（PyTorch 1.6+、CUDA GPU、Tensor Core 架构收益说明）；仅需替换用户环境值（MyModel、loader、loss_fn），且这些占位符明确标识，无需修正内容错误，符合第4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "scaler = torch.amp.GradScaler(\"cuda\")   # 每个训练过程用一个新的 scaler\n\nfor inputs, targets in loader:\n    opt.zero_grad(set_to_none=True)\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "前置条件（recipe 原文）**：PyTorch 1.6 或更高、CUDA-capable GPU；Tensor Core 架构（Volta/Turing/Ampere）收益最大（2–3X）"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-145072426409",
+  "task_id": "P",
+  "ecosystem": "cuda",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "prompt_sha256": "fc7832fa48ba2f62d467c1aba38032bd3d96c482e56d2579c82f37aaa547e300",
+    "process_sha256": "0c863321d4888a7c17cdafd6653917898b4267c5dc7b6b77d61fea022b2f606d",
+    "elapsed_seconds": 26.48,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-471b1d133d1d491aaff23168f363fb05",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": ""
+  },
+  "review": {
+    "raw_file": "assessments/development/case-145072426409-outcome-shape-recovered.json",
+    "repairs": [
+      {
+        "event_id": "run-end",
+        "original": "官方明确：`torch.cuda.amp.autocast(args...)` 与 `torch.cuda.amp.GradScaler(args...)` 已废弃（deprecated），应改用统一接口 `torch.amp.autocast(\"cuda\", args...)` 和 `torch.amp.GradScaler(\"cuda\", args...)`。",
+        "replacement": "官方明确：`torch.cuda.amp.autocast(args...)` 与 `torch.cuda.amp.GradScaler(args...)` **已废弃（deprecated）**，应改用统一接口 `torch.amp.autocast(\"cuda\", args...)` 和 `torch.amp.GradScaler(\"cuda\", args...)`。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "官方文档版本：抓取到的为 PyTorch 2.14（tutorials 页标注 “2.14.0+cu130 documentation”；amp API 页 “PyTorch 2.14 documentation”）",
+        "replacement": "官方文档版本：抓取到的为 **PyTorch 2.14**（tutorials 页标注 “2.14.0+cu130 documentation”；amp API 页 “PyTorch 2.14 documentation”）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "event_id": "run-end",
+        "original": "前置条件（recipe 原文）：PyTorch 1.6 或更高、CUDA-capable GPU；Tensor Core 架构（Volta/Turing/Ampere）收益最大（2–3X）",
+        "replacement": "前置条件（recipe 原文）**：PyTorch 1.6 或更高、CUDA-capable GPU；Tensor Core 架构（Volta/Turing/Ampere）收益最大（2–3X）",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      }
+    ],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}

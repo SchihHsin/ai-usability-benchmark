@@ -147,6 +147,673 @@
           "model_requested": "glm-5.3"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T05:26:40.736102+00:00",
+      "process_sha256": "60d9a393358e3ac3b76ddd84e101f50924751c60c8f85124e5b39cb8c675d3e5",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "scaler = amp.GradScaler(init_scale=2.**10, dynamic=False)",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_a25d1fb27d1a4a4fa915a386.result",
+            "evidence_quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)",
+            "verification": "source",
+            "reason": "原题包含三个子要求，均在最终答案中有证据支撑。(1) 昇腾上开启混合精度的方法：答案给出 torch_npu 原生 AMP 路线（from torch_npu.npu import amp; with amp.autocast()），与官方典型场景样例（call_f99298d2edf048f5b9520686.result）逐字一致；(2) apex 路线：答案给出安装命令（git clone -b master、bash scripts/build.sh --python=3.7、pip3 install apex-0.1+ascend-{version}.whl）和 apex.amp.initialize(opt_level='O1') + scale_loss 用法，与 apex README（call_4f7b76e155b647178c234087.result）一致，含动态 loss scale 参数表（dynamic_init_scale=2**16 等）；(3) loss scale 配置：GradScaler 的 dynamic/init_scale 参数说明与官方适配简介页（call_a25d1fb27d1a4a4fa915a386.result）的表1 一致，静态 loss scale 取值（128/256/512/1024/2048）与混合精度问题调测页（call_8e17463614f54c44b50b7120.result）一致。答案还如实标注了未核实项（transfer_to_npu 出自先验、Gitcode 新表未核实），未混入已证与未证内容。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（hiascend.com TorchNPU 混合精度适配文档），第二次查询也返回官方相关页。",
+            "evidence": [
+              {
+                "event_id": "call_0abff8e9f5df49bcb188107a.result",
+                "quote": "## 1. [适配简介-TorchNPU6.0.0-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0026.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 4.0,
+            "upper": 5.0,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+                "quote": "**标题**: 适配简介-（可选）混合精度适配-关键特性适配-模型迁移-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区"
+              },
+              {
+                "event_id": "call_f99298d2edf048f5b9520686.result",
+                "quote": "# 适配样例（典型场景）"
+              },
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "# Apex for Ascend（昇腾Apex适配）README 完整提取"
+              },
+              {
+                "event_id": "call_8e17463614f54c44b50b7120.result",
+                "quote": "# 混合精度问题调测"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "已取回正文覆盖原题全部子要求：AMP开启方式与完整代码（autocast/GradScaler/scale/step/update）、GradScaler的dynamic与init_scale参数表、apex路线（initialize、opt_level、scale_loss、NpuFused优化器）、loss scale静态/动态配置及调优建议（128/256/512、梯度裁剪）。",
+            "evidence": [
+              {
+                "event_id": "call_f99298d2edf048f5b9520686.result",
+                "quote": "scaler = amp.GradScaler()    # 在模型、优化器定义之后，定义GradScaler"
+              },
+              {
+                "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+                "quote": "当前NPU上适配的amp.GradScaler接口增加了dynamic参数。当dynamic参数设置为False时，支持使用固定值的Loss Scale"
+              },
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "model, optimizer = apex.amp.initialize(models=model, optimizers=optimizer, opt_level='O1')"
+              },
+              {
+                "event_id": "call_8e17463614f54c44b50b7120.result",
+                "quote": "在**amp.initialize**时传入loss_scale，可设置为128、256、512、1024、2048等值"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "M4: unresolved conflict cannot score >=3",
+            "evidence": [
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "| CANN 版本 | PyTorch 版本 | Ascend Extension for PyTorch | Python 版本 | Apex 版本/分支 |"
+              },
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "| 8.0.RC3 | 2.4.0 | v2.4.0-6.0.rc3 | 3.8x / 3.9x / 3.10x | master |"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "两次查询共列出约7-8条相关独立第三方来源（CSDN多篇、runoob、华为云博客），去重后仍≥6条；首次发现于第1次查询第3条。计数基于搜索结果列出，正文未抓取不影响计数。",
+            "evidence": [
+              {
+                "event_id": "call_0abff8e9f5df49bcb188107a.result",
+                "quote": "## 3. [在 PyTorch 分布式训练中，混合精度训练_torch.npu.amp ...](https://blog.csdn.net/2501_93412755/article/details/154646130)"
+              },
+              {
+                "event_id": "call_caee7e5a5b7548f4be7ff365.result",
+                "quote": "## 1. [从+NV+Apex+到+Apex+for+Ascend：混合精度训练在昇腾 ...](https://bbs.huaweicloud.com/blogs/471428)"
+              },
+              {
+                "event_id": "call_caee7e5a5b7548f4be7ff365.result",
+                "quote": "## 4. [昇腾AI处理器混合精度训练利器——apex for Ascend编译与 ...](https://blog.csdn.net/Zero_VPN/article/details/156279914)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-12",
+              "ev-13",
+              "ev-14"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "insufficient_evidence",
+            "reason": "存在第三方来源（M5≥6），非N/A；但全部第三方来源仅以搜索结果标题/摘要形式出现，未抓取任何正文，关键说法（apex for Ascend用法、loss scale建议等）无可追溯核对依据，也无法判断一致性，证据不足以评分。",
+            "evidence": [
+              {
+                "event_id": "call_caee7e5a5b7548f4be7ff365.result",
+                "quote": "2025年12月24日 · 随着华为昇腾 NPU 在 AI 训练领域的广泛应用，社区基于 Apex 的实现逻辑推出了 “Apex for Ascend”"
+              }
+            ],
+            "evidence_refs": [
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前回答已给出两条路线的正确完整流程：torch.npu.amp的autocast/GradScaler/scale/step/update用法（与官方样例一致）、apex的initialize(opt_level O1/O2)与NpuFused系列（与gitee README一致）、loss scale配置原则（静态/动态、128初值与官方128/256建议相符）。但个别关键细节有偏差：所述NpuFusedAdamV2未出现在官方已支持列表中；'NPU上apex对动态loss scale支持有限'与README声明支持动态loss scale及可调参数部分矛盾；具体初值/调整策略自认需检索核实。属完整流程但具体参数、约束仍需补充。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "torch.npu.amp.autocast(enabled=True)` 包裹前向，`torch.npu.amp.GradScaler()` 包裹 loss 与 optimizer.step()"
+              },
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "- ✅ **动态/静态 loss scale**"
+              },
+              {
+                "event_id": "call_8e17463614f54c44b50b7120.result",
+                "quote": "在**amp.initialize**时传入loss_scale，可设置为128、256、512、1024、2048等值"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_0abff8e9f5df49bcb188107a.dispatch",
+              "call_a25d1fb27d1a4a4fa915a386.dispatch",
+              "call_f99298d2edf048f5b9520686.dispatch",
+              "call_caee7e5a5b7548f4be7ff365.dispatch",
+              "call_4f7b76e155b647178c234087.dispatch",
+              "call_8e17463614f54c44b50b7120.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "assessed",
+            "reason": "答案对所需组件给出了有依据的适用范围：AMP 路线锁定到 TorchNPU 6.0.0 文档对应接口（amp.autocast/GradScaler dynamic 参数为 6.0.0 版本特性）；apex 路线给出官方版本配套表（CANN 8.0.RC3 + PyTorch 2.4.0 + torch_npu v2.4.0-6.0.rc3 + Python 3.8–3.10 + master 分支等），各组件配套关系来自 apex README 官方表。但答案以范围/表格形式呈现多组可用组合，未替用户锁定到一组具体版本（如未指定应选哪一行）；且答案自述 apex 仓库迁移至 Gitcode 后新版配套表是否更新未核实。所有组件均有依据的适用范围、无未解决冲突，但未定到单一具体版本组合，符合4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "| CANN | PyTorch | torch_npu | Python | Apex 分支 |\n|------|---------|-----------|--------|----------|\n| 8.0.RC3 | 2.1.0 | v2.1.0-6.0.rc3 | 3.8–3.11 | master |"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "apex Gitee 仓库迁移至 Gitcode 后新版配套表是否更新，未核实。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 5,
+            "lower": null,
+            "upper": null,
+            "status": "assessed",
+            "reason": "两条路线均给出可直接执行的完整方案。AMP 路线：完整可复制的导入、GradScaler 定义与训练循环代码，含 scaler.scale/step/update 调用顺序，与官方样例一致。apex 路线：完整安装命令链（git clone、build.sh --python=3.7、pip3 install --upgrade apex-0.1+ascend-{version}.whl），前置条件明确（torch 已装、setuptools<=65.7.0、Python 3.7–3.10），{version} 为明确标注并附说明（version为python版本和cpu架构）的用户环境参数；使用示例含 opt_level、scale_loss 上下文、融合优化器用法；loss scale 调优给出静态取值（128/256/512/1024/2048）与梯度裁剪的完整代码顺序（apex 退出上下文后裁剪；AMP 先 unscale_ 再裁剪再 step）。适用前提（Atlas 9000 需开启、A2/A3 自选、迁移完成后训练前适配）也已说明，无需补写或修正即可执行。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "git clone -b master https://gitee.com/ascend/apex.git\ncd apex/\n# 前置：torch已安装，setuptools<=65.7.0（推荐65.7.0），Python 3.7–3.10\nbash scripts/build.sh --python=3.7"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "with amp.autocast():                      # 开启混合精度\n            outputs = model(inputs)\n            loss = criterion(outputs, labels).to(device)\n        optimizer.zero_grad()\n        scaler.scale(loss).backward()             # loss缩放并反向传播\n        scaler.step(optimizer)                     # 更新参数（自动unscale）\n        scaler.update()"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "insufficient_evidence",
+                "reason": "存在第三方来源（M5≥6），非N/A；但全部第三方来源仅以搜索结果标题/摘要形式出现，未抓取任何正文，关键说法（apex for Ascend用法、loss scale建议等）无可追溯核对依据，也无法判断一致性，证据不足以评分。"
+              },
+              {
+                "metric": "M4",
+                "status": "insufficient_evidence",
+                "reason": "M4: unresolved conflict cannot score >=3"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "insufficient_evidence",
+              "reason": "存在第三方来源（M5≥6），非N/A；但全部第三方来源仅以搜索结果标题/摘要形式出现，未抓取任何正文，关键说法（apex for Ascend用法、loss scale建议等）无可追溯核对依据，也无法判断一致性，证据不足以评分。"
+            },
+            {
+              "metric": "M4",
+              "status": "insufficient_evidence",
+              "reason": "M4: unresolved conflict cannot score >=3"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [
+              "M4: unresolved conflict cannot score >=3"
+            ],
+            "passed": false,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_0abff8e9f5df49bcb188107a.result",
+            "field": "response",
+            "sha256": "dbbdff029ea4477f701f35ea0788d37da7661bed5e391b530e88cb6cdebca802",
+            "start": 65,
+            "end": 201,
+            "quote": "## 1. [适配简介-TorchNPU6.0.0-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0026.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+            "field": "response",
+            "sha256": "5bc58935e572b1c422e9d9cf25ef521d5e0e13cc20d7535903beb2583a124888",
+            "start": 0,
+            "end": 77,
+            "quote": "**标题**: 适配简介-（可选）混合精度适配-关键特性适配-模型迁移-PyTorch 训练模型迁移调优指南-TorchNPU6.0.0开发文档-昇腾社区",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_f99298d2edf048f5b9520686.result",
+            "field": "response",
+            "sha256": "b14e24f48ca268b01ec3edafb986c0c3ab7f3fbd166341cea3582f13e28229ad",
+            "start": 301,
+            "end": 313,
+            "quote": "# 适配样例（典型场景）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_4f7b76e155b647178c234087.result",
+            "field": "response",
+            "sha256": "140d1fda160f1efe9cf69f49b1ce1adefcbba689bb8f437edf2f75c44c3c46e8",
+            "start": 0,
+            "end": 38,
+            "quote": "# Apex for Ascend（昇腾Apex适配）README 完整提取",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_8e17463614f54c44b50b7120.result",
+            "field": "response",
+            "sha256": "26929244f0d60816af0e86f5145386df7ec7f50d3313f9624a21d44530cfe533",
+            "start": 279,
+            "end": 289,
+            "quote": "# 混合精度问题调测",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_f99298d2edf048f5b9520686.result",
+            "field": "response",
+            "sha256": "b14e24f48ca268b01ec3edafb986c0c3ab7f3fbd166341cea3582f13e28229ad",
+            "start": 1250,
+            "end": 1305,
+            "quote": "scaler = amp.GradScaler()    # 在模型、优化器定义之后，定义GradScaler",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+            "field": "response",
+            "sha256": "5bc58935e572b1c422e9d9cf25ef521d5e0e13cc20d7535903beb2583a124888",
+            "start": 2061,
+            "end": 2137,
+            "quote": "当前NPU上适配的amp.GradScaler接口增加了dynamic参数。当dynamic参数设置为False时，支持使用固定值的Loss Scale",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_4f7b76e155b647178c234087.result",
+            "field": "response",
+            "sha256": "140d1fda160f1efe9cf69f49b1ce1adefcbba689bb8f437edf2f75c44c3c46e8",
+            "start": 1771,
+            "end": 1861,
+            "quote": "model, optimizer = apex.amp.initialize(models=model, optimizers=optimizer, opt_level='O1')",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_8e17463614f54c44b50b7120.result",
+            "field": "response",
+            "sha256": "26929244f0d60816af0e86f5145386df7ec7f50d3313f9624a21d44530cfe533",
+            "start": 1548,
+            "end": 1608,
+            "quote": "在**amp.initialize**时传入loss_scale，可设置为128、256、512、1024、2048等值",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_4f7b76e155b647178c234087.result",
+            "field": "response",
+            "sha256": "140d1fda160f1efe9cf69f49b1ce1adefcbba689bb8f437edf2f75c44c3c46e8",
+            "start": 9278,
+            "end": 9358,
+            "quote": "| CANN 版本 | PyTorch 版本 | Ascend Extension for PyTorch | Python 版本 | Apex 版本/分支 |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_4f7b76e155b647178c234087.result",
+            "field": "response",
+            "sha256": "140d1fda160f1efe9cf69f49b1ce1adefcbba689bb8f437edf2f75c44c3c46e8",
+            "start": 9592,
+            "end": 9659,
+            "quote": "| 8.0.RC3 | 2.4.0 | v2.4.0-6.0.rc3 | 3.8x / 3.9x / 3.10x | master |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_0abff8e9f5df49bcb188107a.result",
+            "field": "response",
+            "sha256": "dbbdff029ea4477f701f35ea0788d37da7661bed5e391b530e88cb6cdebca802",
+            "start": 729,
+            "end": 841,
+            "quote": "## 3. [在 PyTorch 分布式训练中，混合精度训练_torch.npu.amp ...](https://blog.csdn.net/2501_93412755/article/details/154646130)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_caee7e5a5b7548f4be7ff365.result",
+            "field": "response",
+            "sha256": "f5ac662e337e4d0f41f3b35ffe165a664c5217ee287724e36f5503df54487eca",
+            "start": 68,
+            "end": 159,
+            "quote": "## 1. [从+NV+Apex+到+Apex+for+Ascend：混合精度训练在昇腾 ...](https://bbs.huaweicloud.com/blogs/471428)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_caee7e5a5b7548f4be7ff365.result",
+            "field": "response",
+            "sha256": "f5ac662e337e4d0f41f3b35ffe165a664c5217ee287724e36f5503df54487eca",
+            "start": 834,
+            "end": 939,
+            "quote": "## 4. [昇腾AI处理器混合精度训练利器——apex for Ascend编译与 ...](https://blog.csdn.net/Zero_VPN/article/details/156279914)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_caee7e5a5b7548f4be7ff365.result",
+            "field": "response",
+            "sha256": "f5ac662e337e4d0f41f3b35ffe165a664c5217ee287724e36f5503df54487eca",
+            "start": 161,
+            "end": 237,
+            "quote": "2025年12月24日 · 随着华为昇腾 NPU 在 AI 训练领域的广泛应用，社区基于 Apex 的实现逻辑推出了 “Apex for Ascend”",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "e58843177f5d751f3185f2c2d6900956e15b8425a93f5dc420d45a9bcadd8f21",
+            "start": 320,
+            "end": 418,
+            "quote": "torch.npu.amp.autocast(enabled=True)` 包裹前向，`torch.npu.amp.GradScaler()` 包裹 loss 与 optimizer.step()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "call_4f7b76e155b647178c234087.result",
+            "field": "response",
+            "sha256": "140d1fda160f1efe9cf69f49b1ce1adefcbba689bb8f437edf2f75c44c3c46e8",
+            "start": 3151,
+            "end": 3175,
+            "quote": "- ✅ **动态/静态 loss scale**",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "call_8e17463614f54c44b50b7120.result",
+            "field": "response",
+            "sha256": "26929244f0d60816af0e86f5145386df7ec7f50d3313f9624a21d44530cfe533",
+            "start": 1548,
+            "end": 1608,
+            "quote": "在**amp.initialize**时传入loss_scale，可设置为128、256、512、1024、2048等值",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b7f25414d458c2039d6159efb96ce434b850ac84be9903724e6a13b2c9cf0f86",
+            "start": 3980,
+            "end": 4137,
+            "quote": "| CANN | PyTorch | torch_npu | Python | Apex 分支 |\n|------|---------|-----------|--------|----------|\n| 8.0.RC3 | 2.1.0 | v2.1.0-6.0.rc3 | 3.8–3.11 | master |",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b7f25414d458c2039d6159efb96ce434b850ac84be9903724e6a13b2c9cf0f86",
+            "start": 5260,
+            "end": 5300,
+            "quote": "apex Gitee 仓库迁移至 Gitcode 后新版配套表是否更新，未核实。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b7f25414d458c2039d6159efb96ce434b850ac84be9903724e6a13b2c9cf0f86",
+            "start": 1785,
+            "end": 1941,
+            "quote": "git clone -b master https://gitee.com/ascend/apex.git\ncd apex/\n# 前置：torch已安装，setuptools<=65.7.0（推荐65.7.0），Python 3.7–3.10\nbash scripts/build.sh --python=3.7",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b7f25414d458c2039d6159efb96ce434b850ac84be9903724e6a13b2c9cf0f86",
+            "start": 694,
+            "end": 1024,
+            "quote": "with amp.autocast():                      # 开启混合精度\n            outputs = model(inputs)\n            loss = criterion(outputs, labels).to(device)\n        optimizer.zero_grad()\n        scaler.scale(loss).backward()             # loss缩放并反向传播\n        scaler.step(optimizer)                     # 更新参数（自动unscale）\n        scaler.update()",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "b7f25414d458c2039d6159efb96ce434b850ac84be9903724e6a13b2c9cf0f86",
+            "start": 1172,
+            "end": 1229,
+            "quote": "scaler = amp.GradScaler(init_scale=2.**10, dynamic=False)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+            "field": "response",
+            "sha256": "5bc58935e572b1c422e9d9cf25ef521d5e0e13cc20d7535903beb2583a124888",
+            "start": 2182,
+            "end": 2243,
+            "quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-ba15159270eb-predictors.json": "99820d5f2b4f886c4f99ad0bf3111658396b00c2069fcb88e1a4c2b58abbf215",
+          "reviewed/development/case-ba15159270eb-outcome.json": "323ca838475450420cb59be715079c28566d1960bc763e21ee619cb0996d6503",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0026.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+                "quote": "混合精度适配支持两种方式："
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_a25d1fb27d1a4a4fa915a386.result",
+                "quote": "仅在dynamic=False时可用，用户根据实际情况设置。"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_f99298d2edf048f5b9520686.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0027.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_f99298d2edf048f5b9520686.result",
+                "quote": "# 适配样例（典型场景）"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_f99298d2edf048f5b9520686.result",
+                "quote": "scaler.update()    # 基于动态Loss Scale更新loss_scaling系数"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_4f7b76e155b647178c234087.result",
+            "url": "https://gitee.com/ascend/apex",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "**Apex Patch** 以代码 patch 的形式发布"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_4f7b76e155b647178c234087.result",
+                "quote": "> 注：原文个别优化器的函数签名默认值与参数说明表存在细微出入"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_8e17463614f54c44b50b7120.result",
+            "url": "https://www.hiascend.com/document/detail/zh/Pytorch/600/ptmoddevg/trainingmigrguide/PT_LMTMOG_0073.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_8e17463614f54c44b50b7120.result",
+                "quote": "# 混合精度问题调测"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_8e17463614f54c44b50b7120.result",
+                "quote": "若未好转，则建议尝试其他调优方法。"
+              }
+            ],
+            "reference": null
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

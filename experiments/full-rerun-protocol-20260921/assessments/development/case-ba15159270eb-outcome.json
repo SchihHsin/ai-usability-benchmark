@@ -1,0 +1,225 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "scaler = amp.GradScaler(init_scale=2.**10, dynamic=False)",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_a25d1fb27d1a4a4fa915a386.result",
+      "evidence_quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)",
+      "verification": "source",
+      "reason": "原题包含三个子要求，均在最终答案中有证据支撑。(1) 昇腾上开启混合精度的方法：答案给出 torch_npu 原生 AMP 路线（from torch_npu.npu import amp; with amp.autocast()），与官方典型场景样例（call_f99298d2edf048f5b9520686.result）逐字一致；(2) apex 路线：答案给出安装命令（git clone -b master、bash scripts/build.sh --python=3.7、pip3 install apex-0.1+ascend-{version}.whl）和 apex.amp.initialize(opt_level='O1') + scale_loss 用法，与 apex README（call_4f7b76e155b647178c234087.result）一致，含动态 loss scale 参数表（dynamic_init_scale=2**16 等）；(3) loss scale 配置：GradScaler 的 dynamic/init_scale 参数说明与官方适配简介页（call_a25d1fb27d1a4a4fa915a386.result）的表1 一致，静态 loss scale 取值（128/256/512/1024/2048）与混合精度问题调测页（call_8e17463614f54c44b50b7120.result）一致。答案还如实标注了未核实项（transfer_to_npu 出自先验、Gitcode 新表未核实），未混入已证与未证内容。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": null,
+      "upper": null,
+      "status": "assessed",
+      "reason": "答案对所需组件给出了有依据的适用范围：AMP 路线锁定到 TorchNPU 6.0.0 文档对应接口（amp.autocast/GradScaler dynamic 参数为 6.0.0 版本特性）；apex 路线给出官方版本配套表（CANN 8.0.RC3 + PyTorch 2.4.0 + torch_npu v2.4.0-6.0.rc3 + Python 3.8–3.10 + master 分支等），各组件配套关系来自 apex README 官方表。但答案以范围/表格形式呈现多组可用组合，未替用户锁定到一组具体版本（如未指定应选哪一行）；且答案自述 apex 仓库迁移至 Gitcode 后新版配套表是否更新未核实。所有组件均有依据的适用范围、无未解决冲突，但未定到单一具体版本组合，符合4档。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "| CANN | PyTorch | torch_npu | Python | Apex 分支 |\n|------|---------|-----------|--------|----------|\n| 8.0.RC3 | 2.1.0 | v2.1.0-6.0.rc3 | 3.8–3.11 | master |"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "apex Gitee 仓库迁移至 Gitcode 后新版配套表是否更新，未核实。"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": null,
+      "lower": null,
+      "upper": null,
+      "status": "insufficient_evidence",
+      "reason": "两条路线均给出可直接执行的完整方案。AMP 路线：完整可复制的导入、GradScaler 定义与训练循环代码，含 scaler.scale/step/update 调用顺序，与官方样例一致。apex 路线：完整安装命令链（git clone、build.sh --python=3.7、pip3 install --upgrade apex-0.1+ascend-{version}.whl），前置条件明确（torch 已装、setuptools<=65.7.0、Python 3.7–3.10），{version} 为明确标注并附说明（version为python版本和cpu架构）的用户环境参数；使用示例含 opt_level、scale_loss 上下文、融合优化器用法；loss scale 调优给出静态取值（128/256/512/1024/2048）与梯度裁剪的完整代码顺序（apex 退出上下文后裁剪；AMP 先 unscale_ 再裁剪再 step）。适用前提（Atlas 9000 需开启、A2/A3 自选、迁移完成后训练前适配）也已说明，无需补写或修正即可执行。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "git clone -b master https://gitee.com/ascend/apex.git\ncd apex/\n# 前置：torch已安装，setuptools<=65.7.0（推荐65.7.0），Python 3.7–3.10\nbash scripts/build.sh --python=3.7"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "with amp.autocast():                      # 开启混合精度\n    outputs = model(inputs)\n    loss = criterion(outputs, labels).to(device)\noptimizer.zero_grad()\nscaler.scale(loss).backward()             # loss缩放并反向传播\nscaler.step(optimizer)                     # 更新参数（自动unscale）\nscaler.update()"
+        }
+      ],
+      "raw_status": "assessed"
+    }
+  ],
+  "quote_audit": [
+    {
+      "metric": "M10",
+      "bad_refs": [
+        {
+          "event_id": "run-end",
+          "quote": "with amp.autocast():                      # 开启混合精度\n    outputs = model(inputs)\n    loss = criterion(outputs, labels).to(device)\noptimizer.zero_grad()\nscaler.scale(loss).backward()             # loss缩放并反向传播\nscaler.step(optimizer)                     # 更新参数（自动unscale）\nscaler.update()"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-ba15159270eb",
+  "task_id": "P",
+  "ecosystem": "cann",
+  "split": "development",
+  "budget": "standard",
+  "kind": "outcome",
+  "raw_assessment": {
+    "requirements": [
+      {
+        "id": 1,
+        "status": "supported",
+        "answer_quote": "scaler = amp.GradScaler(init_scale=2.**10, dynamic=False)",
+        "answer_event_id": "run-end",
+        "evidence_id": "call_a25d1fb27d1a4a4fa915a386.result",
+        "evidence_quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)",
+        "verification": "source",
+        "reason": "原题包含三个子要求，均在最终答案中有证据支撑。(1) 昇腾上开启混合精度的方法：答案给出 torch_npu 原生 AMP 路线（from torch_npu.npu import amp; with amp.autocast()），与官方典型场景样例（call_f99298d2edf048f5b9520686.result）逐字一致；(2) apex 路线：答案给出安装命令（git clone -b master、bash scripts/build.sh --python=3.7、pip3 install apex-0.1+ascend-{version}.whl）和 apex.amp.initialize(opt_level='O1') + scale_loss 用法，与 apex README（call_4f7b76e155b647178c234087.result）一致，含动态 loss scale 参数表（dynamic_init_scale=2**16 等）；(3) loss scale 配置：GradScaler 的 dynamic/init_scale 参数说明与官方适配简介页（call_a25d1fb27d1a4a4fa915a386.result）的表1 一致，静态 loss scale 取值（128/256/512/1024/2048）与混合精度问题调测页（call_8e17463614f54c44b50b7120.result）一致。答案还如实标注了未核实项（transfer_to_npu 出自先验、Gitcode 新表未核实），未混入已证与未证内容。"
+      }
+    ],
+    "m9_m10": [
+      {
+        "id": "M9",
+        "score": 4,
+        "lower": null,
+        "upper": null,
+        "status": "assessed",
+        "reason": "答案对所需组件给出了有依据的适用范围：AMP 路线锁定到 TorchNPU 6.0.0 文档对应接口（amp.autocast/GradScaler dynamic 参数为 6.0.0 版本特性）；apex 路线给出官方版本配套表（CANN 8.0.RC3 + PyTorch 2.4.0 + torch_npu v2.4.0-6.0.rc3 + Python 3.8–3.10 + master 分支等），各组件配套关系来自 apex README 官方表。但答案以范围/表格形式呈现多组可用组合，未替用户锁定到一组具体版本（如未指定应选哪一行）；且答案自述 apex 仓库迁移至 Gitcode 后新版配套表是否更新未核实。所有组件均有依据的适用范围、无未解决冲突，但未定到单一具体版本组合，符合4档。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "| CANN | PyTorch | torch_npu | Python | Apex 分支 |\n|------|---------|-----------|--------|----------|\n| 8.0.RC3 | 2.1.0 | v2.1.0-6.0.rc3 | 3.8–3.11 | master |"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "apex Gitee 仓库迁移至 Gitcode 后新版配套表是否更新，未核实。"
+          }
+        ]
+      },
+      {
+        "id": "M10",
+        "score": 5,
+        "lower": null,
+        "upper": null,
+        "status": "assessed",
+        "reason": "两条路线均给出可直接执行的完整方案。AMP 路线：完整可复制的导入、GradScaler 定义与训练循环代码，含 scaler.scale/step/update 调用顺序，与官方样例一致。apex 路线：完整安装命令链（git clone、build.sh --python=3.7、pip3 install --upgrade apex-0.1+ascend-{version}.whl），前置条件明确（torch 已装、setuptools<=65.7.0、Python 3.7–3.10），{version} 为明确标注并附说明（version为python版本和cpu架构）的用户环境参数；使用示例含 opt_level、scale_loss 上下文、融合优化器用法；loss scale 调优给出静态取值（128/256/512/1024/2048）与梯度裁剪的完整代码顺序（apex 退出上下文后裁剪；AMP 先 unscale_ 再裁剪再 step）。适用前提（Atlas 9000 需开启、A2/A3 自选、迁移完成后训练前适配）也已说明，无需补写或修正即可执行。",
+        "evidence": [
+          {
+            "event_id": "run-end",
+            "quote": "git clone -b master https://gitee.com/ascend/apex.git\ncd apex/\n# 前置：torch已安装，setuptools<=65.7.0（推荐65.7.0），Python 3.7–3.10\nbash scripts/build.sh --python=3.7"
+          },
+          {
+            "event_id": "run-end",
+            "quote": "with amp.autocast():                      # 开启混合精度\n    outputs = model(inputs)\n    loss = criterion(outputs, labels).to(device)\noptimizer.zero_grad()\nscaler.scale(loss).backward()             # loss缩放并反向传播\nscaler.step(optimizer)                     # 更新参数（自动unscale）\nscaler.update()"
+          }
+        ]
+      }
+    ]
+  },
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "b2d3c774447c4db19f6f518d981be7e5",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "2bbd2f6df63e44708f0852a5de4abf4e",
+        "conversationRequestId": "2bbd2f6df63e44708f0852a5de4abf4e",
+        "agent": "cli"
+      },
+      {
+        "messageId": "b2d3c774447c4db19f6f518d981be7e5",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "2bbd2f6df63e44708f0852a5de4abf4e",
+        "conversationRequestId": "2bbd2f6df63e44708f0852a5de4abf4e",
+        "rawUsage": {
+          "prompt_tokens": 18241,
+          "completion_tokens": 1765,
+          "total_tokens": 20006,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 503,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 18241,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 503,
+          "credit": 3.91,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 18241,
+          "outputTokens": 1765,
+          "totalTokens": 20006,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 0
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 503
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "3769c7f815dd35e537a87239ef03a91cea5a6feae8c78ec862f4e64e4c3d03b5",
+    "process_sha256": "60d9a393358e3ac3b76ddd84e101f50924751c60c8f85124e5b39cb8c675d3e5",
+    "elapsed_seconds": 29.24,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-ccf2033ecf54471cb47f295dd7a5bcdc",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  }
+}

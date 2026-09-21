@@ -147,6 +147,683 @@
           "model_requested": "glm-5.3"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T05:23:03.270566+00:00",
+      "process_sha256": "9d1b19bcb8dbf9f100669f058eadc4c5da93f76af660a170dd24d24dd9795571",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "官方推荐流程是一个**两步注册过程**：(1) 用 `TORCH_LIBRARY` 定义算子（让 PyTorch 知晓它）；(2) 用 `TORCH_LIBRARY_IMPL` 在各 dispatch key（CPU、CUDA、Autograd 等）上注册实现。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_dcb9d577ceea43d8bec255a3.result",
+            "evidence_quote": "**算子注册是一个两步过程：**\n1. **定义算子**（Defining the operator）—— 确保 PyTorch 知晓新算子\n2. **注册后端实现**（Registering backend implementations）—— 将各后端（如 CPU、CUDA）的实现关联到算子",
+            "verification": "source",
+            "reason": "原题包含三方面子要求，最终答案均有官方来源支撑：(1) TORCH_LIBRARY 定义：答案给出 m.def schema 写法及单命名空间/FRAGMENT/mutation 标注规则，与 call_6d3582b91b484037a5ca0582（registration.html 正文：\"There may only be one `TORCH_LIBRARY()` for any given namespace\"）和 call_dcb9d577ceea43d8bec255a3（mymuladd schema 与 Tensor(a!) mutation 标注）一致；(2) dispatcher 按 key 注册：答案的 TORCH_LIBRARY_IMPL(myops, CUDA, m) 及 catch-all 警告，与 call_26b62fc8f3ee420f837c2fa4（\"直接用 def(\\\"myadd\\\", myadd_cpu) 会注册为 catch-all kernel\" 及 CUDA block 注册示例）一致；(3) autograd 注册：答案给出 Python torch.library.register_autograd 与 C++ Autograd key（AutoNonVariableTypeMode redispatch）两条路线，分别由 call_dcb9d577ceea43d8bec255a3（register_autograd 完整代码）和 call_26b62fc8f3ee420f837c2fa4（MyAddFunction + AutoNonVariableTypeMode 解释）支撑。版本声明（PyTorch ≥2.4、Stable ABI ≥2.10、autogradNotImplementedFallback ≥1.10）与 call_dcb9d577ceea43d8bec255a3（\"前置条件：- PyTorch 2.4 或更高（使用 Stable ABI 需 PyTorch 2.10+）\"）及 call_26b62fc8f3ee420f837c2fa4（\"PyTorch >= 1.10\" 的 autogradNotImplementedFallback、\"deprecated as of PyTorch 2.4\"）一致。答案对未取得内容（Manual 细节、CUDAExtension 逐字示例）如实声明未纳入，不影响已答部分。",
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "首次查询即命中官方来源：第1条为官方中文镜像 docs.pytorch.ac.cn，第2条为官方主站 docs.pytorch.org 的 Operator Registration 页，第5条为官方教程镜像。按主站官方域名首现于第2位计4分（若把官方中文镜像也算官方首条则为5，取保守4）。",
+            "evidence": [
+              {
+                "event_id": "call_32ff5960311941c6be8b7bf9.result",
+                "quote": "## 2. [Operator Registration — PyTorch main documentation]"
+              },
+              {
+                "event_id": "call_32ff5960311941c6be8b7bf9.result",
+                "quote": "URL:** https://docs.pytorch.org/cppdocs/api/library/registration.html"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1",
+              "ev-2"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": null,
+            "lower": 3.3333333333333335,
+            "upper": 3.8333333333333335,
+            "status": "bounded",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_6d3582b91b484037a5ca0582.result",
+                "quote": "Macro for defining a function that will be run at static initialization time to define a library of operators in the namespace"
+              },
+              {
+                "event_id": "call_b539821a56e94fd69044200d.result",
+                "quote": "TorchScript is deprecated, please use [torch.export](https://docs.pytorch.org/tutorials/intermediate/torch_export_tutorial.html) instead."
+              },
+              {
+                "event_id": "call_42c5a82700e24df1afdf3e68.result",
+                "quote": "Please see [Custom Python Operators](https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html#python-custom-ops-tutorial) for the Python guide."
+              }
+            ],
+            "evidence_refs": [
+              "ev-3",
+              "ev-4",
+              "ev-5"
+            ],
+            "event_refs": [],
+            "candidate_score": null,
+            "normalization_basis": "Explicit non-degenerate grade range retained; candidate point is not treated as certain."
+          },
+          {
+            "id": "M3",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已取得正文中，TORCH_LIBRARY schema定义、TORCH_LIBRARY_IMPL按CPU/CUDA/Autograd注册、C++ autograd kernel（torch::autograd::Function + redispatch）、Python端register_fake/register_autograd、load_library加载与mutation标注的主流程、参数与约束均完整；但部分分支细节（CompositeExplicitAutograd、AutogradCUDA层级、register_autograd引入版本）在已取得正文中缺失。",
+            "evidence": [
+              {
+                "event_id": "call_6d3582b91b484037a5ca0582.result",
+                "quote": "One common usage pattern is to use `TORCH_LIBRARY()` to define schema for all new operators you want to define, and then use several `TORCH_LIBRARY_IMPL()` blocks to provide implementations of the operator for **CPU, CUDA and Autograd**."
+              },
+              {
+                "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+                "quote": "TORCH_LIBRARY_IMPL(myops, Autograd, m) {\n  m.impl(\"myadd\", myadd_autograd);\n}"
+              },
+              {
+                "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+                "quote": "torch.library.register_autograd(\n    \"extension_cpp::mymuladd\", _backward, setup_context=_setup_context)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-6",
+              "ev-7",
+              "ev-8"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "需合并官方约束确定适用版本：旧dispatcher教程自2.4弃用并指向Custom Operators新指南；新C++教程要求PyTorch≥2.4、Stable ABI路线需≥2.10。合并后适用关系明确，故4分（无直接适用表引证，不给5）。无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+                "quote": "This tutorial is deprecated as of PyTorch 2.4"
+              },
+              {
+                "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+                "quote": "- PyTorch 2.4 或更高（使用 Stable ABI 需 PyTorch 2.10+）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-9",
+              "ev-10"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "统一预算内仅1次查询，返回5条；排除官方域名与官方镜像（docs.pytorch.org、docs.pytorch.ac.cn两条）后第三方结果为pytorch.com.tw与maskerprc.github.io，二者为同一官方教程的镜像/转载，按同内容只计一次得1条相关独立第三方来源。",
+            "evidence": [
+              {
+                "event_id": "call_32ff5960311941c6be8b7bf9.result",
+                "quote": "URL:** https://pytorch.com.tw/tutorials/advanced/dispatcher.html"
+              },
+              {
+                "event_id": "call_32ff5960311941c6be8b7bf9.result",
+                "quote": "URL:** https://maskerprc.github.io/tutorials/advanced/dispatcher.html"
+              }
+            ],
+            "evidence_refs": [
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": null,
+            "lower": null,
+            "upper": null,
+            "status": "not_applicable",
+            "reason": "检索中出现的第三方结果（镜像站）均未被fetch，本轮没有任何第三方材料对操作或结论作出实质陈述，无第三方内容可评。",
+            "evidence": [
+              {
+                "event_id": "call_32ff5960311941c6be8b7bf9.result",
+                "quote": "Found 5 results • Provider: 0 • Search performed on 2026-09-21"
+              }
+            ],
+            "evidence_refs": [
+              "ev-13"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "检索前冻结回答给出C++路线完整流程（TORCH_LIBRARY、m.def schema、TORCH_LIBRARY_IMPL各dispatch key、Autograd注册、load_library、torch.ops调用）及Python路线（custom_op、register_fake、register_autograd），与官方文档核对主流程正确；但autograd注册准确语法（setup_context等）、AutogradCUDA层级细节、版本取舍等具体参数/约束自述不确定，需外部补充，个别细节（如schema末尾加<idx>）无文档依据。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "用 `TORCH_LIBRARY_IMPL(myops, CUDA, m)` 或在同一个 `TORCH_LIBRARY` 块里 `m.impl(\"my_op\", torch::dispatch_key(\"CUDA\"), &my_op_cuda)` 注册各 dispatch key 的实现"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处：\n- `TORCH_LIBRARY_IMPL` 与 `m.impl(..., dispatch_key)` 两种写法的当前官方推荐与细微差别。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 2,
+            "lower": 2,
+            "upper": 2,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=7",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_32ff5960311941c6be8b7bf9.dispatch",
+              "call_6d3582b91b484037a5ca0582.dispatch",
+              "call_26b62fc8f3ee420f837c2fa4.dispatch",
+              "call_42c5a82700e24df1afdf3e68.dispatch",
+              "call_b539821a56e94fd69044200d.dispatch",
+              "call_dcb9d577ceea43d8bec255a3.dispatch",
+              "call_cd224f20d85f449ab6ee0dd1.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "最终答案对实际采用的两条注册路线均给出有依据的版本范围：推荐路线（TORCH_LIBRARY + torch.library.register_autograd）要求 PyTorch ≥2.4，Stable ABI 需 ≥2.10，autogradNotImplementedFallback 需 ≥1.10，弃用路线标注 deprecated as of 2.4；均引用官方教程/参考且与来源一致，无矛盾。但所有组件均以'≥某版本'范围表述，未定到某个具体 PyTorch 版本，且文档自身版本（Tutorials 2.14.0+cu130）未转化为答案的锁定版本，故为4档而非5档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "- 当前推荐流程要求 **PyTorch ≥ 2.4**；Stable ABI API 需 **PyTorch ≥ 2.10**。"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "- `autogradNotImplementedFallback` 要求 PyTorch ≥ 1.10。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 5,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "答案提供端到端可执行方案：完整 TORCH_LIBRARY schema 定义、CUDA kernel 与 TORCH_LIBRARY_IMPL 注册、setuptools/CUDAExtension 的 setup.py 与 pip install 命令、torch.ops.load_library 加载顺序说明、register_fake/register_autograd 的 Python 代码、opcheck 测试代码，并明确前置条件（PyTorch ≥2.4、CUDA 环境、先加载 C++ 库再调用 torch.library API）。命令、参数与前提完整，仅需用户替换路径等环境值即可执行，无需修正内容错误。答案自述未实际编译运行及 CUDAExtension 示例非逐字来自抓取正文，属验证性披露而非可执行性缺口。call_42c5a82700e24df1afdf3e68 佐证 Python register_autograd 亦覆盖。call_32ff5960311941c6be8b7bf9 为搜索页，不用于 M10 评分。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "# 加载方式（顺序重要：必须先加载 C++ 算子定义，再调用 torch.library 注册 API）\ntorch.ops.load_library(\"myops/_C.so\")"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "setup(\n    name=\"myops\",\n    ext_modules=[\n        cpp_extension.CUDAExtension(\n            name=\"myops._C\",\n            sources=[\"csrc/myops.cpp\", \"csrc/myops_cuda.cu\"]),\n    ],\n    cmdclass={\"build_ext\": cpp_extension.BuildExtension},\n)"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "torch.library.opcheck(torch.ops.myops.mymuladd.default, args)  # 检查注册 API 用法是否正确"
+              }
+            ],
+            "evidence_refs": [
+              "ev-18",
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "incomplete_inputs",
+            "score": null,
+            "missing_inputs": [
+              {
+                "metric": "M6",
+                "status": "not_applicable",
+                "reason": "检索中出现的第三方结果（镜像站）均未被fetch，本轮没有任何第三方材料对操作或结论作出实质陈述，无第三方内容可评。"
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "incomplete_inputs",
+          "score": null,
+          "missing_inputs": [
+            {
+              "metric": "M6",
+              "status": "not_applicable",
+              "reason": "检索中出现的第三方结果（镜像站）均未被fetch，本轮没有任何第三方材料对操作或结论作出实质陈述，无第三方内容可评。"
+            }
+          ],
+          "decisions": []
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_32ff5960311941c6be8b7bf9.result",
+            "field": "response",
+            "sha256": "dc9bd0bbe230e9565b20a417b02bc238d3f17eb8c5f39a426f908f35fba365b9",
+            "start": 420,
+            "end": 478,
+            "quote": "## 2. [Operator Registration — PyTorch main documentation]",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_32ff5960311941c6be8b7bf9.result",
+            "field": "response",
+            "sha256": "dc9bd0bbe230e9565b20a417b02bc238d3f17eb8c5f39a426f908f35fba365b9",
+            "start": 654,
+            "end": 723,
+            "quote": "URL:** https://docs.pytorch.org/cppdocs/api/library/registration.html",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_6d3582b91b484037a5ca0582.result",
+            "field": "response",
+            "sha256": "e943ddf5bdb1c439fa5d5619f4740229c238dc261d6ac25f589433f0522d2617",
+            "start": 820,
+            "end": 946,
+            "quote": "Macro for defining a function that will be run at static initialization time to define a library of operators in the namespace",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_b539821a56e94fd69044200d.result",
+            "field": "response",
+            "sha256": "b46923c7b0193203c26d427b0edabf178e87f9800015813da1323fcf6961ff0d",
+            "start": 80,
+            "end": 217,
+            "quote": "TorchScript is deprecated, please use [torch.export](https://docs.pytorch.org/tutorials/intermediate/torch_export_tutorial.html) instead.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_42c5a82700e24df1afdf3e68.result",
+            "field": "response",
+            "sha256": "69a9e5d5f3c116eb623885ee220e283186f02bc2e8efd5706670f1911bd6a644",
+            "start": 961,
+            "end": 1114,
+            "quote": "Please see [Custom Python Operators](https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html#python-custom-ops-tutorial) for the Python guide.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_6d3582b91b484037a5ca0582.result",
+            "field": "response",
+            "sha256": "e943ddf5bdb1c439fa5d5619f4740229c238dc261d6ac25f589433f0522d2617",
+            "start": 2360,
+            "end": 2597,
+            "quote": "One common usage pattern is to use `TORCH_LIBRARY()` to define schema for all new operators you want to define, and then use several `TORCH_LIBRARY_IMPL()` blocks to provide implementations of the operator for **CPU, CUDA and Autograd**.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+            "field": "response",
+            "sha256": "45e4cfdfb241dfbef046de80910f8585bf8ae514191fd0a4c59a986eba80d048",
+            "start": 5836,
+            "end": 5913,
+            "quote": "TORCH_LIBRARY_IMPL(myops, Autograd, m) {\n  m.impl(\"myadd\", myadd_autograd);\n}",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+            "field": "response",
+            "sha256": "8872c881dba1b673f56551c42e2343a53e6bb68d2ab058343b292a503f21be76",
+            "start": 16608,
+            "end": 16712,
+            "quote": "torch.library.register_autograd(\n    \"extension_cpp::mymuladd\", _backward, setup_context=_setup_context)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+            "field": "response",
+            "sha256": "45e4cfdfb241dfbef046de80910f8585bf8ae514191fd0a4c59a986eba80d048",
+            "start": 126,
+            "end": 171,
+            "quote": "This tutorial is deprecated as of PyTorch 2.4",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+            "field": "response",
+            "sha256": "8872c881dba1b673f56551c42e2343a53e6bb68d2ab058343b292a503f21be76",
+            "start": 347,
+            "end": 395,
+            "quote": "- PyTorch 2.4 或更高（使用 Stable ABI 需 PyTorch 2.10+）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_32ff5960311941c6be8b7bf9.result",
+            "field": "response",
+            "sha256": "dc9bd0bbe230e9565b20a417b02bc238d3f17eb8c5f39a426f908f35fba365b9",
+            "start": 943,
+            "end": 1007,
+            "quote": "URL:** https://pytorch.com.tw/tutorials/advanced/dispatcher.html",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_32ff5960311941c6be8b7bf9.result",
+            "field": "response",
+            "sha256": "dc9bd0bbe230e9565b20a417b02bc238d3f17eb8c5f39a426f908f35fba365b9",
+            "start": 1213,
+            "end": 1282,
+            "quote": "URL:** https://maskerprc.github.io/tutorials/advanced/dispatcher.html",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_32ff5960311941c6be8b7bf9.result",
+            "field": "response",
+            "sha256": "dc9bd0bbe230e9565b20a417b02bc238d3f17eb8c5f39a426f908f35fba365b9",
+            "start": 1610,
+            "end": 1672,
+            "quote": "Found 5 results • Provider: 0 • Search performed on 2026-09-21",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "20afb063ffdea069156d1bab723347ba4583059b5f6ca331b043b4dbbbdf4e31",
+            "start": 450,
+            "end": 598,
+            "quote": "用 `TORCH_LIBRARY_IMPL(myops, CUDA, m)` 或在同一个 `TORCH_LIBRARY` 块里 `m.impl(\\\"my_op\\\", torch::dispatch_key(\\\"CUDA\\\"), &my_op_cuda)` 注册各 dispatch key 的实现",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-15",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "20afb063ffdea069156d1bab723347ba4583059b5f6ca331b043b4dbbbdf4e31",
+            "start": 1099,
+            "end": 1176,
+            "quote": "不确定处：\\n- `TORCH_LIBRARY_IMPL` 与 `m.impl(..., dispatch_key)` 两种写法的当前官方推荐与细微差别。",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-16",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5ec49c216c506e85fa5c478022f1081b0ecc7ce205f2deb959908878a59d0d81",
+            "start": 6617,
+            "end": 6682,
+            "quote": "- 当前推荐流程要求 **PyTorch ≥ 2.4**；Stable ABI API 需 **PyTorch ≥ 2.10**。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5ec49c216c506e85fa5c478022f1081b0ecc7ce205f2deb959908878a59d0d81",
+            "start": 6933,
+            "end": 6986,
+            "quote": "- `autogradNotImplementedFallback` 要求 PyTorch ≥ 1.10。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5ec49c216c506e85fa5c478022f1081b0ecc7ce205f2deb959908878a59d0d81",
+            "start": 5736,
+            "end": 5826,
+            "quote": "# 加载方式（顺序重要：必须先加载 C++ 算子定义，再调用 torch.library 注册 API）\ntorch.ops.load_library(\"myops/_C.so\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5ec49c216c506e85fa5c478022f1081b0ecc7ce205f2deb959908878a59d0d81",
+            "start": 5179,
+            "end": 5417,
+            "quote": "setup(\n    name=\"myops\",\n    ext_modules=[\n        cpp_extension.CUDAExtension(\n            name=\"myops._C\",\n            sources=[\"csrc/myops.cpp\", \"csrc/myops_cuda.cu\"]),\n    ],\n    cmdclass={\"build_ext\": cpp_extension.BuildExtension},\n)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5ec49c216c506e85fa5c478022f1081b0ecc7ce205f2deb959908878a59d0d81",
+            "start": 6463,
+            "end": 6543,
+            "quote": "torch.library.opcheck(torch.ops.myops.mymuladd.default, args)  # 检查注册 API 用法是否正确",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "5ec49c216c506e85fa5c478022f1081b0ecc7ce205f2deb959908878a59d0d81",
+            "start": 168,
+            "end": 299,
+            "quote": "官方推荐流程是一个**两步注册过程**：(1) 用 `TORCH_LIBRARY` 定义算子（让 PyTorch 知晓它）；(2) 用 `TORCH_LIBRARY_IMPL` 在各 dispatch key（CPU、CUDA、Autograd 等）上注册实现。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+            "field": "response",
+            "sha256": "8872c881dba1b673f56551c42e2343a53e6bb68d2ab058343b292a503f21be76",
+            "start": 7424,
+            "end": 7572,
+            "quote": "**算子注册是一个两步过程：**\n1. **定义算子**（Defining the operator）—— 确保 PyTorch 知晓新算子\n2. **注册后端实现**（Registering backend implementations）—— 将各后端（如 CPU、CUDA）的实现关联到算子",
+            "json_escaped": false
+          }
+        ],
+        "issues": [
+          {
+            "id": "fetch-call_b539821a56e94fd69044200d.result",
+            "type": "target_body_not_obtained",
+            "initial_obstacle_event_id": "call_b539821a56e94fd69044200d.result",
+            "alternative_body_event_ids": [
+              "call_dcb9d577ceea43d8bec255a3.result"
+            ],
+            "recovery_status": "other_body_obtained_later",
+            "task_resolution": "not_inferred_from_fetch_state"
+          }
+        ],
+        "assessment_files": {
+          "reviewed/development/case-14cdb80f1bf3-predictors.json": "4220c0778db7918480d06054f1334e8599f2203734102db2b8ec38cd7bfccd8f",
+          "reviewed/development/case-14cdb80f1bf3-outcome.json": "8d3342ba53576f7ce8c46082a5b2817339850e759bc4b34b0e478cfa93de1527",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_6d3582b91b484037a5ca0582.result",
+            "url": "https://docs.pytorch.org/cppdocs/api/library/registration.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_6d3582b91b484037a5ca0582.result",
+                "quote": "TORCH_LIBRARY(myops, m) {\n  m.def(\"add(Tensor self, Tensor other) -> Tensor\", &add_impl);"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_6d3582b91b484037a5ca0582.result",
+                "quote": "其他重载（SelectiveStr，用于选择性构建，页内未附详细描述）"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/dispatcher.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+                "quote": "TORCH_LIBRARY_IMPL(myops, CUDA, m) {\n  m.impl(\"myadd\", myadd_cuda);\n}"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_26b62fc8f3ee420f837c2fa4.result",
+                "quote": "Batched tensor 允许以逐样本方式写代码，在 `vmap` 调用下自动批处理。**batching rule 的编写 API 目前仍在开发中**"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_42c5a82700e24df1afdf3e68.result",
+            "url": "https://docs.pytorch.org/docs/stable/notes/custom_operators.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_42c5a82700e24df1afdf3e68.result",
+                "quote": "you must register the custom operation with PyTorch via the Python [torch.library docs](https://pytorch.org/docs/stable/library.html) or C++ `TORCH_LIBRARY` APIs."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_42c5a82700e24df1afdf3e68.result",
+                "quote": "For information not covered in the tutorials and this page, please see [The Custom Operators Manual](https://docs.pytorch.org/docs/main/notes/custom_operators.html)."
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_b539821a56e94fd69044200d.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/torch_script_custom_ops.html",
+            "ownership": "official",
+            "representation": "frame",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_b539821a56e94fd69044200d.result",
+                "quote": "TorchScript is deprecated, please use [torch.export](https://docs.pytorch.org/tutorials/intermediate/torch_export_tutorial.html) instead."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_b539821a56e94fd69044200d.result",
+                "quote": "Back to top\n\nTorchScript is deprecated"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+            "url": "https://docs.pytorch.org/tutorials/advanced/cpp_custom_ops.html",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+                "quote": "TORCH_LIBRARY(extension_cpp, m) {\n  // Note that \"float\" in the schema corresponds to the C++ double type\n  // and the Python float type.\n  m.def(\"mymuladd(Tensor a, Tensor b, float c) -> Tensor\");\n}"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_dcb9d577ceea43d8bec255a3.result",
+                "quote": "**纯 aliasing 标注**（如返回值 `-> Tensor(a)` 的视图/别名语义）：本页只演示 mutation 标注 `Tensor(a!)`"
+              }
+            ],
+            "reference": null
+          },
+          {
+            "event_id": "call_cd224f20d85f449ab6ee0dd1.result",
+            "url": "https://docs.pytorch.org/docs/main/notes/custom_operators.html",
+            "ownership": "official",
+            "representation": "summary",
+            "completeness": "unknown",
+            "evidence": [
+              {
+                "event_id": "call_cd224f20d85f449ab6ee0dd1.result",
+                "quote": "If your operation is expressible as a composition of built-in PyTorch operators then please write it as a Python function and call it instead of creating a custom operator."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_cd224f20d85f449ab6ee0dd1.result",
+                "quote": "Please see [Custom Python Operators](https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html#python-custom-ops-tutorial) for the Python guide."
+              }
+            ],
+            "reference": null
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

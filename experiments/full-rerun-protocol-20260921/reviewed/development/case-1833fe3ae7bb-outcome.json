@@ -2,23 +2,22 @@
   "requirements": [
     {
       "id": 1,
-      "status": "unverified",
-      "answer_quote": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数 → `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用",
-      "answer_event_id": "final",
+      "status": "supported",
+      "answer_quote": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数（`__global__ __aicore__` + `REGISTER_TILING_DEFAULT`/`GET_TILING_DATA`）→ `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用。",
+      "answer_event_id": "run-end",
       "evidence_id": "call_00_pn1iyxNqVYBbzLtYNGGs4156.result",
-      "evidence_quote": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下 - func: npu_add_custom(Tensor x, Tensor y) -> Tensor impl_ns: op_api",
+      "evidence_quote": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下\n     \n     ```\n     - func: npu_add_custom(Tensor x, Tensor y) -> Tensor\n       impl_ns: op_api",
       "verification": "source",
-      "reason": "引文缺失或未匹配，原判断保留在 raw_status；原题要求覆盖两个子方面，均有证据：(1) 注册成 aclnn 接口——来源7（GitCode asc-tools 03_msopgen 解析）给出 msopgen gen 命令、安装 custom_opp .run 后『产出 aclnn_add_custom.h 等头文件与 cust_opapi 库』、aclnn 两段式调用 aclnnAddCustomGetWorkspaceSize/aclnnAddCustom；(2) 集成进 torch_npu/PyTorch——来源5（hiascend CANN 7.0.0 官方）给出 op-plugin_functions.yaml custom 节点注册、AddCustomKernelNpu.cpp 用 EXEC_NPU_CMD(aclnnAddCustom,...)、bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0、pip install torch_npu wheel、torch_npu.npu_add_custom(x.npu(), y.npu()) 调用及测试 OK 输出。来源1（TorchNPU 26.0.0 官方）另给 TORCH_LIBRARY/PrivateUse1 替代路线，答案如实标注其不经 aclnn 并以 A 为主线，符合原题。答案的未核实清单（msopgen -f 取值、REG_OP vs OP_ADD）不构成对已答内容的否定。",
-      "raw_status": "supported"
+      "reason": "原题要求覆盖两个子方面，均有证据：(1) 注册成 aclnn 接口——来源7（GitCode asc-tools 03_msopgen 解析）给出 msopgen gen 命令、安装 custom_opp .run 后『产出 aclnn_add_custom.h 等头文件与 cust_opapi 库』、aclnn 两段式调用 aclnnAddCustomGetWorkspaceSize/aclnnAddCustom；(2) 集成进 torch_npu/PyTorch——来源5（hiascend CANN 7.0.0 官方）给出 op-plugin_functions.yaml custom 节点注册、AddCustomKernelNpu.cpp 用 EXEC_NPU_CMD(aclnnAddCustom,...)、bash ci/build.sh --python=3.8 --pytorch=v2.1.0-5.0.0、pip install torch_npu wheel、torch_npu.npu_add_custom(x.npu(), y.npu()) 调用及测试 OK 输出。来源1（TorchNPU 26.0.0 官方）另给 TORCH_LIBRARY/PrivateUse1 替代路线，答案如实标注其不经 aclnn 并以 A 为主线，符合原题。答案的未核实清单（msopgen -f 取值、REG_OP vs OP_ADD）不构成对已答内容的否定。"
     }
   ],
   "m9_m10": [
     {
       "id": "M9",
-      "score": null,
+      "score": 4,
       "lower": null,
       "upper": null,
-      "status": "insufficient_evidence",
+      "status": "supported",
       "reason": "主线 A 所需组件均给出有依据的具体版本：CANN 7.0.0、PyTorch 2.1.0、op-plugin 分支 5.0.0、torch_npu 2.1.0（来源5 官方原文含 --pytorch=v2.1.0-5.0.0 与 wheel 名）；路线 B 给出 TorchNPU 26.0.0 / CANN 9.0（来源1 安装链接 canncommercial/900）。未到 5 的原因：soc_version 仅给查询方法未定具体型号，且 msopgen -f 的 PyTorch 取值与 op-plugin 其他版本目录名自认未核实，属部分组件未定到具体版本。",
       "evidence": [
         {
@@ -27,10 +26,9 @@
         },
         {
           "event_id": "run-end",
-          "quote": "msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值：取回材料只确证 `-f` 默认 `tf`/`tensorflow`……**未取到**官方参数表中 PyTorch 对应取值"
+          "quote": "1. **msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值**：取回材料只确证 `-f` 默认 `tf`/`tensorflow`、其他值\"参考 msopgen 工具用户指南\"（来源 7），以及 HarmonyOS/CANN Kit 文档中 `-f` 支持 `TF、ONNX`（来源 6）。**未取到**官方参数表中 PyTorch 对应取值；因 aclnn/op-plugin 路线不需要 framework 适配插件，可留默认，但这一点未由官方原文确认。"
         }
-      ],
-      "raw_status": "supported"
+      ]
     },
     {
       "id": "M10",
@@ -55,32 +53,7 @@
       ]
     }
   ],
-  "quote_audit": [
-    {
-      "requirement": 1,
-      "bad_refs": [
-        {
-          "field": "answer_quote",
-          "event_id": "final",
-          "quote": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数 → `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用"
-        },
-        {
-          "field": "evidence_quote",
-          "event_id": "call_00_pn1iyxNqVYBbzLtYNGGs4156.result",
-          "quote": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下 - func: npu_add_custom(Tensor x, Tensor y) -> Tensor impl_ns: op_api"
-        }
-      ]
-    },
-    {
-      "metric": "M9",
-      "bad_refs": [
-        {
-          "event_id": "run-end",
-          "quote": "msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值：取回材料只确证 `-f` 默认 `tf`/`tensorflow`……**未取到**官方参数表中 PyTorch 对应取值"
-        }
-      ]
-    }
-  ],
+  "quote_audit": [],
   "execution_gate": {
     "errors": [],
     "passed": true,
@@ -193,10 +166,31 @@
     "raw_file": "assessments/development/case-1833fe3ae7bb-outcome.json",
     "repairs": [
       {
+        "event_id": "run-end",
+        "original": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数 → `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用",
+        "replacement": "用 `msopgen gen` 从算子原型 JSON 生成 `op_host/op_kernel` 工程 → 填 Tiling/原型注册（`OP_ADD`/`AddConfig`）与 Ascend C 核函数（`__global__ __aicore__` + `REGISTER_TILING_DEFAULT`/`GET_TILING_DATA`）→ `bash build.sh` 出 `custom_opp_<os>_<arch>.run` 并安装（得到 `aclnn_add_custom.h` + `cust_opapi`）→ 在 op-plugin 的 `op_plugin_functions.yaml` 的 `custom:` 下加 `func: npu_xxx_custom(...) -> Tensor` + `impl_ns: op_api`，在 `op_plugin/ops/.../opapi/` 里用 `EXEC_NPU_CMD(aclnnXxxCustom, 输入..., 输出)` 实现 → `bash ci/build.sh --python=... --pytorch=...` 重编并 `pip install` torch_npu wheel → Python 侧 `torch_npu.npu_xxx_custom(x.npu(), y.npu())` 调用。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
+        "basis": "answer_quote verified against frozen final; normalize answer event alias"
+      },
+      {
+        "event_id": "call_00_pn1iyxNqVYBbzLtYNGGs4156.result",
+        "original": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下 - func: npu_add_custom(Tensor x, Tensor y) -> Tensor impl_ns: op_api",
+        "replacement": "将如下信息拷贝至op_plugin_functions.yaml中的custom:节点下\n     \n     ```\n     - func: npu_add_custom(Tensor x, Tensor y) -> Tensor\n       impl_ns: op_api",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
+      },
+      {
         "basis": "final alias maps to frozen final answer"
       },
       {
         "basis": "final alias maps to frozen final answer"
+      },
+      {
+        "event_id": "run-end",
+        "original": "msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值：取回材料只确证 `-f` 默认 `tf`/`tensorflow`……**未取到**官方参数表中 PyTorch 对应取值",
+        "replacement": "1. **msopgen 在 CANN 服务端（A2/A3/950）的 `-f` 精确取值**：取回材料只确证 `-f` 默认 `tf`/`tensorflow`、其他值\"参考 msopgen 工具用户指南\"（来源 7），以及 HarmonyOS/CANN Kit 文档中 `-f` 支持 `TF、ONNX`（来源 6）。**未取到**官方参数表中 PyTorch 对应取值；因 aclnn/op-plugin 路线不需要 framework 适配插件，可留默认，但这一点未由官方原文确认。",
+        "basis": "exact source substring; verified escaping/whitespace/Markdown alignment, uniquely anchored ellipsis expansion, or explicitly recorded transcription correction"
       },
       {
         "basis": "final alias maps to frozen final answer"

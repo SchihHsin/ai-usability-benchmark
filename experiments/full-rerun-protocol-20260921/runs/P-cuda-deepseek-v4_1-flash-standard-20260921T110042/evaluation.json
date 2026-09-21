@@ -147,6 +147,649 @@
           "model_requested": "deepseek-v4.1-flash"
         }
       }
+    },
+    {
+      "revision": 2,
+      "recorded_at": "2026-09-21T05:26:40.826929+00:00",
+      "process_sha256": "0c863321d4888a7c17cdafd6653917898b4267c5dc7b6b77d61fea022b2f606d",
+      "evaluation": {
+        "rubric_version": "three-model-pilot-20260921+execution-checks",
+        "assessor": {
+          "id": "glm-5.3-with-recorded-evidence-review",
+          "method": "separate source/prior and outcome contexts; automatic assessment with recorded Luna/root review corrections, not human gold"
+        },
+        "limitations": [
+          "No hardware execution. Literal evidence auditing cannot establish complete technical correctness.",
+          "M11 uses original baseline coefficients only; this full run does not fit or adopt replacement coefficients."
+        ],
+        "requirements": [
+          {
+            "id": 1,
+            "status": "supported",
+            "answer_quote": "官方明确：`torch.cuda.amp.autocast(args...)` 与 `torch.cuda.amp.GradScaler(args...)` **已废弃（deprecated）**，应改用统一接口 `torch.amp.autocast(\"cuda\", args...)` 和 `torch.amp.GradScaler(\"cuda\", args...)`。",
+            "answer_event_id": "run-end",
+            "evidence_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "evidence_quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)` or `torch.amp.autocast(\"cpu\", args...)` instead.",
+            "verification": "source",
+            "reason": "原题三个子要求均满足：(1) 如何开AMP——答案给出标准训练循环（autocast 包前向 + scaler.scale(loss).backward() + scaler.step + scaler.update），与官方 recipe 的 'All together' 示例一致；(2) autocast 用法——给出签名 device_type/dtype/enabled/cache_enabled、thread-local 约束、不要手动 .half()，均与官方 amp.html 原文一致；(3) GradScaler 用法——给出参数默认值（init_scale=65536.0 等）、unscale_ 与梯度裁剪、多 optimizer 只调一次 update、保存恢复 state_dict，均与 amp_examples 与 recipe 原文一致。答案额外给出废弃迁移说明（torch.cuda.amp→torch.amp），有官方 Warning 逐字支持。",
+            "evidence_refs": [
+              "ev-23",
+              "ev-24"
+            ]
+          }
+        ],
+        "metrics": [
+          {
+            "id": "M1",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "首次查询第1条即为相关官方来源（docs.pytorch.org AMP recipe），首次命中官方文档。",
+            "evidence": [
+              {
+                "event_id": "call_00_cuAPjLwSk0b3HecmKAwN5390.result",
+                "quote": "## 1. [Automatic Mixed Precision - PyTorch](https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-1"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M2",
+            "score": 4.0,
+            "lower": 4.0,
+            "upper": 4.0,
+            "status": "scored",
+            "reason": "程序按独立文档最终获取状态等权聚合；未知项保留",
+            "evidence": [
+              {
+                "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+                "quote": "Instances of torch.autocast serve as context managers that allow regions of your script to run in mixed precision."
+              },
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "*class*torch.cuda.amp.GradScaler(*init_scale=65536.0*, *growth_factor=2.0*, *backoff_factor=0.5*, *growth_interval=2000*, *enabled=True*)"
+              },
+              {
+                "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+                "quote": "## Working with Multiple Models, Losses, and Optimizers#"
+              }
+            ],
+            "evidence_refs": [
+              "ev-2",
+              "ev-3",
+              "ev-4"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M3",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "原题所需内容均说明完整：AMP 主流程完整代码（autocast 前向、scaler.scale/step/update）、autocast 全部参数（device_type/dtype/enabled/cache_enabled）、GradScaler 构造参数、约束（backward 在 autocast 外、unscale 后再裁剪、新实例要求）、推理用法及弃用说明，无需另查。",
+            "evidence": [
+              {
+                "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+                "quote": "scaler = torch.amp.GradScaler(\"cuda\")"
+              },
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "You should not call `half()` or `bfloat16()` on your model(s) or inputs when using autocasting."
+              },
+              {
+                "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+                "quote": "`unscale_` should only be called once per optimizer per `step` call, and only after all gradients for that optimizer’s assigned parameters have been accumulated."
+              }
+            ],
+            "evidence_refs": [
+              "ev-5",
+              "ev-6",
+              "ev-7"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M4",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "官方 amp.html 明确给出 torch.cuda.amp.autocast/GradScaler 已弃用及 torch.amp 新接口的直接替代规则，套用规则即可确定所选接口，无需自行合并约束，也无未消解冲突。",
+            "evidence": [
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)`"
+              },
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` or `torch.amp.GradScaler(\"cpu\", args...)` instead."
+              }
+            ],
+            "evidence_refs": [
+              "ev-8",
+              "ev-9"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M5",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "统一预算内相关独立第三方来源去重计数 3 条（runoob 教程、CSDN qq_38253797、CSDN weixin_34101914）；docs.pytorch.ac.cn 与 pytorch.it-docs.cn 为官方文档或其镜像，按渠道分类不计独立第三方。3—4 条对应 3 分。",
+            "evidence": [
+              {
+                "event_id": "call_00_cuAPjLwSk0b3HecmKAwN5390.result",
+                "quote": "## 3. [PyTorch 混合精度训练 (AMP) - 菜鸟教程](https://www.runoob.com/pytorch/pytorch-amp.html)"
+              },
+              {
+                "event_id": "call_00_cuAPjLwSk0b3HecmKAwN5390.result",
+                "quote": "## 5. [【Trick2】torch.cuda.amp自动混合精度训练 —— 节省显存 ...](https://blog.csdn.net/qq_38253797/article/details/116210911)"
+              },
+              {
+                "event_id": "call_00_qFNhkURVbPPur7VaKnmi5833.result",
+                "quote": "## 4. [PyTorch混合精度训练原理与Java实现详解-CSDN博客](https://blog.csdn.net/weixin_34101914/article/details/166196861)"
+              }
+            ],
+            "evidence_refs": [
+              "ev-10",
+              "ev-11",
+              "ev-12"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M6",
+            "score": 4,
+            "lower": 4,
+            "upper": 4,
+            "status": "scored",
+            "reason": "已核对全文的第三方（runoob）关键说法（2.4 弃用 torch.cuda.amp.autocast、推荐 torch.amp 新接口、BF16 不需要 GradScaler）均有官方文档可追溯依据且无矛盾；CSDN 仅见搜索片段，缺少独立第三方来源的交叉印证，计 4。",
+            "evidence": [
+              {
+                "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+                "quote": "**API 迁移提示：**PyTorch 2.4 将 `torch.cuda.amp.autocast` 标记为 deprecated，推荐使用 `torch.amp.autocast('cuda')`。两者用法完全一致，仅导入路径不同。"
+              },
+              {
+                "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+                "quote": "GradScaler`：动态调整梯度缩放系数，放大 FP16 梯度以防止下溢（仅 FP16 需要，BF16 通常不需要）"
+              },
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated."
+              }
+            ],
+            "evidence_refs": [
+              "ev-13",
+              "ev-14",
+              "ev-15"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M7",
+            "score": 5,
+            "lower": 5,
+            "upper": 5,
+            "status": "scored",
+            "reason": "检索前答案给出完整正确流程与代码（autocast 前向、scale/step/update）、要点约束（unscale 后裁剪、累积、state_dict）并正确预判 2.x 统一接口与弃用问题；经官方来源事后核对无关键错误，覆盖原题所需流程、解释、参数与约束。",
+            "evidence": [
+              {
+                "event_id": "client-note-00005",
+                "quote": "2.x 新统一接口：`torch.amp.autocast('cuda', dtype=...)`、`torch.amp.GradScaler('cuda')`。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "先 `scaler.unscale_(optimizer)` 再 `torch.nn.utils.clip_grad_norm_(...)`，否则裁剪的是被放大后的梯度。"
+              },
+              {
+                "event_id": "client-note-00005",
+                "quote": "不确定处：\n1. `torch.cuda.amp.autocast` / `GradScaler` 在最新版（2.4/2.5+）是否已被标记 deprecated、以及确切推荐写法。"
+              }
+            ],
+            "evidence_refs": [
+              "ev-16",
+              "ev-17",
+              "ev-18"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M8",
+            "score": 3,
+            "lower": 3,
+            "upper": 3,
+            "status": "scored",
+            "reason": "调度器实际dispatch计数 S+F=6",
+            "evidence": [],
+            "evidence_refs": [],
+            "event_refs": [
+              "call_00_cuAPjLwSk0b3HecmKAwN5390.dispatch",
+              "call_00_Vv56T1RzMT6HRpJoZIQx4922.dispatch",
+              "call_00_QZG4TS2WVTB1sPvsFmgc3468.dispatch",
+              "call_00_ynRGrPwSryulAjuqdRHY4059.dispatch",
+              "call_00_qFNhkURVbPPur7VaKnmi5833.dispatch",
+              "call_00_UIj8hQleGlfPSl7WjgGn0087.dispatch"
+            ]
+          },
+          {
+            "id": "M9",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "答案对所用接口给出有依据的版本范围：文档基于 PyTorch 2.14（官方页标注）、torch.amp.autocast 'new in version 1.10'（官方原文）、代码兼容 1.6+、2.4 起废弃 torch.cuda.amp（第三方 runoob），且自述未能确认 torch.amp.GradScaler device_type 参数等精确引入版本——属于有依据的适用范围但至少一项未定到具体版本，符合第4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "官方文档版本：抓取到的为 **PyTorch 2.14**（tutorials 页标注 “2.14.0+cu130 documentation”；amp API 页 “PyTorch 2.14 documentation”）"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "我没能逐一确认每个小版本（如 `torch.amp.GradScaler` 的 `device_type` 参数、`torch.autocast(device_type=...)` 形式）精确引入的版本号"
+              }
+            ],
+            "evidence_refs": [
+              "ev-19",
+              "ev-20"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M10",
+            "score": 4,
+            "lower": null,
+            "upper": null,
+            "status": "scored",
+            "reason": "给出完整可运行训练循环（含 import、optimizer、scaler 构造、autocast 上下文、scale/step/update 顺序），前置条件明确（PyTorch 1.6+、CUDA GPU、Tensor Core 架构收益说明）；仅需替换用户环境值（MyModel、loader、loss_fn），且这些占位符明确标识，无需修正内容错误，符合第4档。",
+            "evidence": [
+              {
+                "event_id": "run-end",
+                "quote": "scaler = torch.amp.GradScaler(\"cuda\")   # 每个训练过程用一个新的 scaler\n\nfor inputs, targets in loader:\n    opt.zero_grad(set_to_none=True)\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):"
+              },
+              {
+                "event_id": "run-end",
+                "quote": "前置条件（recipe 原文）**：PyTorch 1.6 或更高、CUDA-capable GPU；Tensor Core 架构（Volta/Turing/Ampere）收益最大（2–3X）"
+              }
+            ],
+            "evidence_refs": [
+              "ev-21",
+              "ev-22"
+            ],
+            "event_refs": []
+          },
+          {
+            "id": "M11",
+            "scale": "0–100",
+            "status": "calculated",
+            "score": 96.0,
+            "lower": 96.0,
+            "upper": 96.0,
+            "decisions": [],
+            "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+            "display_score": 96.0
+          }
+        ],
+        "overall": {
+          "scale": "0–100",
+          "status": "calculated",
+          "score": 96.0,
+          "lower": 96.0,
+          "upper": 96.0,
+          "decisions": [],
+          "interpretation": "composite index, not probability; interval is not a statistical confidence interval",
+          "display_score": 96.0
+        },
+        "channel_states": {},
+        "execution_gate": {
+          "predictors": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          },
+          "outcome": {
+            "errors": [],
+            "passed": true,
+            "scope": "structural evidence checks, not semantic validation"
+          }
+        },
+        "evidence": [
+          {
+            "id": "ev-1",
+            "event_id": "call_00_cuAPjLwSk0b3HecmKAwN5390.result",
+            "field": "response",
+            "sha256": "90190d37eb0e3fe6a51e882535c24622876f7c136228ff1a85fc22ebb1540471",
+            "start": 81,
+            "end": 192,
+            "quote": "## 1. [Automatic Mixed Precision - PyTorch](https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-2",
+            "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+            "field": "response",
+            "sha256": "036fc474bccf137d99a4cf1047023ebc66b55e421b140a721506bf84e221e79e",
+            "start": 4275,
+            "end": 4389,
+            "quote": "Instances of torch.autocast serve as context managers that allow regions of your script to run in mixed precision.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-3",
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "field": "response",
+            "sha256": "034e60150f1e397613798110c713586e4b781c8b5e131f75912b3770ebf739e4",
+            "start": 9441,
+            "end": 9578,
+            "quote": "*class*torch.cuda.amp.GradScaler(*init_scale=65536.0*, *growth_factor=2.0*, *backoff_factor=0.5*, *growth_interval=2000*, *enabled=True*)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-4",
+            "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+            "field": "response",
+            "sha256": "1be8bba09fabe25d30da5df87f322a52082da6bf9876aff20ed68f4ce968cc26",
+            "start": 7705,
+            "end": 7761,
+            "quote": "## Working with Multiple Models, Losses, and Optimizers#",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-5",
+            "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+            "field": "response",
+            "sha256": "036fc474bccf137d99a4cf1047023ebc66b55e421b140a721506bf84e221e79e",
+            "start": 6256,
+            "end": 6293,
+            "quote": "scaler = torch.amp.GradScaler(\"cuda\")",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-6",
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "field": "response",
+            "sha256": "034e60150f1e397613798110c713586e4b781c8b5e131f75912b3770ebf739e4",
+            "start": 3568,
+            "end": 3663,
+            "quote": "You should not call `half()` or `bfloat16()` on your model(s) or inputs when using autocasting.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-7",
+            "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+            "field": "response",
+            "sha256": "1be8bba09fabe25d30da5df87f322a52082da6bf9876aff20ed68f4ce968cc26",
+            "start": 2716,
+            "end": 2877,
+            "quote": "`unscale_` should only be called once per optimizer per `step` call, and only after all gradients for that optimizer’s assigned parameters have been accumulated.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-8",
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "field": "response",
+            "sha256": "034e60150f1e397613798110c713586e4b781c8b5e131f75912b3770ebf739e4",
+            "start": 1377,
+            "end": 1513,
+            "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)`",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-9",
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "field": "response",
+            "sha256": "034e60150f1e397613798110c713586e4b781c8b5e131f75912b3770ebf739e4",
+            "start": 1563,
+            "end": 1756,
+            "quote": "`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler(\"cuda\", args...)` or `torch.amp.GradScaler(\"cpu\", args...)` instead.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-10",
+            "event_id": "call_00_cuAPjLwSk0b3HecmKAwN5390.result",
+            "field": "response",
+            "sha256": "90190d37eb0e3fe6a51e882535c24622876f7c136228ff1a85fc22ebb1540471",
+            "start": 714,
+            "end": 798,
+            "quote": "## 3. [PyTorch 混合精度训练 (AMP) - 菜鸟教程](https://www.runoob.com/pytorch/pytorch-amp.html)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-11",
+            "event_id": "call_00_cuAPjLwSk0b3HecmKAwN5390.result",
+            "field": "response",
+            "sha256": "90190d37eb0e3fe6a51e882535c24622876f7c136228ff1a85fc22ebb1540471",
+            "start": 1247,
+            "end": 1358,
+            "quote": "## 5. [【Trick2】torch.cuda.amp自动混合精度训练 —— 节省显存 ...](https://blog.csdn.net/qq_38253797/article/details/116210911)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-12",
+            "event_id": "call_00_qFNhkURVbPPur7VaKnmi5833.result",
+            "field": "response",
+            "sha256": "f40a06d2708c5ca9841efb445fa18f50c5c24af6e871861a6f4a3e2c484e0672",
+            "start": 1106,
+            "end": 1210,
+            "quote": "## 4. [PyTorch混合精度训练原理与Java实现详解-CSDN博客](https://blog.csdn.net/weixin_34101914/article/details/166196861)",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-13",
+            "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+            "field": "response",
+            "sha256": "a7edaa50f6ed5b70ea23fef3632fd2da31a2a09aa323fb8e4631e647ee35ebab",
+            "start": 1806,
+            "end": 1925,
+            "quote": "**API 迁移提示：**PyTorch 2.4 将 `torch.cuda.amp.autocast` 标记为 deprecated，推荐使用 `torch.amp.autocast('cuda')`。两者用法完全一致，仅导入路径不同。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-14",
+            "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+            "field": "response",
+            "sha256": "a7edaa50f6ed5b70ea23fef3632fd2da31a2a09aa323fb8e4631e647ee35ebab",
+            "start": 1292,
+            "end": 1352,
+            "quote": "GradScaler`：动态调整梯度缩放系数，放大 FP16 梯度以防止下溢（仅 FP16 需要，BF16 通常不需要）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-15",
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "field": "response",
+            "sha256": "034e60150f1e397613798110c713586e4b781c8b5e131f75912b3770ebf739e4",
+            "start": 1377,
+            "end": 1464,
+            "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated.",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-16",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "5e5e0180912a95a2ddc1701f3a570699509ce3e75187a08884014c64991f74fa",
+            "start": 1168,
+            "end": 1249,
+            "quote": "2.x 新统一接口：`torch.amp.autocast('cuda', dtype=...)`、`torch.amp.GradScaler('cuda')`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-17",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "5e5e0180912a95a2ddc1701f3a570699509ce3e75187a08884014c64991f74fa",
+            "start": 969,
+            "end": 1054,
+            "quote": "先 `scaler.unscale_(optimizer)` 再 `torch.nn.utils.clip_grad_norm_(...)`，否则裁剪的是被放大后的梯度。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-18",
+            "event_id": "client-note-00005",
+            "field": "content",
+            "sha256": "5e5e0180912a95a2ddc1701f3a570699509ce3e75187a08884014c64991f74fa",
+            "start": 1253,
+            "end": 1345,
+            "quote": "不确定处：\\n1. `torch.cuda.amp.autocast` / `GradScaler` 在最新版（2.4/2.5+）是否已被标记 deprecated、以及确切推荐写法。",
+            "json_escaped": true
+          },
+          {
+            "id": "ev-19",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "57ea6845090912ff2d73f5c22211dafd5bb61feaad8a14af11b17185462992dd",
+            "start": 5078,
+            "end": 5190,
+            "quote": "官方文档版本：抓取到的为 **PyTorch 2.14**（tutorials 页标注 “2.14.0+cu130 documentation”；amp API 页 “PyTorch 2.14 documentation”）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-20",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "57ea6845090912ff2d73f5c22211dafd5bb61feaad8a14af11b17185462992dd",
+            "start": 5454,
+            "end": 5556,
+            "quote": "我没能逐一确认每个小版本（如 `torch.amp.GradScaler` 的 `device_type` 参数、`torch.autocast(device_type=...)` 形式）精确引入的版本号",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-21",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "57ea6845090912ff2d73f5c22211dafd5bb61feaad8a14af11b17185462992dd",
+            "start": 1026,
+            "end": 1220,
+            "quote": "scaler = torch.amp.GradScaler(\"cuda\")   # 每个训练过程用一个新的 scaler\n\nfor inputs, targets in loader:\n    opt.zero_grad(set_to_none=True)\n    with torch.autocast(device_type=\"cuda\", dtype=torch.float16):",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-22",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "57ea6845090912ff2d73f5c22211dafd5bb61feaad8a14af11b17185462992dd",
+            "start": 2240,
+            "end": 2336,
+            "quote": "前置条件（recipe 原文）**：PyTorch 1.6 或更高、CUDA-capable GPU；Tensor Core 架构（Volta/Turing/Ampere）收益最大（2–3X）",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-23",
+            "event_id": "run-end",
+            "field": "answer",
+            "sha256": "57ea6845090912ff2d73f5c22211dafd5bb61feaad8a14af11b17185462992dd",
+            "start": 60,
+            "end": 247,
+            "quote": "官方明确：`torch.cuda.amp.autocast(args...)` 与 `torch.cuda.amp.GradScaler(args...)` **已废弃（deprecated）**，应改用统一接口 `torch.amp.autocast(\"cuda\", args...)` 和 `torch.amp.GradScaler(\"cuda\", args...)`。",
+            "json_escaped": false
+          },
+          {
+            "id": "ev-24",
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "field": "response",
+            "sha256": "034e60150f1e397613798110c713586e4b781c8b5e131f75912b3770ebf739e4",
+            "start": 1377,
+            "end": 1562,
+            "quote": "`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast(\"cuda\", args...)` or `torch.amp.autocast(\"cpu\", args...)` instead.",
+            "json_escaped": false
+          }
+        ],
+        "issues": [],
+        "assessment_files": {
+          "reviewed/development/case-145072426409-predictors.json": "3dd8c4a41f23b4c50a3d042e44ebd332b497903490f3928b16f72ec44586050d",
+          "reviewed/development/case-145072426409-outcome.json": "bf8999fa95245a8602ef493696e53209f9abc8d8a9c506b8d692892cd196ab06",
+          "consolidate_evaluations.py": "7bd7f6339d9e9ca8dee2ec5cc4da6f431fd52ae8a3d9df157b855b34f91cd9f0",
+          "reviewed-channel-states.json": "7e6663a97856cd29f5db222eea5feb70d06a1de5f894e27ff5e64eebaed4b521"
+        },
+        "m2_documents": [
+          {
+            "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+                "quote": "Instances of torch.autocast serve as context managers that allow regions of your script to run in mixed precision."
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_Vv56T1RzMT6HRpJoZIQx4922.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html"
+          },
+          {
+            "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "*class*torch.cuda.amp.GradScaler(*init_scale=65536.0*, *growth_factor=2.0*, *backoff_factor=0.5*, *growth_interval=2000*, *enabled=True*)"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_QZG4TS2WVTB1sPvsFmgc3468.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/amp.html"
+          },
+          {
+            "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+            "ownership": "official",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+                "quote": "## Working with Multiple Models, Losses, and Optimizers#"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_ynRGrPwSryulAjuqdRHY4059.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://docs.pytorch.org/docs/stable/notes/amp_examples.html"
+          },
+          {
+            "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+            "ownership": "third_party",
+            "representation": "body",
+            "completeness": "incomplete",
+            "evidence": [
+              {
+                "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+                "quote": "**适用版本：**本文代码基于 PyTorch 1.6+ 的 `torch.cuda.amp` API 编写。"
+              }
+            ],
+            "boundary_evidence": [
+              {
+                "event_id": "call_00_UIj8hQleGlfPSl7WjgGn0087.result",
+                "quote": "[...]"
+              }
+            ],
+            "reference": "https://www.runoob.com/pytorch/pytorch-amp.html"
+          }
+        ],
+        "quote_audit": [],
+        "superseded_m8_quote_audit": [],
+        "m8_audit_basis": "M8 recomputed from actual dispatch events above; assessor count quotations are retained separately and do not override recorded counts"
+      }
     }
   ]
 }

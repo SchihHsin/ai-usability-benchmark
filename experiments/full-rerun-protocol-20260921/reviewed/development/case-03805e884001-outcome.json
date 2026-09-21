@@ -1,0 +1,180 @@
+{
+  "requirements": [
+    {
+      "id": 1,
+      "status": "supported",
+      "answer_quote": "昇腾官方（TorchNPU 6.0.0《PyTorch 训练模型迁移调优指南》）明确给出两条路线，并**推荐用 PyTorch 框架内置的 AMP 功能模块**",
+      "answer_event_id": "run-end",
+      "evidence_id": "call_00_AppeldVJp6jU1ryCFg0M0537.result",
+      "evidence_quote": "混合精度适配支持两种方式：\n\n- PyTorch框架内置的AMP功能模块\n- 第三方APEX混合精度模块",
+      "verification": "source",
+      "reason": "原题含三个子要求，final 均有官方来源支撑。(1) 如何开混合精度（torch_npu amp 路线）：final 给出完整训练代码（from torch_npu.npu import amp; with amp.autocast(); scaler.scale(loss).backward(); scaler.step(optimizer); scaler.update()），与官方样例事件 call_00_Bg5gnMZq0yJzkKISFF6t9610.result 原文一致（'scaler = amp.GradScaler()    # 在模型、优化器定义之后，定义GradScaler'、'with amp.autocast():   # 设置amp'）。(2) apex 路线：final 给出安装命令与 apex.amp.initialize(opt_level='O1')/apex.amp.scale_loss 用法，与 call_00_JgkF1dAOrXsPyCAaFOdc0574.result 一致（'model, optimizer = apex.amp.initialize(models=model, optimizers=optimizer, opt_level=\\'O1\\')'），并如实标注 apex 仓库'Ascend / apex 暂停'。(3) loss scale 配置：final 说明动态为默认、静态通过 dynamic=False + init_scale，引文与 call_00_AppeldVJp6jU1ryCFg0M0537.result 官方原文逐字一致（'当前NPU上适配的amp.GradScaler接口增加了dynamic参数。当dynamic参数设置为False时，支持使用固定值的Loss Scale，并且可以通过init_scale参数设置Loss Scale取值'）；apex 侧 loss_scale 及新增动态参数（dynamic_init_scale 默认2**16 等）亦有 README 原文支撑。动态模式各参数官方默认值未取得，final 已在'无法核实'节如实标注并以第三方实测补充，未作无据断言，不构成错误。"
+    }
+  ],
+  "m9_m10": [
+    {
+      "id": "M9",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "supported",
+      "reason": "最终答案对所需组件（torch_npu/Ascend Extension、CANN、PyTorch、apex）均给出有官方依据的配套关系表，并指明所引文档为 TorchNPU 6.0.0（对应 CANN 8.0.x），apex 配套表亦引用 gitee README 附录；但答案呈现的是可选版本范围表，未替用户把环境锁定到某一个具体 torch_npu/CANN/PyTorch 版本组合，且动态 loss scale 参数默认值未获官方确认，故按档记4：所有组件均有依据的适用范围，至少一项未定到具体版本。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "本文档本身为 **TorchNPU 6.0.0**（对应 CANN 8.0.x 时代）"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "| CANN 8.2.RC1 | 2.6.0 | 2.6.0 | v2.6.0-7.1.0 |"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "`amp.GradScaler()` **动态模式下各参数（init_scale / growth_factor / backoff_factor / growth_interval）的官方默认值**未在昇腾官方页列出"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "score": 4,
+      "lower": 4,
+      "upper": 4,
+      "status": "supported",
+      "reason": "torch_npu amp 路线给出可直接照抄的完整代码（导入、GradScaler 定义时机、autocast、scale/step/update），loss scale 静态配置给出完整可运行语句 amp.GradScaler(init_scale = 2.**10, dynamic = False)；apex 路线给出完整安装命令链（git clone、build.sh --python=3.7 附 setuptools<=65.7.0 前提、pip3 install）与用法代码。需替换的仅为明确标识且有说明的用户环境值：模型/数据集/超参（ToyModel、args）、wheel 文件名中的 {version}（注释说明为 python 版本和 cpu 架构），属4档'仅需替换明确标识且有说明的用户环境参数'；答案亦如实声明未在本机运行验证，不影响内容完整性判定。",
+      "evidence": [
+        {
+          "event_id": "run-end",
+          "quote": "scaler = amp.GradScaler(init_scale = 2.**10, dynamic = False)"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "bash scripts/build.sh --python=3.7        # setuptools<=65.7.0"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "pip3 install --upgrade apex-0.1+ascend-{version}.whl"
+        },
+        {
+          "event_id": "run-end",
+          "quote": "以上均**未在本机运行验证**（未安装 CANN/torch_npu/NPU，未执行任何训练脚本），操作步骤仅基于官方文档原文。"
+        }
+      ]
+    }
+  ],
+  "quote_audit": [],
+  "execution_gate": {
+    "errors": [],
+    "passed": true,
+    "scope": "structural evidence checks, not semantic validation"
+  },
+  "case": "case-03805e884001",
+  "task_id": "P",
+  "ecosystem": "cann",
+  "split": "development",
+  "kind": "outcome",
+  "_audit": {
+    "model_requested": "glm-5.3",
+    "response_providerData": [
+      {
+        "agent": "cli"
+      },
+      {
+        "messageId": "06e0dc5d95a94306bd4c23cbc799f633",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "3b37c6d72ec97f9505c36c20bd72632c",
+        "conversationRequestId": "3b37c6d72ec97f9505c36c20bd72632c",
+        "agent": "cli"
+      },
+      {
+        "messageId": "06e0dc5d95a94306bd4c23cbc799f633",
+        "model": "glm-5.3",
+        "requestModelId": "glm-5.3",
+        "requestModelName": "GLM-5.3",
+        "traceId": "3b37c6d72ec97f9505c36c20bd72632c",
+        "conversationRequestId": "3b37c6d72ec97f9505c36c20bd72632c",
+        "rawUsage": {
+          "prompt_tokens": 23456,
+          "completion_tokens": 2676,
+          "total_tokens": 26132,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 1490,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 3008
+          },
+          "prompt_cache_hit_tokens": 3008,
+          "prompt_cache_miss_tokens": 20448,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 1490,
+          "credit": 4.89,
+          "cached_tokens": 0
+        },
+        "agent": "cli",
+        "usage": {
+          "requests": 1,
+          "inputTokens": 23456,
+          "outputTokens": 2676,
+          "totalTokens": 26132,
+          "inputTokensDetails": [
+            {
+              "cached_tokens": 3008
+            }
+          ],
+          "outputTokensDetails": [
+            {
+              "reasoning_tokens": 1490
+            }
+          ]
+        }
+      }
+    ],
+    "prompt_sha256": "0a86fefc04e060319249265a4d6ae6fc552227d13c4a1103dc9a9bf86f22491b",
+    "process_sha256": "ef99a817c2d54c4630a01b84a87a75f26904a4a8e3e4204f3c15e9a069598f1f",
+    "elapsed_seconds": 35.83,
+    "exit_code": 0,
+    "command": [
+      "node",
+      "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+      "--print",
+      "--model",
+      "glm-5.3",
+      "--agent",
+      "cli",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      "{\"mcpServers\":{}}",
+      "--no-session-persistence",
+      "--session-id",
+      "assess-29bdadba2cb84c7f9c01240bd53f6357",
+      "--effort",
+      "low",
+      "--max-turns",
+      "1",
+      "--output-format",
+      "json"
+    ],
+    "stderr": "",
+    "raw_result_type": "result"
+  },
+  "review": {
+    "raw_file": "assessments/development/case-03805e884001-outcome.json",
+    "repairs": [],
+    "semantic_validation": false,
+    "document_identity_review": null,
+    "official_search_evidence_review": null
+  }
+}
