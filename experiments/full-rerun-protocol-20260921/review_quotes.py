@@ -47,7 +47,7 @@ for run in (R/'runs').iterdir():
     old_id=x.get('event_id')
     if 'quote' not in x and isinstance(x.get('text'),str) and old_id in texts:
      x['quote']=x['text'];repairs.append({'basis':'evidence text field normalized to quote without wording changes; exact quotation audited separately'})
-    if old_id=='final':
+    if old_id in ('final',item['case']+'.final'):
      x['event_id']='run-end';old_id='run-end';repairs.append({'basis':'final alias maps to frozen final answer'})
     if isinstance(old_id,str) and old_id not in texts and old_id+'.result' in texts:
      x['event_id']=old_id+'.result';repairs.append({'original_event_id':old_id,'replacement_event_id':x['event_id'],'basis':'unique exact tool-result ID suffix; quote still separately checked'})
