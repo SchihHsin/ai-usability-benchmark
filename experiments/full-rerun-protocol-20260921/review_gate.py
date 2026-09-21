@@ -53,7 +53,7 @@ def check(value,item,kind):
         m=byid.get('M4',{});score=m.get('score');c=value.get('m4_check',{})
         if score is not None:
             official_ids={d.get('event_id') for d in entries if d.get('ownership')=='official'}
-            if not cited(c.get('evidence',[])) or any(ev.get('event_id') not in official_ids for ev in c.get('evidence',[])):errors.append('M4: missing official constraint citations')
+            if not cited(c.get('evidence',[])) or any(ev.get('event_id') not in official_ids and not any(ev.get('event_id')==r.get('event_id') and ev.get('quote')==r.get('quote') for r in item.get('reviewed_official_search_evidence',[])) for ev in c.get('evidence',[])):errors.append('M4: missing official constraint citations')
             if not c.get('required_relations'):errors.append('M4: missing required relations')
             if score>=3 and c.get('unresolved_conflicts'):errors.append('M4: unresolved conflict cannot score >=3')
             if score>=4 and c.get('missing_relations'):errors.append('M4: missing relation cannot score >=4')

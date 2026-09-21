@@ -1,6 +1,6 @@
 """Derive reviews using only exact verifiable formatting repairs; preserve raw files."""
 from pathlib import Path
-import json,copy,re
+import json,copy,re,hashlib
 import prepare_assessment,assess
 from review_gate import check
 from review_normalization import completeness
@@ -15,6 +15,11 @@ for run in (R/'runs').iterdir():
  for source in item['sources']:
   if source.get('status')=='not_dispatched':source['role']='blocked_request'
  texts={x['event_id']:x['text'] for x in item['sources']+item['prior']};texts['run-end']=item['final']
+ ownership_file=R/'reviewed-official-search-evidence.json'
+ ownership=json.loads(ownership_file.read_text()).get(item['case']) if ownership_file.exists() else None
+ if ownership:
+  if ownership['process_sha256']!=hashlib.sha256((run/'process.jsonl').read_bytes()).hexdigest():raise ValueError('official search review hash mismatch')
+  item['reviewed_official_search_evidence']=ownership['evidence']
  for kind in ['predictors','outcome']:
   candidates=sorted((R/'assessments/development').glob(item['case']+'-'+kind+'*.json'),key=lambda f:f.stat().st_mtime_ns)
   selected=next((f for f in candidates if not json.loads(f.read_text()).get('error')),None)
